@@ -1,0 +1,197 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Quantize Command Contract",
+  "description": "CLI contract for the image quantization command (P1 user story)",
+  "command": "lego-image-processor quantize",
+  "version": "1.0.0",
+  "input": {
+    "arguments": [
+      {
+        "name": "input",
+        "type": "path",
+        "required": true,
+        "description": "Path to input satellite image file (PNG, JPEG, or TIFF)",
+        "validation": {
+          "file_must_exist": true,
+          "file_extensions": [".png", ".jpg", ".jpeg", ".tiff", ".tif"]
+        }
+      }
+    ],
+    "options": [
+      {
+        "name": "--output",
+        "short": "-o",
+        "type": "path",
+        "required": false,
+        "default": "{input_stem}_quantized.png",
+        "description": "Path to output quantized image file",
+        "validation": {
+          "directory_must_be_writable": true
+        }
+      },
+      {
+        "name": "--format",
+        "short": "-f",
+        "type": "choice",
+        "required": false,
+        "default": "png",
+        "choices": ["png", "jpeg", "tiff"],
+        "description": "Output image format (default: png, lossless)"
+      },
+      {
+        "name": "--palette",
+        "short": "-p",
+        "type": "path",
+        "required": false,
+        "default": "builtin",
+        "description": "Path to custom LEGO color palette JSON file (default: use built-in LEGO World Map palette)"
+      },
+      {
+        "name": "--verbose",
+        "short": "-v",
+        "type": "flag",
+        "required": false,
+        "description": "Enable verbose output with processing details"
+      },
+      {
+        "name": "--quiet",
+        "short": "-q",
+        "type": "flag",
+        "required": false,
+        "description": "Suppress progress output (only show errors)"
+      }
+    ]
+  },
+  "output": {
+    "stdout": {
+      "success": {
+        "format": "text",
+        "example": "✓ Quantized image saved to: output_quantized.png\n  Processing time: 3.45 seconds\n  Image size: 1024×1024 (1.05 MP)\n  Colors used: 23 of 45 LEGO colors"
+      },
+      "verbose": {
+        "format": "text",
+        "example": "Loading input image: input.jpg\n  Image size: 1024×1024 (1.05 MP)\n  Original format: JPEG\n  Color mode: RGB\nLoading LEGO color palette...\n  Palette loaded: 45 colors (LEGO World Map Kit 31203)\nConverting RGB to LAB color space...\nQuantizing colors (finding closest LEGO color for each pixel)...\n  [████████████████████████████████] 100% (1048576/1048576) ETA: 0s\nSaving quantized image...\n✓ Quantized image saved to: output_quantized.png\n  Processing time: 3.45 seconds\n  Colors used: 23 of 45 LEGO colors"
+      }
+    },
+    "stderr": {
+      "errors": [
+        {
+          "condition": "Input file not found",
+          "exit_code": 1,
+          "example": "Error: Input file 'nonexistent.png' not found"
+        },
+        {
+          "condition": "Invalid image format",
+          "exit_code": 1,
+          "example": "Error: 'document.txt' is not a valid image format\nSupported formats: PNG, JPEG, TIFF"
+        },
+        {
+          "condition": "Image too large",
+          "exit_code": 1,
+          "example": "Error: Image too large (150.5 MP exceeds 100 MP limit)\nConsider downsampling the image before processing"
+        },
+        {
+          "condition": "Output directory not writable",
+          "exit_code": 1,
+          "example": "Error: Cannot write to output directory '/protected/'\nCheck permissions or specify a different output path"
+        },
+        {
+          "condition": "Corrupted image file",
+          "exit_code": 1,
+          "example": "Error: Failed to load image (file may be corrupted)\nTry opening the file in an image editor to verify integrity"
+        }
+      ],
+      "warnings": [
+        {
+          "condition": "Grayscale image",
+          "example": "Warning: Input image is grayscale, converting to RGB"
+        },
+        {
+          "condition": "JPEG output format",
+          "example": "Warning: JPEG format is lossy and may affect color accuracy\nConsider using PNG for exact color preservation"
+        },
+        {
+          "condition": "Large image",
+          "example": "Warning: Large image (45.2 MP) may take 60+ seconds to process"
+        }
+      ]
+    },
+    "files": [
+      {
+        "path": "{output_path}",
+        "type": "image",
+        "format": "{specified_format}",
+        "description": "Quantized image with all pixels mapped to LEGO colors",
+        "validation": {
+          "dimensions_match_input": true,
+          "color_mode": "RGB",
+          "all_colors_in_palette": true
+        }
+      }
+    ]
+  },
+  "exit_codes": {
+    "0": "Success - image quantized and saved",
+    "1": "Error - invalid input, processing failure, or I/O error",
+    "2": "Usage error - invalid command-line arguments"
+  },
+  "examples": [
+    {
+      "command": "lego-image-processor quantize satellite.png",
+      "description": "Quantize image using default settings (output: satellite_quantized.png)"
+    },
+    {
+      "command": "lego-image-processor quantize satellite.jpg -o map.png",
+      "description": "Quantize with custom output filename"
+    },
+    {
+      "command": "lego-image-processor quantize satellite.png -f jpeg -o map.jpg",
+      "description": "Quantize and save as JPEG (lossy, with warning)"
+    },
+    {
+      "command": "lego-image-processor quantize satellite.tiff --verbose",
+      "description": "Quantize with verbose progress output"
+    },
+    {
+      "command": "lego-image-processor quantize satellite.png -p custom_palette.json",
+      "description": "Quantize using custom LEGO color palette"
+    }
+  ],
+  "test_cases": [
+    {
+      "name": "Valid PNG input",
+      "command": "lego-image-processor quantize test_satellite.png",
+      "expected_exit_code": 0,
+      "expected_output_file": "test_satellite_quantized.png",
+      "assertions": [
+        "Output file exists",
+        "Output dimensions match input",
+        "All output colors are in LEGO palette"
+      ]
+    },
+    {
+      "name": "Nonexistent file",
+      "command": "lego-image-processor quantize missing.png",
+      "expected_exit_code": 1,
+      "expected_stderr_contains": "not found"
+    },
+    {
+      "name": "Invalid file format",
+      "command": "lego-image-processor quantize document.pdf",
+      "expected_exit_code": 1,
+      "expected_stderr_contains": "not a valid image format"
+    },
+    {
+      "name": "Grayscale image conversion",
+      "command": "lego-image-processor quantize grayscale.png",
+      "expected_exit_code": 0,
+      "expected_stderr_contains": "Warning: Input image is grayscale"
+    },
+    {
+      "name": "JPEG output warning",
+      "command": "lego-image-processor quantize test.png -f jpeg",
+      "expected_exit_code": 0,
+      "expected_stderr_contains": "Warning: JPEG format is lossy"
+    }
+  ]
+}
