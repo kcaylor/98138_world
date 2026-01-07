@@ -17,9 +17,13 @@ def cli() -> None:
 # Import and register subcommands
 from .quantize import quantize
 from .stats import stats
+from .layout import layout
+from .validate import validate
 
 cli.add_command(quantize)
 cli.add_command(stats)
+cli.add_command(layout)
+cli.add_command(validate)
 
 
 def main() -> None:
