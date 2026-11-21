@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Set, Tuple
 
 
-# Path to the land/sea mask fixture
-MASK_PATH = Path(__file__).parent.parent.parent.parent / "tests" / "fixtures" / "lego_world_map_land_sea_mask.json"
+# Land/sea mask shipped with the package (runtime reference data)
+MASK_PATH = Path(__file__).parent.parent / "data" / "lego_world_map_land_sea_mask.json"
 
 
 class LandSeaMask:
@@ -154,7 +154,7 @@ class LandSeaMask:
 
 @lru_cache(maxsize=1)
 def load_land_sea_mask(mask_path: str = None) -> LandSeaMask:
-    """Load land/sea mask from fixture file.
+    """Load the land/sea mask bundled with the package.
 
     Uses @lru_cache to avoid reloading the file on repeated calls.
 

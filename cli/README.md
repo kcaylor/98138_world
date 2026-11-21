@@ -8,7 +8,6 @@ A CLI tool that converts images to LEGO-compatible color palettes and generates 
 - Delta E 2000 (CIEDE2000) color matching algorithm for accurate color reproduction
 - Support for PNG, JPEG, and TIFF image formats
 - Color statistics and analysis
-- Batch processing for multiple images
 - **LEGO World Map Layout Generation** (128×80 grid = 10,240 positions)
 - **Kit Inventory Validation** against LEGO World Map kit 31203
 
@@ -17,6 +16,7 @@ A CLI tool that converts images to LEGO-compatible color palettes and generates 
 ```bash
 cd cli
 poetry install
+# without Poetry: uv venv && uv pip install -e . pytest pytest-cov pytest-benchmark
 ```
 
 ## Usage
@@ -29,10 +29,9 @@ lego-image-processor quantize input.png -o output.png
 
 # Get color statistics
 lego-image-processor stats output.png
-
-# Batch process multiple images
-lego-image-processor batch input_dir/ -o output_dir/
 ```
+
+Batch processing of a whole directory is planned (spec 001, user story 3) but not built yet.
 
 ### Layout Generation
 
