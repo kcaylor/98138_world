@@ -1,50 +1,112 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# 98138.world Constitution
+
+98138.world is a general approach to building LEGO World Map-style mosaics of any suitable gridded
+map, using the LEGO World Map kit 31203 as a fixed template: its grid scale and its land/sea mask.
+A Python CLI comes first and is written for open-source release; a web app at 98138.world follows.
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. The Kit Is a Fixed Template
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+- The 128×80 grid (10,240 positions), the kit's land/sea mask, and the single part type used for
+  each class (land piece, ocean piece) MUST NOT change between maps. Maps vary only the colors
+  placed within each class.
+- Template reference data (mask, part IDs, kit inventory, projection) MUST be stored as versioned
+  package data, each file citing its source.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+**Rationale**: the kit's grid and mask are the canvas that makes any map buildable and
+recognisable.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. Maps Are Layers Defined by Recipes
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+- Every map MUST be composed of a land layer and an ocean layer. Each layer is either
+  **data-driven** (a gridded field rendered through an ordered LEGO color scale) or **background**
+  (a fixed treatment, such as the official white land or a general ocean color, with subtle
+  shading or texture).
+- A map MUST be fully reproducible from a declarative recipe file that names the data source,
+  layer roles, classification, color scale, and texture rule.
+- The official 31203 design MUST be reproducible as a recipe; it is the reference acceptance test.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+**Rationale**: one model covers ocean maps (sea surface temperature, productivity, bathymetry) and
+land maps (elevation, land cover, LAI, temperature).
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. Data In, Not Pictures
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+- The primary input MUST be gridded data, reprojected to the kit's projection and classified onto
+  ordered color scales.
+- Perceptual quantization of RGB images is a secondary input path.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+**Rationale**: in a data map the color order must follow the data values; nearest-color matching
+of a rendered picture does not guarantee that.
+
+### IV. Reproducible Data Acquisition
+
+- The tool MUST be able to download canonical public datasets.
+- Every dataset MUST be pinned (source URL, version, checksum) and cached locally, and its
+  citation and license MUST appear in the map's outputs.
+- Once data is cached, every command MUST work offline.
+- Credentials, when a source needs them, MUST come from environment variables and MUST NOT be
+  committed.
+
+**Rationale**: maps must be regenerable by anyone and properly attributed.
+
+### V. Buildable and Honest Outputs
+
+- Every color used in a layer MUST be available for that layer's part.
+- Parts lists MUST use verified part and color IDs (LEGO, BrickLink, Rebrickable).
+- Reference numbers MUST come from a cited source; invented or placeholder quantities are not
+  allowed.
+- Every map MUST get a suitability check that warns when the data loses too much detail at grid
+  scale (for example, political maps or fine-scale patterns).
+
+**Rationale**: the end goal is a physical build whose parts people can buy.
+
+### VI. CLI-First, Open-Source Ready
+
+- Every capability MUST work as a library function and a CLI command on local files before any
+  web feature uses it.
+- The web app (Fly.io, 98138.world) MUST call the CLI or library and MUST NOT duplicate its logic.
+- CLI code MUST contain no hardcoded secrets or proprietary endpoints.
+
+**Rationale**: portability, testability, and a clean open-source release.
+
+### VII. Test-First, Offline Tests
+
+- Core logic (resampling, classification, color scales, layout, parts lists) MUST be developed
+  test-first, with unit, integration, and contract (CLI input/output) tests under `cli/tests/`.
+- Tests MUST NOT require network access; downloads are tested with small fixtures or mocks.
+
+**Rationale**: the constraints are precise, and CI must be fast and reliable.
+
+### VIII. LEGO Compliance
+
+- All user-facing output MUST state: "Not affiliated with or endorsed by The LEGO Group."
+- The project MUST NOT imply endorsement or partnership. Official part numbers are referenced for
+  buyers' convenience only.
+
+**Rationale**: this is a fan project built around a LEGO product.
+
+## Technical Constraints
+
+- Python 3.11+, packaged with Poetry; the CLI is built with Click.
+- Runtime reference data lives in `cli/src/lego_image_processor/data/`.
+- The web stack, performance targets, and scale targets are deferred to the first web feature's
+  specification.
+
+## Development Workflow
+
+- Features are built with Spec Kit (`speckit-run`) as independently testable user stories in
+  priority order; P1 MUST be a usable MVP.
+- Every `plan.md` MUST include a Constitution Check. Any violation MUST be justified in its
+  Complexity Tracking section.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+- This constitution supersedes conflicting practice.
+- Amendments are made through the `speckit-derive-constitution` skill, carry a written rationale,
+  and require the project owner's approval.
+- Versions follow semantic versioning: MAJOR when a principle is removed or redefined, MINOR when
+  a principle is added or materially expanded, PATCH for clarifications.
+- Templates and documentation are updated to match each amendment.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 2.0.0 | **Ratified**: 2026-11-21 | **Last Amended**: 2026-11-21

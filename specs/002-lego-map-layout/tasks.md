@@ -385,7 +385,7 @@ This task breakdown implements LEGO World Map position layout generation, transf
 
 **Goal**: Apply exact shadowing pattern from official LEGO World Map kit 31203 to custom layouts for visual depth.
 
-**Status**: DEFERRED - Requires research into official kit shadowing patterns
+**Status**: SUPERSEDED (2026-11-21) - Replaced by the texture rule in feature 004 (map recipes); see `docs/vision.md`. No tasks will be created here.
 
 **Prerequisites**:
 1. Extract shadowing pattern from official kit 31203 instruction manual

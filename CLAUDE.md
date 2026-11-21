@@ -33,16 +33,19 @@ Paired Claude/Codex runs: `speckit-pair` (opt-in).
 
 ## Project: 98138.world
 
-98138.world makes custom building plans compatible with the LEGO World Map kit (31203) from map or
-satellite imagery: a 128×80 grid of 10,240 positions, with round 1×1 bricks (part 3062b) on land and
-flat 1×1 round tiles (part 98138) in the ocean. The planned pieces are:
+98138.world uses the LEGO World Map kit (31203) as a fixed template (a 128×80 grid of 10,240
+positions and the kit's land/sea mask) and builds a general way to turn any suitable gridded map
+into a buildable mosaic. A map is a land layer plus an ocean layer, each either data-driven or a
+shaded background, described by a recipe file. Read `docs/vision.md` before planning a feature; the
+rules are in `.specify/memory/constitution.md`.
+
+The land and ocean part IDs and the kit inventory in `data/` are not yet verified against a cited
+source (feature 003); do not rely on them for purchasing.
 
 1. **Python CLI** (`cli/`, package `lego_image_processor`), written to be released as open source.
    This is the only part that exists today.
-2. **Web application** (backend and frontend) on Fly.io at 98138.world, planned. It must call the
-   CLI as a library or subprocess and never duplicate its logic.
-
-Outputs: map layouts, parts lists with official part numbers, and building instructions.
+2. **Web application** on Fly.io at 98138.world, planned. It must call the CLI as a library or
+   subprocess and never duplicate its logic.
 
 ### Layout
 
