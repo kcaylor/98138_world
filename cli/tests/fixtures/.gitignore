@@ -1,0 +1,33 @@
+# Test Fixtures .gitignore
+# Keep only small test images in git (< 5MB each)
+
+# Exclude large full-resolution source files
+images/**/natural_earth_ii_full.tif
+images/**/natural_earth_shaded_relief.tif
+images/**/*_full.*
+images/**/*_original.*
+images/**/*_source.*
+images/**/*.zip
+
+# Exclude very large test sizes (keep max 2048x2048)
+images/**/*_4096.*
+images/**/*_8000.*
+
+# Allow standard test sizes (512, 1024, 2048)
+!images/**/*_512.png
+!images/**/*_512.jpg
+!images/**/*_1024.png
+!images/**/*_1024.jpg
+!images/**/*_2048.png
+!images/**/*_2048.jpg
+
+# Keep documentation and scripts
+!images/**/*.md
+!images/**/*.py
+!images/**/README.md
+!images/**/DOWNLOAD_GUIDE.md
+!images/**/*.py
+
+# Temporary extraction directories
+images/**/SR_LR/
+images/**/NE2_*/
