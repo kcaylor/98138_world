@@ -1,0 +1,326 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://98138.world/schemas/position-layout-v1.json",
+  "title": "LEGO World Map Position Placement Layout",
+  "description": "Schema for LEGO World Map position placement layout output (JSON format) - matching official kit 31203 structure with two part types (round bricks for land, flat tiles for ocean)",
+  "type": "object",
+  "required": ["metadata", "positions"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "description": "Summary information about the position placement layout",
+      "required": [
+        "width",
+        "height",
+        "total_positions",
+        "land_positions",
+        "ocean_positions",
+        "unique_colors",
+        "generated_at",
+        "source_image",
+        "schema_version",
+        "coordinate_system"
+      ],
+      "properties": {
+        "width": {
+          "type": "integer",
+          "description": "Grid width in studs (standard: 128)",
+          "minimum": 1,
+          "example": 128
+        },
+        "height": {
+          "type": "integer",
+          "description": "Grid height in studs (standard: 80)",
+          "minimum": 1,
+          "example": 80
+        },
+        "total_positions": {
+          "type": "integer",
+          "description": "Total number of positions (width × height, standard: 10,240)",
+          "minimum": 1,
+          "example": 10240
+        },
+        "land_positions": {
+          "type": "integer",
+          "description": "Number of land positions using round bricks (standard: 3,062)",
+          "minimum": 0,
+          "example": 3062
+        },
+        "ocean_positions": {
+          "type": "integer",
+          "description": "Number of ocean positions using flat tiles (standard: 7,178)",
+          "minimum": 0,
+          "example": 7178
+        },
+        "unique_colors": {
+          "type": "integer",
+          "description": "Number of distinct colors used",
+          "minimum": 1,
+          "example": 12
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when layout was generated",
+          "example": "2026-01-07T12:00:00Z"
+        },
+        "source_image": {
+          "type": "string",
+          "description": "Filename of input quantized image",
+          "example": "natural_earth_ii_quantized.png"
+        },
+        "schema_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$",
+          "description": "Schema version (semantic versioning)",
+          "example": "1.0"
+        },
+        "coordinate_system": {
+          "type": "string",
+          "enum": ["top_left_origin"],
+          "description": "Coordinate system origin (always top-left)",
+          "example": "top_left_origin"
+        }
+      }
+    },
+    "positions": {
+      "type": "array",
+      "description": "Array of all position placements in the grid (one per stud position)",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["x", "y", "color_id", "color_name", "lego_color_code", "part_type", "lego_part_id"],
+        "properties": {
+          "x": {
+            "type": "integer",
+            "description": "X coordinate (0-based, increases rightward, range: 0-127 for standard kit)",
+            "minimum": 0,
+            "example": 0
+          },
+          "y": {
+            "type": "integer",
+            "description": "Y coordinate (0-based, increases downward, range: 0-79 for standard kit)",
+            "minimum": 0,
+            "example": 0
+          },
+          "color_id": {
+            "type": "string",
+            "description": "LEGO color identifier from palette (e.g., lego_blue_medium)",
+            "pattern": "^lego_[a-z_]+$",
+            "example": "lego_blue_medium"
+          },
+          "color_name": {
+            "type": "string",
+            "description": "Human-readable color name",
+            "example": "Medium Blue"
+          },
+          "lego_color_code": {
+            "type": "string",
+            "description": "Official LEGO color code",
+            "example": "102"
+          },
+          "part_type": {
+            "type": "string",
+            "enum": ["brick", "tile"],
+            "description": "Part type: 'brick' for land positions (raised), 'tile' for ocean positions (flat)",
+            "example": "tile"
+          },
+          "lego_part_id": {
+            "type": "string",
+            "enum": ["3062b", "98138"],
+            "description": "LEGO part number: '3062b' for round bricks (land), '98138' for flat tiles (ocean)",
+            "example": "98138"
+          }
+        }
+      }
+    },
+    "statistics": {
+      "type": "object",
+      "description": "Optional summary statistics about the layout composition",
+      "properties": {
+        "total_tile_count": {
+          "type": "integer",
+          "description": "Total positions (same as metadata.total_positions)",
+          "minimum": 1,
+          "example": 10240
+        },
+        "land_brick_count": {
+          "type": "integer",
+          "description": "Number of round bricks (same as metadata.land_positions)",
+          "minimum": 0,
+          "example": 3062
+        },
+        "ocean_tile_count": {
+          "type": "integer",
+          "description": "Number of flat tiles (same as metadata.ocean_positions)",
+          "minimum": 0,
+          "example": 7178
+        },
+        "unique_colors": {
+          "type": "integer",
+          "description": "Count of distinct colors (same as metadata.unique_colors)",
+          "minimum": 1,
+          "example": 12
+        },
+        "color_frequency": {
+          "type": "object",
+          "description": "Map of color_id to position count across all positions",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "example": {
+            "lego_blue_medium": 2400,
+            "lego_green": 1850,
+            "lego_tan": 1200
+          }
+        },
+        "color_frequency_by_part_type": {
+          "type": "object",
+          "description": "Color frequency split by part type (brick vs tile)",
+          "properties": {
+            "brick": {
+              "type": "object",
+              "description": "Color frequencies for round bricks (land positions)",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "example": {
+                "lego_green": 1500,
+                "lego_tan": 800,
+                "lego_brown": 450
+              }
+            },
+            "tile": {
+              "type": "object",
+              "description": "Color frequencies for flat tiles (ocean positions)",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "example": {
+                "lego_blue_medium": 2400,
+                "lego_blue_dark": 1200,
+                "lego_green": 350
+              }
+            }
+          }
+        },
+        "most_common_color": {
+          "type": "object",
+          "description": "Color with highest frequency",
+          "properties": {
+            "color_id": {
+              "type": "string",
+              "example": "lego_blue_medium"
+            },
+            "color_name": {
+              "type": "string",
+              "example": "Medium Blue"
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 1,
+              "example": 2400
+            }
+          }
+        },
+        "coverage_percentage": {
+          "type": "number",
+          "description": "Percentage of grid filled (always 100.0 for valid layouts)",
+          "minimum": 0,
+          "maximum": 100,
+          "example": 100.0
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "metadata": {
+        "width": 128,
+        "height": 80,
+        "total_positions": 10240,
+        "land_positions": 3062,
+        "ocean_positions": 7178,
+        "unique_colors": 12,
+        "generated_at": "2026-01-07T12:00:00Z",
+        "source_image": "natural_earth_ii_quantized.png",
+        "schema_version": "1.0",
+        "coordinate_system": "top_left_origin"
+      },
+      "positions": [
+        {
+          "x": 0,
+          "y": 0,
+          "color_id": "lego_blue_medium",
+          "color_name": "Medium Blue",
+          "lego_color_code": "102",
+          "part_type": "tile",
+          "lego_part_id": "98138"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "color_id": "lego_blue_medium",
+          "color_name": "Medium Blue",
+          "lego_color_code": "102",
+          "part_type": "tile",
+          "lego_part_id": "98138"
+        },
+        {
+          "x": 45,
+          "y": 25,
+          "color_id": "lego_green",
+          "color_name": "Green",
+          "lego_color_code": "28",
+          "part_type": "brick",
+          "lego_part_id": "3062b"
+        }
+      ],
+      "statistics": {
+        "total_tile_count": 10240,
+        "land_brick_count": 3062,
+        "ocean_tile_count": 7178,
+        "unique_colors": 12,
+        "color_frequency": {
+          "lego_blue_medium": 2400,
+          "lego_green": 1850,
+          "lego_tan": 1200,
+          "lego_brown": 600,
+          "lego_white": 500,
+          "lego_blue_dark": 1200,
+          "lego_yellow": 450,
+          "lego_orange": 380,
+          "lego_red": 320,
+          "lego_green_dark": 280,
+          "lego_gray": 240,
+          "lego_purple": 820
+        },
+        "color_frequency_by_part_type": {
+          "brick": {
+            "lego_green": 1500,
+            "lego_tan": 800,
+            "lego_brown": 450,
+            "lego_white": 200,
+            "lego_yellow": 112
+          },
+          "tile": {
+            "lego_blue_medium": 2400,
+            "lego_blue_dark": 1200,
+            "lego_green": 350,
+            "lego_tan": 400,
+            "lego_white": 300
+          }
+        },
+        "most_common_color": {
+          "color_id": "lego_blue_medium",
+          "color_name": "Medium Blue",
+          "count": 2400
+        },
+        "coverage_percentage": 100.0
+      }
+    }
+  ]
+}

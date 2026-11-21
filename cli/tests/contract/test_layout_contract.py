@@ -2,7 +2,9 @@
 
 import json
 import os
+import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -12,6 +14,11 @@ import pytest
 # Get path to test fixtures
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 IMAGES_DIR = FIXTURES_DIR / "images"
+
+# Prefer the entry point installed alongside the running interpreter, so the
+# tests work without an activated virtualenv; fall back to PATH.
+_VENV_CLI = Path(sys.executable).parent / "lego-image-processor"
+CLI = str(_VENV_CLI) if _VENV_CLI.exists() else (shutil.which("lego-image-processor") or "lego-image-processor")
 
 
 class TestLayoutContract:
@@ -24,7 +31,7 @@ class TestLayoutContract:
 
         try:
             result = subprocess.run(
-                ["lego-image-processor", "layout",
+                [CLI, "layout",
                  str(IMAGES_DIR / "test_128x80_quantized.png"),
                  "-o", output_path, "-q"],
                 capture_output=True,
@@ -53,7 +60,7 @@ class TestLayoutContract:
 
         try:
             result = subprocess.run(
-                ["lego-image-processor", "layout",
+                [CLI, "layout",
                  str(IMAGES_DIR / "test_128x80_quantized.png"),
                  "-o", output_path, "-f", "csv", "-q"],
                 capture_output=True,
@@ -81,7 +88,7 @@ class TestLayoutContract:
     def test_missing_file_produces_error(self):
         """Test that missing file produces error with exit code 1."""
         result = subprocess.run(
-            ["lego-image-processor", "layout",
+            [CLI, "layout",
              "nonexistent.png", "-o", "output.json", "-q"],
             capture_output=True,
             text=True
@@ -98,7 +105,7 @@ class TestLayoutContract:
 
         try:
             result = subprocess.run(
-                ["lego-image-processor", "layout",
+                [CLI, "layout",
                  str(IMAGES_DIR / "test_wrong_size.png"),
                  "-o", output_path, "-q"],
                 capture_output=True,
@@ -119,7 +126,7 @@ class TestLayoutContract:
 
         try:
             result = subprocess.run(
-                ["lego-image-processor", "layout",
+                [CLI, "layout",
                  str(IMAGES_DIR / "test_invalid_colors.png"),
                  "-o", output_path, "-q"],
                 capture_output=True,
@@ -140,7 +147,7 @@ class TestLayoutContract:
 
         try:
             result = subprocess.run(
-                ["lego-image-processor", "layout",
+                [CLI, "layout",
                  str(IMAGES_DIR / "test_128x80_quantized.png"),
                  "-o", output_path, "-q"],
                 capture_output=True,
@@ -191,7 +198,7 @@ class TestLayoutContract:
 
         try:
             result = subprocess.run(
-                ["lego-image-processor", "layout",
+                [CLI, "layout",
                  str(IMAGES_DIR / "test_128x80_quantized.png"),
                  "-o", output_path, "-q"],
                 capture_output=True,

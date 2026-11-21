@@ -1,0 +1,217 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Stats Command Contract",
+  "description": "CLI contract for the color statistics command (P2 user story)",
+  "command": "lego-image-processor stats",
+  "version": "1.0.0",
+  "input": {
+    "arguments": [
+      {
+        "name": "input",
+        "type": "path",
+        "required": true,
+        "description": "Path to quantized image file (output from quantize command)",
+        "validation": {
+          "file_must_exist": true,
+          "file_extensions": [".png", ".jpg", ".jpeg", ".tiff", ".tif"]
+        }
+      }
+    ],
+    "options": [
+      {
+        "name": "--format",
+        "short": "-f",
+        "type": "choice",
+        "required": false,
+        "default": "text",
+        "choices": ["text", "json"],
+        "description": "Output format (text: human-readable, json: machine-readable)"
+      },
+      {
+        "name": "--output",
+        "short": "-o",
+        "type": "path",
+        "required": false,
+        "description": "Save statistics to file instead of stdout"
+      },
+      {
+        "name": "--palette",
+        "short": "-p",
+        "type": "path",
+        "required": false,
+        "default": "builtin",
+        "description": "Path to LEGO color palette JSON file (must match palette used for quantization)"
+      },
+      {
+        "name": "--sort-by",
+        "short": "-s",
+        "type": "choice",
+        "required": false,
+        "default": "frequency",
+        "choices": ["frequency", "name", "color_id"],
+        "description": "Sort order for color statistics"
+      }
+    ]
+  },
+  "output": {
+    "stdout": {
+      "text_format": {
+        "description": "Human-readable color statistics",
+        "example": "Color Statistics for satellite_quantized.png\n=====================================\n\nImage size: 1024×1024 (1,048,576 pixels)\nUnique colors: 23 of 45 LEGO colors\n\nColor usage (sorted by frequency):\n  1. Bright Blue (ID: 23)         312,456 pixels  (29.81%)\n  2. Dark Green (ID: 28)          245,789 pixels  (23.44%)\n  3. Brick Yellow (ID: 5)         189,234 pixels  (18.05%)\n  4. White (ID: 1)                 98,765 pixels   (9.42%)\n  5. Tan (ID: 2)                   67,234 pixels   (6.41%)\n  ...\n\nTop 5 colors represent 86.13% of the image."
+      },
+      "json_format": {
+        "description": "Machine-readable JSON statistics",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "image": {
+              "type": "object",
+              "properties": {
+                "file_path": {"type": "string"},
+                "width": {"type": "integer"},
+                "height": {"type": "integer"},
+                "total_pixels": {"type": "integer"}
+              }
+            },
+            "summary": {
+              "type": "object",
+              "properties": {
+                "unique_colors": {"type": "integer"},
+                "total_palette_colors": {"type": "integer"}
+              }
+            },
+            "colors": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {"type": "string"},
+                  "name": {"type": "string"},
+                  "rgb": {"type": "array", "items": {"type": "integer"}},
+                  "part_number": {"type": "string"},
+                  "pixel_count": {"type": "integer"},
+                  "percentage": {"type": "number"}
+                }
+              }
+            }
+          }
+        },
+        "example": "{\n  \"image\": {\n    \"file_path\": \"satellite_quantized.png\",\n    \"width\": 1024,\n    \"height\": 1024,\n    \"total_pixels\": 1048576\n  },\n  \"summary\": {\n    \"unique_colors\": 23,\n    \"total_palette_colors\": 45\n  },\n  \"colors\": [\n    {\n      \"id\": \"23\",\n      \"name\": \"Bright Blue\",\n      \"rgb\": [0, 87, 168],\n      \"part_number\": \"3024\",\n      \"pixel_count\": 312456,\n      \"percentage\": 29.81\n    },\n    {\n      \"id\": \"28\",\n      \"name\": \"Dark Green\",\n      \"rgb\": [40, 127, 70],\n      \"part_number\": \"3024\",\n      \"pixel_count\": 245789,\n      \"percentage\": 23.44\n    }\n  ]\n}"
+      }
+    },
+    "stderr": {
+      "errors": [
+        {
+          "condition": "Input file not found",
+          "exit_code": 1,
+          "example": "Error: Input file 'missing.png' not found"
+        },
+        {
+          "condition": "Invalid image format",
+          "exit_code": 1,
+          "example": "Error: Failed to load image (not a valid image file)"
+        },
+        {
+          "condition": "Output file not writable",
+          "exit_code": 1,
+          "example": "Error: Cannot write to output file '/protected/stats.json'"
+        },
+        {
+          "condition": "Colors not in palette",
+          "exit_code": 1,
+          "example": "Error: Image contains colors not in LEGO palette\nThis may not be a quantized image. Run 'quantize' command first."
+        }
+      ],
+      "warnings": [
+        {
+          "condition": "Non-quantized image detected",
+          "example": "Warning: Image contains >100 unique colors\nThis may not be a quantized image. Statistics may be inaccurate."
+        }
+      ]
+    },
+    "files": [
+      {
+        "path": "{output_path}",
+        "type": "json or text",
+        "description": "Color statistics saved to file (if --output specified)",
+        "optional": true
+      }
+    ]
+  },
+  "exit_codes": {
+    "0": "Success - statistics calculated and displayed",
+    "1": "Error - invalid input or processing failure",
+    "2": "Usage error - invalid command-line arguments"
+  },
+  "examples": [
+    {
+      "command": "lego-image-processor stats satellite_quantized.png",
+      "description": "Display color statistics in human-readable format"
+    },
+    {
+      "command": "lego-image-processor stats satellite_quantized.png --format json",
+      "description": "Display statistics as JSON"
+    },
+    {
+      "command": "lego-image-processor stats map.png -f json -o stats.json",
+      "description": "Save JSON statistics to file"
+    },
+    {
+      "command": "lego-image-processor stats map.png --sort-by name",
+      "description": "Display statistics sorted alphabetically by color name"
+    }
+  ],
+  "test_cases": [
+    {
+      "name": "Valid quantized image",
+      "command": "lego-image-processor stats test_quantized.png",
+      "expected_exit_code": 0,
+      "assertions": [
+        "Output contains 'Image size'",
+        "Output contains 'Unique colors'",
+        "Output lists individual colors with percentages"
+      ]
+    },
+    {
+      "name": "JSON output format",
+      "command": "lego-image-processor stats test_quantized.png -f json",
+      "expected_exit_code": 0,
+      "assertions": [
+        "Output is valid JSON",
+        "JSON contains 'image', 'summary', 'colors' keys",
+        "Percentages sum to ~100%"
+      ]
+    },
+    {
+      "name": "Nonexistent file",
+      "command": "lego-image-processor stats missing.png",
+      "expected_exit_code": 1,
+      "expected_stderr_contains": "not found"
+    },
+    {
+      "name": "Non-quantized image warning",
+      "command": "lego-image-processor stats original_satellite.png",
+      "expected_exit_code": 0,
+      "expected_stderr_contains": "Warning: Image contains >100 unique colors"
+    },
+    {
+      "name": "Save to file",
+      "command": "lego-image-processor stats test.png -f json -o out.json",
+      "expected_exit_code": 0,
+      "assertions": [
+        "File out.json exists",
+        "File contains valid JSON"
+      ]
+    }
+  ],
+  "performance_requirements": {
+    "processing_time": {
+      "1MP_image": "<2 seconds",
+      "10MP_image": "<5 seconds"
+    },
+    "memory_usage": {
+      "1MP_image": "<50 MB",
+      "10MP_image": "<200 MB"
+    }
+  }
+}

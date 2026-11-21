@@ -1,0 +1,276 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Batch Command Contract",
+  "description": "CLI contract for batch processing multiple images (P3 user story)",
+  "command": "lego-image-processor batch",
+  "version": "1.0.0",
+  "input": {
+    "arguments": [
+      {
+        "name": "input_dir",
+        "type": "path",
+        "required": true,
+        "description": "Directory containing satellite images to process",
+        "validation": {
+          "directory_must_exist": true,
+          "directory_must_be_readable": true
+        }
+      }
+    ],
+    "options": [
+      {
+        "name": "--output-dir",
+        "short": "-o",
+        "type": "path",
+        "required": false,
+        "default": "{input_dir}/quantized",
+        "description": "Directory to save quantized images (created if doesn't exist)"
+      },
+      {
+        "name": "--format",
+        "short": "-f",
+        "type": "choice",
+        "required": false,
+        "default": "png",
+        "choices": ["png", "jpeg", "tiff"],
+        "description": "Output image format for all images"
+      },
+      {
+        "name": "--pattern",
+        "short": "-p",
+        "type": "string",
+        "required": false,
+        "default": "*.{png,jpg,jpeg,tiff,tif}",
+        "description": "Glob pattern to match image files (e.g., '*.png', 'satellite_*.jpg')"
+      },
+      {
+        "name": "--recursive",
+        "short": "-r",
+        "type": "flag",
+        "required": false,
+        "description": "Process images in subdirectories recursively"
+      },
+      {
+        "name": "--parallel",
+        "type": "integer",
+        "required": false,
+        "default": 1,
+        "description": "Number of images to process in parallel (default: 1, sequential)"
+      },
+      {
+        "name": "--continue-on-error",
+        "short": "-c",
+        "type": "flag",
+        "required": false,
+        "default": true,
+        "description": "Continue processing remaining images if one fails (default: true)"
+      },
+      {
+        "name": "--fail-fast",
+        "type": "flag",
+        "required": false,
+        "description": "Stop processing on first error (opposite of --continue-on-error)"
+      },
+      {
+        "name": "--dry-run",
+        "short": "-n",
+        "type": "flag",
+        "required": false,
+        "description": "Show which files would be processed without actually processing them"
+      },
+      {
+        "name": "--verbose",
+        "short": "-v",
+        "type": "flag",
+        "required": false,
+        "description": "Show detailed progress for each image"
+      }
+    ]
+  },
+  "output": {
+    "stdout": {
+      "summary": {
+        "format": "text",
+        "example": "Batch Processing Summary\n========================\n\nInput directory: ./satellites/\nOutput directory: ./satellites/quantized/\nPattern: *.png\n\nDiscovered: 15 images\nProcessed: 15 images in 47.3 seconds\n  Success: 13 (86.7%)\n  Failed: 2 (13.3%)\n  Skipped: 0\n\nFailed files:\n  - corrupted_image.png: Failed to load image (file may be corrupted)\n  - too_large.png: Image too large (150.5 MP exceeds 100 MP limit)\n\nAverage processing time: 3.15 seconds per image\nTotal output size: 156.7 MB"
+      },
+      "verbose": {
+        "format": "text",
+        "example": "Discovering images in ./satellites/...\n  Found 15 images matching '*.png'\n\nProcessing images (sequential mode):\n  [1/15] satellite_001.png (1024×1024) ... ✓ 3.2s\n  [2/15] satellite_002.png (2048×2048) ... ✓ 12.1s\n  [3/15] corrupted_image.png ... ✗ Failed to load (corrupted)\n  [4/15] satellite_003.png (512×512) ... ✓ 1.1s\n  ...\n\nBatch Processing Summary\n========================\n..."
+      },
+      "dry_run": {
+        "format": "text",
+        "example": "Dry run mode - no files will be processed\n\nWould process 15 images:\n  1. satellite_001.png → quantized/satellite_001_quantized.png\n  2. satellite_002.png → quantized/satellite_002_quantized.png\n  3. satellite_003.png → quantized/satellite_003_quantized.png\n  ...\n\nRun without --dry-run to process these files."
+      }
+    },
+    "stderr": {
+      "errors": [
+        {
+          "condition": "Input directory not found",
+          "exit_code": 1,
+          "example": "Error: Input directory './missing/' not found"
+        },
+        {
+          "condition": "Input directory not readable",
+          "exit_code": 1,
+          "example": "Error: Cannot read input directory './protected/'\nCheck permissions"
+        },
+        {
+          "condition": "No images found",
+          "exit_code": 1,
+          "example": "Error: No images found matching pattern '*.png' in './empty/'"
+        },
+        {
+          "condition": "Output directory creation failed",
+          "exit_code": 1,
+          "example": "Error: Cannot create output directory '/protected/output/'\nCheck permissions or specify a different output directory"
+        },
+        {
+          "condition": "All images failed to process",
+          "exit_code": 1,
+          "example": "Error: All 5 images failed to process\nSee error messages above for details"
+        }
+      ],
+      "warnings": [
+        {
+          "condition": "Some images failed",
+          "example": "Warning: 2 of 15 images failed to process (see summary)"
+        },
+        {
+          "condition": "Large batch",
+          "example": "Warning: Processing 150 images may take 15+ minutes"
+        },
+        {
+          "condition": "Parallel processing on single CPU",
+          "example": "Warning: Parallel processing (--parallel 4) provides limited benefit on single-core systems"
+        }
+      ]
+    },
+    "files": [
+      {
+        "path": "{output_dir}/{filename}_quantized.{format}",
+        "type": "image",
+        "description": "Quantized images for each successfully processed input",
+        "multiple": true
+      }
+    ]
+  },
+  "exit_codes": {
+    "0": "Success - all images processed successfully (or some succeeded with --continue-on-error)",
+    "1": "Error - directory not found, no images found, all images failed, or I/O error",
+    "2": "Usage error - invalid command-line arguments"
+  },
+  "examples": [
+    {
+      "command": "lego-image-processor batch ./satellites/",
+      "description": "Process all images in directory (output to ./satellites/quantized/)"
+    },
+    {
+      "command": "lego-image-processor batch ./images/ -o ./output/",
+      "description": "Process images with custom output directory"
+    },
+    {
+      "command": "lego-image-processor batch ./maps/ -p 'satellite_*.png'",
+      "description": "Process only images matching specific pattern"
+    },
+    {
+      "command": "lego-image-processor batch ./data/ --recursive",
+      "description": "Process images in directory and all subdirectories"
+    },
+    {
+      "command": "lego-image-processor batch ./images/ --parallel 4",
+      "description": "Process up to 4 images simultaneously (faster on multi-core systems)"
+    },
+    {
+      "command": "lego-image-processor batch ./maps/ --dry-run",
+      "description": "Preview which files would be processed without actually processing"
+    },
+    {
+      "command": "lego-image-processor batch ./images/ --fail-fast",
+      "description": "Stop processing immediately if any image fails"
+    },
+    {
+      "command": "lego-image-processor batch ./maps/ -f jpeg --verbose",
+      "description": "Process with JPEG output and detailed progress"
+    }
+  ],
+  "test_cases": [
+    {
+      "name": "Process multiple images successfully",
+      "setup": "Create test directory with 3 valid PNG images",
+      "command": "lego-image-processor batch ./test_images/",
+      "expected_exit_code": 0,
+      "assertions": [
+        "3 output files created in ./test_images/quantized/",
+        "All output files are valid images",
+        "Summary shows '3 Success, 0 Failed'"
+      ]
+    },
+    {
+      "name": "Continue on error (default)",
+      "setup": "Create test directory with 2 valid images and 1 corrupted",
+      "command": "lego-image-processor batch ./test_images/",
+      "expected_exit_code": 0,
+      "assertions": [
+        "2 output files created (valid images processed)",
+        "Summary shows '2 Success, 1 Failed'",
+        "Failed file listed in output"
+      ]
+    },
+    {
+      "name": "Fail fast mode",
+      "setup": "Create test directory with 1 valid, 1 corrupted, 1 valid (ordered)",
+      "command": "lego-image-processor batch ./test_images/ --fail-fast",
+      "expected_exit_code": 1,
+      "assertions": [
+        "Only 1 output file created (before failure)",
+        "Processing stopped after first error"
+      ]
+    },
+    {
+      "name": "No images found",
+      "command": "lego-image-processor batch ./empty_dir/",
+      "expected_exit_code": 1,
+      "expected_stderr_contains": "No images found"
+    },
+    {
+      "name": "Dry run mode",
+      "setup": "Create test directory with 3 images",
+      "command": "lego-image-processor batch ./test_images/ --dry-run",
+      "expected_exit_code": 0,
+      "assertions": [
+        "No output files created",
+        "Output lists 3 images that would be processed"
+      ]
+    },
+    {
+      "name": "Custom pattern matching",
+      "setup": "Create directory with satellite_1.png, satellite_2.png, other.png",
+      "command": "lego-image-processor batch ./images/ -p 'satellite_*.png'",
+      "expected_exit_code": 0,
+      "assertions": [
+        "Only 2 output files created (matching pattern)",
+        "other.png not processed"
+      ]
+    },
+    {
+      "name": "Recursive processing",
+      "setup": "Create directory tree: ./images/sub1/a.png, ./images/sub2/b.png",
+      "command": "lego-image-processor batch ./images/ --recursive",
+      "expected_exit_code": 0,
+      "assertions": [
+        "2 output files created in respective subdirectories",
+        "Output preserves directory structure"
+      ]
+    }
+  ],
+  "performance_requirements": {
+    "parallel_processing": {
+      "description": "Parallel mode should reduce total time approximately by factor of N (number of parallel workers)",
+      "example": "4 images × 10 seconds each = 40s sequential, ~12-15s with --parallel 4"
+    },
+    "memory_usage": {
+      "sequential": "Memory usage ≈ 1 image at a time",
+      "parallel": "Memory usage ≈ N images simultaneously (where N = --parallel value)"
+    }
+  }
+}

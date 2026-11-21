@@ -1,0 +1,29 @@
+{
+  "version": "1.4.2",
+  "integration_state_schema": 1,
+  "installed_integrations": [
+    "claude",
+    "generic",
+    "codex"
+  ],
+  "integration_settings": {
+    "claude": {
+      "script": "sh",
+      "invoke_separator": "-"
+    },
+    "generic": {
+      "script": "sh",
+      "raw_options": "--commands-dir .specify/harness/commands",
+      "parsed_options": {
+        "commands_dir": ".specify/harness/commands"
+      },
+      "invoke_separator": "."
+    },
+    "codex": {
+      "script": "sh",
+      "invoke_separator": "-"
+    }
+  },
+  "integration": "claude",
+  "default_integration": "claude"
+}
