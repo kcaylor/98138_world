@@ -14,6 +14,12 @@ A CLI tool that converts images to LEGO-compatible color palettes and generates 
 - **Maps from recipes** (feature 004): a TOML recipe names a land layer and an ocean layer; data
   layers read pinned, cached public datasets (ETOPO 2022, NOAA ERSST v5), reprojected to the kit
   grid, classified onto ordered LEGO color scales and textured (`map`, `dataset` commands)
+- **Parts lists and ordering** (feature 005): a parts list with cited LEGO, BrickLink and
+  Rebrickable IDs from any layout, kit top-up (only what you do not own), a BrickLink wanted list
+  and a Rebrickable parts CSV (`parts` commands, `kit part-numbers`)
+- **Build sheets** (feature 006): printable section-by-section pages at true scale with numbered
+  studs and per-section counts, as a PDF or SVG pages, plus per-section counts JSON (`sheets`
+  commands)
 
 ## Installation
 
@@ -162,7 +168,7 @@ land/sea mask). Each layer is **data** (a gridded field classified onto an order
 | `official-31203` | White | the official design grid, one-to-one (exact: 10,240/10,240) | none (packaged) |
 | `official-31203-bathymetry` | White | depth ranked into the official counts and color order, blended | ETOPO 2022 |
 | `ocean-sst` | White | annual mean SST 1991-2020, cold to warm, counts within one kit's supply | ERSST v5 |
-| `land-elevation` | elevation on 10 plate colors (green to brown to grey to white) | the kit's tile colors mixed in the official counts | ETOPO 2022 |
+| `land-elevation` | elevation on 10 plate colors (green to brown to grey to white) | three kit blues (Bright Bluish Green, Medium Azur, Earth Blue at 70/20/10), mixed; needs more blue tiles than one kit holds (reported as beyond-kit) | ETOPO 2022 |
 
 ```bash
 lego-image-processor map recipes                                   # list (and whether data is cached)
@@ -244,16 +250,99 @@ or write error.
 ### Plate and tile colors beyond the kit
 
 ```bash
-lego-image-processor kit part-colors --part 6141      # 14 plate colors (White is the kit's)
+lego-image-processor kit part-colors --part 6141      # 44 plate colors (White is the kit's)
+lego-image-processor kit part-colors --part 98138     # 40 tile colors (9 are the kit's)
 lego-image-processor kit part-colors --format json
 ```
 
-`data/part_colors.json` lists the colors in which the map parts are made, with LEGO, BrickLink
-and Rebrickable names and IDs, element IDs and citations. It is built by a maintainer tool from
-checksum-pinned snapshots of Rebrickable `elements.csv`/`colors.csv`, LDraw `LDConfig.ldr` and the
-archived BrickLink color guide; a row is kept only when every ID resolves (rules in the file's
-`source.join_rules`). Kit colors are copied from `kit_colors.json`. A layout that uses plate
+`data/part_colors.json` lists every opaque color in which the map parts are made that passes the
+join rules, with LEGO, BrickLink and Rebrickable names and IDs, element IDs and citations. It is
+built by a maintainer tool from checksum-pinned snapshots of Rebrickable `elements.csv`/`colors.csv`,
+LDraw `LDConfig.ldr`, the archived BrickLink color guide and the archived BrickLink catalog pages
+of the two parts; a row is kept only when every ID resolves and BrickLink lists the color for the
+part (rules in the file's `source.join_rules`; excluded colors and reasons in `source.excluded`).
+Kit colors are copied from `kit_colors.json`. Rebrickable's catalog is "free for personal and
+commercial use, provided you acknowledge Rebrickable as your data source" (archived downloads page,
+recorded in `source.terms`); this project acknowledges Rebrickable wherever its IDs appear. A layout that uses plate
 colors outside the kit loads in `validate`, which lists them as parts beyond the kit.
+
+### Parts lists and ordering
+
+Each marketplace numbers the land plate differently, so every output uses the marketplace's own
+number (`kit part-numbers`; values from pinned archived catalog pages in `data/part_numbers.json`):
+
+| Part | LEGO design | BrickLink item | Rebrickable part |
+|---|---|---|---|
+| 1×1 round plate (land) | 6141 (element 614101 in White) | **4073** (6141 is an alternate number) | **6141** |
+| 1×1 round tile (ocean) | 98138, 35381 (the kit's elements) | **98138** | **98138** |
+
+Colors also differ (for example LEGO Brick Yellow = BrickLink Tan 2 = Rebrickable Tan 19); every
+lot is matched to a cited row of `part_colors.json` by its color key and LEGO color ID. A lot that
+cannot be matched is listed as unverified, with the reason, and gets no marketplace IDs.
+
+```bash
+lego-image-processor parts list elev.json                        # what the layout needs
+lego-image-processor parts list elev.json --kits 1               # top-up beyond one 31203 kit
+lego-image-processor parts list elev.json --kits 1 --owned loose.csv --missing lost.csv --spares 2
+lego-image-processor parts list elev.json --kits 1 -o elev-parts.json   # JSON (no timestamps)
+lego-image-processor parts export elev.json --kits 1 --condition used \
+    --bricklink elev-wanted.xml --rebrickable elev-parts.csv
+```
+
+- `--kits N`: whole kits owned (the kit's map pieces from the instructions' inventory page count
+  as owned; a Bright Green *plate* gets nothing from the kit's Bright Green *tiles*).
+- `--owned FILE` (loose parts) and `--missing FILE` (pieces missing from secondhand kits) use
+  Rebrickable's import CSV: `Part,Color,Quantity` with Rebrickable numbers, or `Element,Quantity`.
+  Rows for other parts are ignored and counted, so a full Rebrickable set inventory can be passed.
+- `--spares PCT` adds `ceil(shortfall × PCT/100)` to each lot with a shortfall; off by default
+  (no LEGO spare rate is assumed).
+- Map pieces only: the frame, the 40 section bases and other kit parts are not listed.
+
+`parts export` writes only verified lots with something to buy: a BrickLink wanted list (XML, no
+declaration, `ITEMTYPE`/`ITEMID`/`COLOR`/`MINQTY`, `CONDITION` only with `--condition`) and a
+Rebrickable `Part,Color,Quantity` CSV. With unverified lots it exits 6 and writes nothing unless
+`--allow-partial`. When nothing is to buy it writes no file. Uploading to an existing BrickLink
+wanted list adds to the quantities already there. The marketplace files carry no disclaimer (they
+are fixed import formats); the command output and the JSON parts list carry it. No prices are
+estimated: BrickLink and Rebrickable both price an imported list.
+
+Example (land-elevation from the real datasets): 6,382 pieces in 11 lots beyond one kit (3,145
+Bright Bluish Green and 325 Earth Blue tiles plus nine plate colors), 4,178 beyond two kits,
+2,912 beyond three. The official design needs nothing beyond one kit.
+
+### Build sheets
+
+A printable guide for placing the 10,240 pieces: an overview page (whole map, the 8 × 5 section
+grid, frame boundaries, totals, provenance), legend pages (each lot's number, swatch, LEGO,
+BrickLink and Rebrickable names and IDs, total) and one page per section base, 40 in all.
+
+```bash
+lego-image-processor sheets build elev.json -o elev-sheets.pdf                # PDF, Letter
+lego-image-processor sheets build elev.json -o elev-sheets.pdf --paper a4     # A4
+lego-image-processor sheets build elev.json -o two.pdf --sections B2,C2       # reprint two sections
+lego-image-processor sheets build elev.json -o elev-svg --format svg          # page-01.svg ...
+lego-image-processor sheets counts elev.json                                  # pieces per section
+lego-image-processor sheets counts elev.json -o elev-counts.json              # as JSON
+```
+
+- **Sections** are labelled by column letter A–H (west to east) and row number 1–5 (north to
+  south), so `C2` is columns 32–47, rows 16–31. Pages run column by column (A1 … A5, B1 … H5),
+  the order of the kit's section instructions. Frames: columns A–B, C–F, G–H. North is up.
+- **Studs** are drawn at true scale (8.0 mm pitch, from LDraw's approximation 1 stud = 20 LDU =
+  8 mm), each in its lot's cited color with the lot number on it (black or white, whichever
+  contrasts more), so the sheet also works in black and white. Land plates have a ring; ocean
+  tiles are plain. Lot numbers follow the parts list's lot order and are the same on every page.
+- **Print at 100% (no fit-to-page).** Every page has a 100 mm scale bar: measure it. A 16 × 16
+  base laid on a printed section should match the grid.
+- Each section page lists the section's pieces per lot (they sum to 256); `sheets counts` gives the
+  same numbers for sorting pieces into 40 bags.
+- Unverified lots (colors without cited IDs) are marked "no cited IDs" and the overview warns.
+- PDF text is Latin-1 (standard Helvetica, not embedded): a `--title` with other characters fails
+  for PDF and works for SVG. Output is deterministic: the same layout and options give identical
+  bytes.
+- The pages are drawn from the layout data with circles, lines and text only; no LEGO artwork,
+  logo, instruction image or crop is used. Every page carries "Not affiliated with or endorsed
+  by The LEGO Group."
 
 ### Python library
 
@@ -270,7 +359,24 @@ from lego_image_processor.datasets import get_entry, fetch
 result = build_map(load_recipe("official-31203"))   # never downloads
 result.layout.to_json(); result.report; result.agreement
 fetch(get_entry("ersst-v5-ltm-1991-2020"))           # the only function that uses the network
+
+from lego_image_processor.parts import (OwnedInputs, build_parts_list, read_layout,
+                                        resolve_color, to_bricklink_xml, to_rebrickable_csv)
+
+pl = build_parts_list(read_layout("elev.json"), owned=OwnedInputs(kits=1))
+pl.totals(); pl.to_json(); to_bricklink_xml(pl, condition="U"); to_rebrickable_csv(pl)
+resolve_color("6141", "lego_brick_yellow", "5")      # cited IDs, or Unresolved(reason)
+
+from lego_image_processor.sheets import build_sheet_set, render_pdf, render_svg, section_counts
+
+sheet_set = build_sheet_set(read_layout("elev.json"), paper="letter", sections="B2,C2")
+pdf_bytes = render_pdf(sheet_set); svg_pages = render_svg(sheet_set)   # [(name, text), ...]
+section_counts(read_layout("elev.json")).to_json()
 ```
+
+Maintainer tools (from `cli/`, need the pinned sources in the cache; `--check` must report
+"no differences"): `PYTHONPATH=tools python -m partnumbers build --check` and
+`PYTHONPATH=tools python -m partcolors build --check`.
 
 ## Development
 

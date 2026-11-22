@@ -115,9 +115,10 @@ class TestErrors:
         assert _err(text).path == "ocean.classification"
 
     def test_color_not_for_part(self):
-        e = _err(BASE.replace('colors = ["lego_white"]', 'colors = ["lego_earth_blue"]'))
+        # Medium Blue is a cited tile color but not a plate color (005 join rule 5)
+        e = _err(BASE.replace('colors = ["lego_white"]', 'colors = ["lego_medium_blue"]'))
         assert e.path == "land.colors[0]"
-        assert "lego_earth_blue" in str(e) and "6141" in str(e)
+        assert "lego_medium_blue" in str(e) and "6141" in str(e)
 
     def test_unknown_color(self):
         e = _err(BASE.replace('"lego_medium_azur", "lego_bright', '"lego_plaid", "lego_bright'))

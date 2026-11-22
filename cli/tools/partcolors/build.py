@@ -12,6 +12,12 @@ Join rules (a row is kept only when every rule holds; otherwise it is excluded a
    "grey" as "gray"), and a ``LEGOID`` comment precedes the color.
 4. The BrickLink color guide lists a color whose name equals the Rebrickable name exactly; its
    BrickLink id is used.
+5. The color is listed, with the same BrickLink id, on BrickLink's pinned catalog page for the part
+   (item 4073 for the plate, 98138 for the tile; feature 005).
+
+Every color Rebrickable lists for the part is tried (feature 005, Q3); rows that fail a rule are
+excluded and reported. Rebrickable's terms (archived downloads page) are recorded in
+``source.terms`` after checking that the quoted text is on the pinned page.
 
 Kit colors are copied from ``kit_colors.json`` (the authority for them); the tool reports any
 disagreement between that table and the snapshots but does not change it.
@@ -31,6 +37,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from lego_image_processor.kit.source import DISCLAIMER
+from partnumbers.build import parse_bricklink_part
 
 # Pinned snapshots (fetched 2026-11-22 except where noted). Files are kept in the maintainer cache
 # (<cache>/sources/partcolors/), never in the repository.
@@ -55,22 +62,44 @@ SNAPSHOTS: Tuple[Dict[str, str], ...] = (
      "url": "http://web.archive.org/web/20251002182704/https://www.bricklink.com/catalogColors.asp",
      "sha256": "93b28f3a1f6bb668c9f4102edaf3b2e6f500cf90084b087ead3af02c32e9ecda",
      "accessed": "2026-11-21"},
+    # Feature 005: BrickLink part pages (rule 5) and Rebrickable's terms, shared with the
+    # partnumbers tool's cache (<cache>/sources/partnumbers/).
+    {"id": "bricklink-4073", "file": "../partnumbers/bricklink-4073.html",
+     "title": "BrickLink catalog item 4073, Plate, Round 1 x 1 (Internet Archive copy of 2026-11-04)",
+     "url": "http://web.archive.org/web/20261104074336id_/https://www.bricklink.com/v2/catalog/catalogitem.page?P=4073",
+     "sha256": "957f23bd90a68006f3cbf7f1f4461a6d5de89f2b9b6ed67b5b14533db0b2c146",
+     "accessed": "2026-11-22"},
+    {"id": "bricklink-98138", "file": "../partnumbers/bricklink-98138.html",
+     "title": "BrickLink catalog item 98138, Tile, Round 1 x 1 (Internet Archive copy of 2026-09-01)",
+     "url": "http://web.archive.org/web/20260901170641id_/https://www.bricklink.com/v2/catalog/catalogitem.page?P=98138",
+     "sha256": "d1683255e9ecb05ade31884614beb278526aed13efb5725cbc53f74f9e7ffeb0",
+     "accessed": "2026-11-22"},
+    {"id": "rebrickable-terms", "file": "../partnumbers/rebrickable-downloads.html",
+     "title": "Rebrickable downloads page with the catalog terms (Internet Archive copy of 2026-10-29)",
+     "url": "http://web.archive.org/web/20261029125803id_/https://rebrickable.com/downloads/",
+     "sha256": "1c514a79f8cb70a0faacccf7174ee4329a307a6d91221b8c318b6982a7b91b75",
+     "accessed": "2026-11-22"},
 )
+BRICKLINK_PART_PAGE = {"6141": "bricklink-4073", "98138": "bricklink-98138"}
+TERMS_TEXT = ("Free for personal and commercial use, provided you acknowledge Rebrickable as your "
+              "data source.")
+ACKNOWLEDGEMENT = "Catalog data: Rebrickable (rebrickable.com)."
 
-# Reviewed opaque plate colors (Rebrickable color ids) offered beyond the kit for part 6141
-# (research R9). Kit colors are always included. 326 (Olive Green) is listed to show the join
-# rule at work: Rebrickable's id does not match LDraw's code for it, so it is excluded.
-REVIEWED: Dict[str, Tuple[int, ...]] = {
+PARTS = ("6141", "98138")
+# Feature 004 used a hand-reviewed list of Rebrickable color ids (research R9 of 004). Feature 005
+# (Q3) tries every color listed for the part; ``reviewed`` remains for tests and comparisons.
+REVIEWED_004: Dict[str, Tuple[int, ...]] = {
     "6141": (0, 2, 10, 27, 378, 326, 19, 28, 92, 84, 70, 308, 71, 72),
     "98138": (),
 }
 PART_NUMBERS = {
     "6141": "Rebrickable elements.csv files element 614101 (and every other 1x1 round plate "
             "element) under part_num 6141 with design_id 6141; it lists no elements under 4073. "
-            "4073 is the BrickLink catalog number recorded in feature 003 from Brickset; no pinned "
-            "BrickLink part page was checked.",
+            "BrickLink files the part as item 4073 with 6141 as an alternate number (pinned "
+            "BrickLink catalog page bricklink-4073). Marketplace numbers: part_numbers.json.",
     "98138": "Rebrickable elements.csv files the 1x1 round tile under part_num 98138 (design_id "
-             "35381 for newer elements).",
+             "35381 for newer elements); BrickLink item 98138 (pinned page bricklink-98138). "
+             "Marketplace numbers: part_numbers.json.",
 }
 
 
@@ -81,6 +110,8 @@ JOIN_RULES = (
     "LDraw LDConfig.ldr gives the LEGO name and id: the LDraw CODE equals the Rebrickable id, the "
     "names agree (case-insensitive, '_' as space, grey as gray) and a LEGOID comment precedes it.",
     "The BrickLink color guide lists a color with exactly the Rebrickable name; its id is used.",
+    "BrickLink's pinned catalog page for the part (4073 plate, 98138 tile) lists the color with the "
+    "same BrickLink id.",
     "Kit colors are copied from kit_colors.json, the authority for them.",
 )
 
@@ -171,18 +202,33 @@ def _pick_element(els: List[Tuple[str, str]], part: str) -> Tuple[str, List[str]
     return (preferred or ids)[0], ids
 
 
+def check_terms(html: str, text: str = TERMS_TEXT) -> None:
+    if text not in re.sub(r"\s+", " ", html):
+        raise SnapshotError(f"Rebrickable terms text not found on the pinned page: {text!r}")
+
+
 def build(snap: Mapping[str, bytes], kit_colors: Mapping[str, Any], generated_on: str,
-          reviewed: Mapping[str, Sequence[int]] = REVIEWED,
+          reviewed: Optional[Mapping[str, Sequence[int]]] = None,
           snapshots: Sequence[Mapping[str, str]] = SNAPSHOTS) -> BuildResult:
+    """Join the snapshots. ``reviewed`` limits the colors tried per part (default: every color
+    Rebrickable lists for the part)."""
     rb = parse_rebrickable_colors(snap["rebrickable-colors"].decode("utf-8"))
-    elements = parse_elements(snap["rebrickable-elements"].decode("utf-8"), list(reviewed))
+    elements = parse_elements(snap["rebrickable-elements"].decode("utf-8"), list(PARTS))
+    if reviewed is None:
+        reviewed = {p: tuple(sorted({c for (q, c) in elements if q == p})) for p in PARTS}
     ld = parse_ldconfig(snap["ldraw"].decode("utf-8", "replace"))
     bl = parse_bricklink(snap["bricklink"].decode("latin-1"))
+    part_page = {p: dict((n, i) for i, n in parse_bricklink_part(
+        snap[BRICKLINK_PART_PAGE[p]].decode("utf-8", "replace"))["colors"]) for p in PARTS}
+    terms_page = next(s for s in snapshots if s["id"] == "rebrickable-terms")
+    check_terms(snap["rebrickable-terms"].decode("utf-8", "replace"))
     kit_src = kit_colors["source"]
     citations = [dict(c) for c in kit_src["citations"]]
     known = {c["id"] for c in citations}
     for s in snapshots:
         cid = s["id"]
+        if cid == "rebrickable-terms":
+            continue
         if cid == "rebrickable-colors":
             cid = "rebrickable-colors-snapshot"
         if cid not in known:
@@ -209,7 +255,11 @@ def build(snap: Mapping[str, bytes], kit_colors: Mapping[str, Any], generated_on
             if c["element_id"] not in listed:
                 kit_notes.append(f"{part} {c['key']}: kit element {c['element_id']} is not listed in "
                                  f"Rebrickable elements.csv for part {part} (listed: {listed or 'none'})")
-        for cid in rb_ids:
+            if part_page[part].get(c["bricklink"]["name"]) != c["bricklink"]["id"]:
+                kit_notes.append(f"{part} {c['key']}: BrickLink {c['bricklink']['name']} "
+                                 f"({c['bricklink']['id']}) is not on BrickLink's part page")
+        extra: List[Dict[str, Any]] = []
+        for cid in sorted(rb_ids):
             if cid in kit_rb:
                 continue
             why = None
@@ -229,13 +279,18 @@ def build(snap: Mapping[str, bytes], kit_colors: Mapping[str, Any], generated_on
                 why = "LDraw entry has no LEGOID"
             elif r["name"] not in bl:
                 why = f"BrickLink color guide has no color named {r['name']!r}"
+            elif part_page[part].get(r["name"]) != bl[r["name"]]:
+                why = (f"BrickLink's catalog page for part {part} does not list {r['name']!r} "
+                       f"(id {bl[r['name']]})")
+            elif any(x["key"] == color_key(l["lego"][1]) for x in rows + extra):
+                why = f"LEGO color key {color_key(l['lego'][1])} is already taken by another row"
             if why:
                 excluded.append({"part": part, "rebrickable_id": cid,
                                  "name": r["name"] if r else None, "reason": why})
                 continue
             lego_id, lego_name = l["lego"]
             element_id, ids = _pick_element(els, part)
-            rows.append({
+            extra.append({
                 "key": color_key(lego_name), "element_id": element_id,
                 "lego": {"name": lego_name, "id": lego_id},
                 "bricklink": {"name": r["name"], "id": bl[r["name"]]},
@@ -246,7 +301,7 @@ def build(snap: Mapping[str, bytes], kit_colors: Mapping[str, Any], generated_on
                               "element": "rebrickable-elements"},
                 "element_ids": ids, "in_kit": False, "notes": "",
             })
-        parts[part] = rows
+        parts[part] = rows + extra
     data = {
         "format_version": "1",
         "source": {
@@ -257,10 +312,9 @@ def build(snap: Mapping[str, bytes], kit_colors: Mapping[str, Any], generated_on
             "citations": citations,
             "join_rules": list(JOIN_RULES),
             "part_numbers": dict(PART_NUMBERS),
-            "license_note": "Rebrickable's terms for its CSV downloads could not be confirmed (open "
-                            "question in specs/004-map-recipes/run-state.md). This file records "
-                            "facts (which colors a part is made in, and catalog IDs) with "
-                            "citations; it does not redistribute the downloads.",
+            "terms": {"text": TERMS_TEXT, "url": terms_page["url"], "sha256": terms_page["sha256"],
+                      "accessed": terms_page["accessed"]},
+            "acknowledgement": ACKNOWLEDGEMENT,
             "excluded": excluded,
             "disclaimer": DISCLAIMER,
         },

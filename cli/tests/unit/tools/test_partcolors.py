@@ -1,4 +1,5 @@
-"""Part-color maintainer tool (T049, Q4): joins only fully cited rows, from synthetic snapshots."""
+"""Part-color maintainer tool (004 T049/Q4; 005 T008/T034): joins only fully cited rows, from
+synthetic snapshots."""
 
 import gzip
 import hashlib
@@ -8,8 +9,8 @@ import pytest
 
 from lego_image_processor.kit.colors import KIT_COLORS_PATH
 from lego_image_processor.kit.part_colors import PART_COLORS_PATH, parse_part_colors
-from partcolors.build import (SnapshotError, build, color_key, differences, parse_bricklink,
-                              parse_ldconfig, read_snapshots)
+from partcolors.build import (REVIEWED_004, TERMS_TEXT, SnapshotError, build, color_key,
+                              differences, parse_bricklink, parse_ldconfig, read_snapshots)
 
 KIT = json.loads(KIT_COLORS_PATH.read_text(encoding="utf-8"))
 
@@ -37,9 +38,25 @@ BRICKLINK = "".join(BL_ROW.format(id=i, name=n) for i, n in ((6, "Green"), (86, 
                                                            (155, "Olive Green")))
 
 
-def _snap():
+def _part_page(colors):
+    """A trimmed imitation of a BrickLink catalog page (color list of the "All" tab)."""
+    items = "".join(f'<div class="pciSelectColorColorItem" data-tab="All" data-color="{i}" '
+                    f'data-name="{n}">{n}</div>' for i, n in colors)
+    return (f"<html><head><title>Plate, Round 1 x 1 : Part X</title></head><body>Item No: "
+            f"<span>X</span>{items}</body></html>").encode()
+
+
+KIT_BL = {"land": [(c["bricklink"]["id"], c["bricklink"]["name"]) for c in KIT["colors"] if c["role"] == "land"],
+          "ocean": [(c["bricklink"]["id"], c["bricklink"]["name"]) for c in KIT["colors"] if c["role"] == "ocean"]}
+PLATE_PAGE = KIT_BL["land"] + [(6, "Green"), (86, "Light Bluish Gray"), (155, "Olive Green")]
+
+
+def _snap(plate_page=PLATE_PAGE):
     return {"rebrickable-elements": ELEMENTS.encode(), "rebrickable-colors": COLORS.encode(),
-            "ldraw": LDCONFIG.encode(), "bricklink": BRICKLINK.encode("latin-1")}
+            "ldraw": LDCONFIG.encode(), "bricklink": BRICKLINK.encode("latin-1"),
+            "bricklink-4073": _part_page(plate_page).replace(b"Part X", b"Part 4073").replace(b">X<", b">4073<"),
+            "bricklink-98138": _part_page(KIT_BL["ocean"]).replace(b"Part X", b"Part 98138").replace(b">X<", b">98138<"),
+            "rebrickable-terms": f"<p>The catalog ... below.  {TERMS_TEXT}</p>".encode()}
 
 
 def test_parsers():
@@ -108,5 +125,52 @@ def test_snapshot_checksums(tmp_path):
 def test_committed_table_lists_part_number_finding():
     data = json.loads(PART_COLORS_PATH.read_text(encoding="utf-8"))
     assert "4073" in data["source"]["part_numbers"]["6141"]
-    assert len(data["source"]["snapshots"]) == 4
+    assert [s["id"] for s in data["source"]["snapshots"]] == [
+        "rebrickable-elements", "rebrickable-colors", "ldraw", "bricklink",
+        "bricklink-4073", "bricklink-98138", "rebrickable-terms"]
     assert all(len(s["sha256"]) == 64 for s in data["source"]["snapshots"])
+
+
+def test_rule5_excludes_colors_missing_from_bricklink_part_page():
+    """005 rule 5: a color not on BrickLink's page for the part is excluded with the reason."""
+    page = [c for c in PLATE_PAGE if c[1] != "Light Bluish Gray"]
+    r = build(_snap(page), KIT, "2026-11-22", reviewed={"6141": (2, 71), "98138": ()})
+    keys = {row["key"] for row in r.data["parts"]["6141"]}
+    assert "lego_dark_green" in keys and "lego_medium_stone_grey" not in keys
+    reason = {e["rebrickable_id"]: e["reason"] for e in r.excluded}[71]
+    assert "catalog page for part 6141" in reason
+    # a different BrickLink id on the part page also fails the rule
+    page = [c for c in PLATE_PAGE if c[1] != "Green"] + [(99, "Green")]
+    r = build(_snap(page), KIT, "2026-11-22", reviewed={"6141": (2,), "98138": ()})
+    assert {e["rebrickable_id"] for e in r.excluded} == {2}
+
+
+def test_terms_replace_license_note():
+    r = build(_snap(), KIT, "2026-11-22")
+    src = r.data["source"]
+    assert "license_note" not in src
+    assert src["terms"]["text"] == TERMS_TEXT and len(src["terms"]["sha256"]) == 64
+    assert "Rebrickable" in src["acknowledgement"]
+    snap = _snap()
+    snap["rebrickable-terms"] = b"<p>other terms</p>"
+    with pytest.raises(SnapshotError, match="terms"):
+        build(snap, KIT, "2026-11-22")
+
+
+def test_all_colors_mode_keeps_reviewed_rows_identical():
+    """005 US4: trying every listed color adds rows but never changes a row the 004 list gave."""
+    reviewed = build(_snap(), KIT, "2026-11-22", reviewed={"6141": (2, 326, 71), "98138": ()})
+    every = build(_snap(), KIT, "2026-11-22")
+    for part, rows in reviewed.data["parts"].items():
+        all_rows = {r["key"]: r for r in every.data["parts"][part]}
+        for row in rows:
+            assert all_rows[row["key"]] == row
+    # every listed color was tried: transparent 41/36 and Olive Green 326 are reported
+    assert {41, 36, 326} <= {e["rebrickable_id"] for e in every.excluded}
+
+
+def test_committed_table_is_the_all_colors_build():
+    data = json.loads(PART_COLORS_PATH.read_text(encoding="utf-8"))
+    counts = {p: len(rows) for p, rows in data["parts"].items()}
+    assert counts == {"6141": 44, "98138": 40}
+    assert REVIEWED_004["6141"]  # the 004 list is kept for reference

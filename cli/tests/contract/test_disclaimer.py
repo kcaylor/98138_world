@@ -107,3 +107,22 @@ def test_bundled_recipes_carry_disclaimer():
     from lego_image_processor.maps.recipe import bundled_recipes
     for path in bundled_recipes().values():
         assert DISCLAIMER in path.read_text(encoding="utf-8")
+
+
+# --- Feature 005 (T039, SC-007) -----------------------------------------------------------------
+
+def test_parts_commands_end_with_disclaimer(runner, tmp_path):
+    layout = tmp_path / "official.json"
+    layout.write_text(load_official_design().to_layout().to_json(), encoding="utf-8")
+    for command in (["parts", "list", str(layout)], ["parts", "list", str(layout), "--kits", "1"],
+                    ["parts", "list", str(layout), "-o", str(tmp_path / "pl.json")],
+                    ["parts", "export", str(layout), "--bricklink", str(tmp_path / "w.xml")],
+                    ["parts", "export", str(layout), "--kits", "1", "--rebrickable", str(tmp_path / "r.csv")],
+                    ["kit", "part-numbers"], ["kit", "part-colors"]):
+        result = runner.invoke(cli, command)
+        assert result.exit_code == 0, (command, result.output)
+        assert _last_line(result.output) == DISCLAIMER, command
+    assert json.loads((tmp_path / "pl.json").read_text(encoding="utf-8"))["disclaimer"] == DISCLAIMER
+    as_json = runner.invoke(cli, ["parts", "list", str(layout), "--format", "json"])
+    assert json.loads(as_json.output)["disclaimer"] == DISCLAIMER
+    assert json.loads((DATA_DIR / "part_numbers.json").read_text(encoding="utf-8"))["source"]["disclaimer"] == DISCLAIMER

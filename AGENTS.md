@@ -72,7 +72,8 @@ checksum-pinned Rebrickable, LDraw and BrickLink snapshots) are regenerated with
   CIEDE2000 matching), `analysis/`, `layout/` (grid, land/sea mask, kit spec, validator), `kit/`
   (kit reference data, part colors), `datasets/` (registry, verified cache, readers), `maps/`
   (recipes, projection, reprojection, classification, texture, suitability, build, preview),
-  `cli/` (Click commands), `data/` (runtime reference data, shipped with the package).
+  `parts/` (parts lists, cited IDs, marketplace exports; feature 005), `sheets/` (build sheets:
+  sections, page model, PDF and SVG backends, per-section counts; feature 006), `cli/` (Click commands), `data/` (runtime reference data, shipped with the package).
 - `cli/tools/`: maintainer-only tools (`kit31203`, `partcolors`, `fixtures004`), not packaged.
 - `cli/tests/`: `unit/`, `integration/`, `contract/` (CLI I/O), `fixtures/`.
 - `specs/NNN-name/`: Spec Kit artifacts for each feature.

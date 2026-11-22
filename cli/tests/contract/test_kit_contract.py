@@ -117,7 +117,9 @@ class TestKitPartColors:
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert data["disclaimer"] == DISCLAIMER
-        assert len(data["colors"]) == 9 and all(c["in_kit"] for c in data["colors"])
+        # 005 (Q3): every cited tile color, the kit's nine first
+        assert len(data["colors"]) == 40 and sum(c["in_kit"] for c in data["colors"]) == 9
+        assert all(c["in_kit"] for c in data["colors"][:9])
         assert {"lego", "bricklink", "rebrickable", "element_id"} <= set(data["colors"][0])
 
     def test_bad_part_is_usage_error(self, runner):

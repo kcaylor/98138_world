@@ -177,7 +177,8 @@ the real cached datasets, check the agreement figures in SC-003.
 
 A maker builds the bundled recipe `land-elevation`: land shows elevation on an ordered scale of
 1×1 round plate colors (low greens through tans and browns to white), and the ocean is a
-background of kit tile colors with subtle shading. Every plate color the recipe uses is listed in
+background of kit tile colors with subtle shading (as built: three kit blues at 70/20/10, which
+needs more blue tiles than one kit holds; see run-state.md). Every plate color the recipe uses is listed in
 a cited table of colors in which the land part is made. The suitability report and `validate`
 show which pieces go beyond one kit.
 

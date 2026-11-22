@@ -43,7 +43,9 @@ def test_unknown_part():
 def test_get():
     t = load_part_colors()
     assert t.get("6141", "lego_white").lego.name == "White"
-    assert t.get("6141", "lego_earth_blue") is None
+    assert t.get("6141", "lego_earth_blue").bricklink.name == "Dark Blue"  # 005: wider table
+    assert t.get("6141", "lego_medium_blue") is None  # excluded by rule 5 (not on BrickLink 4073)
+    assert t.get("98138", "lego_medium_blue") is not None
 
 
 def test_every_row_has_ids_and_citations(raw):
@@ -93,3 +95,14 @@ def test_citation_must_resolve(raw):
     _first_row(data)["citations"]["lego"] = "nowhere"
     with pytest.raises(ValueError, match="nowhere"):
         parse_part_colors(data)
+
+
+def test_terms_are_required(raw):
+    """005 FR-002: Rebrickable's confirmed terms replace the open license note."""
+    from lego_image_processor.kit.part_colors import parse_part_colors
+    assert raw["source"]["terms"]["text"].startswith("Free for personal and commercial use")
+    assert "license_note" not in raw["source"]
+    bad = copy.deepcopy(raw)
+    bad["source"].pop("terms")
+    with pytest.raises(ValueError, match="terms"):
+        parse_part_colors(bad)
