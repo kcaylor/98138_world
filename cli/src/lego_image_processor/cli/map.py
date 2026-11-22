@@ -18,6 +18,7 @@ from ..kit.source import DISCLAIMER
 from ..maps.build import build_map, missing_datasets
 from ..maps.classify import MapBuildError
 from ..maps.recipe import RecipeError, bundled_recipes, load_recipe
+from .options import arrangement_option
 
 
 class CommandError(click.ClickException):
@@ -136,14 +137,16 @@ def map_group() -> None:
               help="Download the recipe's missing pinned datasets (verified) before building")
 @click.option("--compare-official", is_flag=True, default=None,
               help="Print cell agreement with the official design (always on for official-31203*)")
+@arrangement_option()
 @click.option("--quiet", "-q", is_flag=True, help="Suppress output")
-def build(recipe, output, preview, report_path, cache_dir, do_fetch, compare_official, quiet):
+def build(recipe, output, preview, report_path, cache_dir, do_fetch, compare_official, arrangement, quiet):
     """Build RECIPE (a recipe file or a bundled recipe id) into a schema 2.0 layout.
 
     \b
     Examples:
         lego-image-processor map build official-31203 -o official.json --preview official.png
         lego-image-processor map build ocean-sst -o sst.json --fetch
+        lego-image-processor map build land-elevation --arrangement B -o elev-B.json
     """
     echo = (lambda *a, **k: None) if quiet else click.echo
     r = _load(recipe)
@@ -156,12 +159,14 @@ def build(recipe, output, preview, report_path, cache_dir, do_fetch, compare_off
                 raise _dataset_failure(exc)
             echo(f"Fetched {entry.id}: {path} (SHA-256 verified)")
     try:
-        result = build_map(r, cache_dir=cache_dir, compare_official=compare_official or None)
+        result = build_map(r, cache_dir=cache_dir, compare_official=compare_official or None,
+                           arrangement=arrangement)
     except DatasetError as exc:
         raise _dataset_failure(exc)
     except MapBuildError as exc:
         raise CommandError(f"Cannot build {r.id}: {exc}", 1)
     echo(f"Recipe: {r.id} - {r.title} (format {r.format}, SHA-256 {r.sha256})")
+    echo(f"Arrangement: {arrangement.describe()}")
     echo_report(result.report, echo)
     if result.agreement:
         echo_agreement(result.agreement, echo)
@@ -188,16 +193,18 @@ def build(recipe, output, preview, report_path, cache_dir, do_fetch, compare_off
 @click.argument("recipe")
 @click.option("--report", "report_path", type=click.Path(dir_okay=False), help="Write the report (JSON)")
 @click.option("--cache-dir", type=click.Path(file_okay=False), help="Dataset cache root (default: per-user cache)")
-def check(recipe, report_path, cache_dir):
+@arrangement_option()
+def check(recipe, report_path, cache_dir, arrangement):
     """Run the suitability check on RECIPE without writing a layout (exit 0 even with warnings)."""
     r = _load(recipe)
     try:
-        result = build_map(r, cache_dir=cache_dir, compare_official=False)
+        result = build_map(r, cache_dir=cache_dir, compare_official=False, arrangement=arrangement)
     except DatasetError as exc:
         raise _dataset_failure(exc)
     except MapBuildError as exc:
         raise CommandError(f"Cannot build {r.id}: {exc}", 1)
     click.echo(f"Suitability check: {r.id} - {r.title}")
+    click.echo(f"Arrangement: {arrangement.describe()}")
     echo_report(result.report)
     if report_path:
         _write_json(report_path, result.report)

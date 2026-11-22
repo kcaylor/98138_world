@@ -26,8 +26,9 @@ from .counts import SectionCount, count_sections
 from .legend import LegendEntry, build_legend, lot_numbers, text_color
 from .model import (BLACK, GREY, OUTLINE, PT_MM, RGB, WHITE, Circle, Item, Line, Page, PageSize,
                     Rect, Text, latin1_safe, paper_size)
-from .sections import (COLUMNS, FRAME_BOUNDARIES, GRID_HEIGHT, GRID_WIDTH, N_COLS, N_ROWS, Section,
-                       parse_section_labels, sections)
+from ..layout.arrangement import Arrangement, arrangement_of, load_arrangements, parse_arrangement
+from .sections import (COLUMNS, GRID_HEIGHT, GRID_WIDTH, N_COLS, N_ROWS, Section,
+                       arranged_sections, parse_section_labels)
 
 MARGIN = 12.0
 PITCH = 8.0
@@ -164,9 +165,15 @@ def disc(cx: float, cy: float, r: float, entry: LegendEntry, size: float, tag: s
     return out
 
 
-def locator(x0: float, y0: float, current: Section, cell: float = 4.0) -> List[Item]:
+def frame_names() -> Dict[int, str]:
+    return {f.number: f.name for f in load_arrangements().frames}
+
+
+def locator(x0: float, y0: float, current: Section, cell: float = 4.0,
+            arrangement: Optional[Arrangement] = None) -> List[Item]:
+    arrangement = arrangement or parse_arrangement(None)
     items: List[Item] = []
-    for s in sections():
+    for s in arranged_sections(arrangement):
         on = s.label == current.label
         items.append(Rect(x0 + s.col * cell, y0 + s.row * cell, cell, cell, DARK if on else WHITE,
                           SOFT, 0.15, tag="locator", data=d(label=s.label, on=int(on))))
@@ -176,7 +183,7 @@ def locator(x0: float, y0: float, current: Section, cell: float = 4.0) -> List[I
     for r in range(N_ROWS):
         items.append(Text(x0 - 1.0, y0 + (r + 0.5) * cell + cap_offset(5.5), str(r + 1), 5.5,
                           "right", tag="locator-label"))
-    for b in FRAME_BOUNDARIES:
+    for b in arrangement.boundaries():
         xb = x0 + (b // 16) * cell
         items.append(Line(xb, y0, xb, y0 + N_ROWS * cell, BLACK, 0.6, tag="locator-frame"))
     return items
@@ -186,18 +193,25 @@ def locator(x0: float, y0: float, current: Section, cell: float = 4.0) -> List[I
 
 def section_page(size: PageSize, section: Section, grid_cells: Dict[Tuple[int, int], LegendEntry],
                  count: SectionCount, legend: Sequence[LegendEntry], title: str, number: int,
-                 total: int) -> Page:
+                 total: int, arrangement: Optional[Arrangement] = None) -> Page:
+    arrangement = arrangement or parse_arrangement(None)
     W, H = size.width_mm, size.height_mm
     items: List[Item] = []
     s = section
     items.append(Text(MARGIN, 21.0, f"Section {s.label}", 20, bold=True, tag="section-title"))
-    items.append(Text(MARGIN, 28.0, f"columns {s.x_range[0]}-{s.x_range[1]}, rows "
-                      f"{s.y_range[0]}-{s.y_range[1]} · frame {s.frame} of 3", 9.5,
-                      tag="section-range"))
-    items.append(Text(MARGIN, 33.0, f"Base {s.order} of 40 in build order (column by column, "
-                      "as in the kit's instructions). North is up.", 7.5, color=SOFT,
+    where = (f"columns {s.x_range[0]}-{s.x_range[1]}, rows {s.y_range[0]}-{s.y_range[1]} · "
+             f"frame {s.frame} of 3 ({frame_names()[s.frame]})")
+    if s.kit_label and s.kit_label != s.label:
+        where += f" · kit section {s.kit_label}"
+    items.append(Text(MARGIN, 28.0, fit(where, 9.5, W - 2 * MARGIN - 40.0), 9.5, tag="section-range"))
+    order = (f"Base {s.order} of 40 in build order (column by column, as in the kit's "
+             "instructions). North is up.")
+    if arrangement.column_shift:
+        order = (f"Base {s.order} of 40 as hung in combination {arrangement.id} (column by column). "
+                 "North is up.")
+    items.append(Text(MARGIN, 33.0, fit(order, 7.5, W - 2 * MARGIN - 40.0), 7.5, color=SOFT,
                       tag="section-order"))
-    items += locator(W - MARGIN - 32.0, 15.0, s)
+    items += locator(W - MARGIN - 32.0, 15.0, s, arrangement=arrangement)
 
     x0 = (W - 16 * PITCH) / 2
     y0 = 44.0
@@ -267,7 +281,10 @@ class Flow:
 def overview_page(size: PageSize, title: str, grid: PositionPlacementGrid,
                   cells: Dict[Tuple[int, int], LegendEntry], legend: Sequence[LegendEntry],
                   layout: Dict[str, Any], map_meta: Optional[Dict[str, Any]], n_legend_pages: int,
-                  chosen: Sequence[Section], total: int) -> Page:
+                  chosen: Sequence[Section], total: int,
+                  arrangement: Optional[Arrangement] = None) -> Page:
+    arrangement = arrangement or parse_arrangement(None)
+    bounds = arrangement.boundaries()
     W, H = size.width_mm, size.height_mm
     items: List[Item] = []
     for i, line in enumerate(wrap(title, 18, W - 2 * MARGIN, True)[:2]):
@@ -287,11 +304,11 @@ def overview_page(size: PageSize, title: str, grid: PositionPlacementGrid,
                 items.append(Circle(cx, cy, 0.33, None, GREY, 0.1, tag="map-ring"))
     sec = 16 * MAP_PITCH
     for c in range(1, N_COLS):
-        if c * 16 not in FRAME_BOUNDARIES:
+        if c * 16 not in bounds:
             items.append(Line(x0 + c * sec, y0, x0 + c * sec, y0 + mh, SOFT, 0.2, tag="section-line"))
     for r in range(1, N_ROWS):
         items.append(Line(x0, y0 + r * sec, x0 + mw, y0 + r * sec, SOFT, 0.2, tag="section-line"))
-    for b in FRAME_BOUNDARIES:
+    for b in bounds:
         items.append(Line(x0 + b * MAP_PITCH, y0, x0 + b * MAP_PITCH, y0 + mh, BLACK, 0.8,
                           tag="frame-line"))
     items.append(Rect(x0, y0, mw, mh, None, BLACK, 0.4, tag="map-border"))
@@ -302,7 +319,12 @@ def overview_page(size: PageSize, title: str, grid: PositionPlacementGrid,
         items.append(Text(x0 - 1.5, y0 + (r + 0.5) * sec + cap_offset(8), str(r + 1), 8, "right",
                           True, tag="map-row-label"))
 
-    flow = Flow(MARGIN, y0 + mh + 3.0, W - 2 * MARGIN, H - CONTENT_BOTTOM)
+    for f, start, end in arrangement.frame_spans():
+        items.append(Text(x0 + (start + end + 1) / 2 * MAP_PITCH, y0 + mh + 3.6,
+                          f"Frame {f.number}: {f.name}", 7.5, "center", True, tag="frame-label",
+                          data=d(frame=f.number)))
+
+    flow = Flow(MARGIN, y0 + mh + 5.0, W - 2 * MARGIN, H - CONTENT_BOTTOM)
     plates = sum(e.lot.needed for e in legend if e.lot.part_type == "plate")
     tiles = sum(e.lot.needed for e in legend if e.lot.part_type == "tile")
     unverified = [e for e in legend if not e.verified]
@@ -328,10 +350,20 @@ def overview_page(size: PageSize, title: str, grid: PositionPlacementGrid,
     labels = [s.label for s in chosen]
     which = "A1 to H5" if len(chosen) == 40 else ", ".join(labels)
     flow.para(f"This set: 1 overview page, {n_legend_pages} legend page(s), {len(chosen)} section "
-              f"page(s) ({which}), column by column as in the kit's section instructions. Each "
+              f"page(s) ({which}), column by column "
+              + ("as in the kit's section instructions" if not arrangement.column_shift else "as hung")
+              + ". Each "
               "section page is one 16 x 16 base at true size; the number on each stud is its lot "
               "in the legend. Plates (land) are drawn with a ring, tiles (ocean) plain. Frames: "
-              "columns A-B, C-F, G-H.", 8.5, tag="howto")
+              + ", ".join(f"{COLUMNS[s // 16]}-{COLUMNS[e // 16]} frame {f.number}"
+                          for f, s, e in arrangement.frame_spans()) + ".", 8.5, tag="howto")
+    order = "·".join(str(n) for n in arrangement.frame_order)
+    src = load_arrangements().source
+    flow.para(f"Combination {arrangement.id} ({arrangement.name}): frames {order} from left to right, "
+              f"{arrangement.centre} in the centre ({latin1_safe(src['citation'].replace('–', '-'))}). Sections are labelled as hung"
+              + ("." if not arrangement.column_shift else
+                 "; each section page names its physical frame and its kit section in the instructions.")
+              + " Every combination uses the same pieces.", 8.5, tag="arrangement")
     flow.para("Provenance", 9, True, tag="heading", gap=0.3)
     flow.para(f"Layout: {layout.get('path') or '(in memory)'}", 8, tag="provenance")
     if layout.get("sha256"):
@@ -436,7 +468,6 @@ def build_sheet_set(layout: Union[LayoutInput, PositionPlacementGrid],
     """The overview, legend and section pages for a full 128 x 80 layout."""
     try:
         size = paper_size(paper)
-        chosen = parse_section_labels(sections)
     except ValueError as exc:
         raise SheetError(str(exc))
     if isinstance(layout, LayoutInput):
@@ -449,6 +480,11 @@ def build_sheet_set(layout: Union[LayoutInput, PositionPlacementGrid],
         except LayoutInputError as exc:
             raise SheetError(str(exc))
         pl = build_parts_list(grid, layout_path, layout_sha256=layout_sha256)
+    try:
+        arrangement = arrangement_of(grid)
+        chosen = parse_section_labels(sections, arrangement)
+    except ValueError as exc:
+        raise SheetError(str(exc))
     if len(grid.positions) != FULL_POSITIONS:
         raise SheetError(f"layout has {len(grid.positions):,} of {FULL_POSITIONS:,} positions; build "
                          "sheets need every position of the 128 x 80 grid")
@@ -462,10 +498,10 @@ def build_sheet_set(layout: Union[LayoutInput, PositionPlacementGrid],
     n_legend = max(1, math.ceil(len(legend) / legend_rows_per_page(size)))
     total = 1 + n_legend + len(chosen)
     pages: List[Page] = [overview_page(size, title, grid, cells, legend, pl.layout,
-                                       grid.map_metadata, n_legend, chosen, total)]
+                                       grid.map_metadata, n_legend, chosen, total, arrangement)]
     pages += legend_pages(size, legend, title, 2, total)
     for i, s in enumerate(chosen):
         pages.append(section_page(size, s, cells, count_by_label[s.label], legend, title,
-                                  2 + n_legend + i, total))
+                                  2 + n_legend + i, total, arrangement))
     return SheetSet(title=title, layout=pl.layout, legend=legend, pages=tuple(pages), paper=size,
                     sections=chosen, counts=counts, parts_list=pl, map_metadata=grid.map_metadata)

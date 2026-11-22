@@ -59,6 +59,7 @@ downsampling and whether the colors available for each part can carry the patter
 | 004 | Map recipes and canonical datasets: download/cache, reprojection, classification, color scales, texture, suitability (built). Examples: the official design as a recipe (exact), the official look from bathymetry (derived, 26.7% ocean cell agreement), an ocean temperature map, a land elevation map |
 | 005 | Parts lists and ordering (built): parts list with cited LEGO, BrickLink and Rebrickable IDs from any layout (plate = BrickLink 4073 / Rebrickable 6141, tile = 98138), kit top-up from `--kits`, loose and missing parts, BrickLink wanted-list XML and Rebrickable CSV; 44 plate and 40 tile colors cited |
 | 006 | Build sheets (built): overview, legend and 40 section pages (A1–H5, 16 × 16 at true scale, 8.0 mm pitch) with numbered studs and per-section counts, as PDF (ReportLab) or SVG pages, plus per-section counts JSON (`sheets build`, `sheets counts`) |
+| 007 | Map arrangements (built): the kit's three frames hung as combination A (Europe and Africa in the centre), B (America) or C (Asia and Australia), from the instructions pp. 7–8; `map build --arrangement`, `layout arrange` (pure frame move, exact round trip), mask check in `validate`, sheets and counts labelled as hung with frame names |
 | later | Web app at 98138.world on top of the CLI |
 
 Not affiliated with or endorsed by The LEGO Group.

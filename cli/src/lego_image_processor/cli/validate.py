@@ -71,6 +71,8 @@ def validate(layout_file: str, kit: str, output: str) -> None:
         click.echo(f"  Land plates: {layout.land_positions:,}")
         click.echo(f"  Ocean tiles: {layout.ocean_positions:,}")
         click.echo(f"  Unique colors: {layout.unique_colors}")
+        from ..layout.arrangement import arrangement_of
+        click.echo(f"  Arrangement: {arrangement_of(layout).describe()}")
         click.echo()
 
         # Load kit specification
@@ -93,6 +95,7 @@ def validate(layout_file: str, kit: str, output: str) -> None:
         # Summarize violations
         color_unavailable = [v for v in report.violations if v.type == "color_unavailable"]
         quantity_exceeded = [v for v in report.violations if v.type == "quantity_exceeded"]
+        mask_mismatch = [v for v in report.violations if v.type == "mask_mismatch"]
 
         plate_unavailable = [v for v in color_unavailable if v.part_type == "plate"]
         tile_unavailable = [v for v in color_unavailable if v.part_type == "tile"]
@@ -114,6 +117,14 @@ def validate(layout_file: str, kit: str, output: str) -> None:
                 click.echo(click.style(f"    ✗ {len(tile_unavailable)} tile colors unavailable in kit", fg="red"))
             else:
                 click.echo(click.style("    ✓ All tile colors available in kit", fg="green"))
+
+        # Land/sea mask under the layout's arrangement (feature 007)
+        click.echo(f"  Checking land/sea mask (arrangement {report.arrangement})...")
+        if mask_mismatch:
+            click.echo(click.style(f"    ✗ {mask_mismatch[0].positions_required:,} positions do not match "
+                                   f"the kit mask in arrangement {report.arrangement}", fg="red"))
+        else:
+            click.echo(click.style("    ✓ Plates on land and tiles on ocean", fg="green"))
 
         # Show quantity validation
         click.echo("  Checking color quantities...")
@@ -150,6 +161,11 @@ def validate(layout_file: str, kit: str, output: str) -> None:
                 if v.suggested_alternative:
                     click.echo(f"    Suggested alternative: {v.suggested_alternative.color_name} "
                               f"(ΔE00 {v.suggested_alternative.color_distance:.1f})")
+
+            for v in mask_mismatch:
+                click.echo(f"\n  Mask Mismatch (arrangement {v.arrangement}): {v.positions_required:,} positions")
+                for e in v.examples[:3]:
+                    click.echo(f"    ({e['x']}, {e['y']}): {e['part_type']}, kit mask expects {e['expected']}")
 
             for v in quantity_exceeded:
                 click.echo(f"\n  Quantity Exceeded: {v.color_name} ({v.color_id})")

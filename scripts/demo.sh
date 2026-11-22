@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# End-to-end demo of the 98138.world CLI: kit data -> maps -> parts lists -> build sheets.
+# End-to-end demo of the 98138.world CLI: kit data -> maps -> parts lists -> build sheets -> arrangements.
 # Usage: scripts/demo.sh [OUTPUT_DIR]     (default: ./demo-output, git-ignored)
 # Needs: uv (https://docs.astral.sh/uv/); it fetches Python 3.11 if missing. Downloads two public datasets (~10.5 MB) once.
 # See docs/runbook.md for what each step shows. Not affiliated with or endorsed by The LEGO Group.
@@ -54,7 +54,15 @@ step "8. Build sheets (PDF, plus SVG pages)"
 "$LIP" sheets build "$OUT/ocean-sst.json" -o "$OUT/ocean-sst-svg" --format svg
 "$LIP" sheets counts "$OUT/official.json" | sed -n '1,21p'   # sed reads it all (no broken pipe)
 
-step "9. Make your own recipe"
+step "9. Arrangements: the same maps hung as B (America centre) and C (Asia and Australia centre)"
+for a in B C; do
+  "$LIP" map build land-elevation --arrangement "$a" -o "$OUT/land-elevation-$a.json" --preview "$OUT/land-elevation-$a.png" -q
+  "$LIP" layout arrange "$OUT/official.json" --arrangement "$a" -o "$OUT/official-$a.json"
+  "$LIP" validate "$OUT/official-$a.json" | tail -2
+done
+"$LIP" sheets build "$OUT/land-elevation-B.json" -o "$OUT/land-elevation-B-sheets.pdf"
+
+step "10. Make your own recipe"
 "$LIP" map recipes --copy ocean-sst "$OUT/my-sst.toml" --force
 "$LIP" map check "$OUT/my-sst.toml"
 

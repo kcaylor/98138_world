@@ -134,6 +134,30 @@ class QuantityExceededViolation(Violation):
 
 
 @dataclass
+class MaskMismatchViolation(Violation):
+    """Positions whose part (plate on land, tile on ocean) does not match the kit's land/sea mask
+    in the layout's arrangement (feature 007).
+
+    Attributes:
+        arrangement: Arrangement id the mask was checked in (A, B or C)
+        positions_required: Number of mismatched positions
+        examples: Up to 10 mismatches as {x, y, part_type, expected}
+    """
+
+    arrangement: str
+    positions_required: int
+    examples: List[Dict[str, Any]] = field(default_factory=list)
+
+    @property
+    def type(self) -> str:
+        return "mask_mismatch"
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"type": self.type, "arrangement": self.arrangement,
+                "positions_required": self.positions_required, "examples": list(self.examples)}
+
+
+@dataclass
 class ValidationReport:
     """Result of validating layout against kit specifications.
 
@@ -152,6 +176,7 @@ class ValidationReport:
     validated_at: str
     kit_id: str
     layout_file: str
+    arrangement: str = "A"
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert report to dictionary."""
@@ -162,6 +187,7 @@ class ValidationReport:
             "validated_at": self.validated_at,
             "kit_id": self.kit_id,
             "layout_file": self.layout_file,
+            "arrangement": self.arrangement,
             "disclaimer": DISCLAIMER,
         }
 
@@ -288,6 +314,15 @@ class LayoutValidator:
                     ))
                     total_violation_positions += (count - available)
 
+        # Land/sea mask in the layout's arrangement (feature 007)
+        from .arrangement import arrangement_of
+
+        arrangement = arrangement_of(layout)
+        mismatch = self._mask_mismatch(layout, arrangement)
+        if mismatch is not None:
+            violations.append(mismatch)
+            total_violation_positions += mismatch.positions_required
+
         # Calculate buildability score
         total_positions = layout.total_positions
         buildable_positions = total_positions - total_violation_positions
@@ -299,8 +334,29 @@ class LayoutValidator:
             violations=violations,
             validated_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             kit_id=self._kit_spec.kit_id,
-            layout_file=layout_file
+            layout_file=layout_file,
+            arrangement=arrangement.id,
         )
+
+    @staticmethod
+    def _mask_mismatch(layout: PositionPlacementGrid, arrangement) -> Optional["MaskMismatchViolation"]:
+        """Positions off the kit mask shifted to ``arrangement``; None when all match."""
+        from .land_sea_mask import load_land_sea_mask
+
+        mask = load_land_sea_mask()
+        if (layout.width, layout.height) != (mask.width, mask.height):
+            return None
+        bad = []
+        for p in layout.positions:
+            if not (0 <= p.x < mask.width and 0 <= p.y < mask.height):
+                continue
+            expected = LAND_PART_TYPE if mask.is_land(arrangement.to_kit(p.x), p.y) else OCEAN_PART_TYPE
+            if p.part_type != expected:
+                bad.append({"x": p.x, "y": p.y, "part_type": p.part_type, "expected": expected})
+        if not bad:
+            return None
+        return MaskMismatchViolation(arrangement=arrangement.id, positions_required=len(bad),
+                                     examples=bad[:10])
 
     def _find_nearest_color(
         self,

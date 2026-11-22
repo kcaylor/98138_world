@@ -1,4 +1,5 @@
-"""Layout CLI command for LEGO Image Processor."""
+"""Layout CLI commands: a layout from a quantized image (``layout IMAGE``) and re-hanging a layout
+in another frame arrangement (``layout arrange``, feature 007)."""
 
 from __future__ import annotations
 
@@ -10,10 +11,32 @@ from ..core.image_loader import load_image, ImageLoadError
 from ..palette.loader import LegoPalette
 from ..layout.land_sea_mask import load_land_sea_mask
 from ..layout.generator import LayoutGenerator
-from ..layout.grid import DISCLAIMER
+from ..layout.grid import DISCLAIMER, LayoutSchemaError, PositionPlacementGrid
+from .options import arrangement_option
 
 
-@click.command()
+class LayoutGroup(click.Group):
+    """``layout IMAGE ...`` (the original command) keeps working: a first argument that is not a
+    sub-command name runs ``layout image``."""
+
+    def parse_args(self, ctx, args):
+        if args and args[0] not in self.commands and args[0] not in ("--help", "-h"):
+            args = ["image"] + list(args)
+        return super().parse_args(ctx, args)
+
+
+@click.group(cls=LayoutGroup)
+def layout() -> None:
+    """Make layouts: from a quantized image, or re-hung in another frame arrangement.
+
+    \b
+    Examples:
+        lego-image-processor layout quantized.png -o layout.json
+        lego-image-processor layout arrange layout.json --arrangement B -o layout-B.json
+    """
+
+
+@layout.command("image")
 @click.argument("input_image", type=click.Path(exists=True))
 @click.option(
     "--output", "-o",
@@ -32,7 +55,7 @@ from ..layout.grid import DISCLAIMER
     is_flag=True,
     help="Suppress progress output"
 )
-def layout(input_image: str, output: str, output_format: str, quiet: bool) -> None:
+def image_layout(input_image: str, output: str, output_format: str, quiet: bool) -> None:
     """Generate LEGO position placement layout from quantized image.
 
     Takes a color-quantized image (128x80 pixels) and generates a complete
@@ -154,3 +177,52 @@ def layout(input_image: str, output: str, output_format: str, quiet: bool) -> No
         raise click.ClickException(f"File not found: {e}")
     except Exception as e:
         raise click.ClickException(f"Unexpected error: {e}")
+
+
+@layout.command("arrange")
+@click.argument("layout_file", type=click.Path(dir_okay=False))
+@arrangement_option(required=True)
+@click.option("--output", "-o", required=True, type=click.Path(dir_okay=False), help="Layout JSON to write")
+@click.option("--quiet", "-q", is_flag=True, help="Suppress output")
+def arrange(layout_file: str, arrangement, output: str, quiet: bool) -> None:
+    """Re-hang LAYOUT in another arrangement of the kit's three frames.
+
+    A pure frame move, as when moving the physical frames: every position moves by whole frames
+    (32 or 64 columns, cyclically); colors and parts never change, and arranging back to A
+    restores the original positions. A layout without ``metadata.arrangement`` is in A.
+
+    \b
+    Examples:
+        lego-image-processor layout arrange official.json --arrangement B -o official-B.json
+        lego-image-processor layout arrange official-B.json --arrangement asia-australia -o official-C.json
+    """
+    from ..layout.arrangement import ArrangementError, arrange_grid, arrangement_of
+    from .map import CommandError
+
+    try:
+        text = Path(layout_file).read_text(encoding="utf-8")
+    except OSError as exc:
+        raise CommandError(f"Cannot read layout {layout_file}: {exc.strerror or exc}", 1)
+    try:
+        grid = PositionPlacementGrid.from_json(text)
+    except LayoutSchemaError as exc:
+        raise CommandError(str(exc), 1)
+    except (ValueError, KeyError, TypeError) as exc:
+        raise CommandError(f"{layout_file}: not a valid layout ({exc.__class__.__name__}: {exc})", 1)
+    try:
+        current = arrangement_of(grid)
+        out = arrange_grid(grid, arrangement)
+    except ArrangementError as exc:
+        raise CommandError(f"{layout_file}: {exc}", 1)
+    try:
+        Path(output).write_text(out.to_json(), encoding="utf-8")
+    except OSError as exc:
+        raise CommandError(f"Cannot write output: {exc}", 1)
+    if not quiet:
+        delta = (arrangement.column_shift - current.column_shift) % out.width
+        click.echo(f"Arranged {layout_file} from {current.id} to {arrangement.id} "
+                   f"(column shift +{delta}): {output} ({len(out.positions):,} positions)")
+        click.echo(f"  {arrangement.describe()}; frames left to right: "
+                   + ", ".join(f.label for f, _, _ in arrangement.frame_spans()))
+        click.echo("  Colors and parts unchanged; every arrangement uses the same pieces.")
+        click.echo(DISCLAIMER)

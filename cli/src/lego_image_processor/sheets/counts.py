@@ -17,7 +17,8 @@ from ..kit.source import DISCLAIMER
 from ..layout.grid import PositionPlacementGrid
 from ..parts import LayoutInput, PartsList, build_parts_list
 from .legend import LegendEntry, build_legend, lot_numbers
-from .sections import Section, section_for, sections
+from ..layout.arrangement import arrangement_of
+from .sections import Section, arranged_sections, section_for
 
 FORMAT_VERSION = "1"
 
@@ -34,7 +35,7 @@ class SectionCount:
     def to_dict(self) -> Dict[str, Any]:
         s = self.section
         return {"label": s.label, "col": s.col, "row": s.row, "x": list(s.x_range),
-                "y": list(s.y_range), "frame": s.frame,
+                "y": list(s.y_range), "frame": s.frame, "kit_label": s.kit_label,
                 "counts": {str(k): v for k, v in self.counts.items()}, "total": self.total}
 
 
@@ -44,11 +45,13 @@ class SectionCounts:
     legend: Tuple[LegendEntry, ...]
     sections: Tuple[SectionCount, ...]
     kit_id: str = "31203"
+    arrangement: str = "A"
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "format_version": FORMAT_VERSION,
             "kit": self.kit_id,
+            "arrangement": self.arrangement,
             "layout": {"path": self.layout.get("path"), "sha256": self.layout.get("sha256"),
                        "source_image": self.layout.get("source_image")},
             "legend": [{"number": e.number, "part_id": e.lot.part_id, "part_type": e.lot.part_type,
@@ -64,12 +67,14 @@ class SectionCounts:
 
 def count_sections(grid: PositionPlacementGrid,
                    legend: Tuple[LegendEntry, ...]) -> Tuple[SectionCount, ...]:
+    """Counts per section as hung in the layout's arrangement (feature 007)."""
+    arrangement = arrangement_of(grid)
     numbers = lot_numbers(legend)
-    per: Dict[str, Counter] = {s.label: Counter() for s in sections()}
+    secs = arranged_sections(arrangement)
+    per: Dict[str, Counter] = {s.label: Counter() for s in secs}
     for p in grid.positions:
-        per[section_for(p.x, p.y).label][numbers[(p.lego_part_id, p.color_id)]] += 1
-    return tuple(SectionCount(section=s, counts=dict(sorted(per[s.label].items())))
-                 for s in sections())
+        per[section_for(p.x, p.y, arrangement).label][numbers[(p.lego_part_id, p.color_id)]] += 1
+    return tuple(SectionCount(section=s, counts=dict(sorted(per[s.label].items()))) for s in secs)
 
 
 def section_counts(layout: Union[LayoutInput, PositionPlacementGrid],
@@ -87,4 +92,4 @@ def section_counts(layout: Union[LayoutInput, PositionPlacementGrid],
     if layout_sha256 is not None:
         lay["sha256"] = layout_sha256
     return SectionCounts(layout=lay, legend=legend, sections=count_sections(grid, legend),
-                         kit_id=parts_list.kit_id)
+                         kit_id=parts_list.kit_id, arrangement=arrangement_of(grid).id)

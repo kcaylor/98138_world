@@ -1,0 +1,30 @@
+{
+  "format_version": "1",
+  "kit": "31203",
+  "width": 128,
+  "height": 80,
+  "frames": [
+    {"number": 1, "name": "America", "columns": [0, 31], "section_columns": "A-B"},
+    {"number": 2, "name": "Europe & Africa", "columns": [32, 95], "section_columns": "C-F"},
+    {"number": 3, "name": "Asia & Australia", "columns": [96, 127], "section_columns": "G-H"}
+  ],
+  "arrangements": [
+    {"id": "A", "name": "europe-africa", "centre": "Europe and Africa", "frame_order": [1, 2, 3],
+     "column_shift": 0, "default": true},
+    {"id": "B", "name": "americas", "centre": "America", "frame_order": [3, 1, 2],
+     "column_shift": 32},
+    {"id": "C", "name": "asia-australia", "centre": "Asia and Australia", "frame_order": [2, 3, 1],
+     "column_shift": -32}
+  ],
+  "notes": "\"1 world - 3 combinations\": the three frames can be hung in three orders, joined with the kit's connector pins. Kit columns are the columns of combination A (the kit mask, the official design and the projection are defined in them). A layout's x is the column as hung: display column = (kit column + column_shift) mod 128. The grid spans 360 degrees of longitude (kit_31203_projection.json), so every seam is geographically continuous.",
+  "source": {
+    "title": "LEGO 31203 World Map building instructions",
+    "url": "https://www.lego.com/cdn/product-assets/product.bi.core.pdf/6372756.pdf",
+    "sha256": "b593e2f4befbc227c5b12fec9b58a1bd6141d19b54de5f5336dcc8cc9eb43c4c",
+    "pages": [7, 8],
+    "citation": "LEGO 31203 building instructions, pp. 7–8",
+    "read_on": "2026-11-22",
+    "method": "Read by hand from pages 7-8 (frame numbers, names and the three combinations); the frame column ranges follow from the 8 x 5 section layout of kit_31203_design.json. Nothing from the PDF is shipped.",
+    "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
+  }
+}
