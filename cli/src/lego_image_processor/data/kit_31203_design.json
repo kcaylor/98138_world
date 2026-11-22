@@ -1,0 +1,1514 @@
+{
+  "format_version": "1",
+  "source": {
+    "title": "LEGO 31203 World Map building instructions",
+    "url": "https://www.lego.com/cdn/product-assets/product.bi.core.pdf/6372756.pdf",
+    "sha256": "b593e2f4befbc227c5b12fec9b58a1bd6141d19b54de5f5336dcc8cc9eb43c4c",
+    "pages": [
+      22,
+      24,
+      26,
+      28,
+      30,
+      36,
+      38,
+      40,
+      42,
+      44,
+      52,
+      54,
+      56,
+      58,
+      60,
+      66,
+      68,
+      70,
+      72,
+      74,
+      80,
+      82,
+      84,
+      86,
+      88,
+      94,
+      96,
+      98,
+      100,
+      102,
+      110,
+      112,
+      114,
+      116,
+      118,
+      124,
+      126,
+      128,
+      130,
+      132
+    ],
+    "generator": "cli/tools/kit31203 extract",
+    "generated_on": "2026-11-21",
+    "citations": [],
+    "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
+  },
+  "width": 128,
+  "height": 80,
+  "coordinate_system": "top_left_origin",
+  "palette": [
+    "lego_white",
+    "lego_bright_bluish_green",
+    "lego_medium_azur",
+    "lego_bright_yellowish_green",
+    "lego_brick_yellow",
+    "lego_bright_green",
+    "lego_bright_orange",
+    "lego_vibrant_coral",
+    "lego_flame_yellowish_orange",
+    "lego_earth_blue"
+  ],
+  "rows": [
+    "51312118121135112115112111512151232112521115115111651151512115116515655111133123112132413281623281823832478448433131221321313212",
+    "21135312312218233312135823832818132688231122213252156112113612615512111182211811231532111313123212221312343243742821122131121311",
+    "11131221213132138222284422218282788373288241211232813325522121311121322361532341312321121211112131111213131428366344232812142118",
+    "31328222315233222533222382823328287281837788438483462432323352111243212228814235123232323262312328211121121224634246312113135331",
+    "22225221112123332432323223844342283788424874284683873834324223234843412431412234413134232833323132323131121131487231232835212342",
+    "82433232223222223238223322830000000098800009000000009424382211342122438242384000094488431442133428484821231812688342258343143428",
+    "34422223235221322874384009000000009340000000000000000963443131520000093424344848872443748474300983832488122887474483444234325335",
+    "44823221212236248009434340922000912000000000000000009478381211334094185442487636400097863738474300943834784764647384424684284332",
+    "87244343252841300940048534343318443842000000000000009848313135122258543863464840932363426440000000009486834340090974687464344444",
+    "36484244343123400000090900944000097834240000000000093462352241281534484238662400924400943000000000000000009486094484346344309868",
+    "84600094864838743400000094090900000098434300000000094824225522252140000947884094409300900000000000000000000000000000098373784344",
+    "40000000000000000009500930000009860094764400000009473322311512128000000000090900000000900000000000000000000000000000000000000093",
+    "00900000000000009000000000000096400000943000000943809009125241230000900093400000000009000000000000000000000000000000000000009009",
+    "38600000000000000000000000009009234009383400009482440094122124000009400000000000000000000000000000000000000000000000000000009840",
+    "40000000000000000000000000094283000946472320092322232248383430000098000090000000000000000000000000000000000000000009400009877364",
+    "26700094848000000000000000948346000940938611183131327128450948090009009000000000000000000000000000000000000000944463009543238448",
+    "43409482427400000000000000009434800000944513112222828522400953409093800000000000000000000000000000000000000009436340009221253274",
+    "84096474514840000000000000000009000000009482521128686254090094309480000000000000000000000000000000900000000096467840095123234532",
+    "38682223233683000000000000000009000000009453222242828280090009400000000000000000000000000000000009000000000000098380951285221223",
+    "24241241344232400000000000000000000093400933211233181855430940000000000000000000000000000000000000000000000000091438551151118511",
+    "12125122825887830000000000091500000009800944151153738828243000000000000000000000000000000000000000000000000009092342521511515151",
+    "11111131253184380000000000000910000000943832221323288216224000009000000000000980090000000000000000000000000009234145111115111251",
+    "23112151432256140000000000000909000909243121181223323665500000960900009183200940000000000000000000000000000091009555112215121211",
+    "51151211251232340000000000009000009583412135313836832271500092409090909009200930000000900000000000000000009230925351212112111515",
+    "51152561123524380000000000000000094322213212352728351151600098120090900000000920000000000000000000000094209410973111121211121651",
+    "15515525111153118000000000000000092321332821223363825875311200009424090090000091000000000000000900000000909200951121122521651511",
+    "31211111222652121000000000000000942131151213834828231518300000009814385340000000000000000000000000000009830009655312121518222521",
+    "11115512512221213500000000000009121109312213222363113123000000000090096820000000000000000000000000000009460943511111555555521126",
+    "21211155515111325340000000009809141525258281233687151321000000000000000900000900000000000000000000000009342314711521125551212121",
+    "11115351512152532328000000093409224211112123488163535210000000000000000090000940000000000000000000000009471433151811153515125821",
+    "09515115112223211133230000948284093112611832327317133100000000000000000090000090943000000000000000000094883414156251521521521112",
+    "21092211111122325251110000932300922211112132877181352300000000000000000009000000098400000000000000000940934112185311212512111115",
+    "11109551251111213321428000940922090955161213317731511400000000000000000009000000092743000009400000909464138246112182255555128221",
+    "21312111111121222135183200000943090009115134378173358300000000000000000009000000952364000093800000946809584111116111113151131231",
+    "51121511121212221511234132400094231121091313171633122600000000000000000000900009218518000927309000092809811121125512121522113252",
+    "21123122111222112582311853340091132232112322386631562400000000000000000000000921321134000935248000098400984116115511555555522211",
+    "15251121221121222113431424323099109094832122271783118240000000000000000000091353125118400983409090090910092115135612212532121511",
+    "11211212112222321215823872858300900000094382238417512330000000000000000000000095111587809213109090981261093111156211211512131215",
+    "15152111122322121354234248412211000000009823321777151238000091000000000000000095131511410911321094738091091311565221122521551111",
+    "15211111221221211251383225424355000000000096281237832122232153200000000000000921112125880912120909460093421182332322215512115131",
+    "11315551122123122532368472825333000000000094831773183211221112300000000000009312121211731211321009780091183112283265321221121133",
+    "32151115212222321423724282309350000000000009462822178731122215100000000900093511212282842323311009300090915122122838463222124258",
+    "31515511112211232252846243238230000000000000944313312272732225200000000000981113132125441212121100900909009200982324831234222142",
+    "58311215515122121421674322352230000000000000000927231318283221130000000000923317314213328121212220964800915000009209478322212218",
+    "33721111513212222238423534525324000000000000000092232237538285548000000000932311473222822128231112009383151460009096842338111151",
+    "24342123211321253327442232332323000000000000000092118312312131254000000000912212642412212213121113444209094348090932488321118111",
+    "23211152323122132283734583285322400000000000000981213182288115328000000000921222846223212126311111113216446438342312158111151512",
+    "12221255134313124323462322223832100000000000009221181723332121134000000000982091348124111282823211111463430097091111221182222121",
+    "22111531872421231284783232532241550000000000009352167157431521280000000000920092272228521524321111121144000009009811112212211321",
+    "18151111324111312132478541777267151000000000009412117724851532150000000009310092128121211832311111138430000000009431212221109138",
+    "31111122113121122333763331216751121000000000094232156183332223124000000092400981213621252274823111414000000000000942220928211183",
+    "38312111215371217213427677171113112000000000935421311322331132181000000009300962284122118142221181180000000000000092822822091218",
+    "56181511122372322173368814157684351000000009483221131182432521153400000094821811122121832186358111340000000000000009124821211112",
+    "35351155252123218727248841732232121000000009542112211737833122221800000093244551215112226328721813280000000000000009283288212111",
+    "31111155111215111332427882471371725000000009332141531784232211552400000932217812115141123863383211317000000000000009228098181622",
+    "62351126151222125188438468377277223000000096428338111354651322181480009282146511151111132827421221121000096000000094234632818121",
+    "21115115561222251223424888387318251000090984232284111184833121221340093452583451521218122347823632412009414480000091324380916211",
+    "15121611651662523853437876873127420000009478111522212252282223122514234521123181224114133624282131113131121144000983146433094132",
+    "21121122165686351168428683837181820000943612232221323336483311111311122211458752111112823648428816114112111115483111138264093151",
+    "21111223521555684353884862331787410000944125321212222882832323111213251521134612128122638436768382112112111211400911223740946315",
+    "11211512126863512235248633622812320009887311512222122337632222121112112211513221412123482764663828211341112111109111181609344341",
+    "11511221222156851532476733232224320094435112211112332288838321113111125121232215111324878233887668841111111111448121232094264132",
+    "31111131232384382424868262121123100009645111513222212354732122511122111212351311212409887838336722383381123121182212124846436822",
+    "11221323436423844278683223751132100094484743421121313336433132121231152525325131118448423131833166273333514211111218114734622091",
+    "22312212328324232468828471156111110094309448742121225581358323322515112123233422151246753525128331383167271251212212187346323221",
+    "31213233434287347867176115151561511009834652124809512133348781182112111122212151112824481131445221226222522225122111232832321211",
+    "22322142822334444161611121751115511155151211132122111311131311115252112212312221132275463821133253224282222122221422213261211121",
+    "12413264433468181712121231212121111511111136311235353231511153231325251112131151521211327112112232825222114252252511221213113221",
+    "12221333147872713212131121112132512511148514485151111131112111155122112121252122121221351112114222121311511521121225216212132122",
+    "21343418353173231315155212555123211141853221212511112112131152825251111211552151522133532511121121111411331812122222821111262111",
+    "11213142221334121221621111251115432124346218251111222616282212111152111511111115151111253521111341313131514318128213221821822113",
+    "42422264532121131315151238212421131244484831131111121321811255111211215111322451113151552315438644484347483443481152526113218221",
+    "25821323251112211241213112118132548440944453211312111152112132143131212822184300984213118113600900937483680009476434422821622212",
+    "32152131218231321315145132555474374360947834835518111811315243433423132444300000000092840000000000000000000000000009834126212212",
+    "11245124284484218422334447434783246000094544241821321581434430000000098000000000000009000000000000000000000000000000000945582882",
+    "34212824843872768348447400000094830000934324643445834840000000000000000000000000000090000000000000000000000000000000000093738423",
+    "42134374000000000000009780000000000098573843474424800000000000000000000000000000000000000000000000000000000000000000009464444443",
+    "23883800000000000000000000000000000983464450095440000000000000000000000000000000000000000000000000000000000000000000009844846344",
+    "84478230000000000000000000000000000094340000094644300000000000000000000000000000000000000000000000000000000000000000000009744784",
+    "46800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000938483"
+  ],
+  "sections": [
+    {
+      "col": 0,
+      "row": 0,
+      "page": 22,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 13.934,
+        "y": 493.453,
+        "scale": 36.865
+      },
+      "order_check": true
+    },
+    {
+      "col": 0,
+      "row": 1,
+      "page": 24,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 13.934,
+        "y": 457.109,
+        "scale": 36.84
+      },
+      "order_check": true
+    },
+    {
+      "col": 0,
+      "row": 2,
+      "page": 26,
+      "image_size": [
+        154,
+        153
+      ],
+      "placement": {
+        "x": 13.934,
+        "y": 420.864,
+        "scale": 36.84
+      },
+      "order_check": true
+    },
+    {
+      "col": 0,
+      "row": 3,
+      "page": 28,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 13.934,
+        "y": 384.379,
+        "scale": 36.84
+      },
+      "order_check": true
+    },
+    {
+      "col": 0,
+      "row": 4,
+      "page": 30,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 13.934,
+        "y": 348.135,
+        "scale": 36.865
+      },
+      "order_check": true
+    },
+    {
+      "col": 1,
+      "row": 0,
+      "page": 36,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 50.22,
+        "y": 493.453,
+        "scale": 36.914
+      },
+      "order_check": true
+    },
+    {
+      "col": 1,
+      "row": 1,
+      "page": 38,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 50.296,
+        "y": 457.109,
+        "scale": 36.84
+      },
+      "order_check": true
+    },
+    {
+      "col": 1,
+      "row": 2,
+      "page": 40,
+      "image_size": [
+        154,
+        153
+      ],
+      "placement": {
+        "x": 50.296,
+        "y": 420.864,
+        "scale": 36.84
+      },
+      "order_check": true
+    },
+    {
+      "col": 1,
+      "row": 3,
+      "page": 42,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 50.296,
+        "y": 384.379,
+        "scale": 36.84
+      },
+      "order_check": true
+    },
+    {
+      "col": 1,
+      "row": 4,
+      "page": 44,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 50.22,
+        "y": 348.135,
+        "scale": 36.914
+      },
+      "order_check": true
+    },
+    {
+      "col": 2,
+      "row": 0,
+      "page": 52,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 90.808,
+        "y": 493.453,
+        "scale": 36.914
+      },
+      "order_check": true
+    },
+    {
+      "col": 2,
+      "row": 1,
+      "page": 54,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 90.807,
+        "y": 457.109,
+        "scale": 36.9
+      },
+      "order_check": true
+    },
+    {
+      "col": 2,
+      "row": 2,
+      "page": 56,
+      "image_size": [
+        154,
+        153
+      ],
+      "placement": {
+        "x": 90.807,
+        "y": 420.864,
+        "scale": 36.9
+      },
+      "order_check": true
+    },
+    {
+      "col": 2,
+      "row": 3,
+      "page": 58,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 90.807,
+        "y": 384.379,
+        "scale": 36.9
+      },
+      "order_check": true
+    },
+    {
+      "col": 2,
+      "row": 4,
+      "page": 60,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 90.808,
+        "y": 348.135,
+        "scale": 36.914
+      },
+      "order_check": true
+    },
+    {
+      "col": 3,
+      "row": 0,
+      "page": 66,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 127.144,
+        "y": 493.453,
+        "scale": 36.914
+      },
+      "order_check": true
+    },
+    {
+      "col": 3,
+      "row": 1,
+      "page": 68,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 127.228,
+        "y": 457.109,
+        "scale": 36.9
+      },
+      "order_check": true
+    },
+    {
+      "col": 3,
+      "row": 2,
+      "page": 70,
+      "image_size": [
+        154,
+        153
+      ],
+      "placement": {
+        "x": 127.228,
+        "y": 420.864,
+        "scale": 36.9
+      },
+      "order_check": true
+    },
+    {
+      "col": 3,
+      "row": 3,
+      "page": 72,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 127.228,
+        "y": 384.379,
+        "scale": 36.9
+      },
+      "order_check": true
+    },
+    {
+      "col": 3,
+      "row": 4,
+      "page": 74,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 127.144,
+        "y": 348.135,
+        "scale": 36.914
+      },
+      "order_check": true
+    },
+    {
+      "col": 4,
+      "row": 0,
+      "page": 80,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 163.48,
+        "y": 493.453,
+        "scale": 36.914
+      },
+      "order_check": true
+    },
+    {
+      "col": 4,
+      "row": 1,
+      "page": 82,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 163.409,
+        "y": 457.109,
+        "scale": 36.9
+      },
+      "order_check": true
+    },
+    {
+      "col": 4,
+      "row": 2,
+      "page": 84,
+      "image_size": [
+        154,
+        153
+      ],
+      "placement": {
+        "x": 163.409,
+        "y": 420.864,
+        "scale": 36.9
+      },
+      "order_check": true
+    },
+    {
+      "col": 4,
+      "row": 3,
+      "page": 86,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 163.409,
+        "y": 384.379,
+        "scale": 36.9
+      },
+      "order_check": true
+    },
+    {
+      "col": 4,
+      "row": 4,
+      "page": 88,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 163.48,
+        "y": 348.135,
+        "scale": 36.914
+      },
+      "order_check": true
+    },
+    {
+      "col": 5,
+      "row": 0,
+      "page": 94,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 199.816,
+        "y": 493.453,
+        "scale": 36.914
+      },
+      "order_check": true
+    },
+    {
+      "col": 5,
+      "row": 1,
+      "page": 96,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 199.83,
+        "y": 457.109,
+        "scale": 36.9
+      },
+      "order_check": true
+    },
+    {
+      "col": 5,
+      "row": 2,
+      "page": 98,
+      "image_size": [
+        154,
+        153
+      ],
+      "placement": {
+        "x": 199.83,
+        "y": 420.864,
+        "scale": 36.9
+      },
+      "order_check": true
+    },
+    {
+      "col": 5,
+      "row": 3,
+      "page": 100,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 199.83,
+        "y": 384.379,
+        "scale": 36.9
+      },
+      "order_check": true
+    },
+    {
+      "col": 5,
+      "row": 4,
+      "page": 102,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 199.816,
+        "y": 348.135,
+        "scale": 36.914
+      },
+      "order_check": true
+    },
+    {
+      "col": 6,
+      "row": 0,
+      "page": 110,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 240.403,
+        "y": 493.453,
+        "scale": 36.914
+      },
+      "order_check": true
+    },
+    {
+      "col": 6,
+      "row": 1,
+      "page": 112,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 240.402,
+        "y": 457.109,
+        "scale": 36.84
+      },
+      "order_check": true
+    },
+    {
+      "col": 6,
+      "row": 2,
+      "page": 114,
+      "image_size": [
+        154,
+        153
+      ],
+      "placement": {
+        "x": 240.402,
+        "y": 420.864,
+        "scale": 36.84
+      },
+      "order_check": true
+    },
+    {
+      "col": 6,
+      "row": 3,
+      "page": 116,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 240.402,
+        "y": 384.379,
+        "scale": 36.84
+      },
+      "order_check": true
+    },
+    {
+      "col": 6,
+      "row": 4,
+      "page": 118,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 240.403,
+        "y": 348.135,
+        "scale": 36.914
+      },
+      "order_check": true
+    },
+    {
+      "col": 7,
+      "row": 0,
+      "page": 124,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 276.738,
+        "y": 493.453,
+        "scale": 36.865
+      },
+      "order_check": true
+    },
+    {
+      "col": 7,
+      "row": 1,
+      "page": 126,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 276.764,
+        "y": 457.109,
+        "scale": 36.84
+      },
+      "order_check": true
+    },
+    {
+      "col": 7,
+      "row": 2,
+      "page": 128,
+      "image_size": [
+        154,
+        153
+      ],
+      "placement": {
+        "x": 276.764,
+        "y": 420.864,
+        "scale": 36.84
+      },
+      "order_check": true
+    },
+    {
+      "col": 7,
+      "row": 3,
+      "page": 130,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 276.764,
+        "y": 384.379,
+        "scale": 36.84
+      },
+      "order_check": true
+    },
+    {
+      "col": 7,
+      "row": 4,
+      "page": 132,
+      "image_size": [
+        154,
+        154
+      ],
+      "placement": {
+        "x": 276.738,
+        "y": 348.135,
+        "scale": 36.865
+      },
+      "order_check": true
+    }
+  ],
+  "classification": {
+    "method": "median 5x5 at cell centre; CIEDE2000 to reference render colours",
+    "ambiguity_ratio_threshold": 0.6,
+    "max_delta_e00": 12.0,
+    "flagged": 68,
+    "resolved": 68
+  },
+  "overrides": [
+    {
+      "x": 0,
+      "y": 0,
+      "auto": "lego_bright_green",
+      "chosen": "lego_bright_green",
+      "ratio": 0.633,
+      "reason": "sample RGB (117, 165, 82); dE00 Bright Green 11.7 vs Bright Yellowish Green 18.48 (ratio 0.633); red channel 117 is on the Bright Green side of the midpoint (151) between Bright Green (R 116) and Bright Yellowish Green (R 187); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 32,
+      "y": 0,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.724,
+      "reason": "sample RGB (115, 161, 171); dE00 Medium Azur 8.81 vs Bright Bluish Green 12.16 (ratio 0.724); red channel 115 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 48,
+      "y": 0,
+      "auto": "lego_bright_bluish_green",
+      "chosen": "lego_bright_bluish_green",
+      "ratio": 0.633,
+      "reason": "sample RGB (62, 117, 119); dE00 Bright Bluish Green 15.82 vs Medium Azur 25.01 (ratio 0.633); darkened stud at a section edge (dE00 to nearest above 12); hue and low red channel 62 match Bright Bluish Green (ref R 39), as do the other darkened edge cells (80,0), (0,32), (111,32), (95,48); RGB nearest is Earth Blue, but Earth Blue's dE00 is far and its supply has 1 spare; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 64,
+      "y": 0,
+      "auto": "lego_bright_orange",
+      "chosen": "lego_bright_orange",
+      "ratio": 0.759,
+      "reason": "sample RGB (208, 156, 66); dE00 Bright Orange 8.69 vs Flame Yellowish Orange 11.44 (ratio 0.759); green channel 156 matches Bright Orange (G 157) rather than Flame Yellowish Orange (G 194); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 80,
+      "y": 0,
+      "auto": "lego_bright_bluish_green",
+      "chosen": "lego_bright_bluish_green",
+      "ratio": 0.532,
+      "reason": "sample RGB (44, 122, 120); dE00 Bright Bluish Green 13.38 vs Medium Azur 25.15 (ratio 0.532); darkened stud at a section edge (dE00 to nearest above 12); hue and low red channel 44 match Bright Bluish Green (ref R 39), as do the other darkened edge cells (48,0), (0,32), (111,32), (95,48); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 111,
+      "y": 0,
+      "auto": "lego_bright_yellowish_green",
+      "chosen": "lego_bright_yellowish_green",
+      "ratio": 0.616,
+      "reason": "sample RGB (185, 199, 87); dE00 Bright Yellowish Green 7.78 vs Brick Yellow 12.63 (ratio 0.616); blue channel 87 rules out Brick Yellow (ref B 144); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 15,
+      "y": 3,
+      "auto": "lego_bright_bluish_green",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.805,
+      "reason": "sample RGB (117, 182, 178); dE00 Bright Bluish Green 9.77 vs Medium Azur 12.14 (ratio 0.805); red channel 117 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; Bright Bluish Green would also exceed its supply of 1,879",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 16,
+      "y": 3,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.805,
+      "reason": "sample RGB (115, 172, 178); dE00 Medium Azur 8.43 vs Bright Bluish Green 10.47 (ratio 0.805); red channel 115 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 21,
+      "y": 3,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.797,
+      "reason": "sample RGB (123, 172, 176); dE00 Medium Azur 8.96 vs Bright Bluish Green 11.25 (ratio 0.797); red channel 123 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 81,
+      "y": 3,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.618,
+      "reason": "sample RGB (106, 183, 193); dE00 Medium Azur 7.04 vs Bright Bluish Green 11.39 (ratio 0.618); red channel 106 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 96,
+      "y": 3,
+      "auto": "lego_bright_bluish_green",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.92,
+      "reason": "sample RGB (114, 181, 181); dE00 Bright Bluish Green 9.73 vs Medium Azur 10.58 (ratio 0.92); red channel 114 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; Bright Bluish Green would also exceed its supply of 1,879",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 97,
+      "y": 3,
+      "auto": "lego_flame_yellowish_orange",
+      "chosen": "lego_flame_yellowish_orange",
+      "ratio": 0.883,
+      "reason": "sample RGB (211, 194, 74); dE00 Flame Yellowish Orange 9.19 vs Brick Yellow 10.41 (ratio 0.883); blue channel 74 rules out Brick Yellow (ref B 144); green channel 194 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 113,
+      "y": 3,
+      "auto": "lego_bright_bluish_green",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.929,
+      "reason": "sample RGB (111, 181, 182); dE00 Bright Bluish Green 9.57 vs Medium Azur 10.31 (ratio 0.929); red channel 111 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; Bright Bluish Green would also exceed its supply of 1,879",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 12,
+      "y": 5,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.63,
+      "reason": "sample RGB (122, 190, 196); dE00 Medium Azur 8.04 vs Bright Bluish Green 12.77 (ratio 0.63); red channel 122 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 0,
+      "y": 16,
+      "auto": "lego_brick_yellow",
+      "chosen": "lego_brick_yellow",
+      "ratio": 0.712,
+      "reason": "sample RGB (171, 161, 141); dE00 Brick Yellow 14.38 vs White 20.2 (ratio 0.712); White is far (dE00 20.2) and the cell reads tan on the review sheet; keeping it ocean also keeps the land mask unchanged; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 1,
+      "y": 16,
+      "auto": "lego_bright_yellowish_green",
+      "chosen": "lego_bright_yellowish_green",
+      "ratio": 0.684,
+      "reason": "sample RGB (177, 196, 86); dE00 Bright Yellowish Green 8.03 vs Bright Green 11.73 (ratio 0.684); red channel 177 is on the Bright Yellowish Green side of the midpoint (151) between Bright Green (R 116) and Bright Yellowish Green (R 187); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 9,
+      "y": 16,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.847,
+      "reason": "sample RGB (115, 180, 184); dE00 Medium Azur 8.87 vs Bright Bluish Green 10.47 (ratio 0.847); red channel 115 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 32,
+      "y": 16,
+      "auto": "lego_brick_yellow",
+      "chosen": "lego_flame_yellowish_orange",
+      "ratio": 0.974,
+      "reason": "sample RGB (196, 187, 66); near tie on all metrics (dE00 Brick Yellow 11.5 / Flame Yellowish Orange 11.8; RGB nearest Bright Yellowish Green); blue channel 66 rules out Brick Yellow (ref B 144) and Brick Yellow would use the last of its supply; the stud reads yellow-orange on the review sheet. Coin-flip between Flame Yellowish Orange and Bright Yellowish Green",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 48,
+      "y": 16,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.798,
+      "reason": "sample RGB (109, 142, 160); dE00 Medium Azur 13.53 vs Bright Bluish Green 16.97 (ratio 0.798); red channel 109 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 49,
+      "y": 16,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.821,
+      "reason": "sample RGB (105, 185, 191); dE00 Medium Azur 8.71 vs Bright Bluish Green 10.61 (ratio 0.821); red channel 105 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 55,
+      "y": 16,
+      "auto": "lego_bright_bluish_green",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.947,
+      "reason": "sample RGB (118, 178, 178); dE00 Bright Bluish Green 9.91 vs Medium Azur 10.46 (ratio 0.947); red channel 118 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; Bright Bluish Green would also exceed its supply of 1,879",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 68,
+      "y": 16,
+      "auto": "lego_flame_yellowish_orange",
+      "chosen": "lego_flame_yellowish_orange",
+      "ratio": 0.602,
+      "reason": "sample RGB (219, 191, 71); dE00 Flame Yellowish Orange 6.29 vs Brick Yellow 10.45 (ratio 0.602); blue channel 71 rules out Brick Yellow (ref B 144); green channel 191 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 111,
+      "y": 16,
+      "auto": "lego_bright_yellowish_green",
+      "chosen": "lego_bright_yellowish_green",
+      "ratio": 0.635,
+      "reason": "sample RGB (178, 197, 78); dE00 Bright Yellowish Green 7.7 vs Bright Green 12.13 (ratio 0.635); red channel 178 is on the Bright Yellowish Green side of the midpoint (151) between Bright Green (R 116) and Bright Yellowish Green (R 187); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 0,
+      "y": 19,
+      "auto": "lego_bright_bluish_green",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.646,
+      "reason": "sample RGB (113, 164, 161); dE00 Bright Bluish Green 8.38 vs Medium Azur 12.97 (ratio 0.646); red channel 113 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; Bright Bluish Green would also exceed its supply of 1,879",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 47,
+      "y": 19,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.759,
+      "reason": "sample RGB (115, 177, 183); dE00 Medium Azur 8.11 vs Bright Bluish Green 10.69 (ratio 0.759); red channel 115 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 48,
+      "y": 19,
+      "auto": "lego_bright_yellowish_green",
+      "chosen": "lego_bright_yellowish_green",
+      "ratio": 0.711,
+      "reason": "sample RGB (169, 202, 88); dE00 Bright Yellowish Green 6.37 vs Bright Green 8.97 (ratio 0.711); red channel 169 is on the Bright Yellowish Green side of the midpoint (151) between Bright Green (R 116) and Bright Yellowish Green (R 187); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 49,
+      "y": 19,
+      "auto": "lego_bright_yellowish_green",
+      "chosen": "lego_bright_yellowish_green",
+      "ratio": 0.715,
+      "reason": "sample RGB (171, 200, 89); dE00 Bright Yellowish Green 6.88 vs Bright Green 9.62 (ratio 0.715); red channel 171 is on the Bright Yellowish Green side of the midpoint (151) between Bright Green (R 116) and Bright Yellowish Green (R 187); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 30,
+      "y": 31,
+      "auto": "lego_white",
+      "chosen": "lego_white",
+      "ratio": 0.644,
+      "reason": "sample RGB (230, 245, 225); dE00 White 11.32 vs Brick Yellow 17.57 (ratio 0.644); near-white sample, Brick Yellow is far; land (white) agrees with the current mask; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 0,
+      "y": 32,
+      "auto": "lego_bright_bluish_green",
+      "chosen": "lego_bright_bluish_green",
+      "ratio": 0.563,
+      "reason": "sample RGB (52, 121, 121); dE00 Bright Bluish Green 13.88 vs Medium Azur 24.64 (ratio 0.563); darkened stud at a section edge (dE00 to nearest above 12); hue and low red channel 52 match Bright Bluish Green (ref R 39), as do the other darkened edge cells (48,0), (80,0), (111,32), (95,48); research R6 (RGB variant) had this cell as Earth Blue, which would exceed the Earth Blue supply of 393; dE00 puts Earth Blue third (26.8); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 14,
+      "y": 32,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.964,
+      "reason": "sample RGB (100, 187, 191); dE00 Medium Azur 9.84 vs Bright Bluish Green 10.2 (ratio 0.964); red channel 100 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 16,
+      "y": 32,
+      "auto": "lego_brick_yellow",
+      "chosen": "lego_bright_yellowish_green",
+      "ratio": 0.903,
+      "reason": "sample RGB (187, 186, 81); dE00 Brick Yellow 11.0 vs Bright Yellowish Green 12.2 (ratio 0.90) but RGB nearest is Bright Yellowish Green; blue channel 81 rules out Brick Yellow (ref B 144), which would also exceed its supply of 725; the stud reads lime on the review sheet. Coin-flip in numbers, decided by the visual",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 48,
+      "y": 32,
+      "auto": "lego_bright_yellowish_green",
+      "chosen": "lego_bright_yellowish_green",
+      "ratio": 0.805,
+      "reason": "sample RGB (178, 190, 87); dE00 Bright Yellowish Green 9.94 vs Brick Yellow 12.35 (ratio 0.805); blue channel 87 rules out Brick Yellow (ref B 144); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 111,
+      "y": 32,
+      "auto": "lego_bright_bluish_green",
+      "chosen": "lego_bright_bluish_green",
+      "ratio": 0.548,
+      "reason": "sample RGB (47, 125, 128); dE00 Bright Bluish Green 12.58 vs Medium Azur 22.94 (ratio 0.548); darkened stud at a section edge (dE00 to nearest above 12); hue and low red channel 47 match Bright Bluish Green (ref R 39), as do the other darkened edge cells (48,0), (80,0), (0,32), (95,48); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 112,
+      "y": 32,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.601,
+      "reason": "sample RGB (109, 158, 175); dE00 Medium Azur 8.28 vs Bright Bluish Green 13.79 (ratio 0.601); red channel 109 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 114,
+      "y": 32,
+      "auto": "lego_flame_yellowish_orange",
+      "chosen": "lego_flame_yellowish_orange",
+      "ratio": 0.647,
+      "reason": "sample RGB (218, 195, 59); dE00 Flame Yellowish Orange 7.58 vs Brick Yellow 11.72 (ratio 0.647); blue channel 59 rules out Brick Yellow (ref B 144); green channel 195 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 124,
+      "y": 32,
+      "auto": "lego_flame_yellowish_orange",
+      "chosen": "lego_flame_yellowish_orange",
+      "ratio": 0.619,
+      "reason": "sample RGB (216, 189, 66); dE00 Flame Yellowish Orange 6.72 vs Brick Yellow 10.85 (ratio 0.619); blue channel 66 rules out Brick Yellow (ref B 144); green channel 189 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 14,
+      "y": 34,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.719,
+      "reason": "sample RGB (107, 170, 180); dE00 Medium Azur 7.58 vs Bright Bluish Green 10.53 (ratio 0.719); red channel 107 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 21,
+      "y": 34,
+      "auto": "lego_bright_green",
+      "chosen": "lego_bright_yellowish_green",
+      "ratio": 0.768,
+      "reason": "sample RGB (151, 197, 84); red channel 151 sits on the midpoint between Bright Green (ref R 116) and Bright Yellowish Green (ref R 187); dE00 6.5 vs 8.4 favours Bright Green, but the stud reads yellow-green like its Bright Yellowish Green neighbours on the review sheet. Coin-flip; both colours have spare supply",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 31,
+      "y": 34,
+      "auto": "lego_brick_yellow",
+      "chosen": "lego_brick_yellow",
+      "ratio": 0.626,
+      "reason": "sample RGB (193, 167, 111); dE00 Brick Yellow 8.79 vs Flame Yellowish Orange 14.05 (ratio 0.626); blue channel 111 matches Brick Yellow (ref B 144), not the oranges (B about 61); reads tan on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 33,
+      "y": 34,
+      "auto": "lego_bright_yellowish_green",
+      "chosen": "lego_bright_yellowish_green",
+      "ratio": 0.968,
+      "reason": "sample RGB (158, 191, 74); dE00 Bright Yellowish Green 9.0 vs Bright Green 9.3 (ratio 0.97), RGB nearest Bright Green; red channel 158 is on the Bright Yellowish Green side of the midpoint (151) and the stud reads lime on the review sheet. Coin-flip in numbers, decided by the visual",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 48,
+      "y": 34,
+      "auto": "lego_bright_yellowish_green",
+      "chosen": "lego_bright_yellowish_green",
+      "ratio": 0.864,
+      "reason": "sample RGB (158, 200, 72); dE00 Bright Yellowish Green 6.92 vs Bright Green 8.01 (ratio 0.864); red channel 158 is on the Bright Yellowish Green side of the midpoint (151) between Bright Green (R 116) and Bright Yellowish Green (R 187); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 49,
+      "y": 34,
+      "auto": "lego_bright_yellowish_green",
+      "chosen": "lego_bright_yellowish_green",
+      "ratio": 0.87,
+      "reason": "sample RGB (163, 192, 76); dE00 Bright Yellowish Green 8.68 vs Bright Green 9.97 (ratio 0.87); red channel 163 is on the Bright Yellowish Green side of the midpoint (151) between Bright Green (R 116) and Bright Yellowish Green (R 187); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 0,
+      "y": 35,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.674,
+      "reason": "sample RGB (115, 169, 178); dE00 Medium Azur 7.65 vs Bright Bluish Green 11.35 (ratio 0.674); red channel 115 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 18,
+      "y": 35,
+      "auto": "lego_flame_yellowish_orange",
+      "chosen": "lego_flame_yellowish_orange",
+      "ratio": 0.617,
+      "reason": "sample RGB (216, 190, 62); dE00 Flame Yellowish Orange 6.94 vs Brick Yellow 11.24 (ratio 0.617); blue channel 62 rules out Brick Yellow (ref B 144); green channel 190 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 48,
+      "y": 35,
+      "auto": "lego_bright_yellowish_green",
+      "chosen": "lego_bright_yellowish_green",
+      "ratio": 0.678,
+      "reason": "sample RGB (174, 209, 106); dE00 Bright Yellowish Green 5.8 vs Bright Green 8.55 (ratio 0.678); red channel 174 is on the Bright Yellowish Green side of the midpoint (151) between Bright Green (R 116) and Bright Yellowish Green (R 187); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 79,
+      "y": 35,
+      "auto": "lego_bright_bluish_green",
+      "chosen": "lego_bright_bluish_green",
+      "ratio": 0.66,
+      "reason": "sample RGB (34, 136, 152); dE00 Bright Bluish Green 11.69 vs Medium Azur 17.69 (ratio 0.66); red channel 34 matches Bright Bluish Green (ref R 39), not Medium Azur (ref R 116); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 94,
+      "y": 35,
+      "auto": "lego_flame_yellowish_orange",
+      "chosen": "lego_flame_yellowish_orange",
+      "ratio": 0.744,
+      "reason": "sample RGB (213, 192, 66); dE00 Flame Yellowish Orange 8.17 vs Brick Yellow 10.99 (ratio 0.744); blue channel 66 rules out Brick Yellow (ref B 144); green channel 192 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 112,
+      "y": 37,
+      "auto": "lego_bright_orange",
+      "chosen": "lego_bright_orange",
+      "ratio": 0.681,
+      "reason": "sample RGB (226, 162, 55); dE00 Bright Orange 6.48 vs Flame Yellowish Orange 9.51 (ratio 0.681); green channel 162 matches Bright Orange (G 157) rather than Flame Yellowish Orange (G 194); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 11,
+      "y": 40,
+      "auto": "lego_bright_bluish_green",
+      "chosen": "lego_bright_bluish_green",
+      "ratio": 0.81,
+      "reason": "sample RGB (33, 162, 180); dE00 Bright Bluish Green 8.88 vs Medium Azur 10.97 (ratio 0.81); red channel 33 matches Bright Bluish Green (ref R 39), not Medium Azur (ref R 116); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 0,
+      "y": 48,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.842,
+      "reason": "sample RGB (98, 150, 166); dE00 Medium Azur 10.86 vs Bright Bluish Green 12.89 (ratio 0.842); red channel 98 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 29,
+      "y": 48,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.772,
+      "reason": "sample RGB (111, 182, 188); dE00 Medium Azur 8.27 vs Bright Bluish Green 10.71 (ratio 0.772); red channel 111 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 75,
+      "y": 48,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.652,
+      "reason": "sample RGB (116, 184, 191); dE00 Medium Azur 7.62 vs Bright Bluish Green 11.68 (ratio 0.652); red channel 116 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 79,
+      "y": 48,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.642,
+      "reason": "sample RGB (113, 163, 175); dE00 Medium Azur 7.88 vs Bright Bluish Green 12.29 (ratio 0.642); red channel 113 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 95,
+      "y": 48,
+      "auto": "lego_bright_bluish_green",
+      "chosen": "lego_bright_bluish_green",
+      "ratio": 0.55,
+      "reason": "sample RGB (49, 124, 126); dE00 Bright Bluish Green 12.86 vs Medium Azur 23.38 (ratio 0.55); darkened stud at a section edge (dE00 to nearest above 12); hue and low red channel 49 match Bright Bluish Green (ref R 39), as do the other darkened edge cells (48,0), (80,0), (0,32), (111,32); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 113,
+      "y": 48,
+      "auto": "lego_flame_yellowish_orange",
+      "chosen": "lego_flame_yellowish_orange",
+      "ratio": 0.736,
+      "reason": "sample RGB (215, 200, 40); dE00 Flame Yellowish Orange 9.9 vs Brick Yellow 13.45 (ratio 0.736); blue channel 40 rules out Brick Yellow (ref B 144); green channel 200 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 1,
+      "y": 51,
+      "auto": "lego_flame_yellowish_orange",
+      "chosen": "lego_flame_yellowish_orange",
+      "ratio": 0.714,
+      "reason": "sample RGB (212, 189, 65); dE00 Flame Yellowish Orange 7.82 vs Brick Yellow 10.95 (ratio 0.714); blue channel 65 rules out Brick Yellow (ref B 144); green channel 189 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 17,
+      "y": 51,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.872,
+      "reason": "sample RGB (116, 182, 185); dE00 Medium Azur 9.24 vs Bright Bluish Green 10.59 (ratio 0.872); red channel 116 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 48,
+      "y": 51,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.958,
+      "reason": "sample RGB (110, 177, 181); dE00 Medium Azur 9.2 vs Bright Bluish Green 9.6 (ratio 0.958); red channel 110 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 78,
+      "y": 51,
+      "auto": "lego_bright_orange",
+      "chosen": "lego_bright_orange",
+      "ratio": 0.871,
+      "reason": "sample RGB (215, 159, 53); dE00 Bright Orange 8.54 vs Flame Yellowish Orange 9.81 (ratio 0.871); green channel 159 matches Bright Orange (G 157) rather than Flame Yellowish Orange (G 194); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 80,
+      "y": 51,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.764,
+      "reason": "sample RGB (117, 180, 185); dE00 Medium Azur 8.35 vs Bright Bluish Green 10.93 (ratio 0.764); red channel 117 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 96,
+      "y": 51,
+      "auto": "lego_flame_yellowish_orange",
+      "chosen": "lego_flame_yellowish_orange",
+      "ratio": 0.64,
+      "reason": "sample RGB (218, 194, 62); dE00 Flame Yellowish Orange 7.3 vs Brick Yellow 11.41 (ratio 0.64); blue channel 62 rules out Brick Yellow (ref B 144); green channel 194 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 107,
+      "y": 62,
+      "auto": "lego_bright_bluish_green",
+      "chosen": "lego_bright_bluish_green",
+      "ratio": 0.645,
+      "reason": "sample RGB (32, 164, 178); dE00 Bright Bluish Green 7.44 vs Medium Azur 11.54 (ratio 0.645); red channel 32 matches Bright Bluish Green (ref R 39), not Medium Azur (ref R 116); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 48,
+      "y": 64,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.647,
+      "reason": "sample RGB (109, 174, 184); dE00 Medium Azur 7.06 vs Bright Bluish Green 10.91 (ratio 0.647); red channel 109 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 63,
+      "y": 64,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.627,
+      "reason": "sample RGB (111, 180, 189); dE00 Medium Azur 7.06 vs Bright Bluish Green 11.27 (ratio 0.627); red channel 111 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 64,
+      "y": 64,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.723,
+      "reason": "sample RGB (102, 167, 179); dE00 Medium Azur 7.64 vs Bright Bluish Green 10.56 (ratio 0.723); red channel 102 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 26,
+      "y": 65,
+      "auto": "lego_bright_bluish_green",
+      "chosen": "lego_bright_bluish_green",
+      "ratio": 0.668,
+      "reason": "sample RGB (39, 160, 175); dE00 Bright Bluish Green 7.86 vs Medium Azur 11.76 (ratio 0.668); red channel 39 matches Bright Bluish Green (ref R 39), not Medium Azur (ref R 116); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 81,
+      "y": 67,
+      "auto": "lego_medium_azur",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.746,
+      "reason": "sample RGB (103, 184, 192); dE00 Medium Azur 8.04 vs Bright Bluish Green 10.77 (ratio 0.746); red channel 103 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 97,
+      "y": 67,
+      "auto": "lego_bright_bluish_green",
+      "chosen": "lego_medium_azur",
+      "ratio": 0.898,
+      "reason": "sample RGB (115, 182, 181); dE00 Bright Bluish Green 9.83 vs Medium Azur 10.95 (ratio 0.898); red channel 115 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; Bright Bluish Green would also exceed its supply of 1,879",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    }
+  ],
+  "counts": [
+    {
+      "key": "lego_white",
+      "used": 3062,
+      "supplied": 3064,
+      "spare": 2,
+      "spare_note": "unexplained"
+    },
+    {
+      "key": "lego_bright_bluish_green",
+      "used": 1878,
+      "supplied": 1879,
+      "spare": 1,
+      "spare_note": "unexplained"
+    },
+    {
+      "key": "lego_medium_azur",
+      "used": 1606,
+      "supplied": 1607,
+      "spare": 1,
+      "spare_note": "unexplained"
+    },
+    {
+      "key": "lego_bright_yellowish_green",
+      "used": 1019,
+      "supplied": 1060,
+      "spare": 41,
+      "spare_note": "unexplained"
+    },
+    {
+      "key": "lego_brick_yellow",
+      "used": 724,
+      "supplied": 725,
+      "spare": 1,
+      "spare_note": "unexplained"
+    },
+    {
+      "key": "lego_bright_green",
+      "used": 529,
+      "supplied": 601,
+      "spare": 72,
+      "spare_note": "unexplained"
+    },
+    {
+      "key": "lego_bright_orange",
+      "used": 230,
+      "supplied": 601,
+      "spare": 371,
+      "spare_note": "unexplained"
+    },
+    {
+      "key": "lego_vibrant_coral",
+      "used": 203,
+      "supplied": 601,
+      "spare": 398,
+      "spare_note": "unexplained"
+    },
+    {
+      "key": "lego_flame_yellowish_orange",
+      "used": 597,
+      "supplied": 599,
+      "spare": 2,
+      "spare_note": "unexplained"
+    },
+    {
+      "key": "lego_earth_blue",
+      "used": 392,
+      "supplied": 393,
+      "spare": 1,
+      "spare_note": "unexplained"
+    }
+  ]
+}

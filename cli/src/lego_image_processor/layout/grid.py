@@ -10,7 +10,23 @@ from datetime import datetime, timezone
 from io import StringIO
 from typing import Dict, List, Any, Optional
 
-from .position import PositionPlacement
+from .position import LAND_PART_TYPE, OCEAN_PART_TYPE, PositionPlacement
+
+CURRENT_SCHEMA_VERSION = "2.0"
+DISCLAIMER = "Not affiliated with or endorsed by The LEGO Group."
+
+
+class LayoutSchemaError(ValueError):
+    """Raised when a layout file was written with an unsupported schema version."""
+
+    def __init__(self, found):
+        shown = found if found else "(missing)"
+        self.found = found
+        super().__init__(
+            f"Layout schema version {shown} is no longer supported "
+            f"(land is now part 6141, a 1x1 round plate). "
+            f"Regenerate it with: lego-image-processor layout <image> -o <layout.json>"
+        )
 
 
 @dataclass
@@ -22,7 +38,7 @@ class LayoutStatistics:
 
     Attributes:
         total_tile_count: Total positions (e.g., 10,240)
-        land_brick_count: Round bricks for land (e.g., 3,062)
+        land_plate_count: Round plates for land (e.g., 3,062)
         ocean_tile_count: Flat tiles for ocean (e.g., 7,178)
         unique_colors: Count of distinct colors used
         color_frequency: Map of color_id to position count
@@ -32,7 +48,7 @@ class LayoutStatistics:
     """
 
     total_tile_count: int
-    land_brick_count: int
+    land_plate_count: int
     ocean_tile_count: int
     unique_colors: int
     color_frequency: Dict[str, int]
@@ -48,7 +64,7 @@ class LayoutStatistics:
         """
         return {
             "total_tile_count": self.total_tile_count,
-            "land_brick_count": self.land_brick_count,
+            "land_plate_count": self.land_plate_count,
             "ocean_tile_count": self.ocean_tile_count,
             "unique_colors": self.unique_colors,
             "color_frequency": self.color_frequency,
@@ -62,19 +78,19 @@ class PositionPlacementGrid:
     """Complete LEGO World Map building plan.
 
     Represents a grid of position placements matching the official kit 31203
-    structure (128x80 grid, 10,240 positions: 3,062 land bricks + 7,178 ocean tiles).
+    structure (128x80 grid, 10,240 positions: 3,062 land plates + 7,178 ocean tiles).
 
     Attributes:
         width: Grid width in studs (standard: 128)
         height: Grid height in studs (standard: 80)
         total_positions: Total positions (width x height)
-        land_positions: Count of land positions (round bricks)
+        land_positions: Count of land positions (round plates)
         ocean_positions: Count of ocean positions (flat tiles)
         unique_colors: Count of distinct colors used
         coordinate_system: Always "top_left_origin"
         generated_at: ISO 8601 timestamp when layout was generated
         source_image: Input quantized image filename
-        schema_version: Schema version (current: "1.0")
+        schema_version: Schema version (current: "2.0")
         positions: List of all position placements
     """
 
@@ -85,7 +101,7 @@ class PositionPlacementGrid:
         positions: List[PositionPlacement],
         source_image: str,
         generated_at: Optional[str] = None,
-        schema_version: str = "1.0"
+        schema_version: str = CURRENT_SCHEMA_VERSION
     ):
         """Initialize position placement grid.
 
@@ -119,8 +135,8 @@ class PositionPlacementGrid:
 
     def _compute_counts(self) -> None:
         """Compute land/ocean/color counts from positions."""
-        self._land_positions = sum(1 for p in self._positions if p.part_type == "brick")
-        self._ocean_positions = sum(1 for p in self._positions if p.part_type == "tile")
+        self._land_positions = sum(1 for p in self._positions if p.part_type == LAND_PART_TYPE)
+        self._ocean_positions = sum(1 for p in self._positions if p.part_type == OCEAN_PART_TYPE)
         self._unique_colors = len(set(p.color_id for p in self._positions)) if self._positions else 0
 
     @property
@@ -140,7 +156,7 @@ class PositionPlacementGrid:
 
     @property
     def land_positions(self) -> int:
-        """Count of land positions (round bricks)."""
+        """Count of land positions (round plates)."""
         return self._land_positions
 
     @property
@@ -209,11 +225,11 @@ class PositionPlacementGrid:
         if not self._positions:
             return LayoutStatistics(
                 total_tile_count=0,
-                land_brick_count=0,
+                land_plate_count=0,
                 ocean_tile_count=0,
                 unique_colors=0,
                 color_frequency={},
-                color_frequency_by_part_type={"brick": {}, "tile": {}},
+                color_frequency_by_part_type={LAND_PART_TYPE: {}, OCEAN_PART_TYPE: {}},
                 most_common_color={},
                 coverage_percentage=0.0
             )
@@ -223,8 +239,8 @@ class PositionPlacementGrid:
         color_frequency = dict(color_counter)
 
         # Count colors by part type
-        brick_colors = Counter(p.color_id for p in self._positions if p.part_type == "brick")
-        tile_colors = Counter(p.color_id for p in self._positions if p.part_type == "tile")
+        plate_colors = Counter(p.color_id for p in self._positions if p.part_type == LAND_PART_TYPE)
+        tile_colors = Counter(p.color_id for p in self._positions if p.part_type == OCEAN_PART_TYPE)
 
         # Find most common color
         most_common = color_counter.most_common(1)[0]
@@ -241,13 +257,13 @@ class PositionPlacementGrid:
 
         return LayoutStatistics(
             total_tile_count=len(self._positions),
-            land_brick_count=self._land_positions,
+            land_plate_count=self._land_positions,
             ocean_tile_count=self._ocean_positions,
             unique_colors=self._unique_colors,
             color_frequency=color_frequency,
             color_frequency_by_part_type={
-                "brick": dict(brick_colors),
-                "tile": dict(tile_colors)
+                LAND_PART_TYPE: dict(plate_colors),
+                OCEAN_PART_TYPE: dict(tile_colors)
             },
             most_common_color=most_common_color,
             coverage_percentage=coverage
@@ -273,7 +289,8 @@ class PositionPlacementGrid:
                 "generated_at": self._generated_at,
                 "source_image": self._source_image,
                 "schema_version": self._schema_version,
-                "coordinate_system": self._coordinate_system
+                "coordinate_system": self._coordinate_system,
+                "disclaimer": DISCLAIMER
             },
             "positions": [p.to_dict() for p in self._positions],
             "statistics": self.compute_statistics().to_dict()
@@ -313,9 +330,15 @@ class PositionPlacementGrid:
 
         Returns:
             New PositionPlacementGrid instance
+
+        Raises:
+            LayoutSchemaError: if the schema version is missing or not the current one
         """
         data = json.loads(json_str)
         metadata = data["metadata"]
+        version = metadata.get("schema_version")
+        if version != CURRENT_SCHEMA_VERSION:
+            raise LayoutSchemaError(version)
 
         positions = [
             PositionPlacement.from_dict(p)

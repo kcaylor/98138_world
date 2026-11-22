@@ -1,0 +1,135 @@
+{
+  "page": 159,
+  "note": "The 32 element/quantity pairs printed on page 159 (research R1).",
+  "total_pieces": 11694,
+  "elements": [
+    {
+      "element_id": "235701",
+      "quantity": 4
+    },
+    {
+      "element_id": "242001",
+      "quantity": 4
+    },
+    {
+      "element_id": "246501",
+      "quantity": 22
+    },
+    {
+      "element_id": "300501",
+      "quantity": 12
+    },
+    {
+      "element_id": "300801",
+      "quantity": 34
+    },
+    {
+      "element_id": "301001",
+      "quantity": 22
+    },
+    {
+      "element_id": "379501",
+      "quantity": 8
+    },
+    {
+      "element_id": "4119227",
+      "quantity": 22
+    },
+    {
+      "element_id": "4121715",
+      "quantity": 205
+    },
+    {
+      "element_id": "4160228",
+      "quantity": 52
+    },
+    {
+      "element_id": "416201",
+      "quantity": 48
+    },
+    {
+      "element_id": "4211002",
+      "quantity": 32
+    },
+    {
+      "element_id": "428226",
+      "quantity": 1
+    },
+    {
+      "element_id": "4518400",
+      "quantity": 40
+    },
+    {
+      "element_id": "4558168",
+      "quantity": 8
+    },
+    {
+      "element_id": "6056774",
+      "quantity": 1
+    },
+    {
+      "element_id": "6104805",
+      "quantity": 4
+    },
+    {
+      "element_id": "614101",
+      "quantity": 3064
+    },
+    {
+      "element_id": "6284573",
+      "quantity": 725
+    },
+    {
+      "element_id": "6284582",
+      "quantity": 601
+    },
+    {
+      "element_id": "6284583",
+      "quantity": 1060
+    },
+    {
+      "element_id": "6284584",
+      "quantity": 393
+    },
+    {
+      "element_id": "6302092",
+      "quantity": 40
+    },
+    {
+      "element_id": "6302093",
+      "quantity": 1
+    },
+    {
+      "element_id": "6302094",
+      "quantity": 2
+    },
+    {
+      "element_id": "6311436",
+      "quantity": 601
+    },
+    {
+      "element_id": "6311437",
+      "quantity": 1879
+    },
+    {
+      "element_id": "6322819",
+      "quantity": 1607
+    },
+    {
+      "element_id": "6322822",
+      "quantity": 599
+    },
+    {
+      "element_id": "6329429",
+      "quantity": 1
+    },
+    {
+      "element_id": "6329436",
+      "quantity": 1
+    },
+    {
+      "element_id": "6353793",
+      "quantity": 601
+    }
+  ]
+}

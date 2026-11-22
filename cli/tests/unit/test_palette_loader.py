@@ -93,3 +93,25 @@ class TestLegoPalette:
         """Test palette length."""
         palette = LegoPalette.load_default()
         assert len(palette) >= 40  # At least 40 colors in official palette
+
+
+class TestKitColorsInPalette:
+    """Cross-file rule 5: the palette holds every kit color with a unique RGB."""
+
+    def test_bright_bluish_green_present(self):
+        palette = LegoPalette.load_default()
+        c = palette.get_by_id(107)
+        assert c is not None
+        assert c.name == "Bright Bluish Green"
+        assert c.rgb == (0, 143, 155)
+        assert c.hex == "#008F9B"
+
+    def test_every_kit_color_in_palette_with_unique_rgb(self):
+        from lego_image_processor.kit import load_kit_colors
+        palette = LegoPalette.load_default()
+        rgbs = [c.rgb for c in palette.colors]
+        for kc in load_kit_colors():
+            c = palette.get_by_id(kc.lego.id)
+            assert c is not None, kc.key
+            assert c.name == kc.lego.name
+            assert rgbs.count(c.rgb) == 1, kc.key

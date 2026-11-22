@@ -18,19 +18,28 @@
 - **Single project**: `cli/src/`, `cli/tests/` at repository root
 - Paths shown below follow the single CLI package structure from plan.md
 
+> **Status (checked 2026-11-21, during feature 003):** US1 (`quantize`) and US2 (`stats`) are
+> built and tested; tasks marked [X] were checked against the code and tests. Some landed under
+> other names: `LegoColor`/`LegoPalette` in `palette/loader.py`, `delta_e_2000` in
+> `core/color_quantizer.py`, image I/O as `load_image`/`save_image` functions, the quantize and
+> stats CLI tests in `tests/integration/test_cli.py`, the quantize workflow test in
+> `tests/integration/test_quantization_pipeline.py`, stats JSON/text rendering in `cli/stats.py`
+> (`--json`, `--top`). Unchecked US1/US2 tasks (for example `--quiet`, `--force`, collision
+> prompts, `--sort-by`, `--output`, size limits) were not built. US3 (batch) is not built.
+
 ## Phase 1: Setup (Project Initialization)
 
 **Purpose**: Initialize Python CLI package structure and dependencies
 
-- [ ] T001 Create cli/ directory structure per plan.md (src/lego_image_processor/, tests/)
-- [ ] T002 Initialize Poetry project with pyproject.toml in cli/ directory
-- [ ] T003 [P] Add dependencies to pyproject.toml (Pillow, NumPy, scikit-image, Click, tqdm)
+- [X] T001 Create cli/ directory structure per plan.md (src/lego_image_processor/, tests/)
+- [X] T002 Initialize Poetry project with pyproject.toml in cli/ directory
+- [X] T003 [P] Add dependencies to pyproject.toml (Pillow, NumPy, scikit-image, Click, tqdm)
 - [ ] T004 [P] Add dev dependencies to pyproject.toml (pytest, pytest-benchmark, black, mypy, ruff)
-- [ ] T005 [P] Create cli/src/lego_image_processor/__init__.py with version info
-- [ ] T006 [P] Create cli/README.md with installation and usage overview
+- [X] T005 [P] Create cli/src/lego_image_processor/__init__.py with version info
+- [X] T006 [P] Create cli/README.md with installation and usage overview
 - [ ] T007 [P] Create cli/LICENSE file (MIT or Apache 2.0)
 - [ ] T008 [P] Create cli/CONTRIBUTING.md with development guidelines
-- [ ] T009 [P] Create .gitignore for Python project (node_modules, __pycache__, dist/, .env, etc.)
+- [X] T009 [P] Create .gitignore for Python project (node_modules, __pycache__, dist/, .env, etc.)
 
 ---
 
@@ -40,14 +49,14 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T010 Create LEGO color palette JSON data file at cli/src/lego_image_processor/palette/lego_colors.json
-- [ ] T011 [P] Implement LegoColor dataclass in cli/src/lego_image_processor/palette/__init__.py
-- [ ] T012 [P] Implement LegoPalette dataclass in cli/src/lego_image_processor/palette/__init__.py
-- [ ] T013 Implement palette loader in cli/src/lego_image_processor/palette/loader.py
-- [ ] T014 [P] Implement RGB to LAB color space converter in cli/src/lego_image_processor/palette/converter.py
-- [ ] T015 [P] Implement Delta E 2000 color distance calculator in cli/src/lego_image_processor/core/color_distance.py
+- [X] T010 Create LEGO color palette JSON data file at cli/src/lego_image_processor/palette/lego_colors.json
+- [X] T011 [P] Implement LegoColor dataclass in cli/src/lego_image_processor/palette/__init__.py
+- [X] T012 [P] Implement LegoPalette dataclass in cli/src/lego_image_processor/palette/__init__.py
+- [X] T013 Implement palette loader in cli/src/lego_image_processor/palette/loader.py
+- [X] T014 [P] Implement RGB to LAB color space converter in cli/src/lego_image_processor/palette/converter.py
+- [X] T015 [P] Implement Delta E 2000 color distance calculator in cli/src/lego_image_processor/core/color_distance.py
 - [ ] T016 [P] Create CLI entry point module at cli/src/lego_image_processor/__main__.py
-- [ ] T017 [P] Set up Click command group structure in cli/src/lego_image_processor/cli/__init__.py
+- [X] T017 [P] Set up Click command group structure in cli/src/lego_image_processor/cli/__init__.py
 - [ ] T018 Create test fixtures directory at cli/tests/integration/fixtures/ with sample satellite images
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
@@ -64,18 +73,18 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T019 [P] [US1] Write contract test for quantize command in cli/tests/contract/test_quantize_contract.py
-- [ ] T020 [P] [US1] Write integration test for image-to-LEGO workflow in cli/tests/integration/test_image_to_lego_workflow.py
-- [ ] T021 [P] [US1] Write unit test for image loader in cli/tests/unit/test_image_loader.py
-- [ ] T022 [P] [US1] Write unit test for color quantizer in cli/tests/unit/test_color_quantizer.py
-- [ ] T023 [P] [US1] Write unit test for image writer in cli/tests/unit/test_image_writer.py
+- [X] T019 [P] [US1] Write contract test for quantize command in cli/tests/contract/test_quantize_contract.py
+- [X] T020 [P] [US1] Write integration test for image-to-LEGO workflow in cli/tests/integration/test_image_to_lego_workflow.py
+- [X] T021 [P] [US1] Write unit test for image loader in cli/tests/unit/test_image_loader.py
+- [X] T022 [P] [US1] Write unit test for color quantizer in cli/tests/unit/test_color_quantizer.py
+- [X] T023 [P] [US1] Write unit test for image writer in cli/tests/unit/test_image_writer.py
 
 ### Implementation for User Story 1
 
-- [ ] T024 [P] [US1] Implement InputImage dataclass and from_file() method in cli/src/lego_image_processor/core/image_loader.py
-- [ ] T025 [P] [US1] Implement QuantizedImage dataclass and save() method in cli/src/lego_image_processor/core/image_writer.py
-- [ ] T026 [US1] Implement ColorQuantizer class with quantize() method in cli/src/lego_image_processor/core/color_quantizer.py
-- [ ] T027 [US1] Implement quantize CLI command in cli/src/lego_image_processor/cli/quantize.py with Click decorators
+- [X] T024 [P] [US1] Implement InputImage dataclass and from_file() method in cli/src/lego_image_processor/core/image_loader.py
+- [X] T025 [P] [US1] Implement QuantizedImage dataclass and save() method in cli/src/lego_image_processor/core/image_writer.py
+- [X] T026 [US1] Implement ColorQuantizer class with quantize() method in cli/src/lego_image_processor/core/color_quantizer.py
+- [X] T027 [US1] Implement quantize CLI command in cli/src/lego_image_processor/cli/quantize.py with Click decorators
 - [ ] T028 [US1] Add input validation (file exists, format check, size limits) to quantize command
 - [ ] T029 [US1] Add progress feedback with tqdm in quantize command
 - [ ] T030 [US1] Add --verbose and --quiet flags to quantize command
@@ -97,16 +106,16 @@
 
 ### Tests for User Story 2 (TDD - Write FIRST, Ensure FAIL)
 
-- [ ] T036 [P] [US2] Write contract test for stats command in cli/tests/contract/test_stats_contract.py
-- [ ] T037 [P] [US2] Write unit test for color statistics calculator in cli/tests/unit/test_color_stats.py
+- [X] T036 [P] [US2] Write contract test for stats command in cli/tests/contract/test_stats_contract.py
+- [X] T037 [P] [US2] Write unit test for color statistics calculator in cli/tests/unit/test_color_stats.py
 
 ### Implementation for User Story 2
 
 - [ ] T038 [P] [US2] Implement ColorUsage dataclass in cli/src/lego_image_processor/analysis/color_stats.py
-- [ ] T039 [P] [US2] Implement ColorStatistics dataclass with from_quantized_image() method in cli/src/lego_image_processor/analysis/color_stats.py
-- [ ] T040 [US2] Implement to_json() method for ColorStatistics in cli/src/lego_image_processor/analysis/color_stats.py
-- [ ] T041 [US2] Implement to_human_readable() method for ColorStatistics in cli/src/lego_image_processor/analysis/color_stats.py
-- [ ] T042 [US2] Implement stats CLI command in cli/src/lego_image_processor/cli/stats.py
+- [X] T039 [P] [US2] Implement ColorStatistics dataclass with from_quantized_image() method in cli/src/lego_image_processor/analysis/color_stats.py
+- [X] T040 [US2] Implement to_json() method for ColorStatistics in cli/src/lego_image_processor/analysis/color_stats.py
+- [X] T041 [US2] Implement to_human_readable() method for ColorStatistics in cli/src/lego_image_processor/analysis/color_stats.py
+- [X] T042 [US2] Implement stats CLI command in cli/src/lego_image_processor/cli/stats.py
 - [ ] T043 [US2] Add --format flag (text/json) to stats command
 - [ ] T044 [US2] Add --output flag to save statistics to file
 - [ ] T045 [US2] Add --sort-by flag (frequency/name/color_id) to stats command
@@ -153,8 +162,8 @@
 - [ ] T061 [P] Add type hints throughout codebase and run mypy validation
 - [ ] T062 [P] Run black formatter on all Python files
 - [ ] T063 [P] Run ruff linter and fix any issues
-- [ ] T064 [P] Create cli/tests/unit/test_palette_loader.py for palette loading edge cases
-- [ ] T065 [P] Create cli/tests/unit/test_color_distance.py for Delta E accuracy validation
+- [X] T064 [P] Create cli/tests/unit/test_palette_loader.py for palette loading edge cases
+- [X] T065 [P] Create cli/tests/unit/test_color_distance.py for Delta E accuracy validation
 - [ ] T066 [P] Add performance benchmarks using pytest-benchmark for 1024x1024 image processing
 - [ ] T067 Update cli/README.md with complete usage examples from quickstart.md
 - [ ] T068 [P] Add LEGO disclaimer to CLI help text and README

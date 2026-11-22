@@ -56,10 +56,10 @@ class TestLayoutGenerator:
         grid = generator.generate(image, source_filename="test.png")
 
         # Count by part type
-        brick_count = sum(1 for p in grid.positions if p.part_type == "brick")
+        plate_count = sum(1 for p in grid.positions if p.part_type == "plate")
         tile_count = sum(1 for p in grid.positions if p.part_type == "tile")
 
-        assert brick_count == 3062
+        assert plate_count == 3062
         assert tile_count == 7178
 
     def test_generate_position_coordinates(self, generator, palette):
@@ -191,8 +191,37 @@ class TestLayoutGenerator:
         for pos in grid.positions:
             expected_is_land = land_sea_mask.is_land(pos.x, pos.y)
             if expected_is_land:
-                assert pos.part_type == "brick", f"Position ({pos.x}, {pos.y}) should be brick"
-                assert pos.lego_part_id == "3062b"
+                assert pos.part_type == "plate", f"Position ({pos.x}, {pos.y}) should be plate"
+                assert pos.lego_part_id == "6141"
             else:
                 assert pos.part_type == "tile", f"Position ({pos.x}, {pos.y}) should be tile"
                 assert pos.lego_part_id == "98138"
+
+
+# --- US3 (feature 003): kit color keys and corrected parts (T064, FR-020) ----------------------
+
+class TestGeneratorKitLabels:
+
+    def test_positions_carry_kit_color_keys_and_corrected_parts(self):
+        from lego_image_processor.kit import load_kit_color_table
+        palette = LegoPalette.load_default()
+        mask = load_land_sea_mask()
+        table = load_kit_color_table()
+        kit_colors = list(table.colors)
+        image = Image.new("RGB", (128, 80))
+        for y in range(80):
+            for x in range(128):
+                c = kit_colors[(x + y) % len(kit_colors)]
+                image.putpixel((x, y), palette.get_by_name(c.lego.name).rgb)
+        grid = LayoutGenerator(palette=palette, land_sea_mask=mask).generate(image, "k.png")
+        keys = {c.key: c for c in kit_colors}
+        for pos in grid.positions:
+            c = kit_colors[(pos.x + pos.y) % len(kit_colors)]
+            assert pos.color_id == c.key
+            assert pos.color_name == keys[pos.color_id].lego.name
+            assert pos.lego_color_code == str(c.lego.id)
+            if mask.is_land(pos.x, pos.y):
+                assert (pos.part_type, pos.lego_part_id) == ("plate", "6141")
+            else:
+                assert (pos.part_type, pos.lego_part_id) == ("tile", "98138")
+        assert grid.schema_version == "2.0"

@@ -15,12 +15,12 @@ class TestLayoutStatistics:
         """Test creating layout statistics."""
         stats = LayoutStatistics(
             total_tile_count=10240,
-            land_brick_count=3062,
+            land_plate_count=3062,
             ocean_tile_count=7178,
             unique_colors=12,
             color_frequency={"lego_blue_medium": 2400, "lego_green": 1850},
             color_frequency_by_part_type={
-                "brick": {"lego_green": 1500},
+                "plate": {"lego_green": 1500},
                 "tile": {"lego_blue_medium": 2400}
             },
             most_common_color={
@@ -31,7 +31,7 @@ class TestLayoutStatistics:
             coverage_percentage=100.0
         )
         assert stats.total_tile_count == 10240
-        assert stats.land_brick_count == 3062
+        assert stats.land_plate_count == 3062
         assert stats.ocean_tile_count == 7178
         assert stats.unique_colors == 12
         assert stats.coverage_percentage == 100.0
@@ -40,12 +40,12 @@ class TestLayoutStatistics:
         """Test converting statistics to dictionary."""
         stats = LayoutStatistics(
             total_tile_count=100,
-            land_brick_count=30,
+            land_plate_count=30,
             ocean_tile_count=70,
             unique_colors=5,
             color_frequency={"lego_blue": 50, "lego_green": 30},
             color_frequency_by_part_type={
-                "brick": {"lego_green": 30},
+                "plate": {"lego_green": 30},
                 "tile": {"lego_blue": 50}
             },
             most_common_color={
@@ -57,7 +57,7 @@ class TestLayoutStatistics:
         )
         result = stats.to_dict()
         assert result["total_tile_count"] == 100
-        assert result["land_brick_count"] == 30
+        assert result["land_plate_count"] == 30
         assert result["ocean_tile_count"] == 70
         assert result["unique_colors"] == 5
         assert result["coverage_percentage"] == 100.0
@@ -81,11 +81,11 @@ class TestPositionPlacementGrid:
             ),
             PositionPlacement(
                 x=0, y=1, color_id="lego_green", color_name="Green",
-                lego_color_code="28", part_type="brick", lego_part_id="3062b"
+                lego_color_code="28", part_type="plate", lego_part_id="6141"
             ),
             PositionPlacement(
                 x=1, y=1, color_id="lego_green", color_name="Green",
-                lego_color_code="28", part_type="brick", lego_part_id="3062b"
+                lego_color_code="28", part_type="plate", lego_part_id="6141"
             ),
         ]
         return positions
@@ -106,7 +106,7 @@ class TestPositionPlacementGrid:
         assert grid.unique_colors == 2
         assert grid.coordinate_system == "top_left_origin"
         assert grid.source_image == "test.png"
-        assert grid.schema_version == "1.0"
+        assert grid.schema_version == "2.0"
 
     def test_get_position(self, sample_positions):
         """Test retrieving a position by coordinates."""
@@ -147,13 +147,13 @@ class TestPositionPlacementGrid:
         )
         stats = grid.compute_statistics()
         assert stats.total_tile_count == 4
-        assert stats.land_brick_count == 2
+        assert stats.land_plate_count == 2
         assert stats.ocean_tile_count == 2
         assert stats.unique_colors == 2
         assert stats.coverage_percentage == 100.0
         assert stats.color_frequency["lego_blue"] == 2
         assert stats.color_frequency["lego_green"] == 2
-        assert stats.color_frequency_by_part_type["brick"]["lego_green"] == 2
+        assert stats.color_frequency_by_part_type["plate"]["lego_green"] == 2
         assert stats.color_frequency_by_part_type["tile"]["lego_blue"] == 2
 
     def test_to_json(self, sample_positions):
@@ -174,7 +174,10 @@ class TestPositionPlacementGrid:
         assert data["metadata"]["land_positions"] == 2
         assert data["metadata"]["ocean_positions"] == 2
         assert data["metadata"]["coordinate_system"] == "top_left_origin"
-        assert data["metadata"]["schema_version"] == "1.0"
+        assert data["metadata"]["schema_version"] == "2.0"
+        assert data["metadata"]["disclaimer"] == "Not affiliated with or endorsed by The LEGO Group."
+        assert "land_plate_count" in data["statistics"]
+        assert set(data["statistics"]["color_frequency_by_part_type"]) == {"plate", "tile"}
 
         assert len(data["positions"]) == 4
 
@@ -256,3 +259,36 @@ class TestPositionPlacementGrid:
         positions.clear()
         # Original grid should not be affected
         assert len(grid.positions) == 4
+
+
+class TestSchemaVersion:
+    """Layout format 2.0 and rejection of older layouts (FR-009, US3-4)."""
+
+    @staticmethod
+    def _layout_json(version):
+        metadata = {"width": 1, "height": 1, "source_image": "x.png",
+                    "generated_at": "2026-11-21T00:00:00Z"}
+        if version is not None:
+            metadata["schema_version"] = version
+        return json.dumps({"metadata": metadata, "positions": [
+            {"x": 0, "y": 0, "color_id": "lego_earth_blue", "color_name": "Earth Blue",
+             "lego_color_code": "140", "part_type": "tile", "lego_part_id": "98138"}]})
+
+    def test_current_version_constant(self):
+        from lego_image_processor.layout.grid import CURRENT_SCHEMA_VERSION
+        assert CURRENT_SCHEMA_VERSION == "2.0"
+
+    def test_accepts_2_0(self):
+        grid = PositionPlacementGrid.from_json(self._layout_json("2.0"))
+        assert grid.schema_version == "2.0"
+
+    @pytest.mark.parametrize("version,shown", [("1.0", "1.0"), (None, "(missing)"), ("3.0", "3.0")])
+    def test_rejects_other_versions(self, version, shown):
+        from lego_image_processor.layout.grid import LayoutSchemaError
+        with pytest.raises(LayoutSchemaError) as info:
+            PositionPlacementGrid.from_json(self._layout_json(version))
+        msg = str(info.value)
+        assert f"Layout schema version {shown} is no longer supported" in msg
+        assert "6141" in msg
+        assert "lego-image-processor layout <image> -o <layout.json>" in msg
+        assert isinstance(info.value, ValueError)

@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 from functools import lru_cache
 from pathlib import Path
-from typing import Set, Tuple
+from typing import Optional, Set, Tuple
+
+from .position import LAND_PART_ID, LAND_PART_TYPE, OCEAN_PART_ID, OCEAN_PART_TYPE
 
 
 # Land/sea mask shipped with the package (runtime reference data)
@@ -13,10 +15,11 @@ MASK_PATH = Path(__file__).parent.parent / "data" / "lego_world_map_land_sea_mas
 
 
 class LandSeaMask:
-    """Binary classification of grid positions into land (bricks) or ocean (tiles).
+    """Binary classification of grid positions into land (plates) or ocean (tiles).
 
-    Extracted from official LEGO World Map kit 31203 instruction manual.
-    This classification is constant across all custom maps - only colors vary.
+    Derived from the official design of kit 31203 (white positions are land), which the
+    maintainer tool extracts from the pinned instructions PDF. This classification is constant
+    across all custom maps - only colors vary.
 
     Attributes:
         width: Mask width in positions (128)
@@ -36,7 +39,8 @@ class LandSeaMask:
         height: int,
         land_positions: Set[Tuple[int, int]],
         source: str,
-        extracted_date: str
+        extracted_date: str,
+        derived_from: Optional[str] = None,
     ):
         """Initialize land/sea mask.
 
@@ -44,14 +48,16 @@ class LandSeaMask:
             width: Mask width in positions
             height: Mask height in positions
             land_positions: Set of (x, y) coordinates that are land
-            source: Extraction source reference
-            extracted_date: Extraction date
+            source: Extraction source reference (URL of the pinned instructions PDF)
+            extracted_date: Extraction date (YYYY-MM-DD)
+            derived_from: Design file the mask was derived from, if any
         """
         self._width = width
         self._height = height
         self._land_positions = land_positions
         self._source = source
         self._extracted_date = extracted_date
+        self._derived_from = derived_from
 
         # Compute counts
         self._land_count = len(land_positions)
@@ -107,6 +113,11 @@ class LandSeaMask:
         """Extraction date."""
         return self._extracted_date
 
+    @property
+    def derived_from(self) -> Optional[str]:
+        """Design file the mask was derived from (``kit_31203_design.json``)."""
+        return self._derived_from
+
     def is_land(self, x: int, y: int) -> bool:
         """Check if position (x, y) is land.
 
@@ -135,9 +146,9 @@ class LandSeaMask:
             y: Y coordinate
 
         Returns:
-            'brick' for land, 'tile' for ocean
+            'plate' for land, 'tile' for ocean
         """
-        return "brick" if self.is_land(x, y) else "tile"
+        return LAND_PART_TYPE if self.is_land(x, y) else OCEAN_PART_TYPE
 
     def get_lego_part_id(self, x: int, y: int) -> str:
         """Get LEGO part ID for position.
@@ -147,9 +158,9 @@ class LandSeaMask:
             y: Y coordinate
 
         Returns:
-            '3062b' for land (round brick), '98138' for ocean (flat tile)
+            '6141' for land (1x1 round plate), '98138' for ocean (1x1 round tile)
         """
-        return "3062b" if self.is_land(x, y) else "98138"
+        return LAND_PART_ID if self.is_land(x, y) else OCEAN_PART_ID
 
 
 @lru_cache(maxsize=1)
@@ -197,15 +208,21 @@ def load_land_sea_mask(mask_path: str = None) -> LandSeaMask:
             f"got {len(land_positions)}"
         )
 
-    # Get metadata
-    source = data.get("source", "LEGO World Map kit 31203 instruction manual")
-    # Handle both possible field names for the date
-    extracted_date = data.get("extracted_date", data.get("extraction_date", ""))
+    # Provenance: a ``source`` block (url, generated_on, ...). The old free-text form is still
+    # accepted for the date during the transition (contracts/data-files.md).
+    raw_source = data.get("source")
+    if isinstance(raw_source, dict):
+        source = raw_source.get("url", "")
+        extracted_date = raw_source.get("generated_on", "")
+    else:
+        source = raw_source or "LEGO World Map kit 31203 instruction manual"
+        extracted_date = data.get("extracted_date", data.get("extraction_date", ""))
 
     return LandSeaMask(
         width=width,
         height=height,
         land_positions=land_positions,
         source=source,
-        extracted_date=extracted_date
+        extracted_date=extracted_date,
+        derived_from=data.get("derived_from"),
     )

@@ -39,8 +39,16 @@ into a buildable mosaic. A map is a land layer plus an ocean layer, each either 
 shaded background, described by a recipe file. Read `docs/vision.md` before planning a feature; the
 rules are in `.specify/memory/constitution.md`.
 
-The land and ocean part IDs and the kit inventory in `data/` are not yet verified against a cited
-source (feature 003); do not rely on them for purchasing.
+The kit reference data in `cli/src/lego_image_processor/data/` is cited (feature 003, see
+`specs/003-kit-reference-data/` and each data file's `source` block). Land is the white 1×1 round
+plate, part 6141 (element 614101); ocean is the 1×1 round tile, part 98138, in 9 colors. The parts
+inventory (`kit_31203_inventory.json`, page 159) and the official design
+(`kit_31203_design.json`, 40 section pages) are extracted from the official building instructions
+PDF pinned by URL and SHA-256; the 10 colors' LEGO, BrickLink and Rebrickable names and IDs
+(`kit_colors.json`) come from the cited catalogs. Never commit the PDF or crops of it. To
+regenerate or check the data, from `cli/`: `poetry install --with maintainer`, then
+`PYTHONPATH=tools poetry run python -m kit31203 extract --check` (add `--pdf <local copy>` to skip
+the download; exit 0 and "no differences" means the committed data is reproducible).
 
 1. **Python CLI** (`cli/`, package `lego_image_processor`), written to be released as open source.
    This is the only part that exists today.

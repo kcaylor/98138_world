@@ -48,22 +48,22 @@ class TestColorUnavailableViolation:
     def test_create_violation(self):
         """Test creating a color unavailable violation."""
         violation = ColorUnavailableViolation(
-            part_type="brick",
-            part_id="3062b",
+            part_type="plate",
+            part_id="6141",
             color_id="lego_purple",
             color_name="Purple",
             positions_required=100
         )
         assert violation.type == "color_unavailable"
-        assert violation.part_type == "brick"
+        assert violation.part_type == "plate"
         assert violation.positions_required == 100
 
     def test_to_dict(self):
         """Test converting violation to dictionary."""
         suggestion = ColorSuggestion("lego_white", "White", 15.0)
         violation = ColorUnavailableViolation(
-            part_type="brick",
-            part_id="3062b",
+            part_type="plate",
+            part_id="6141",
             color_id="lego_purple",
             color_name="Purple",
             positions_required=100,
@@ -236,3 +236,96 @@ class TestLayoutValidator:
 
         assert report.validated_at is not None
         assert "T" in report.validated_at  # ISO format
+
+
+# --- US3 (feature 003): validation against the real kit (T061) ---------------------------------
+
+from lego_image_processor.core.color_quantizer import delta_e_2000
+from lego_image_processor.kit import load_kit_color_table
+from lego_image_processor.layout.grid import DISCLAIMER, PositionPlacementGrid
+from lego_image_processor.layout.position import PositionPlacement
+import numpy as np
+from lego_image_processor.palette.converter import rgb_to_lab
+
+
+def _pos(x, palette_color, part_type):
+    part_id = "6141" if part_type == "plate" else "98138"
+    key = "lego_" + palette_color.name.lower().replace(" ", "_").replace("-", "_")
+    return PositionPlacement(x=x, y=0, color_id=key, color_name=palette_color.name,
+                             lego_color_code=str(palette_color.id), part_type=part_type,
+                             lego_part_id=part_id)
+
+
+def _grid(positions):
+    return PositionPlacementGrid(width=len(positions), height=1, positions=positions,
+                                 source_image="test.png")
+
+
+class TestValidatorAgainstRealKit:
+    """US3-2, US3-3, FR-018, FR-019: colors per part, real quantities, CIEDE2000 suggestions."""
+
+    @pytest.fixture
+    def palette(self):
+        return LegoPalette.load_default()
+
+    @pytest.fixture
+    def validator(self, palette):
+        return LayoutValidator(kit_spec=load_kit_specification("31203"), palette=palette)
+
+    def _expected_nearest(self, palette_color, role):
+        target = rgb_to_lab(np.array(palette_color.rgb, dtype=np.float64))
+        best = None
+        for c in load_kit_color_table().colors:
+            if c.role != role:
+                continue
+            d = float(delta_e_2000(target, rgb_to_lab(np.array(c.rgb, dtype=np.float64))))
+            if best is None or d < best[1]:
+                best = (c.key, d)
+        return best
+
+    def test_ocean_non_kit_color_named_with_part_count_and_ciede2000_suggestion(
+            self, validator, palette):
+        bright_blue = palette.get_by_name("Bright Blue")
+        earth_blue = palette.get_by_name("Earth Blue")
+        layout = _grid([_pos(0, bright_blue, "tile"), _pos(1, bright_blue, "tile"),
+                        _pos(2, bright_blue, "tile"), _pos(3, earth_blue, "tile")])
+        report = validator.validate(layout, layout_file="t.json")
+        (v,) = [v for v in report.violations if v.type == "color_unavailable"]
+        assert v.color_id == "lego_bright_blue"
+        assert v.color_name == "Bright Blue"
+        assert (v.part_type, v.part_id) == ("tile", "98138")
+        assert v.positions_required == 3
+        key, dist = self._expected_nearest(bright_blue, "ocean")
+        assert v.suggested_alternative.color_id == key
+        assert v.suggested_alternative.color_id != "lego_white"
+        assert v.suggested_alternative.color_distance == pytest.approx(dist, abs=1e-6)
+
+    def test_ocean_suggestion_is_always_an_ocean_kit_color(self, validator, palette):
+        ocean_keys = {c.key for c in load_kit_color_table().colors if c.role == "ocean"}
+        # Light colors whose nearest kit color overall could be White
+        for name in ("Light Stone Grey", "Aqua", "White Glow", "Cool Yellow"):
+            layout = _grid([_pos(0, palette.get_by_name(name), "tile")])
+            (v,) = validator.validate(layout, layout_file="t.json").violations
+            assert v.suggested_alternative.color_id in ocean_keys, name
+
+    def test_land_non_white_color_suggests_only_white(self, validator, palette):
+        for name in ("Earth Blue", "Black", "Bright Red", "Medium Azur"):
+            layout = _grid([_pos(0, palette.get_by_name(name), "plate")])
+            (v,) = validator.validate(layout, layout_file="t.json").violations
+            assert v.type == "color_unavailable"
+            assert (v.part_type, v.part_id) == ("plate", "6141")
+            assert v.suggested_alternative.color_id == "lego_white"
+
+    def test_overuse_reports_required_available_shortfall_from_inventory(self, validator, palette):
+        earth_blue = palette.get_by_name("Earth Blue")
+        layout = _grid([_pos(x, earth_blue, "tile") for x in range(400)])
+        (v,) = validator.validate(layout, layout_file="t.json").violations
+        assert isinstance(v, QuantityExceededViolation)
+        assert (v.positions_required, v.kit_quantity, v.shortfall) == (400, 393, 7)
+        assert (v.part_type, v.part_id) == ("tile", "98138")
+
+    def test_report_dict_has_disclaimer(self, validator, palette):
+        layout = _grid([_pos(0, palette.get_by_name("White"), "plate")])
+        report = validator.validate(layout, layout_file="t.json")
+        assert report.to_dict()["disclaimer"] == DISCLAIMER
+        assert report.buildable

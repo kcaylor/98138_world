@@ -15,6 +15,7 @@
     {"id": 38, "name": "Dark Orange", "rgb": [168, 61, 21], "hex": "#A83D15"},
     {"id": 102, "name": "Medium Blue", "rgb": [71, 140, 198], "hex": "#478CC6"},
     {"id": 106, "name": "Bright Orange", "rgb": [231, 99, 24], "hex": "#E76318"},
+    {"id": 107, "name": "Bright Bluish Green", "rgb": [0, 143, 155], "hex": "#008F9B", "source": "Rebrickable colors.csv (Dark Turquoise, id 3), https://cdn.rebrickable.com/media/downloads/colors.csv.gz, accessed 2026-11-21"},
     {"id": 119, "name": "Bright Yellowish Green", "rgb": [149, 185, 11], "hex": "#95B90B"},
     {"id": 124, "name": "Bright Reddish Violet", "rgb": [146, 57, 120], "hex": "#923978"},
     {"id": 135, "name": "Sand Blue", "rgb": [116, 134, 156], "hex": "#74869C"},

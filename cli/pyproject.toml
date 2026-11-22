@@ -23,11 +23,20 @@ pytest = "^7.4.0"
 pytest-benchmark = "^4.0.0"
 pytest-cov = "^4.1.0"
 
+# Maintainer-only tools (cli/tools/kit31203). Not needed to use the package:
+#   poetry install --with maintainer
+[tool.poetry.group.maintainer]
+optional = true
+
+[tool.poetry.group.maintainer.dependencies]
+pypdf = ">=5"
+
 [tool.poetry.scripts]
 lego-image-processor = "lego_image_processor.cli.main:cli"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["tools"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

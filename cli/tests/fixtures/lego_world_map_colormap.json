@@ -5,16 +5,16 @@
     "height": 80
   },
   "color_legend": {
-    "1": "White brick (land)",
-    "2": "Dark blue tile",
-    "3": "Cyan tile",
-    "4": "Teal tile",
-    "5": "Green tile",
-    "6": "Yellow-green tile",
-    "7": "Tan tile",
-    "8": "Orange tile",
-    "9": "Orange-red tile",
-    "10": "Pink/magenta tile"
+    "1": "lego_white",
+    "2": "lego_earth_blue",
+    "3": "lego_medium_azur",
+    "4": "lego_bright_bluish_green",
+    "5": "lego_bright_green",
+    "6": "lego_bright_yellowish_green",
+    "7": "lego_brick_yellow",
+    "8": "lego_flame_yellowish_orange",
+    "9": "lego_bright_orange",
+    "10": "lego_vibrant_coral"
   },
   "colormap_2d": [
     [
@@ -10417,5 +10417,6 @@
       8,
       6
     ]
-  ]
+  ],
+  "color_legend_note": "Legend values are kit color keys from src/lego_image_processor/data/kit_colors.json, relabeled from the former ad hoc labels (Dark blue, Cyan, Teal, Green, Yellow-green, Tan, Orange, Orange-red, Pink/magenta). Grid values are unchanged from the earlier hand extraction and do not match the official design's per-color counts; the authoritative design is kit_31203_design.json (feature 003, user story 2)."
 }

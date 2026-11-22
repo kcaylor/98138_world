@@ -1,0 +1,18 @@
+"""Kit 31203 reference data: inventory, color table and the official design.
+
+All loaders read package data only (no network, no API keys).
+Not affiliated with or endorsed by The LEGO Group.
+"""
+
+from .colors import CatalogColor, KitColor, KitColorTable, load_kit_color_table, load_kit_colors
+from .design import ColorCount, DesignGrid, Section, load_official_design
+from .inventory import KitElement, KitInventory, UnsupportedKitError, load_kit_inventory
+from .source import DISCLAIMER, Citation, SourceDocument
+
+__all__ = [
+    "SourceDocument", "Citation", "DISCLAIMER",
+    "CatalogColor", "KitColor", "KitColorTable", "load_kit_colors", "load_kit_color_table",
+    "KitElement", "KitInventory", "load_kit_inventory",
+    "Section", "DesignGrid", "ColorCount", "load_official_design",
+    "UnsupportedKitError",
+]
