@@ -10,8 +10,8 @@
   <ul class="gallery">
   {% for m in maps %}
     <li class="card">
-      <a href="/maps/{{ m.id }}/A" class="card-link">
-        <img src="/maps/{{ m.id }}/A/thumb.png" width="384" height="240" alt="Stud preview of the {{ m.title }} map" class="stud-img">
+      <a href="/maps/{{ m.id }}/{{ m.default_combination }}" class="card-link">
+        <img src="/maps/{{ m.id }}/{{ m.default_combination }}/thumb.png" width="384" height="240" alt="Stud preview of the {{ m.title }} map" class="stud-img">
         <span class="card-body">
           <span class="card-title">{{ m.title }}</span>
           <span class="card-text">{{ m.description }}</span>

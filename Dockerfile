@@ -24,8 +24,8 @@ RUN pip install --no-deps ./cli \
 # Optional: record the source commit in the manifest (fly deploy --build-arg GIT_COMMIT=...).
 ARG GIT_COMMIT=""
 ENV GIT_COMMIT=${GIT_COMMIT}
-# Downloads the two pinned public datasets (~10.5 MB, SHA-256 verified), then builds
-# 4 maps x 3 combinations (~75 MB, ~30 s, peak ~400 MB RAM on the builder).
+# Downloads the four pinned public datasets (~10.8 MB, SHA-256 verified), then builds
+# 6 maps x 3 combinations (~110 MB, ~45 s, peak ~400 MB RAM on the builder).
 RUN python -m web98138.prebuild --fetch --out /site
 
 FROM ${PYTHON_IMAGE} AS runtime

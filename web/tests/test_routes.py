@@ -36,8 +36,9 @@ def test_every_page_has_footer_and_basics(client, path):
 def test_home_gallery(client, manifest):
     html = client.get("/").text
     for m in manifest["maps"]:
-        assert f'href="/maps/{m["id"]}/A"' in html
-        assert f'src="/maps/{m["id"]}/A/thumb.png"' in html
+        c = m["default_combination"]
+        assert f'href="/maps/{m["id"]}/{c}"' in html
+        assert f'src="/maps/{m["id"]}/{c}/thumb.png"' in html
         assert escape(m["title"]) in html and escape(m["description"]) in html
 
 
@@ -87,6 +88,17 @@ def test_combination_switcher(client):
 def test_map_root_redirects_to_a(client):
     r = client.get("/maps/ocean-sst", follow_redirects=False)
     assert r.status_code in (302, 307) and r.headers["location"] == "/maps/ocean-sst/A"
+
+
+def test_map_root_redirects_to_recipe_arrangement(client):
+    # feature 009: a recipe's `arrangement` key is the map's default combination on the site
+    r = client.get("/maps/ocean-el-nino", follow_redirects=False)
+    assert r.status_code in (302, 307) and r.headers["location"] == "/maps/ocean-el-nino/B"
+
+
+def test_home_links_default_combination(client):
+    html = client.get("/").text
+    assert 'href="/maps/ocean-el-nino/B"' in html and 'href="/maps/ocean-sst/A"' in html
 
 
 def test_lowercase_combination_redirects(client):

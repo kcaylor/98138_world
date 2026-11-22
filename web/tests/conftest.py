@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 CLI_FIXTURES = Path(__file__).resolve().parents[2] / "cli" / "tests" / "fixtures" / "datasets"
-SMALL_MAPS = ("official-31203", "ocean-sst")
+SMALL_MAPS = ("official-31203", "ocean-sst", "ocean-el-nino")
 
 
 def _sha(p: Path) -> str:
@@ -36,6 +36,10 @@ def fixture_datasets(tmp_path_factory):
             f = CLI_FIXTURES / "ersst_v5_annual_2deg.nc"
             row.update(filename=f.name, size=f.stat().st_size, sha256=_sha(f),
                        variables={"sst": {"units": "degC"}})
+            files[row["id"]] = f
+        elif row["id"] == "ersst-v5-1997-12":  # feature 009: the per-month fixture (int16 ssta)
+            f = CLI_FIXTURES / "ersst_v5_199712_ssta.nc"
+            row.update(filename=f.name, size=f.stat().st_size, sha256=_sha(f))
             files[row["id"]] = f
         elif row["id"] == "etopo2022-surface-10m":
             f = CLI_FIXTURES / "etopo2022_1deg.npy"

@@ -31,6 +31,11 @@ class MapEntry:
     description: str
     data: Dict[str, Any]
 
+    @property
+    def default_combination(self) -> str:
+        """The combination the recipe hangs by default (its ``arrangement`` key; feature 009)."""
+        return self.data.get("default_combination") or "A"
+
     def variant(self, combination: str) -> Optional[Dict[str, Any]]:
         return self.data["variants"].get(combination)
 

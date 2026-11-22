@@ -246,6 +246,7 @@ def build_site(out, maps: Optional[Iterable[str]] = None,
                      "size": e.size} for e in recipe.datasets() if e.kind == "download"]
         rows.append({"id": recipe.id, "title": recipe.title, "description": recipe.description,
                      "recipe": {"format": recipe.format, "sha256": recipe.sha256},
+                     "default_combination": recipe.arrangement.id if recipe.arrangement else "A",
                      "layers": _layers(report), "datasets": datasets,
                      "citations": _citations(report), "variants": variants})
     manifest = {

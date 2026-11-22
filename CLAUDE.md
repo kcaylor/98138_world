@@ -68,10 +68,10 @@ Layout positions use columns as hung and record `metadata.arrangement` (absent =
 --arrangement` computes per-cell values in kit (A) columns and the shadow, halo and mix on the board
 as hung; `layout arrange` re-hangs any layout without recomputing.
 
-The web site (feature 008, see `specs/008-web-app/` and `docs/deploy.md`) shows the four bundled
+The web site (feature 008, see `specs/008-web-app/` and `docs/deploy.md`) shows the six bundled
 maps in combinations A, B and C and offers every build file. `web/` (package `web98138`, FastAPI +
 Jinja2, no JS, no cookies) has two halves: `python -m web98138.prebuild --out DIR [--fetch]` builds
-all 12 variants with the CLI library (`build_map`, `write_preview`, `build_parts_list`, exports,
+all 18 variants with the CLI library (`build_map`, `write_preview`, `build_parts_list`, exports,
 `build_sheet_set`/`render_pdf`) plus `manifest.json` (sizes, SHA-256, tool and dataset versions,
 page data); the service (`web98138.app`, `WEB98138_SITE_DIR=DIR uvicorn web98138.app:app`) only
 serves that output and never imports `lego_image_processor`. The `Dockerfile` (two stages) runs the
