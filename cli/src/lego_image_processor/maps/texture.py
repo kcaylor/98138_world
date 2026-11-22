@@ -5,7 +5,8 @@
   boundary to 0 at the edge of the zone. Rank methods swap cells in pairs across the boundary, so
   class counts never change. No cell moves more than one class.
 - ``mix`` (background layers): Gaussian-smoothed white noise (sigma = ``cluster`` studs) ranked
-  into the colors by weight, giving exact counts and soft patches.
+  into the colors by weight, giving exact counts and soft patches. The smoothing does not wrap
+  across the left and right edges (feature 007: those edges change with the arrangement).
 - ``halo`` (ocean background, amendment 2026-11-22): the base color everywhere; cells within
   ``inner`` studs (Euclidean) of land take the ring color; cells between ``inner`` and ``outer``
   take it on an even Poisson-disk subset (no two closer than ``spacing``), so the ring fades
@@ -72,7 +73,8 @@ def fill_background(mask: np.ndarray, weights: Sequence[float], *, cluster: floa
     rng = np.random.default_rng(seed)
     noise = rng.standard_normal(mask.shape)
     if cluster > 0:
-        noise = ndimage.gaussian_filter(noise, sigma=cluster, mode=("nearest", "wrap"))
+        # No wrap: the left and right edges of the grid as hung are not neighbours (feature 007).
+        noise = ndimage.gaussian_filter(noise, sigma=cluster, mode="nearest")
     idx = np.flatnonzero(mask.ravel())
     order = np.argsort(noise.ravel()[idx], kind="stable")
     counts = largest_remainder(weights, len(idx))

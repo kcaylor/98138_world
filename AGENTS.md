@@ -61,6 +61,13 @@ checksum-pinned Rebrickable, LDraw and BrickLink snapshots) are regenerated with
 `PYTHONPATH=tools python -m partcolors build --check`. Tests use small derived fixtures in
 `cli/tests/fixtures/datasets/` (each with a `.source.json`); never commit downloaded datasets.
 
+The kit's three frames can be hung three ways (feature 007, see `specs/007-map-arrangements/`;
+LEGO 31203 building instructions, pp. 7–8; `data/kit_31203_arrangements.json`): A 1·2·3 (default),
+B 3·1·2 (America centre), C 2·3·1 (Asia and Australia centre), each a cyclic shift of whole frames.
+Layout positions use columns as hung and record `metadata.arrangement` (absent = A). `map build
+--arrangement` computes per-cell values in kit (A) columns and the shadow, halo and mix on the board
+as hung; `layout arrange` re-hangs any layout without recomputing.
+
 1. **Python CLI** (`cli/`, package `lego_image_processor`), written to be released as open source.
    This is the only part that exists today.
 2. **Web application** on Fly.io at 98138.world, planned. It must call the CLI as a library or
@@ -69,7 +76,7 @@ checksum-pinned Rebrickable, LDraw and BrickLink snapshots) are regenerated with
 ### Layout
 
 - `cli/src/lego_image_processor/`: `core/` (image I/O, quantization), `palette/` (LEGO colors,
-  CIEDE2000 matching), `analysis/`, `layout/` (grid, land/sea mask, kit spec, validator), `kit/`
+  CIEDE2000 matching), `analysis/`, `layout/` (grid, land/sea mask, kit spec, validator, frame arrangements; feature 007), `kit/`
   (kit reference data, part colors), `datasets/` (registry, verified cache, readers), `maps/`
   (recipes, projection, reprojection, classification, texture, suitability, build, preview),
   `parts/` (parts lists, cited IDs, marketplace exports; feature 005), `sheets/` (build sheets:

@@ -70,6 +70,11 @@ def check_grid(grid: PositionPlacementGrid, where: str = "layout") -> None:
     if (grid.width, grid.height) != (GRID_WIDTH, GRID_HEIGHT):
         raise LayoutInputError(f"{where}: grid is {grid.width}x{grid.height}, expected "
                                f"{GRID_WIDTH}x{GRID_HEIGHT} (kit 31203)")
+    from ..layout.arrangement import ArrangementError, arrangement_of
+    try:
+        arrangement_of(grid)
+    except ArrangementError as exc:
+        raise LayoutInputError(f"{where}: {exc}")
     seen = set()
     for pos in grid.positions:
         if not (0 <= pos.x < GRID_WIDTH and 0 <= pos.y < GRID_HEIGHT):
@@ -201,6 +206,14 @@ class PartsList:
         return json.dumps(self.to_dict(), indent=2, ensure_ascii=False) + "\n"
 
 
+def _arrangement_block(grid: PositionPlacementGrid) -> Dict[str, Any]:
+    """How the layout's frames are hung (feature 007); the pieces are the same in every one."""
+    from ..layout.arrangement import SAME_PIECES_NOTE, arrangement_of
+
+    a = arrangement_of(grid)
+    return {"id": a.id, "name": a.name, "note": SAME_PIECES_NOTE}
+
+
 def _map_provenance(meta: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     if not meta:
         return None
@@ -295,6 +308,7 @@ def build_parts_list(layout: Union[LayoutInput, PositionPlacementGrid],
         "source_image": grid.source_image,
         "positions": grid.total_positions,
         "map": _map_provenance(grid.map_metadata),
+        "arrangement": _arrangement_block(grid),
     }
     return PartsList(layout=layout_block, owned=owned, lots=lots_t, citations=_citations(lots_t),
                      kit_id=kit_id)

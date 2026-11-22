@@ -20,6 +20,9 @@ A CLI tool that converts images to LEGO-compatible color palettes and generates 
 - **Build sheets** (feature 006): printable section-by-section pages at true scale with numbered
   studs and per-section counts, as a PDF or SVG pages, plus per-section counts JSON (`sheets`
   commands)
+- **Map arrangements** (feature 007): the kit's three frames can be hung in three orders
+  (combination A Europe and Africa in the centre, B America, C Asia and Australia); build any map
+  in any of them (`map build --arrangement`) or re-hang an existing layout (`layout arrange`)
 
 ## Installation
 
@@ -362,6 +365,40 @@ lego-image-processor sheets counts elev.json -o elev-counts.json              # 
 - The pages are drawn from the layout data with circles, lines and text only; no LEGO artwork,
   logo, instruction image or crop is used. Every page carries "Not affiliated with or endorsed
   by The LEGO Group."
+
+### Map arrangements
+
+The kit's board is three frames: 1 America (columns 0–31, sections A–B), 2 Europe & Africa
+(32–95, C–F) and 3 Asia & Australia (96–127, G–H). The instructions show "1 world – 3
+combinations" (LEGO 31203 building instructions, pp. 7–8), and the kit's connector pins join the
+frames in any order:
+
+| Arrangement | Frames, left to right | Centre | Column shift |
+|---|---|---|---|
+| `A` / `europe-africa` (default) | 1 · 2 · 3 | Europe and Africa | 0 |
+| `B` / `americas` | 3 · 1 · 2 | America | +32 |
+| `C` / `asia-australia` | 2 · 3 · 1 | Asia and Australia | −32 |
+
+```bash
+lego-image-processor map build land-elevation --arrangement B -o elev-B.json --preview elev-B.png
+lego-image-processor map check ocean-sst --arrangement asia-australia
+lego-image-processor layout arrange official.json --arrangement C -o official-C.json   # re-hang, no rebuild
+lego-image-processor validate official-C.json        # checks the mask under arrangement C
+lego-image-processor sheets build elev-B.json -o elev-B.pdf
+```
+
+- The grid spans exactly 360° of longitude, so every arrangement is a cyclic shift of whole
+  frames and its seams are geographically continuous.
+- A layout's x is the column as hung; `metadata.arrangement` records the arrangement (schema stays
+  2.0; a layout without it is A). `layout arrange` only moves positions, so arranging back to A
+  restores the original positions exactly.
+- `map build` computes data values and classes as in A and moves them; the land shadow, the
+  coastal halo and `mix` shading are computed on the board as hung, with no wrap at the outer
+  edges, so the shadow is right at the new seam. The `official-31203` recipe in B or C is the
+  official design moved frame by frame.
+- Build sheets label sections A1–H5 as hung, draw the frame boundaries where they fall, name the
+  frames and the combination; each section page names its physical frame and its kit section
+  (the label in the instructions). Parts lists are the same in every arrangement.
 
 ### Python library
 

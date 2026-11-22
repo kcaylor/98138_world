@@ -4,6 +4,10 @@ Labels are a column letter A-H (west to east) and a row number 1-5 (north to sou
 ordered column by column (A1 ... A5, B1 ... H5), the order of the kit's section instruction pages
 recorded by feature 003 in ``kit_31203_design.json``. The instructions' page numbers are used only
 to cite that order; nothing from the instructions is drawn.
+
+Arrangements (feature 007): in combination B or C the frames are hung in another order. Sections
+are then labelled by their position as hung; each keeps the physical frame and the kit section
+label (``kit_label``, its label in the instructions) of the base it is.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -34,6 +38,7 @@ class Section:
     frame: int
     instruction_page: int
     order: int
+    kit_label: str = ""
 
     def contains(self, x: int, y: int) -> bool:
         return self.x_range[0] <= x <= self.x_range[1] and self.y_range[0] <= y <= self.y_range[1]
@@ -56,7 +61,8 @@ def sections() -> Tuple[Section, ...]:
         out.append(Section(label=f"{COLUMNS[s.col]}{s.row + 1}", col=s.col, row=s.row,
                            x_range=(SECTION_SIZE * s.col, SECTION_SIZE * s.col + SECTION_SIZE - 1),
                            y_range=(SECTION_SIZE * s.row, SECTION_SIZE * s.row + SECTION_SIZE - 1),
-                           frame=frame_for_column(s.col), instruction_page=s.page, order=i))
+                           frame=frame_for_column(s.col), instruction_page=s.page, order=i,
+                           kit_label=f"{COLUMNS[s.col]}{s.row + 1}"))
     if [(s.col, s.row) for s in out] != [(c, r) for c in range(N_COLS) for r in range(N_ROWS)]:
         raise ValueError("kit_31203_design.json: section pages do not run column by column")
     if (design.width, design.height) != (GRID_WIDTH, GRID_HEIGHT):
@@ -64,24 +70,54 @@ def sections() -> Tuple[Section, ...]:
     return tuple(out)
 
 
-def section_for(x: int, y: int) -> Section:
+@lru_cache(maxsize=None)
+def _arranged(aid: str) -> Tuple[Section, ...]:
+    from ..layout.arrangement import parse_arrangement
+
+    a = parse_arrangement(aid)
+    if a.column_shift % SECTION_SIZE:
+        raise ValueError(f"arrangement {aid} does not move whole sections")
+    kit = sections()
+    shift = a.column_shift // SECTION_SIZE
+    out = []
+    for c in range(N_COLS):
+        kc = (c - shift) % N_COLS
+        for r in range(N_ROWS):
+            k = kit[kc * N_ROWS + r]
+            out.append(Section(label=f"{COLUMNS[c]}{r + 1}", col=c, row=r,
+                               x_range=(SECTION_SIZE * c, SECTION_SIZE * c + SECTION_SIZE - 1),
+                               y_range=k.y_range, frame=k.frame, instruction_page=k.instruction_page,
+                               order=len(out) + 1, kit_label=k.kit_label))
+    return tuple(out)
+
+
+def arranged_sections(arrangement=None) -> Tuple[Section, ...]:
+    """The 40 sections as hung in ``arrangement`` (default A), labelled by display position, in
+    build order A1 ... H5 as hung."""
+    if arrangement is None or arrangement.column_shift == 0:
+        return sections()
+    return _arranged(arrangement.id)
+
+
+def section_for(x: int, y: int, arrangement=None) -> Section:
     if not (0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT):
         raise ValueError(f"position ({x}, {y}) is outside the {GRID_WIDTH} x {GRID_HEIGHT} grid")
     col, row = x // SECTION_SIZE, y // SECTION_SIZE
-    return sections()[col * N_ROWS + row]
+    return arranged_sections(arrangement)[col * N_ROWS + row]
 
 
-def parse_section_labels(value: Optional[Union[str, Iterable[str]]]) -> Tuple[Section, ...]:
-    """Sections named in ``value`` (comma-separated text or labels), in board order; None = all."""
+def parse_section_labels(value: Optional[Union[str, Iterable[str]]], arrangement=None) -> Tuple[Section, ...]:
+    """Sections named in ``value`` (comma-separated text or labels), in board order; None = all.
+    Labels are positions as hung in ``arrangement`` (default A)."""
     if value is None:
-        return sections()
+        return arranged_sections(arrangement)
     parts = value.split(",") if isinstance(value, str) else list(value)
     labels = [p.strip().upper() for p in parts if p and p.strip()]
     if not labels:
         raise ValueError(f"no section labels given; valid labels are {VALID_RANGE}")
-    by_label = {s.label: s for s in sections()}
+    by_label = {s.label: s for s in arranged_sections(arrangement)}
     unknown = [l for l in dict.fromkeys(labels) if l not in by_label]
     if unknown:
         raise ValueError(f"unknown section label(s) {', '.join(unknown)}; valid labels are {VALID_RANGE}")
     wanted = set(labels)
-    return tuple(s for s in sections() if s.label in wanted)
+    return tuple(s for s in arranged_sections(arrangement) if s.label in wanted)

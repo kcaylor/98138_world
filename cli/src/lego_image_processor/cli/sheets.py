@@ -91,6 +91,9 @@ def build_cmd(layout_path, output, output_format, paper, section_list, title, qu
     lots = f"{t['lots']} lots ({t['verified_lots']} verified"
     lots += f", {t['unverified_lots']} unverified: no cited IDs)" if t["unverified_lots"] else ")"
     click.echo(f"Lots: {lots}; {t['needed']:,} pieces")
+    from ..layout.arrangement import arrangement_of
+    a = arrangement_of(layout.grid)
+    click.echo(f"Arrangement: {a.describe()}; sections labelled as hung")
     click.echo(PRINT_LINE)
     click.echo("Drawn from the layout data only; no LEGO artwork or instruction images.")
     click.echo(DISCLAIMER)
@@ -122,10 +125,13 @@ def counts_cmd(layout_path, output_format, output, quiet):
     if quiet:
         return
     click.echo(f"Section counts for {layout.path} (lot numbers as in the build sheets)")
+    if sc.arrangement != "A":
+        click.echo(f"Arrangement {sc.arrangement}: sections labelled as hung; kit section in brackets")
     for s in sc.sections:
         sec = s.section
         pairs = " ".join(f"#{k}:{v}" for k, v in s.counts.items())
-        click.echo(f"{sec.label}  x {sec.x_range[0]}-{sec.x_range[1]}  y {sec.y_range[0]}-"
+        kit = f" [{sec.kit_label}]" if sec.kit_label != sec.label else ""
+        click.echo(f"{sec.label}{kit}  x {sec.x_range[0]}-{sec.x_range[1]}  y {sec.y_range[0]}-"
                    f"{sec.y_range[1]}  frame {sec.frame}  {pairs}  total {s.total}")
     click.echo()
     click.echo("Legend")

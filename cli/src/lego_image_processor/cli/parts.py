@@ -86,6 +86,9 @@ def _describe_inputs(pl: PartsList, echo) -> None:
         parts.append(f"{o.ignored_rows} row(s) for other parts ignored")
     parts.append(f"spares {percent_text(o.spares_percent)}%")
     echo("Owned: " + "; ".join(parts))
+    arr = lay.get("arrangement") or {}
+    if arr.get("id", "A") != "A":
+        echo(f"Arrangement: {arr['id']} ({arr['name']}). {arr['note']}")
 
 
 def _lot_rows(pl: PartsList, all_columns: bool) -> List[List[str]]:

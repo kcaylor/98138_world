@@ -2,6 +2,11 @@
 layout with ``metadata.map`` provenance and a suitability report (FR-004-FR-006, FR-019).
 
 ``build_map`` never downloads: a missing dataset raises ``DatasetNotCachedError``.
+
+Arrangements (feature 007): per-cell work (reprojection, classification, the value-space ``blend``
+texture) runs in kit coordinates, exactly as for combination A, and is then placed as hung; the
+spatial neighbourhood work (land shadow, halo, ``mix``) runs on the grid as hung, with no wrap at
+the outer left and right edges.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -20,6 +25,7 @@ from ..datasets.registry import DatasetEntry
 from ..kit.part_colors import load_part_colors
 from ..kit.source import DISCLAIMER
 from ..layout.grid import CURRENT_SCHEMA_VERSION, PositionPlacementGrid
+from ..layout.arrangement import Arrangement, parse_arrangement
 from ..layout.land_sea_mask import load_land_sea_mask
 from ..layout.position import (LAND_PART_ID, LAND_PART_TYPE, OCEAN_PART_ID, OCEAN_PART_TYPE,
                                PositionPlacement)
@@ -57,13 +63,23 @@ def missing_datasets(recipe: Recipe, cache_dir=None) -> List[DatasetEntry]:
     return [e for e in recipe.datasets() if e.kind == "download" and not is_cached(e, cache_dir)]
 
 
-def _layer_classes(layer: Layer, mask: np.ndarray, seed: int, cache_dir, *, land=None, supply=None):
-    """Classes for ``layer`` on the cells in ``mask``. ``land`` is the kit land mask (for the halo);
-    ``supply`` overrides one kit's supply (the build passes it net of the shadow)."""
+def _rolled_field(fld: LayerField, arrangement: Arrangement) -> LayerField:
+    return LayerField(values=arrangement.roll(fld.values), samples=arrangement.roll(fld.samples),
+                      filled=arrangement.roll(fld.filled), variance_lost=fld.variance_lost,
+                      total_variance=fld.total_variance)
+
+
+def _layer_classes(layer: Layer, mask: np.ndarray, seed: int, cache_dir, *, land=None, supply=None,
+                   arrangement: Optional[Arrangement] = None):
+    """Classes for ``layer`` on the cells in ``mask`` (display coordinates, as hung). ``land`` is
+    the land mask as hung (for the halo); ``supply`` overrides one kit's supply (the build passes
+    it net of the shadow). Data layers are reprojected, classified and blended in kit coordinates
+    and returned as hung."""
+    arrangement = arrangement or parse_arrangement(None)
     seq = (seed, _LAYER_SEED[layer.cls])
     if layer.role == "background":
         if layer.texture.kind == "halo":
-            land = land_mask_array() if land is None else land
+            land = arrangement.roll(land_mask_array()) if land is None else land
             t = layer.texture
             classes = fill_halo(mask, land, inner=t.inner, outer=t.outer, spacing=t.spacing, seed=seq)
         else:
@@ -73,13 +89,14 @@ def _layer_classes(layer: Layer, mask: np.ndarray, seed: int, cache_dir, *, land
     path = None if entry.kind == "packaged" else resolve(entry, cache_dir)
     grid = read_dataset(entry, path, layer.variable, transform=layer.transform)
     categorical = layer.classification.method == "categorical"
-    fld = reproject_layer(grid, load_kit_projection(), mask, layer.cls, categorical=categorical)
-    cr = classify(fld.values, mask, layer.classification, layer.colors, categories=grid.categories,
+    kit_mask = arrangement.unroll(mask)
+    fld = reproject_layer(grid, load_kit_projection(), kit_mask, layer.cls, categorical=categorical)
+    cr = classify(fld.values, kit_mask, layer.classification, layer.colors, categories=grid.categories,
                   supply=kit_supply().get(layer.part_id, {}) if supply is None else supply)
     classes = cr.classes
     if layer.texture.kind == "blend":
-        classes = apply_blend(cr, fld.values, mask, width=layer.texture.width, seed=seq)
-    return classes, fld, cr
+        classes = apply_blend(cr, fld.values, kit_mask, width=layer.texture.width, seed=seq)
+    return arrangement.roll(classes), _rolled_field(fld, arrangement), cr
 
 
 def _medians(values: np.ndarray, classes: np.ndarray, colors) -> List[Dict[str, Any]]:
@@ -90,14 +107,17 @@ def _medians(values: np.ndarray, classes: np.ndarray, colors) -> List[Dict[str, 
     return out
 
 
-def agreement_with_official(layout: PositionPlacementGrid) -> Dict[str, Any]:
-    """Cell agreement of a layout with the official design (color key per position)."""
+def agreement_with_official(layout: PositionPlacementGrid,
+                            arrangement: Optional[Arrangement] = None) -> Dict[str, Any]:
+    """Cell agreement of a layout with the official design hung the same way (color key per
+    position)."""
     from ..kit import load_official_design
 
+    arrangement = arrangement or parse_arrangement(None)
     d = load_official_design()
     land = ocean = land_ok = ocean_ok = 0
     for p in layout.positions:
-        official = d.color_at(p.x, p.y)
+        official = d.color_at(arrangement.to_kit(p.x), p.y)
         if official == "lego_white":
             land += 1
             land_ok += p.color_id == official
@@ -131,10 +151,12 @@ def _layer_provenance(layer: Layer) -> Dict[str, Any]:
     return out
 
 
-def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool] = None) -> MapResult:
-    """Build ``recipe`` from packaged or cached data. Raises ``DatasetNotCachedError`` (never
-    downloads), ``ChecksumMismatchError`` or ``MapBuildError``."""
-    land = land_mask_array()
+def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool] = None,
+              arrangement: Optional[Arrangement] = None) -> MapResult:
+    """Build ``recipe`` from packaged or cached data, hung as ``arrangement`` (default A). Raises
+    ``DatasetNotCachedError`` (never downloads), ``ChecksumMismatchError`` or ``MapBuildError``."""
+    arrangement = arrangement or parse_arrangement(None)
+    land = arrangement.roll(land_mask_array())  # as hung
     table = load_part_colors()
     H, W = land.shape
     labels = np.empty((H, W), dtype=object)
@@ -154,7 +176,8 @@ def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool
     for layer in recipe.layers:
         mask = land if layer.cls == "land" else ~land & ~shadow
         cl, fld, cr = _layer_classes(layer, mask, recipe.seed, cache_dir, land=land,
-                                     supply=ocean_supply if layer.cls == "ocean" else None)
+                                     supply=ocean_supply if layer.cls == "ocean" else None,
+                                     arrangement=arrangement)
         if (cl[mask] < 0).any():  # pragma: no cover - guarded by classify
             raise MapBuildError(f"{layer.cls}: some cells got no class")
         classes[layer.cls], fields[layer.cls] = cl, fld
@@ -191,13 +214,14 @@ def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool
         "disclaimer": DISCLAIMER,
     }
     layout = PositionPlacementGrid(width=W, height=H, positions=positions, source_image=f"recipe:{recipe.id}",
-                                   schema_version=CURRENT_SCHEMA_VERSION, map_metadata=provenance)
+                                   schema_version=CURRENT_SCHEMA_VERSION, map_metadata=provenance,
+                                   arrangement=arrangement.record())
     if compare_official is None:
         compare_official = recipe.id.startswith("official-31203")
-    agreement = agreement_with_official(layout) if compare_official else None
+    agreement = agreement_with_official(layout, arrangement) if compare_official else None
     report = {
         "recipe_id": recipe.id, "recipe_title": recipe.title, "recipe_sha256": recipe.sha256,
-        "seed": recipe.seed, "shadow": recipe.shadow.provenance(n_shadow), "layers": layer_reports, "thresholds": dict(THRESHOLDS),
+        "seed": recipe.seed, "arrangement": arrangement.record(), "shadow": recipe.shadow.provenance(n_shadow), "layers": layer_reports, "thresholds": dict(THRESHOLDS),
         "citations": citations,
         "warnings": [w for r in layer_reports for w in r["warnings"]],
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -210,6 +234,6 @@ def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool
                      agreement=agreement)
 
 
-def check_recipe(recipe: Recipe, *, cache_dir=None) -> Dict[str, Any]:
+def check_recipe(recipe: Recipe, *, cache_dir=None, arrangement: Optional[Arrangement] = None) -> Dict[str, Any]:
     """The suitability report of ``recipe`` without writing a layout (``map check``)."""
-    return build_map(recipe, cache_dir=cache_dir).report
+    return build_map(recipe, cache_dir=cache_dir, arrangement=arrangement).report

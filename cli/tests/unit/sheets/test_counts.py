@@ -37,14 +37,14 @@ def test_json_shape_and_order(official_grid):
     sc = section_counts(official_grid, layout_path="official.json", layout_sha256="ab" * 32)
     text = sc.to_json()
     d = json.loads(text)
-    assert list(d) == ["format_version", "kit", "layout", "legend", "sections", "disclaimer"]
+    assert list(d) == ["format_version", "kit", "arrangement", "layout", "legend", "sections", "disclaimer"]
     assert d["format_version"] == "1" and d["kit"] == "31203" and d["disclaimer"] == DISCLAIMER
     assert d["layout"] == {"path": "official.json", "sha256": "ab" * 32,
                            "source_image": "official-31203-design"}
     assert list(d["legend"][0]) == ["number", "part_id", "part_type", "color_key", "name",
                                     "verified", "total"]
     s0 = d["sections"][0]
-    assert list(s0) == ["label", "col", "row", "x", "y", "frame", "counts", "total"]
+    assert list(s0) == ["label", "col", "row", "x", "y", "frame", "kit_label", "counts", "total"]
     assert (s0["label"], s0["x"], s0["y"], s0["frame"]) == ("A1", [0, 15], [0, 15], 1)
     assert [s["label"] for s in d["sections"]][:6] == ["A1", "A2", "A3", "A4", "A5", "B1"]
     for s in d["sections"]:

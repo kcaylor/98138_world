@@ -1,7 +1,8 @@
 # Runbook: trying out 98138.world
 
-This walks through everything built so far (features 001–006): the kit reference data, maps from
-recipes, parts lists and marketplace exports, and printable build sheets. Allow about 15 minutes.
+This walks through everything built so far (features 001–007): the kit reference data, maps from
+recipes, parts lists and marketplace exports, printable build sheets, and the three ways to hang
+the map. Allow about 15 minutes.
 Not affiliated with or endorsed by The LEGO Group.
 
 ## Quick start: run the whole demo
@@ -110,7 +111,23 @@ lego-image-processor sheets counts official.json
 The PDF has an overview page, a legend with every color's IDs, and one true-scale page per
 16×16 section (A1–H5), with numbered studs and per-section counts.
 
-### 7. Make your own map
+### 7. Arrangements: hang the map three ways
+
+```bash
+lego-image-processor map build land-elevation --arrangement B -o elev-B.json --preview elev-B.png
+lego-image-processor map build land-elevation --arrangement C -o elev-C.json --preview elev-C.png
+lego-image-processor layout arrange official.json --arrangement B -o official-B.json
+lego-image-processor validate official-B.json
+lego-image-processor sheets build elev-B.json -o elev-B-sheets.pdf
+```
+
+The kit's three frames (1 America, 2 Europe & Africa, 3 Asia & Australia) can be hung as A
+(1·2·3, the default), B (3·1·2, America in the centre) or C (2·3·1, Asia and Australia in the
+centre). Look at `elev-B.png`: the Pacific is now whole, and the shadow and halo follow the coasts
+across the old edge. `layout arrange` just moves frames, so any layout can be re-hung. The B sheets
+draw the frame lines after columns 32 and 64 and name each frame.
+
+### 8. Make your own map
 
 ```bash
 lego-image-processor map recipes --copy ocean-sst my-map.toml
@@ -123,7 +140,7 @@ lego-image-processor map build my-map.toml -o my-map.json --preview my-map.png
 `--part 6141` lists the plate colors. A recipe can also point to your own gridded data file, if it
 declares the file's checksum, citation and license (see `specs/004-map-recipes/quickstart.md`).
 
-### 8. From an image (the original feature 001/002 path)
+### 9. From an image (the original feature 001/002 path)
 
 ```bash
 lego-image-processor quantize photo.jpg -o photo_lego.png    # snap colors to LEGO colors
@@ -157,4 +174,4 @@ Tell me what you find, especially any part or color that fails to match.
 - **Exit 6 from `parts export`:** some colors in the layout have no cited IDs. `parts list` shows
   which; `--allow-partial` exports the rest.
 - **Run the test suite:** `cd cli && uv pip install pytest pytest-cov pytest-benchmark pypdf`,
-  then `.venv/bin/pytest -q` (about 850 tests, 1–2 minutes). Tests never use the network.
+  then `.venv/bin/pytest -q` (about 970 tests, 1–2 minutes). Tests never use the network.

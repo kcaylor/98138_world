@@ -103,6 +103,7 @@ class PositionPlacementGrid:
         generated_at: Optional[str] = None,
         schema_version: str = CURRENT_SCHEMA_VERSION,
         map_metadata: Optional[Dict[str, Any]] = None,
+        arrangement: Optional[Dict[str, Any]] = None,
     ):
         """Initialize position placement grid.
 
@@ -114,6 +115,7 @@ class PositionPlacementGrid:
             generated_at: Optional ISO 8601 timestamp (defaults to now)
             schema_version: Schema version
             map_metadata: Optional map provenance written as ``metadata.map`` (feature 004)
+            arrangement: Optional ``metadata.arrangement`` record (feature 007); None means A
         """
         self._width = width
         self._height = height
@@ -122,6 +124,7 @@ class PositionPlacementGrid:
         self._schema_version = schema_version
         self._coordinate_system = "top_left_origin"
         self._map_metadata = map_metadata
+        self._arrangement = arrangement
 
         if generated_at is None:
             self._generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -196,6 +199,11 @@ class PositionPlacementGrid:
     def map_metadata(self) -> Optional[Dict[str, Any]]:
         """Map provenance (``metadata.map``) for recipe builds; None for image layouts."""
         return self._map_metadata
+
+    @property
+    def arrangement(self) -> Optional[Dict[str, Any]]:
+        """The ``metadata.arrangement`` record (feature 007); None for combination A by default."""
+        return self._arrangement
 
     @property
     def positions(self) -> List[PositionPlacement]:
@@ -305,6 +313,8 @@ class PositionPlacementGrid:
         }
         if self._map_metadata is not None:
             data["metadata"]["map"] = self._map_metadata
+        if self._arrangement is not None:
+            data["metadata"]["arrangement"] = self._arrangement
         return json.dumps(data, indent=indent)
 
     def to_csv(self) -> str:
@@ -363,4 +373,5 @@ class PositionPlacementGrid:
             generated_at=metadata["generated_at"],
             schema_version=metadata["schema_version"],
             map_metadata=metadata.get("map"),
+            arrangement=metadata.get("arrangement"),
         )
