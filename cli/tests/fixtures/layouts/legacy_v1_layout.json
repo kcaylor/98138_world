@@ -1,0 +1,58 @@
+{
+  "metadata": {
+    "width": 2,
+    "height": 1,
+    "total_positions": 2,
+    "land_positions": 1,
+    "ocean_positions": 1,
+    "unique_colors": 2,
+    "generated_at": "2025-06-01T00:00:00Z",
+    "source_image": "legacy.png",
+    "schema_version": "1.0",
+    "coordinate_system": "top_left_origin"
+  },
+  "positions": [
+    {
+      "x": 0,
+      "y": 0,
+      "color_id": "lego_white",
+      "color_name": "White",
+      "lego_color_code": "1",
+      "part_type": "brick",
+      "lego_part_id": "3062b"
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "color_id": "lego_earth_blue",
+      "color_name": "Earth Blue",
+      "lego_color_code": "140",
+      "part_type": "tile",
+      "lego_part_id": "98138"
+    }
+  ],
+  "statistics": {
+    "total_tile_count": 2,
+    "land_brick_count": 1,
+    "ocean_tile_count": 1,
+    "unique_colors": 2,
+    "color_frequency": {
+      "lego_white": 1,
+      "lego_earth_blue": 1
+    },
+    "color_frequency_by_part_type": {
+      "brick": {
+        "lego_white": 1
+      },
+      "tile": {
+        "lego_earth_blue": 1
+      }
+    },
+    "most_common_color": {
+      "color_id": "lego_white",
+      "color_name": "White",
+      "count": 1
+    },
+    "coverage_percentage": 100.0
+  }
+}

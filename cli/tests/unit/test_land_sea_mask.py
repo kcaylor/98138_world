@@ -59,14 +59,14 @@ class TestLandSeaMask:
         assert ocean_found, "No ocean positions found"
 
     def test_get_part_type_land(self):
-        """Test get_part_type returns 'brick' for land positions."""
+        """Test get_part_type returns 'plate' for land positions."""
         mask = load_land_sea_mask()
 
         # Find a land position
         for y in range(80):
             for x in range(128):
                 if mask.is_land(x, y):
-                    assert mask.get_part_type(x, y) == "brick"
+                    assert mask.get_part_type(x, y) == "plate"
                     return
         pytest.fail("No land position found")
 
@@ -83,14 +83,14 @@ class TestLandSeaMask:
         pytest.fail("No ocean position found")
 
     def test_get_lego_part_id_land(self):
-        """Test get_lego_part_id returns '3062b' for land positions."""
+        """Test get_lego_part_id returns '6141' for land positions."""
         mask = load_land_sea_mask()
 
         # Find a land position
         for y in range(80):
             for x in range(128):
                 if mask.is_land(x, y):
-                    assert mask.get_lego_part_id(x, y) == "3062b"
+                    assert mask.get_lego_part_id(x, y) == "6141"
                     return
         pytest.fail("No land position found")
 
@@ -158,3 +158,44 @@ class TestLandSeaMask:
 
         assert counted_land == mask.land_count
         assert counted_ocean == mask.ocean_count
+
+
+class TestMaskSourceBlock:
+    """The regenerated mask carries a source block and names the design it is derived from."""
+
+    def test_source_block_read(self):
+        from lego_image_processor.kit.source import PINNED_URL
+
+        mask = load_land_sea_mask()
+        assert mask.source == PINNED_URL
+        assert len(mask.extracted_date) == 10 and mask.extracted_date[4] == "-"
+        assert mask.derived_from == "kit_31203_design.json"
+
+    def test_shipped_file_uses_the_new_form(self):
+        import json
+
+        from lego_image_processor.kit.source import SourceDocument
+        from lego_image_processor.layout.land_sea_mask import MASK_PATH
+
+        data = json.loads(MASK_PATH.read_text(encoding="utf-8"))
+        src = SourceDocument.from_dict(data["source"])
+        assert len(src.pages) == 40
+        assert data["derived_from"] == "kit_31203_design.json"
+        assert "detection_method" not in data
+
+    def test_old_string_form_still_reads_the_date(self, tmp_path):
+        import json
+
+        from lego_image_processor.layout.land_sea_mask import MASK_PATH
+
+        data = json.loads(MASK_PATH.read_text(encoding="utf-8"))
+        data["source"] = "all_plates_in_order.pdf (official LEGO instructions)"
+        data["extraction_date"] = "2025-01-02"
+        data.pop("derived_from", None)
+        path = tmp_path / "old_mask.json"
+        path.write_text(json.dumps(data))
+        mask = load_land_sea_mask(str(path))
+        assert mask.extracted_date == "2025-01-02"
+        assert mask.source == "all_plates_in_order.pdf (official LEGO instructions)"
+        assert mask.derived_from is None
+        assert mask.land_count == 3062

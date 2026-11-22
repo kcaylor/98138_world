@@ -1,0 +1,333 @@
+{
+  "format_version": "1",
+  "source": {
+    "title": "LEGO 31203 World Map building instructions",
+    "url": "https://www.lego.com/cdn/product-assets/product.bi.core.pdf/6372756.pdf",
+    "sha256": "b593e2f4befbc227c5b12fec9b58a1bd6141d19b54de5f5336dcc8cc9eb43c4c",
+    "pages": [
+      159
+    ],
+    "generator": "curated by hand",
+    "generated_on": "2026-11-21",
+    "citations": [
+      {
+        "id": "ldraw",
+        "title": "LDraw LDConfig.ldr (update 2026-11-09)",
+        "url": "https://library.ldraw.org/library/official/LDConfig.ldr",
+        "accessed": "2026-11-21"
+      },
+      {
+        "id": "bricklink",
+        "title": "BrickLink Color Guide (archived 2025-10-02)",
+        "url": "http://web.archive.org/web/20251002182704/https://www.bricklink.com/catalogColors.asp",
+        "accessed": "2026-11-21"
+      },
+      {
+        "id": "rebrickable",
+        "title": "Rebrickable colors.csv",
+        "url": "https://cdn.rebrickable.com/media/downloads/colors.csv.gz",
+        "accessed": "2026-11-21"
+      },
+      {
+        "id": "brickset",
+        "title": "Brickset inventory 31203-1",
+        "url": "https://brickset.com/inventories/31203-1",
+        "accessed": "2026-11-21"
+      }
+    ],
+    "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
+  },
+  "notes": "LEGO names and IDs from LDraw LDConfig.ldr LEGOID comments; BrickLink and Rebrickable names and IDs from the cited catalogs; element to color from Brickset, cross-checked against the tile icons on instructions page 159. The LEGO to BrickLink/Rebrickable equivalence is asserted by those catalogs, not by a LEGO-published crosswalk. rgb is Rebrickable's display RGB.",
+  "colors": [
+    {
+      "key": "lego_white",
+      "role": "land",
+      "element_id": "614101",
+      "lego": {
+        "name": "White",
+        "id": 1
+      },
+      "bricklink": {
+        "name": "White",
+        "id": 1
+      },
+      "rebrickable": {
+        "name": "White",
+        "id": 15
+      },
+      "rgb": [
+        255,
+        255,
+        255
+      ],
+      "citations": {
+        "lego": "ldraw",
+        "bricklink": "bricklink",
+        "rebrickable": "rebrickable",
+        "element": "brickset"
+      },
+      "notes": ""
+    },
+    {
+      "key": "lego_bright_bluish_green",
+      "role": "ocean",
+      "element_id": "6311437",
+      "lego": {
+        "name": "Bright Bluish Green",
+        "id": 107
+      },
+      "bricklink": {
+        "name": "Dark Turquoise",
+        "id": 39
+      },
+      "rebrickable": {
+        "name": "Dark Turquoise",
+        "id": 3
+      },
+      "rgb": [
+        0,
+        143,
+        155
+      ],
+      "citations": {
+        "lego": "ldraw",
+        "bricklink": "bricklink",
+        "rebrickable": "rebrickable",
+        "element": "brickset"
+      },
+      "notes": ""
+    },
+    {
+      "key": "lego_medium_azur",
+      "role": "ocean",
+      "element_id": "6322819",
+      "lego": {
+        "name": "Medium Azur",
+        "id": 322
+      },
+      "bricklink": {
+        "name": "Medium Azure",
+        "id": 156
+      },
+      "rebrickable": {
+        "name": "Medium Azure",
+        "id": 322
+      },
+      "rgb": [
+        54,
+        174,
+        191
+      ],
+      "citations": {
+        "lego": "ldraw",
+        "bricklink": "bricklink",
+        "rebrickable": "rebrickable",
+        "element": "brickset"
+      },
+      "notes": ""
+    },
+    {
+      "key": "lego_bright_yellowish_green",
+      "role": "ocean",
+      "element_id": "6284583",
+      "lego": {
+        "name": "Bright Yellowish Green",
+        "id": 119
+      },
+      "bricklink": {
+        "name": "Lime",
+        "id": 34
+      },
+      "rebrickable": {
+        "name": "Lime",
+        "id": 27
+      },
+      "rgb": [
+        187,
+        233,
+        11
+      ],
+      "citations": {
+        "lego": "ldraw",
+        "bricklink": "bricklink",
+        "rebrickable": "rebrickable",
+        "element": "brickset"
+      },
+      "notes": ""
+    },
+    {
+      "key": "lego_brick_yellow",
+      "role": "ocean",
+      "element_id": "6284573",
+      "lego": {
+        "name": "Brick Yellow",
+        "id": 5
+      },
+      "bricklink": {
+        "name": "Tan",
+        "id": 2
+      },
+      "rebrickable": {
+        "name": "Tan",
+        "id": 19
+      },
+      "rgb": [
+        228,
+        205,
+        158
+      ],
+      "citations": {
+        "lego": "ldraw",
+        "bricklink": "bricklink",
+        "rebrickable": "rebrickable",
+        "element": "brickset"
+      },
+      "notes": ""
+    },
+    {
+      "key": "lego_bright_green",
+      "role": "ocean",
+      "element_id": "6353793",
+      "lego": {
+        "name": "Bright Green",
+        "id": 37
+      },
+      "bricklink": {
+        "name": "Bright Green",
+        "id": 36
+      },
+      "rebrickable": {
+        "name": "Bright Green",
+        "id": 10
+      },
+      "rgb": [
+        75,
+        159,
+        74
+      ],
+      "citations": {
+        "lego": "ldraw",
+        "bricklink": "bricklink",
+        "rebrickable": "rebrickable",
+        "element": "brickset"
+      },
+      "notes": ""
+    },
+    {
+      "key": "lego_bright_orange",
+      "role": "ocean",
+      "element_id": "6284582",
+      "lego": {
+        "name": "Bright Orange",
+        "id": 106
+      },
+      "bricklink": {
+        "name": "Orange",
+        "id": 4
+      },
+      "rebrickable": {
+        "name": "Orange",
+        "id": 25
+      },
+      "rgb": [
+        254,
+        138,
+        24
+      ],
+      "citations": {
+        "lego": "ldraw",
+        "bricklink": "bricklink",
+        "rebrickable": "rebrickable",
+        "element": "brickset"
+      },
+      "notes": ""
+    },
+    {
+      "key": "lego_vibrant_coral",
+      "role": "ocean",
+      "element_id": "6311436",
+      "lego": {
+        "name": "Vibrant Coral",
+        "id": 353
+      },
+      "bricklink": {
+        "name": "Coral",
+        "id": 220
+      },
+      "rebrickable": {
+        "name": "Coral",
+        "id": 1050
+      },
+      "rgb": [
+        255,
+        105,
+        143
+      ],
+      "citations": {
+        "lego": "ldraw",
+        "bricklink": "bricklink",
+        "rebrickable": "rebrickable",
+        "element": "brickset"
+      },
+      "notes": ""
+    },
+    {
+      "key": "lego_flame_yellowish_orange",
+      "role": "ocean",
+      "element_id": "6322822",
+      "lego": {
+        "name": "Flame Yellowish Orange",
+        "id": 191
+      },
+      "bricklink": {
+        "name": "Bright Light Orange",
+        "id": 110
+      },
+      "rebrickable": {
+        "name": "Bright Light Orange",
+        "id": 191
+      },
+      "rgb": [
+        248,
+        187,
+        61
+      ],
+      "citations": {
+        "lego": "ldraw",
+        "bricklink": "bricklink",
+        "rebrickable": "rebrickable",
+        "element": "brickset"
+      },
+      "notes": ""
+    },
+    {
+      "key": "lego_earth_blue",
+      "role": "ocean",
+      "element_id": "6284584",
+      "lego": {
+        "name": "Earth Blue",
+        "id": 140
+      },
+      "bricklink": {
+        "name": "Dark Blue",
+        "id": 63
+      },
+      "rebrickable": {
+        "name": "Dark Blue",
+        "id": 272
+      },
+      "rgb": [
+        10,
+        52,
+        99
+      ],
+      "citations": {
+        "lego": "ldraw",
+        "bricklink": "bricklink",
+        "rebrickable": "rebrickable",
+        "element": "brickset"
+      },
+      "notes": ""
+    }
+  ]
+}

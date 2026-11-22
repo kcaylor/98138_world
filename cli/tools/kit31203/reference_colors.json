@@ -1,0 +1,59 @@
+{
+  "format_version": "1",
+  "description": "Reference render colours: how each kit colour appears in the 40 section images of the pinned instructions PDF (JPEG renders differ from catalog RGB). Used by classify.py with CIEDE2000; fixed so that extraction is deterministic (research R6, SC-008).",
+  "derivation": "Derived once on 2026-11-21: the median 5x5 sample at each of the 10,240 cell centres was clustered by k-means in RGB (Euclidean), seeded with the tile icon colours sampled on page 159 (white #FFFFFF, #189090, #58A8C8, #A0C840, #C0B078, #58C040, #F08828, #F86088, #F8A828, #203868), iterated to convergence (3 iterations), and each centre rounded to integers. Not re-run at extraction time.",
+  "source_pdf_sha256": "b593e2f4befbc227c5b12fec9b58a1bd6141d19b54de5f5336dcc8cc9eb43c4c",
+  "colors": {
+    "lego_white": [
+      233,
+      233,
+      233
+    ],
+    "lego_bright_bluish_green": [
+      39,
+      160,
+      155
+    ],
+    "lego_medium_azur": [
+      116,
+      185,
+      212
+    ],
+    "lego_bright_yellowish_green": [
+      187,
+      228,
+      90
+    ],
+    "lego_brick_yellow": [
+      218,
+      200,
+      144
+    ],
+    "lego_bright_green": [
+      116,
+      207,
+      90
+    ],
+    "lego_bright_orange": [
+      243,
+      157,
+      62
+    ],
+    "lego_vibrant_coral": [
+      241,
+      116,
+      156
+    ],
+    "lego_flame_yellowish_orange": [
+      245,
+      194,
+      61
+    ],
+    "lego_earth_blue": [
+      43,
+      69,
+      112
+    ]
+  },
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
+}

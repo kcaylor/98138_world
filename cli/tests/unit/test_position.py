@@ -26,24 +26,24 @@ class TestPositionPlacement:
         assert pos.part_type == "tile"
         assert pos.lego_part_id == "98138"
 
-    def test_create_land_brick_position(self):
-        """Test creating a land brick position."""
+    def test_create_land_plate_position(self):
+        """Test creating a land plate position."""
         pos = PositionPlacement(
             x=45,
             y=25,
             color_id="lego_green",
             color_name="Green",
             lego_color_code="28",
-            part_type="brick",
-            lego_part_id="3062b"
+            part_type="plate",
+            lego_part_id="6141"
         )
         assert pos.x == 45
         assert pos.y == 25
         assert pos.color_id == "lego_green"
         assert pos.color_name == "Green"
         assert pos.lego_color_code == "28"
-        assert pos.part_type == "brick"
-        assert pos.lego_part_id == "3062b"
+        assert pos.part_type == "plate"
+        assert pos.lego_part_id == "6141"
 
     def test_invalid_negative_x_coordinate(self):
         """Test that negative x coordinate raises ValueError."""
@@ -73,7 +73,7 @@ class TestPositionPlacement:
 
     def test_invalid_part_type(self):
         """Test that invalid part_type raises ValueError."""
-        with pytest.raises(ValueError, match="part_type must be 'brick' or 'tile'"):
+        with pytest.raises(ValueError, match="part_type must be 'plate' or 'tile'"):
             PositionPlacement(
                 x=0,
                 y=0,
@@ -86,7 +86,7 @@ class TestPositionPlacement:
 
     def test_invalid_lego_part_id(self):
         """Test that invalid lego_part_id raises ValueError."""
-        with pytest.raises(ValueError, match="lego_part_id must be '3062b' or '98138'"):
+        with pytest.raises(ValueError, match="lego_part_id must be '6141' or '98138'"):
             PositionPlacement(
                 x=0,
                 y=0,
@@ -97,17 +97,17 @@ class TestPositionPlacement:
                 lego_part_id="invalid"
             )
 
-    def test_part_type_brick_requires_3062b(self):
-        """Test that brick part_type must have 3062b part_id."""
-        with pytest.raises(ValueError, match="part_type 'brick' must use lego_part_id '3062b'"):
+    def test_part_type_plate_requires_6141(self):
+        """Test that plate part_type must have 6141 part_id."""
+        with pytest.raises(ValueError, match="part_type 'plate' must use lego_part_id '6141'"):
             PositionPlacement(
                 x=0,
                 y=0,
                 color_id="lego_green",
                 color_name="Green",
                 lego_color_code="28",
-                part_type="brick",
-                lego_part_id="98138"  # Wrong - bricks use 3062b
+                part_type="plate",
+                lego_part_id="98138"  # Wrong - plates use 6141
             )
 
     def test_part_type_tile_requires_98138(self):
@@ -120,7 +120,7 @@ class TestPositionPlacement:
                 color_name="Medium Blue",
                 lego_color_code="102",
                 part_type="tile",
-                lego_part_id="3062b"  # Wrong - tiles use 98138
+                lego_part_id="6141"  # Wrong - tiles use 98138
             )
 
     def test_to_dict(self):
@@ -131,8 +131,8 @@ class TestPositionPlacement:
             color_id="lego_tan",
             color_name="Tan",
             lego_color_code="19",
-            part_type="brick",
-            lego_part_id="3062b"
+            part_type="plate",
+            lego_part_id="6141"
         )
         result = pos.to_dict()
         assert result == {
@@ -141,8 +141,8 @@ class TestPositionPlacement:
             "color_id": "lego_tan",
             "color_name": "Tan",
             "lego_color_code": "19",
-            "part_type": "brick",
-            "lego_part_id": "3062b"
+            "part_type": "plate",
+            "lego_part_id": "6141"
         }
 
     def test_from_dict(self):
@@ -153,8 +153,8 @@ class TestPositionPlacement:
             "color_id": "lego_tan",
             "color_name": "Tan",
             "lego_color_code": "19",
-            "part_type": "brick",
-            "lego_part_id": "3062b"
+            "part_type": "plate",
+            "lego_part_id": "6141"
         }
         pos = PositionPlacement.from_dict(data)
         assert pos.x == 10
@@ -162,8 +162,8 @@ class TestPositionPlacement:
         assert pos.color_id == "lego_tan"
         assert pos.color_name == "Tan"
         assert pos.lego_color_code == "19"
-        assert pos.part_type == "brick"
-        assert pos.lego_part_id == "3062b"
+        assert pos.part_type == "plate"
+        assert pos.lego_part_id == "6141"
 
     def test_repr(self):
         """Test string representation."""
@@ -173,15 +173,15 @@ class TestPositionPlacement:
             color_id="lego_green",
             color_name="Green",
             lego_color_code="28",
-            part_type="brick",
-            lego_part_id="3062b"
+            part_type="plate",
+            lego_part_id="6141"
         )
         repr_str = repr(pos)
         assert "PositionPlacement" in repr_str
         assert "x=5" in repr_str
         assert "y=10" in repr_str
-        assert "brick" in repr_str
-        assert "3062b" in repr_str
+        assert "plate" in repr_str
+        assert "6141" in repr_str
 
     def test_equality(self):
         """Test equality comparison."""
@@ -206,3 +206,23 @@ class TestPositionPlacement:
             lego_color_code="23", part_type="tile", lego_part_id="98138"
         )
         assert pos1 != pos2
+
+
+class TestLandPartCorrection:
+    """Land is the 1x1 round plate (6141); the old land part is rejected (FR-008)."""
+
+    @pytest.mark.parametrize("part_type,part_id", [
+        ("plate", "98138"), ("tile", "6141"), ("plate", "4073"), ("tile", "35381"),
+        ("round", "6141"),
+    ])
+    def test_other_pairings_rejected(self, part_type, part_id):
+        with pytest.raises(ValueError):
+            PositionPlacement(x=0, y=0, color_id="lego_white", color_name="White",
+                              lego_color_code="1", part_type=part_type, lego_part_id=part_id)
+
+    def test_constants(self):
+        from lego_image_processor.layout import position
+        assert position.LAND_PART_TYPE == "plate"
+        assert position.LAND_PART_ID == "6141"
+        assert position.OCEAN_PART_TYPE == "tile"
+        assert position.OCEAN_PART_ID == "98138"

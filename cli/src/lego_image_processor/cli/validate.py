@@ -8,7 +8,7 @@ from pathlib import Path
 import click
 
 from ..palette.loader import LegoPalette
-from ..layout.grid import PositionPlacementGrid
+from ..layout.grid import DISCLAIMER, LayoutSchemaError, PositionPlacementGrid
 from ..layout.kit_spec import load_kit_specification
 from ..layout.validator import LayoutValidator
 
@@ -28,8 +28,10 @@ from ..layout.validator import LayoutValidator
 def validate(layout_file: str, kit: str, output: str) -> None:
     """Validate layout against LEGO World Map kit inventory.
 
-    Checks if a layout can be built with standard LEGO World Map kit parts.
-    Reports color availability issues and quantity violations.
+    Checks if a layout can be built with the parts of kit 31203: land uses the 1x1 round plate
+    (6141) in White, ocean the 1x1 round tile (98138) in 9 colors, with quantities from the
+    instructions' parts inventory (page 159). Layouts must use schema 2.0.
+    Not affiliated with or endorsed by The LEGO Group.
 
     \b
     Examples:
@@ -48,7 +50,8 @@ def validate(layout_file: str, kit: str, output: str) -> None:
         - Buildability score (percentage of positions buildable)
         - Color availability violations (colors not in kit)
         - Quantity violations (colors exceeding kit inventory)
-        - Suggested alternatives for unavailable colors
+        - Suggested alternatives for unavailable colors (nearest kit color of
+          the same part by CIEDE2000, shown as ΔE00)
     """
     try:
         # Load layout
@@ -65,7 +68,7 @@ def validate(layout_file: str, kit: str, output: str) -> None:
             )
 
         click.echo(f"  Total positions: {layout.total_positions:,}")
-        click.echo(f"  Land bricks: {layout.land_positions:,}")
+        click.echo(f"  Land plates: {layout.land_positions:,}")
         click.echo(f"  Ocean tiles: {layout.ocean_positions:,}")
         click.echo(f"  Unique colors: {layout.unique_colors}")
         click.echo()
@@ -73,9 +76,10 @@ def validate(layout_file: str, kit: str, output: str) -> None:
         # Load kit specification
         click.echo(f"Loading kit specification: {kit} (LEGO World Map)")
         kit_spec = load_kit_specification(kit)
-        click.echo(f"  Available brick colors: {len(kit_spec.available_colors_brick)}")
-        click.echo(f"  Available tile colors: {len(kit_spec.available_colors_tile)}")
-        click.echo(f"  Kit inventory loaded")
+        click.echo(f"  Plate colors: {len(kit_spec.available_colors_plate)}")
+        click.echo(f"  Tile colors: {len(kit_spec.available_colors_tile)}")
+        click.echo(f"  Inventory: {kit_spec.inventory_lines} lines, "
+                   f"cited from instructions page {kit_spec.inventory_page}")
         click.echo()
 
         # Load palette
@@ -90,19 +94,17 @@ def validate(layout_file: str, kit: str, output: str) -> None:
         color_unavailable = [v for v in report.violations if v.type == "color_unavailable"]
         quantity_exceeded = [v for v in report.violations if v.type == "quantity_exceeded"]
 
-        brick_unavailable = [v for v in color_unavailable if v.part_type == "brick"]
+        plate_unavailable = [v for v in color_unavailable if v.part_type == "plate"]
         tile_unavailable = [v for v in color_unavailable if v.part_type == "tile"]
-        brick_exceeded = [v for v in quantity_exceeded if v.part_type == "brick"]
-        tile_exceeded = [v for v in quantity_exceeded if v.part_type == "tile"]
 
-        # Show brick validation
+        # Show plate (land) validation
         if layout.land_positions > 0:
-            brick_color_count = layout.compute_statistics().color_frequency_by_part_type.get("brick", {})
-            click.echo(f"  Checking brick colors ({len(brick_color_count)} colors)...")
-            if brick_unavailable:
-                click.echo(click.style(f"    ✗ {len(brick_unavailable)} brick colors unavailable in kit", fg="red"))
+            plate_color_count = layout.compute_statistics().color_frequency_by_part_type.get("plate", {})
+            click.echo(f"  Checking plate colors ({len(plate_color_count)} colors)...")
+            if plate_unavailable:
+                click.echo(click.style(f"    ✗ {len(plate_unavailable)} plate colors unavailable in kit", fg="red"))
             else:
-                click.echo(click.style("    ✓ All brick colors available in kit", fg="green"))
+                click.echo(click.style("    ✓ All plate colors available in kit", fg="green"))
 
         # Show tile validation
         if layout.ocean_positions > 0:
@@ -147,7 +149,7 @@ def validate(layout_file: str, kit: str, output: str) -> None:
                 click.echo(f"    Positions required: {v.positions_required}")
                 if v.suggested_alternative:
                     click.echo(f"    Suggested alternative: {v.suggested_alternative.color_name} "
-                              f"(distance: {v.suggested_alternative.color_distance:.1f})")
+                              f"(ΔE00 {v.suggested_alternative.color_distance:.1f})")
 
             for v in quantity_exceeded:
                 click.echo(f"\n  Quantity Exceeded: {v.color_name} ({v.color_id})")
@@ -170,12 +172,17 @@ def validate(layout_file: str, kit: str, output: str) -> None:
             ))
             if output:
                 click.echo(f"  See {output} for details and suggested alternatives.")
+        click.echo(DISCLAIMER)
 
+    except click.ClickException:
+        raise
+    except LayoutSchemaError as e:
+        raise click.ClickException(str(e))
     except FileNotFoundError as e:
         raise click.ClickException(f"File not found: {e}")
-    except ValueError as e:
-        raise click.ClickException(str(e))
     except json.JSONDecodeError as e:
         raise click.ClickException(f"Invalid JSON in layout file: {e}")
+    except ValueError as e:
+        raise click.ClickException(str(e))
     except Exception as e:
         raise click.ClickException(f"Unexpected error: {e}")

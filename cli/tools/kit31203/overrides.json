@@ -1,0 +1,550 @@
+{
+  "format_version": "1",
+  "note": "Manual decisions for positions the classifier flags as ambiguous (ratio > 0.6 or dE00 > 12). Reasons cite the sample RGB, CIEDE2000 distances to the reference render colours (reference_colors.json) and the review sheet (python -m kit31203 review). Not affiliated with or endorsed by The LEGO Group.",
+  "overrides": [
+    {
+      "x": 0,
+      "y": 0,
+      "chosen": "lego_bright_green",
+      "reason": "sample RGB (117, 165, 82); dE00 Bright Green 11.7 vs Bright Yellowish Green 18.48 (ratio 0.633); red channel 117 is on the Bright Green side of the midpoint (151) between Bright Green (R 116) and Bright Yellowish Green (R 187); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 32,
+      "y": 0,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (115, 161, 171); dE00 Medium Azur 8.81 vs Bright Bluish Green 12.16 (ratio 0.724); red channel 115 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 48,
+      "y": 0,
+      "chosen": "lego_bright_bluish_green",
+      "reason": "sample RGB (62, 117, 119); dE00 Bright Bluish Green 15.82 vs Medium Azur 25.01 (ratio 0.633); darkened stud at a section edge (dE00 to nearest above 12); hue and low red channel 62 match Bright Bluish Green (ref R 39), as do the other darkened edge cells (80,0), (0,32), (111,32), (95,48); RGB nearest is Earth Blue, but Earth Blue's dE00 is far and its supply has 1 spare; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 64,
+      "y": 0,
+      "chosen": "lego_bright_orange",
+      "reason": "sample RGB (208, 156, 66); dE00 Bright Orange 8.69 vs Flame Yellowish Orange 11.44 (ratio 0.759); green channel 156 matches Bright Orange (G 157) rather than Flame Yellowish Orange (G 194); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 80,
+      "y": 0,
+      "chosen": "lego_bright_bluish_green",
+      "reason": "sample RGB (44, 122, 120); dE00 Bright Bluish Green 13.38 vs Medium Azur 25.15 (ratio 0.532); darkened stud at a section edge (dE00 to nearest above 12); hue and low red channel 44 match Bright Bluish Green (ref R 39), as do the other darkened edge cells (48,0), (0,32), (111,32), (95,48); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 111,
+      "y": 0,
+      "chosen": "lego_bright_yellowish_green",
+      "reason": "sample RGB (185, 199, 87); dE00 Bright Yellowish Green 7.78 vs Brick Yellow 12.63 (ratio 0.616); blue channel 87 rules out Brick Yellow (ref B 144); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 15,
+      "y": 3,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (117, 182, 178); dE00 Bright Bluish Green 9.77 vs Medium Azur 12.14 (ratio 0.805); red channel 117 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; Bright Bluish Green would also exceed its supply of 1,879",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 16,
+      "y": 3,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (115, 172, 178); dE00 Medium Azur 8.43 vs Bright Bluish Green 10.47 (ratio 0.805); red channel 115 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 21,
+      "y": 3,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (123, 172, 176); dE00 Medium Azur 8.96 vs Bright Bluish Green 11.25 (ratio 0.797); red channel 123 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 81,
+      "y": 3,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (106, 183, 193); dE00 Medium Azur 7.04 vs Bright Bluish Green 11.39 (ratio 0.618); red channel 106 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 96,
+      "y": 3,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (114, 181, 181); dE00 Bright Bluish Green 9.73 vs Medium Azur 10.58 (ratio 0.92); red channel 114 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; Bright Bluish Green would also exceed its supply of 1,879",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 97,
+      "y": 3,
+      "chosen": "lego_flame_yellowish_orange",
+      "reason": "sample RGB (211, 194, 74); dE00 Flame Yellowish Orange 9.19 vs Brick Yellow 10.41 (ratio 0.883); blue channel 74 rules out Brick Yellow (ref B 144); green channel 194 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 113,
+      "y": 3,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (111, 181, 182); dE00 Bright Bluish Green 9.57 vs Medium Azur 10.31 (ratio 0.929); red channel 111 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; Bright Bluish Green would also exceed its supply of 1,879",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 12,
+      "y": 5,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (122, 190, 196); dE00 Medium Azur 8.04 vs Bright Bluish Green 12.77 (ratio 0.63); red channel 122 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 0,
+      "y": 16,
+      "chosen": "lego_brick_yellow",
+      "reason": "sample RGB (171, 161, 141); dE00 Brick Yellow 14.38 vs White 20.2 (ratio 0.712); White is far (dE00 20.2) and the cell reads tan on the review sheet; keeping it ocean also keeps the land mask unchanged; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 1,
+      "y": 16,
+      "chosen": "lego_bright_yellowish_green",
+      "reason": "sample RGB (177, 196, 86); dE00 Bright Yellowish Green 8.03 vs Bright Green 11.73 (ratio 0.684); red channel 177 is on the Bright Yellowish Green side of the midpoint (151) between Bright Green (R 116) and Bright Yellowish Green (R 187); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 9,
+      "y": 16,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (115, 180, 184); dE00 Medium Azur 8.87 vs Bright Bluish Green 10.47 (ratio 0.847); red channel 115 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 32,
+      "y": 16,
+      "chosen": "lego_flame_yellowish_orange",
+      "reason": "sample RGB (196, 187, 66); near tie on all metrics (dE00 Brick Yellow 11.5 / Flame Yellowish Orange 11.8; RGB nearest Bright Yellowish Green); blue channel 66 rules out Brick Yellow (ref B 144) and Brick Yellow would use the last of its supply; the stud reads yellow-orange on the review sheet. Coin-flip between Flame Yellowish Orange and Bright Yellowish Green",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 48,
+      "y": 16,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (109, 142, 160); dE00 Medium Azur 13.53 vs Bright Bluish Green 16.97 (ratio 0.798); red channel 109 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 49,
+      "y": 16,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (105, 185, 191); dE00 Medium Azur 8.71 vs Bright Bluish Green 10.61 (ratio 0.821); red channel 105 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 55,
+      "y": 16,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (118, 178, 178); dE00 Bright Bluish Green 9.91 vs Medium Azur 10.46 (ratio 0.947); red channel 118 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; Bright Bluish Green would also exceed its supply of 1,879",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 68,
+      "y": 16,
+      "chosen": "lego_flame_yellowish_orange",
+      "reason": "sample RGB (219, 191, 71); dE00 Flame Yellowish Orange 6.29 vs Brick Yellow 10.45 (ratio 0.602); blue channel 71 rules out Brick Yellow (ref B 144); green channel 191 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 111,
+      "y": 16,
+      "chosen": "lego_bright_yellowish_green",
+      "reason": "sample RGB (178, 197, 78); dE00 Bright Yellowish Green 7.7 vs Bright Green 12.13 (ratio 0.635); red channel 178 is on the Bright Yellowish Green side of the midpoint (151) between Bright Green (R 116) and Bright Yellowish Green (R 187); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 0,
+      "y": 19,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (113, 164, 161); dE00 Bright Bluish Green 8.38 vs Medium Azur 12.97 (ratio 0.646); red channel 113 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; Bright Bluish Green would also exceed its supply of 1,879",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 47,
+      "y": 19,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (115, 177, 183); dE00 Medium Azur 8.11 vs Bright Bluish Green 10.69 (ratio 0.759); red channel 115 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 48,
+      "y": 19,
+      "chosen": "lego_bright_yellowish_green",
+      "reason": "sample RGB (169, 202, 88); dE00 Bright Yellowish Green 6.37 vs Bright Green 8.97 (ratio 0.711); red channel 169 is on the Bright Yellowish Green side of the midpoint (151) between Bright Green (R 116) and Bright Yellowish Green (R 187); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 49,
+      "y": 19,
+      "chosen": "lego_bright_yellowish_green",
+      "reason": "sample RGB (171, 200, 89); dE00 Bright Yellowish Green 6.88 vs Bright Green 9.62 (ratio 0.715); red channel 171 is on the Bright Yellowish Green side of the midpoint (151) between Bright Green (R 116) and Bright Yellowish Green (R 187); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 30,
+      "y": 31,
+      "chosen": "lego_white",
+      "reason": "sample RGB (230, 245, 225); dE00 White 11.32 vs Brick Yellow 17.57 (ratio 0.644); near-white sample, Brick Yellow is far; land (white) agrees with the current mask; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 0,
+      "y": 32,
+      "chosen": "lego_bright_bluish_green",
+      "reason": "sample RGB (52, 121, 121); dE00 Bright Bluish Green 13.88 vs Medium Azur 24.64 (ratio 0.563); darkened stud at a section edge (dE00 to nearest above 12); hue and low red channel 52 match Bright Bluish Green (ref R 39), as do the other darkened edge cells (48,0), (80,0), (111,32), (95,48); research R6 (RGB variant) had this cell as Earth Blue, which would exceed the Earth Blue supply of 393; dE00 puts Earth Blue third (26.8); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 14,
+      "y": 32,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (100, 187, 191); dE00 Medium Azur 9.84 vs Bright Bluish Green 10.2 (ratio 0.964); red channel 100 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 16,
+      "y": 32,
+      "chosen": "lego_bright_yellowish_green",
+      "reason": "sample RGB (187, 186, 81); dE00 Brick Yellow 11.0 vs Bright Yellowish Green 12.2 (ratio 0.90) but RGB nearest is Bright Yellowish Green; blue channel 81 rules out Brick Yellow (ref B 144), which would also exceed its supply of 725; the stud reads lime on the review sheet. Coin-flip in numbers, decided by the visual",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 48,
+      "y": 32,
+      "chosen": "lego_bright_yellowish_green",
+      "reason": "sample RGB (178, 190, 87); dE00 Bright Yellowish Green 9.94 vs Brick Yellow 12.35 (ratio 0.805); blue channel 87 rules out Brick Yellow (ref B 144); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 111,
+      "y": 32,
+      "chosen": "lego_bright_bluish_green",
+      "reason": "sample RGB (47, 125, 128); dE00 Bright Bluish Green 12.58 vs Medium Azur 22.94 (ratio 0.548); darkened stud at a section edge (dE00 to nearest above 12); hue and low red channel 47 match Bright Bluish Green (ref R 39), as do the other darkened edge cells (48,0), (80,0), (0,32), (95,48); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 112,
+      "y": 32,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (109, 158, 175); dE00 Medium Azur 8.28 vs Bright Bluish Green 13.79 (ratio 0.601); red channel 109 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 114,
+      "y": 32,
+      "chosen": "lego_flame_yellowish_orange",
+      "reason": "sample RGB (218, 195, 59); dE00 Flame Yellowish Orange 7.58 vs Brick Yellow 11.72 (ratio 0.647); blue channel 59 rules out Brick Yellow (ref B 144); green channel 195 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 124,
+      "y": 32,
+      "chosen": "lego_flame_yellowish_orange",
+      "reason": "sample RGB (216, 189, 66); dE00 Flame Yellowish Orange 6.72 vs Brick Yellow 10.85 (ratio 0.619); blue channel 66 rules out Brick Yellow (ref B 144); green channel 189 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 14,
+      "y": 34,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (107, 170, 180); dE00 Medium Azur 7.58 vs Bright Bluish Green 10.53 (ratio 0.719); red channel 107 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 21,
+      "y": 34,
+      "chosen": "lego_bright_yellowish_green",
+      "reason": "sample RGB (151, 197, 84); red channel 151 sits on the midpoint between Bright Green (ref R 116) and Bright Yellowish Green (ref R 187); dE00 6.5 vs 8.4 favours Bright Green, but the stud reads yellow-green like its Bright Yellowish Green neighbours on the review sheet. Coin-flip; both colours have spare supply",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 31,
+      "y": 34,
+      "chosen": "lego_brick_yellow",
+      "reason": "sample RGB (193, 167, 111); dE00 Brick Yellow 8.79 vs Flame Yellowish Orange 14.05 (ratio 0.626); blue channel 111 matches Brick Yellow (ref B 144), not the oranges (B about 61); reads tan on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 33,
+      "y": 34,
+      "chosen": "lego_bright_yellowish_green",
+      "reason": "sample RGB (158, 191, 74); dE00 Bright Yellowish Green 9.0 vs Bright Green 9.3 (ratio 0.97), RGB nearest Bright Green; red channel 158 is on the Bright Yellowish Green side of the midpoint (151) and the stud reads lime on the review sheet. Coin-flip in numbers, decided by the visual",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 48,
+      "y": 34,
+      "chosen": "lego_bright_yellowish_green",
+      "reason": "sample RGB (158, 200, 72); dE00 Bright Yellowish Green 6.92 vs Bright Green 8.01 (ratio 0.864); red channel 158 is on the Bright Yellowish Green side of the midpoint (151) between Bright Green (R 116) and Bright Yellowish Green (R 187); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 49,
+      "y": 34,
+      "chosen": "lego_bright_yellowish_green",
+      "reason": "sample RGB (163, 192, 76); dE00 Bright Yellowish Green 8.68 vs Bright Green 9.97 (ratio 0.87); red channel 163 is on the Bright Yellowish Green side of the midpoint (151) between Bright Green (R 116) and Bright Yellowish Green (R 187); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 0,
+      "y": 35,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (115, 169, 178); dE00 Medium Azur 7.65 vs Bright Bluish Green 11.35 (ratio 0.674); red channel 115 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 18,
+      "y": 35,
+      "chosen": "lego_flame_yellowish_orange",
+      "reason": "sample RGB (216, 190, 62); dE00 Flame Yellowish Orange 6.94 vs Brick Yellow 11.24 (ratio 0.617); blue channel 62 rules out Brick Yellow (ref B 144); green channel 190 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 48,
+      "y": 35,
+      "chosen": "lego_bright_yellowish_green",
+      "reason": "sample RGB (174, 209, 106); dE00 Bright Yellowish Green 5.8 vs Bright Green 8.55 (ratio 0.678); red channel 174 is on the Bright Yellowish Green side of the midpoint (151) between Bright Green (R 116) and Bright Yellowish Green (R 187); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 79,
+      "y": 35,
+      "chosen": "lego_bright_bluish_green",
+      "reason": "sample RGB (34, 136, 152); dE00 Bright Bluish Green 11.69 vs Medium Azur 17.69 (ratio 0.66); red channel 34 matches Bright Bluish Green (ref R 39), not Medium Azur (ref R 116); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 94,
+      "y": 35,
+      "chosen": "lego_flame_yellowish_orange",
+      "reason": "sample RGB (213, 192, 66); dE00 Flame Yellowish Orange 8.17 vs Brick Yellow 10.99 (ratio 0.744); blue channel 66 rules out Brick Yellow (ref B 144); green channel 192 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 112,
+      "y": 37,
+      "chosen": "lego_bright_orange",
+      "reason": "sample RGB (226, 162, 55); dE00 Bright Orange 6.48 vs Flame Yellowish Orange 9.51 (ratio 0.681); green channel 162 matches Bright Orange (G 157) rather than Flame Yellowish Orange (G 194); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 11,
+      "y": 40,
+      "chosen": "lego_bright_bluish_green",
+      "reason": "sample RGB (33, 162, 180); dE00 Bright Bluish Green 8.88 vs Medium Azur 10.97 (ratio 0.81); red channel 33 matches Bright Bluish Green (ref R 39), not Medium Azur (ref R 116); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 0,
+      "y": 48,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (98, 150, 166); dE00 Medium Azur 10.86 vs Bright Bluish Green 12.89 (ratio 0.842); red channel 98 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 29,
+      "y": 48,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (111, 182, 188); dE00 Medium Azur 8.27 vs Bright Bluish Green 10.71 (ratio 0.772); red channel 111 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 75,
+      "y": 48,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (116, 184, 191); dE00 Medium Azur 7.62 vs Bright Bluish Green 11.68 (ratio 0.652); red channel 116 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 79,
+      "y": 48,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (113, 163, 175); dE00 Medium Azur 7.88 vs Bright Bluish Green 12.29 (ratio 0.642); red channel 113 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 95,
+      "y": 48,
+      "chosen": "lego_bright_bluish_green",
+      "reason": "sample RGB (49, 124, 126); dE00 Bright Bluish Green 12.86 vs Medium Azur 23.38 (ratio 0.55); darkened stud at a section edge (dE00 to nearest above 12); hue and low red channel 49 match Bright Bluish Green (ref R 39), as do the other darkened edge cells (48,0), (80,0), (0,32), (111,32); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 113,
+      "y": 48,
+      "chosen": "lego_flame_yellowish_orange",
+      "reason": "sample RGB (215, 200, 40); dE00 Flame Yellowish Orange 9.9 vs Brick Yellow 13.45 (ratio 0.736); blue channel 40 rules out Brick Yellow (ref B 144); green channel 200 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 1,
+      "y": 51,
+      "chosen": "lego_flame_yellowish_orange",
+      "reason": "sample RGB (212, 189, 65); dE00 Flame Yellowish Orange 7.82 vs Brick Yellow 10.95 (ratio 0.714); blue channel 65 rules out Brick Yellow (ref B 144); green channel 189 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 17,
+      "y": 51,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (116, 182, 185); dE00 Medium Azur 9.24 vs Bright Bluish Green 10.59 (ratio 0.872); red channel 116 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 48,
+      "y": 51,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (110, 177, 181); dE00 Medium Azur 9.2 vs Bright Bluish Green 9.6 (ratio 0.958); red channel 110 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 78,
+      "y": 51,
+      "chosen": "lego_bright_orange",
+      "reason": "sample RGB (215, 159, 53); dE00 Bright Orange 8.54 vs Flame Yellowish Orange 9.81 (ratio 0.871); green channel 159 matches Bright Orange (G 157) rather than Flame Yellowish Orange (G 194); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 80,
+      "y": 51,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (117, 180, 185); dE00 Medium Azur 8.35 vs Bright Bluish Green 10.93 (ratio 0.764); red channel 117 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 96,
+      "y": 51,
+      "chosen": "lego_flame_yellowish_orange",
+      "reason": "sample RGB (218, 194, 62); dE00 Flame Yellowish Orange 7.3 vs Brick Yellow 11.41 (ratio 0.64); blue channel 62 rules out Brick Yellow (ref B 144); green channel 194 matches Flame Yellowish Orange (G 194) rather than Bright Orange (G 157); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 107,
+      "y": 62,
+      "chosen": "lego_bright_bluish_green",
+      "reason": "sample RGB (32, 164, 178); dE00 Bright Bluish Green 7.44 vs Medium Azur 11.54 (ratio 0.645); red channel 32 matches Bright Bluish Green (ref R 39), not Medium Azur (ref R 116); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 48,
+      "y": 64,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (109, 174, 184); dE00 Medium Azur 7.06 vs Bright Bluish Green 10.91 (ratio 0.647); red channel 109 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 63,
+      "y": 64,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (111, 180, 189); dE00 Medium Azur 7.06 vs Bright Bluish Green 11.27 (ratio 0.627); red channel 111 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 64,
+      "y": 64,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (102, 167, 179); dE00 Medium Azur 7.64 vs Bright Bluish Green 10.56 (ratio 0.723); red channel 102 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 26,
+      "y": 65,
+      "chosen": "lego_bright_bluish_green",
+      "reason": "sample RGB (39, 160, 175); dE00 Bright Bluish Green 7.86 vs Medium Azur 11.76 (ratio 0.668); red channel 39 matches Bright Bluish Green (ref R 39), not Medium Azur (ref R 116); kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 81,
+      "y": 67,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (103, 184, 192); dE00 Medium Azur 8.04 vs Bright Bluish Green 10.77 (ratio 0.746); red channel 103 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; kept the automatic choice",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    },
+    {
+      "x": 97,
+      "y": 67,
+      "chosen": "lego_medium_azur",
+      "reason": "sample RGB (115, 182, 181); dE00 Bright Bluish Green 9.83 vs Medium Azur 10.95 (ratio 0.898); red channel 115 matches Medium Azur (ref R 116), not Bright Bluish Green (ref R 39); reads light blue on the review sheet; Bright Bluish Green would also exceed its supply of 1,879",
+      "decided_by": "Claude (agent) from pixel evidence and the review sheet; pending maintainer review",
+      "decided_on": "2026-11-21"
+    }
+  ]
+}

@@ -45,12 +45,12 @@ class TestLayoutPipeline:
         grid = generator.generate(test_image, source_filename="test.png")
         assert len(grid.positions) == 10240
 
-    def test_full_pipeline_correct_land_brick_count(self, generator, test_image):
-        """Test that pipeline generates exactly 3,062 land bricks."""
+    def test_full_pipeline_correct_land_plate_count(self, generator, test_image):
+        """Test that pipeline generates exactly 3,062 land plates."""
         grid = generator.generate(test_image, source_filename="test.png")
 
-        brick_count = sum(1 for p in grid.positions if p.part_type == "brick")
-        assert brick_count == 3062
+        plate_count = sum(1 for p in grid.positions if p.part_type == "plate")
+        assert plate_count == 3062
 
     def test_full_pipeline_correct_ocean_tile_count(self, generator, test_image):
         """Test that pipeline generates exactly 7,178 ocean tiles."""
@@ -60,12 +60,12 @@ class TestLayoutPipeline:
         assert tile_count == 7178
 
     def test_full_pipeline_correct_part_ids(self, generator, test_image):
-        """Test that bricks use 3062b and tiles use 98138."""
+        """Test that plates use 6141 and tiles use 98138."""
         grid = generator.generate(test_image, source_filename="test.png")
 
         for pos in grid.positions:
-            if pos.part_type == "brick":
-                assert pos.lego_part_id == "3062b"
+            if pos.part_type == "plate":
+                assert pos.lego_part_id == "6141"
             else:
                 assert pos.lego_part_id == "98138"
 
@@ -140,7 +140,7 @@ class TestLayoutPipeline:
         stats = grid.compute_statistics()
 
         assert stats.total_tile_count == 10240
-        assert stats.land_brick_count == 3062
+        assert stats.land_plate_count == 3062
         assert stats.ocean_tile_count == 7178
         assert stats.unique_colors == 2
         assert stats.coverage_percentage == 100.0

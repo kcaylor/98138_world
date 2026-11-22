@@ -9,8 +9,14 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional
 
-from .grid import PositionPlacementGrid
+import numpy as np
+
+from .grid import DISCLAIMER, PositionPlacementGrid
 from .kit_spec import LEGOWorldMapKitSpecification
+from .position import LAND_PART_TYPE, OCEAN_PART_TYPE
+from ..core.color_quantizer import delta_e_2000
+from ..kit import load_kit_color_table
+from ..palette.converter import rgb_to_lab
 from ..palette.loader import LegoPalette
 
 
@@ -21,7 +27,7 @@ class ColorSuggestion:
     Attributes:
         color_id: Suggested color ID
         color_name: Human-readable name
-        color_distance: Delta E distance from required color
+        color_distance: CIEDE2000 (Delta E 00) distance from the required color
     """
 
     color_id: str
@@ -52,8 +58,8 @@ class ColorUnavailableViolation(Violation):
 
     Attributes:
         type: Always "color_unavailable"
-        part_type: Affected part type ("brick" or "tile")
-        part_id: LEGO part ID ("3062b" or "98138")
+        part_type: Affected part type ("plate" or "tile")
+        part_id: LEGO part ID ("6141" or "98138")
         color_id: Required color not in kit
         color_name: Human-readable color name
         positions_required: Number of positions needing this color
@@ -92,8 +98,8 @@ class QuantityExceededViolation(Violation):
 
     Attributes:
         type: Always "quantity_exceeded"
-        part_type: Affected part type ("brick" or "tile")
-        part_id: LEGO part ID ("3062b" or "98138")
+        part_type: Affected part type ("plate" or "tile")
+        part_id: LEGO part ID ("6141" or "98138")
         color_id: Color with insufficient quantity
         color_name: Human-readable color name
         positions_required: Number of positions needed
@@ -155,7 +161,8 @@ class ValidationReport:
             "violations": [v.to_dict() for v in self.violations],
             "validated_at": self.validated_at,
             "kit_id": self.kit_id,
-            "layout_file": self.layout_file
+            "layout_file": self.layout_file,
+            "disclaimer": DISCLAIMER,
         }
 
     def to_json(self, indent: int = 2) -> str:
@@ -166,7 +173,7 @@ class ValidationReport:
 class LayoutValidator:
     """Validate layouts against LEGO World Map kit specifications.
 
-    Checks color availability and quantities for both brick and tile parts.
+    Checks color availability and quantities for both plate (land) and tile (ocean) parts.
     """
 
     def __init__(self, kit_spec: LEGOWorldMapKitSpecification, palette: LegoPalette):
@@ -185,6 +192,11 @@ class LayoutValidator:
             color_id = self._make_color_id(color.name)
             self._color_by_id[color_id] = color
 
+        # Kit colors (cited names and RGB) for suggestions
+        self._kit_colors = {
+            c.key: (c.lego.name, tuple(c.rgb)) for c in load_kit_color_table().colors
+        }
+
     def validate(self, layout: PositionPlacementGrid, layout_file: str) -> ValidationReport:
         """Validate layout against kit specifications.
 
@@ -199,28 +211,28 @@ class LayoutValidator:
         total_violation_positions = 0
 
         # Count colors by part type
-        brick_colors = Counter()
+        plate_colors = Counter()
         tile_colors = Counter()
         color_names = {}
 
         for pos in layout.positions:
             color_names[pos.color_id] = pos.color_name
-            if pos.part_type == "brick":
-                brick_colors[pos.color_id] += 1
+            if pos.part_type == LAND_PART_TYPE:
+                plate_colors[pos.color_id] += 1
             else:
                 tile_colors[pos.color_id] += 1
 
-        # Validate brick colors
-        for color_id, count in brick_colors.items():
+        # Validate plate (land) colors
+        for color_id, count in plate_colors.items():
             color_name = color_names.get(color_id, color_id)
 
             # Check if color is available
-            if not self._kit_spec.is_brick_color_available(color_id):
+            if not self._kit_spec.is_plate_color_available(color_id):
                 suggestion = self._find_nearest_color(
-                    color_id, self._kit_spec.available_colors_brick
+                    color_id, self._kit_spec.available_colors_plate
                 )
                 violations.append(ColorUnavailableViolation(
-                    part_type="brick",
+                    part_type=LAND_PART_TYPE,
                     part_id=self._kit_spec.land_part_id,
                     color_id=color_id,
                     color_name=color_name,
@@ -230,10 +242,10 @@ class LayoutValidator:
                 total_violation_positions += count
             else:
                 # Check quantity
-                available = self._kit_spec.get_brick_quantity(color_id)
+                available = self._kit_spec.get_plate_quantity(color_id)
                 if count > available:
                     violations.append(QuantityExceededViolation(
-                        part_type="brick",
+                        part_type=LAND_PART_TYPE,
                         part_id=self._kit_spec.land_part_id,
                         color_id=color_id,
                         color_name=color_name,
@@ -243,7 +255,7 @@ class LayoutValidator:
                     ))
                     total_violation_positions += (count - available)
 
-        # Validate tile colors
+        # Validate tile (ocean) colors
         for color_id, count in tile_colors.items():
             color_name = color_names.get(color_id, color_id)
 
@@ -253,7 +265,7 @@ class LayoutValidator:
                     color_id, self._kit_spec.available_colors_tile
                 )
                 violations.append(ColorUnavailableViolation(
-                    part_type="tile",
+                    part_type=OCEAN_PART_TYPE,
                     part_id=self._kit_spec.ocean_part_id,
                     color_id=color_id,
                     color_name=color_name,
@@ -266,7 +278,7 @@ class LayoutValidator:
                 available = self._kit_spec.get_tile_quantity(color_id)
                 if count > available:
                     violations.append(QuantityExceededViolation(
-                        part_type="tile",
+                        part_type=OCEAN_PART_TYPE,
                         part_id=self._kit_spec.ocean_part_id,
                         color_id=color_id,
                         color_name=color_name,
@@ -295,57 +307,34 @@ class LayoutValidator:
         target_color_id: str,
         available_colors: List[str]
     ) -> Optional[ColorSuggestion]:
-        """Find nearest available color using Delta E distance.
+        """Nearest kit color of the affected part by CIEDE2000.
 
-        Args:
-            target_color_id: Color to find alternative for
-            available_colors: List of available color IDs
+        The target's RGB comes from the palette (the colors quantized images use); candidates are
+        the part's kit colors with their cited RGB from ``kit_colors.json``. Only colors in
+        ``available_colors`` (the part's kit colors) are considered.
 
         Returns:
-            ColorSuggestion or None if no alternative found
+            ColorSuggestion with the distance as Delta E 00, or None if the target is unknown
         """
         target_color = self._color_by_id.get(target_color_id)
         if not target_color:
             return None
+        target_lab = rgb_to_lab(np.array(target_color.rgb, dtype=np.float64))
 
         best_suggestion = None
-        best_distance = float('inf')
-
+        best_distance = float("inf")
         for color_id in available_colors:
-            candidate = self._color_by_id.get(color_id)
-            if not candidate:
+            candidate = self._kit_colors.get(color_id)
+            if candidate is None:
                 continue
-
-            # Calculate simple Euclidean distance (for now)
-            # In production, use Delta E 2000
-            distance = self._calculate_color_distance(target_color.rgb, candidate.rgb)
-
+            name, rgb = candidate
+            distance = float(delta_e_2000(target_lab, rgb_to_lab(np.array(rgb, dtype=np.float64))))
             if distance < best_distance:
                 best_distance = distance
                 best_suggestion = ColorSuggestion(
-                    color_id=color_id,
-                    color_name=candidate.name,
-                    color_distance=distance
+                    color_id=color_id, color_name=name, color_distance=distance
                 )
-
         return best_suggestion
-
-    @staticmethod
-    def _calculate_color_distance(rgb1: tuple, rgb2: tuple) -> float:
-        """Calculate simple Euclidean distance between RGB colors.
-
-        Args:
-            rgb1: First RGB tuple
-            rgb2: Second RGB tuple
-
-        Returns:
-            Distance value
-        """
-        return (
-            (rgb1[0] - rgb2[0]) ** 2 +
-            (rgb1[1] - rgb2[1]) ** 2 +
-            (rgb1[2] - rgb2[2]) ** 2
-        ) ** 0.5
 
     @staticmethod
     def _make_color_id(color_name: str) -> str:

@@ -5,13 +5,21 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, Any
 
+# Land: 1x1 round plate, LEGO design 6141 (BrickLink/Rebrickable 4073), element 614101.
+# Ocean: 1x1 round tile, BrickLink/Rebrickable 98138 (LEGO design 35381).
+LAND_PART_TYPE = "plate"
+LAND_PART_ID = "6141"
+OCEAN_PART_TYPE = "tile"
+OCEAN_PART_ID = "98138"
+PART_ID_FOR_TYPE = {LAND_PART_TYPE: LAND_PART_ID, OCEAN_PART_TYPE: OCEAN_PART_ID}
+
 
 @dataclass(frozen=True)
 class PositionPlacement:
     """Represents a single LEGO part placement at a specific grid position.
 
-    Land positions use round bricks (LEGO part 3062b) that stand taller.
-    Ocean positions use flat tiles (LEGO part 98138) that sit flush with base plate.
+    Land positions use 1x1 round plates (part 6141) that stand taller.
+    Ocean positions use 1x1 round tiles (part 98138) that sit flush with the base.
 
     Attributes:
         x: X coordinate (0-based, increases rightward, range: 0-127)
@@ -19,8 +27,8 @@ class PositionPlacement:
         color_id: LEGO color identifier (e.g., "lego_blue_medium")
         color_name: Human-readable color name (e.g., "Medium Blue")
         lego_color_code: Official LEGO color code (e.g., "102")
-        part_type: Part type - "brick" for land, "tile" for ocean
-        lego_part_id: LEGO part number - "3062b" for bricks, "98138" for tiles
+        part_type: Part type - "plate" for land, "tile" for ocean
+        lego_part_id: Part number - "6141" for plates, "98138" for tiles
     """
 
     x: int
@@ -40,18 +48,19 @@ class PositionPlacement:
             raise ValueError(f"y coordinate must be >= 0, got {self.y}")
 
         # Validate part_type
-        if self.part_type not in ("brick", "tile"):
-            raise ValueError(f"part_type must be 'brick' or 'tile', got '{self.part_type}'")
+        if self.part_type not in PART_ID_FOR_TYPE:
+            raise ValueError(f"part_type must be 'plate' or 'tile', got '{self.part_type}'")
 
         # Validate lego_part_id
-        if self.lego_part_id not in ("3062b", "98138"):
-            raise ValueError(f"lego_part_id must be '3062b' or '98138', got '{self.lego_part_id}'")
+        if self.lego_part_id not in PART_ID_FOR_TYPE.values():
+            raise ValueError(f"lego_part_id must be '6141' or '98138', got '{self.lego_part_id}'")
 
         # Validate invariant: part_type and lego_part_id must match
-        if self.part_type == "brick" and self.lego_part_id != "3062b":
-            raise ValueError(f"part_type 'brick' must use lego_part_id '3062b', got '{self.lego_part_id}'")
-        if self.part_type == "tile" and self.lego_part_id != "98138":
-            raise ValueError(f"part_type 'tile' must use lego_part_id '98138', got '{self.lego_part_id}'")
+        expected = PART_ID_FOR_TYPE[self.part_type]
+        if self.lego_part_id != expected:
+            raise ValueError(
+                f"part_type '{self.part_type}' must use lego_part_id '{expected}', got '{self.lego_part_id}'"
+            )
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert position placement to dictionary.

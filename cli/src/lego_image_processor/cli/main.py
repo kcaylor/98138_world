@@ -19,11 +19,13 @@ from .quantize import quantize
 from .stats import stats
 from .layout import layout
 from .validate import validate
+from .kit import kit
 
 cli.add_command(quantize)
 cli.add_command(stats)
 cli.add_command(layout)
 cli.add_command(validate)
+cli.add_command(kit)
 
 
 def main() -> None:

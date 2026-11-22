@@ -55,7 +55,7 @@ downsampling and whether the colors available for each part can carry the patter
 |---|---|
 | 001 | Image quantization CLI (built) |
 | 002 | Layout generation and kit validation (built; its "shadowing" story is replaced by the texture rule in 004) |
-| 003 | Kit reference data: verified part IDs and inventory, color ID mappings, the official design as named colors, the kit's projection |
+| 003 | Kit reference data: verified part IDs and inventory, color ID mappings, the official design as named colors (built; projection findings recorded as notes for 004) |
 | 004 | Map recipes and canonical datasets: download/cache, reprojection, classification, color scales, texture, suitability. First examples: the official bathymetry map, an ocean temperature map, a land elevation map |
 | 005 | Parts lists and ordering (BrickLink, Rebrickable, kit top-up) |
 | 006 | Build sheets |

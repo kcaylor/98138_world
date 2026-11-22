@@ -61,3 +61,6 @@ poetry.lock
 
 # Project specific
 *.pyc
+
+# LEGO instruction PDFs are never committed or packaged (feature 003, FR-002)
+*.pdf

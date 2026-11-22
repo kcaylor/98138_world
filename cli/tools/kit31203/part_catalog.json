@@ -1,0 +1,441 @@
+{
+  "format_version": "1",
+  "description": "Curated part metadata for the elements on page 159 of the 31203 instructions. Element IDs and quantities come from the PDF; design numbers, part numbers, descriptions and colors come from the cited Brickset inventory. 98138 (ocean tile) and 4073 (land plate) are the BrickLink/Rebrickable numbers for LEGO designs 35381 and 6141.",
+  "citations": [
+    {
+      "id": "brickset",
+      "title": "Brickset inventory 31203-1",
+      "url": "https://brickset.com/inventories/31203-1",
+      "accessed": "2026-11-21"
+    }
+  ],
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group.",
+  "parts": [
+    {
+      "element_id": "235701",
+      "design_id": "2357",
+      "part_ids": [
+        "2357"
+      ],
+      "description": "BRICK CORNER 1X2X2",
+      "color": "White",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "242001",
+      "design_id": "2420",
+      "part_ids": [
+        "2420"
+      ],
+      "description": "CORNER PLATE 1X2X2",
+      "color": "White",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "246501",
+      "design_id": "2465",
+      "part_ids": [
+        "2465"
+      ],
+      "description": "BRICK 1X16",
+      "color": "White",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "300501",
+      "design_id": "3005",
+      "part_ids": [
+        "3005"
+      ],
+      "description": "BRICK 1X1",
+      "color": "White",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "300801",
+      "design_id": "3008",
+      "part_ids": [
+        "3008"
+      ],
+      "description": "BRICK 1X8",
+      "color": "White",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "301001",
+      "design_id": "3010",
+      "part_ids": [
+        "3010"
+      ],
+      "description": "BRICK 1X4",
+      "color": "White",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "379501",
+      "design_id": "3795",
+      "part_ids": [
+        "3795"
+      ],
+      "description": "PLATE 2X6",
+      "color": "White",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "416201",
+      "design_id": "4162",
+      "part_ids": [
+        "4162"
+      ],
+      "description": "FLAT TILE 1X8",
+      "color": "White",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "428226",
+      "design_id": "4282",
+      "part_ids": [
+        "4282"
+      ],
+      "description": "PLATE 2X16",
+      "color": "Black",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "614101",
+      "design_id": "6141",
+      "part_ids": [
+        "6141",
+        "4073"
+      ],
+      "description": "ROUND PLATE 1X1",
+      "color": "White",
+      "role": "land",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "4119227",
+      "design_id": "4282",
+      "part_ids": [
+        "4282"
+      ],
+      "description": "PLATE 2X16",
+      "color": "White",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "4121715",
+      "design_id": "61332",
+      "part_ids": [
+        "61332"
+      ],
+      "description": "CONNECTOR PEG W. FRICTION",
+      "color": "Black",
+      "role": "frame_other",
+      "verified": false,
+      "citation": "brickset",
+      "note": "Page 159 prints element 4121715 x205; Brickset lists 6279875 x206 for this line. Design, description and color are Brickset's for the equivalent line and are not confirmed for this element ID."
+    },
+    {
+      "element_id": "4160228",
+      "design_id": "44865",
+      "part_ids": [
+        "44865"
+      ],
+      "description": "BRICK 1X2 W. HORIZONTAL SNAP",
+      "color": "Multicombination",
+      "role": "frame_other",
+      "verified": false,
+      "citation": "brickset",
+      "note": "Page 159 prints element 4160228 x52; Brickset lists 6406522 x52 for this line. Design, description and color are Brickset's for the equivalent line and are not confirmed for this element ID."
+    },
+    {
+      "element_id": "4211002",
+      "design_id": "3795",
+      "part_ids": [
+        "3795"
+      ],
+      "description": "PLATE 2X6",
+      "color": "Dark Stone Grey",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "4518400",
+      "design_id": "59900",
+      "part_ids": [
+        "59900"
+      ],
+      "description": "NOSE CONE SMALL 1X1",
+      "color": "White",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "4558168",
+      "design_id": "63864",
+      "part_ids": [
+        "63864"
+      ],
+      "description": "FLAT TILE 1X3",
+      "color": "White",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "6056774",
+      "design_id": "92585",
+      "part_ids": [
+        "92585"
+      ],
+      "description": "MINI FIGURE CROWBAR",
+      "color": "Warm Gold",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "6104805",
+      "design_id": "11212",
+      "part_ids": [
+        "11212"
+      ],
+      "description": "PLATE 3X3",
+      "color": "White",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "6284573",
+      "design_id": "35381",
+      "part_ids": [
+        "98138",
+        "35381"
+      ],
+      "description": "FLAT TILE 1X1, ROUND",
+      "color": "Brick Yellow",
+      "role": "ocean",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "6284582",
+      "design_id": "35381",
+      "part_ids": [
+        "98138",
+        "35381"
+      ],
+      "description": "FLAT TILE 1X1, ROUND",
+      "color": "Bright Orange",
+      "role": "ocean",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "6284583",
+      "design_id": "35381",
+      "part_ids": [
+        "98138",
+        "35381"
+      ],
+      "description": "FLAT TILE 1X1, ROUND",
+      "color": "Bright Yellowish Green",
+      "role": "ocean",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "6284584",
+      "design_id": "35381",
+      "part_ids": [
+        "98138",
+        "35381"
+      ],
+      "description": "FLAT TILE 1X1, ROUND",
+      "color": "Earth Blue",
+      "role": "ocean",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "6302092",
+      "design_id": "65803",
+      "part_ids": [
+        "65803"
+      ],
+      "description": "BRICK 4/3, 16X16 W/ 4.85 HOLE",
+      "color": "Black",
+      "role": "section_base",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "6302093",
+      "design_id": "55819",
+      "part_ids": [
+        "55819"
+      ],
+      "description": "ELEMENT SEPARATOR, NO. 2",
+      "color": "Black",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "6302094",
+      "design_id": "67139",
+      "part_ids": [
+        "67139"
+      ],
+      "description": "PANEL 3X5, W/ 4.85 HOLE",
+      "color": "Black",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "6311436",
+      "design_id": "35381",
+      "part_ids": [
+        "98138",
+        "35381"
+      ],
+      "description": "FLAT TILE 1X1, ROUND",
+      "color": "Vibrant Coral",
+      "role": "ocean",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "6311437",
+      "design_id": "35381",
+      "part_ids": [
+        "98138",
+        "35381"
+      ],
+      "description": "FLAT TILE 1X1, ROUND",
+      "color": "Bright Bluish Green",
+      "role": "ocean",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "6322819",
+      "design_id": "35381",
+      "part_ids": [
+        "98138",
+        "35381"
+      ],
+      "description": "FLAT TILE 1X1, ROUND",
+      "color": "Medium Azur",
+      "role": "ocean",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "6322822",
+      "design_id": "35381",
+      "part_ids": [
+        "98138",
+        "35381"
+      ],
+      "description": "FLAT TILE 1X1, ROUND",
+      "color": "Flame Yellowish Orange",
+      "role": "ocean",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "6329429",
+      "design_id": "73881",
+      "part_ids": [
+        "73881"
+      ],
+      "description": "FLAT TILE 1X8, NO. 85",
+      "color": "Black",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "6329436",
+      "design_id": "73892",
+      "part_ids": [
+        "73892"
+      ],
+      "description": "FLAT TILE 1X8, NO. 86",
+      "color": "Black",
+      "role": "frame_other",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    },
+    {
+      "element_id": "6353793",
+      "design_id": "35381",
+      "part_ids": [
+        "98138",
+        "35381"
+      ],
+      "description": "FLAT TILE 1X1, ROUND",
+      "color": "Bright Green",
+      "role": "ocean",
+      "verified": true,
+      "citation": "brickset",
+      "note": ""
+    }
+  ]
+}

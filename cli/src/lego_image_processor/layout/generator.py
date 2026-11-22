@@ -6,9 +6,10 @@ from typing import Dict, Tuple, Optional, Callable
 
 from PIL import Image
 
-from .position import PositionPlacement
+from .position import LAND_PART_ID, LAND_PART_TYPE, OCEAN_PART_ID, OCEAN_PART_TYPE, PositionPlacement
 from .grid import PositionPlacementGrid
 from .land_sea_mask import LandSeaMask
+from ..kit import load_kit_color_table
 from ..palette.loader import LegoPalette, LegoColor
 
 
@@ -16,7 +17,7 @@ class LayoutGenerator:
     """Generate LEGO World Map position placement layouts from quantized images.
 
     Takes a color-quantized image (128x80 pixels with LEGO palette colors) and
-    generates a complete building plan with 10,240 positions (3,062 land bricks
+    generates a complete building plan with 10,240 positions (3,062 land plates
     + 7,178 ocean tiles).
 
     Attributes:
@@ -42,6 +43,12 @@ class LayoutGenerator:
         self._rgb_to_color: Dict[Tuple[int, int, int], LegoColor] = {}
         for color in palette.colors:
             self._rgb_to_color[color.rgb] = color
+
+        # Kit colors: key -> (cited LEGO name, LEGO color id), so kit colors are labeled
+        # with the names in kit_colors.json (FR-020). Other palette colors keep palette names.
+        self._kit_labels: Dict[str, Tuple[str, str]] = {
+            c.key: (c.lego.name, str(c.lego.id)) for c in load_kit_color_table().colors
+        }
 
     def generate(
         self,
@@ -91,16 +98,20 @@ class LayoutGenerator:
 
                 # Get part type from land/sea mask
                 is_land = self._land_sea_mask.is_land(x, y)
-                part_type = "brick" if is_land else "tile"
-                lego_part_id = "3062b" if is_land else "98138"
+                part_type = LAND_PART_TYPE if is_land else OCEAN_PART_TYPE
+                lego_part_id = LAND_PART_ID if is_land else OCEAN_PART_ID
 
-                # Create position placement
+                # Create position placement (kit colors carry their kit_colors.json labels)
+                color_id = self._make_color_id(color.name)
+                color_name, color_code = self._kit_labels.get(
+                    color_id, (color.name, str(color.id))
+                )
                 position = PositionPlacement(
                     x=x,
                     y=y,
-                    color_id=self._make_color_id(color.name),
-                    color_name=color.name,
-                    lego_color_code=str(color.id),
+                    color_id=color_id,
+                    color_name=color_name,
+                    lego_color_code=color_code,
                     part_type=part_type,
                     lego_part_id=lego_part_id
                 )

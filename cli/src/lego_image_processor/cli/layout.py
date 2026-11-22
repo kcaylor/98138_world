@@ -10,6 +10,7 @@ from ..core.image_loader import load_image, ImageLoadError
 from ..palette.loader import LegoPalette
 from ..layout.land_sea_mask import load_land_sea_mask
 from ..layout.generator import LayoutGenerator
+from ..layout.grid import DISCLAIMER
 
 
 @click.command()
@@ -35,8 +36,8 @@ def layout(input_image: str, output: str, output_format: str, quiet: bool) -> No
     """Generate LEGO position placement layout from quantized image.
 
     Takes a color-quantized image (128x80 pixels) and generates a complete
-    LEGO World Map building plan with 10,240 positions (3,062 land bricks
-    + 7,178 ocean tiles).
+    LEGO World Map building plan with 10,240 positions (3,062 land plates,
+    part 6141, + 7,178 ocean tiles, part 98138).
 
     \b
     Examples:
@@ -129,7 +130,7 @@ def layout(input_image: str, output: str, output_format: str, quiet: bool) -> No
             click.echo()
             click.echo(click.style("Layout generation complete!", fg="green"))
             click.echo(f"  Total positions: {grid.total_positions:,}")
-            click.echo(f"  Land bricks (3062b): {grid.land_positions:,} ({grid.land_positions/grid.total_positions*100:.1f}%)")
+            click.echo(f"  Land plates (6141): {grid.land_positions:,} ({grid.land_positions/grid.total_positions*100:.1f}%)")
             click.echo(f"  Ocean tiles (98138): {grid.ocean_positions:,} ({grid.ocean_positions/grid.total_positions*100:.1f}%)")
             click.echo(f"  Unique colors: {grid.unique_colors}")
             click.echo(f"  Output: {output}")
@@ -142,6 +143,8 @@ def layout(input_image: str, output: str, output_format: str, quiet: bool) -> No
                 click.echo(f"  Most common color: {stats.most_common_color['color_name']} "
                           f"({stats.most_common_color['count']:,} positions, "
                           f"{stats.most_common_color['count']/grid.total_positions*100:.1f}%)")
+            click.echo()
+            click.echo(DISCLAIMER)
 
     except ImageLoadError as e:
         raise click.ClickException(f"Failed to load image: {e}")

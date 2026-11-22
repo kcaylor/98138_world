@@ -186,7 +186,11 @@ class TestLayoutContract:
             assert "statistics" in data
             stats = data["statistics"]
             assert "total_tile_count" in stats
-            assert "land_brick_count" in stats
+            assert "land_plate_count" in stats
+            assert stats["land_plate_count"] == 3062
+            assert set(stats["color_frequency_by_part_type"]) == {"plate", "tile"}
+            assert metadata["schema_version"] == "2.0"
+            assert metadata["disclaimer"] == "Not affiliated with or endorsed by The LEGO Group."
             assert "ocean_tile_count" in stats
         finally:
             os.unlink(output_path)
@@ -211,10 +215,36 @@ class TestLayoutContract:
                 data = json.load(f)
 
             for pos in data["positions"]:
-                assert pos["part_type"] in ["brick", "tile"]
-                if pos["part_type"] == "brick":
-                    assert pos["lego_part_id"] == "3062b"
+                assert pos["part_type"] in ["plate", "tile"]
+                if pos["part_type"] == "plate":
+                    assert pos["lego_part_id"] == "6141"
                 else:
                     assert pos["lego_part_id"] == "98138"
         finally:
             os.unlink(output_path)
+
+
+class TestLayoutSchema2Contract:
+    """Schema 2.0 output and human summary (contracts/cli.md `layout`, US1-4)."""
+
+    def test_summary_lines_and_disclaimer(self, tmp_path):
+        out = tmp_path / "l.json"
+        result = subprocess.run(
+            [CLI, "layout", str(IMAGES_DIR / "test_128x80_quantized.png"), "-o", str(out)],
+            capture_output=True, text=True)
+        assert result.returncode == 0, result.stderr
+        assert "Land plates (6141): 3,062 (29.9%)" in result.stdout
+        assert "Ocean tiles (98138): 7,178 (70.1%)" in result.stdout
+        assert result.stdout.strip().splitlines()[-1] == "Not affiliated with or endorsed by The LEGO Group."
+
+    def test_csv_land_rows_use_plate_6141(self, tmp_path):
+        out = tmp_path / "l.csv"
+        result = subprocess.run(
+            [CLI, "layout", str(IMAGES_DIR / "test_128x80_quantized.png"), "-o", str(out),
+             "-f", "csv", "-q"], capture_output=True, text=True)
+        assert result.returncode == 0, result.stderr
+        rows = out.read_text().strip().splitlines()[1:]
+        land = [r for r in rows if r.endswith(",plate,6141")]
+        ocean = [r for r in rows if r.endswith(",tile,98138")]
+        assert len(land) == 3062
+        assert len(ocean) == 7178
