@@ -86,3 +86,33 @@ def test_supply_table():
 def test_thresholds_recorded():
     assert THRESHOLDS == {"variance_lost": 0.5, "filled_share": 0.05, "min_delta_e00": 5.0}
     assert _report()["thresholds"] == THRESHOLDS
+
+
+class TestExtraTiles:
+    """``extra_tiles(supply rows)`` (feature 009, FR-016; data-model.md Report.extra_tiles)."""
+
+    def test_within_supply_is_zero(self):
+        from lego_image_processor.maps.suitability import extra_tiles
+
+        assert extra_tiles(_report()["supply"]) == 0
+
+    def test_over_supply_non_kit_and_shadow(self):
+        from lego_image_processor.maps.suitability import extra_tiles, kit_supply
+
+        supply = kit_supply()["98138"]
+        eb = supply["lego_earth_blue"]
+        colors = ("lego_earth_blue", "lego_medium_azur", "lego_bright_red")  # red: no 98138 in kit
+        rep = _report(colors=colors, classes=_classes([eb - 10, 100, 7]), layer_cells=eb - 10 + 107,
+                      extra_use={"lego_earth_blue": 25})
+        rows = {r["key"]: r for r in rep["supply"]}
+        assert rows["lego_earth_blue"]["used"] == eb + 15
+        assert extra_tiles(rep["supply"]) == 15 + 7
+        assert set(rep) >= {"supply", "class_counts", "warnings"} and "extra_tiles" not in rep
+
+    def test_rows_by_hand(self):
+        from lego_image_processor.maps.suitability import extra_tiles
+
+        rows = [{"key": "a", "used": 10, "supplied": 4, "within": False, "in_kit": True},
+                {"key": "b", "used": 3, "supplied": 0, "within": False, "in_kit": False},
+                {"key": "c", "used": 2, "supplied": 9, "within": True, "in_kit": True}]
+        assert extra_tiles(rows) == 9

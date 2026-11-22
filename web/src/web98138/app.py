@@ -128,7 +128,7 @@ def create_app(site_dir) -> FastAPI:
     async def map_root(request: Request, map_id: str):
         if catalog.map(map_id) is None:
             return not_found(request)
-        return RedirectResponse(f"/maps/{map_id}/A", status_code=307)
+        return RedirectResponse(f"/maps/{map_id}/{catalog.map(map_id).default_combination}", status_code=307)
 
     @get("/maps/{map_id}/{combination}")
     async def map_page(request: Request, map_id: str, combination: str):

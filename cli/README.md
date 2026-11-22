@@ -23,6 +23,9 @@ A CLI tool that converts images to LEGO-compatible color palettes and generates 
 - **Map arrangements** (feature 007): the kit's three frames can be hung in three orders
   (combination A Europe and Africa in the centre, B America, C Asia and Australia); build any map
   in any of them (`map build --arrangement`) or re-hang an existing layout (`layout arrange`)
+- **ENSO maps** (feature 009): sea surface temperature anomaly of a strong El Niño (December 1997)
+  and a strong La Niña (December 1988) on one shared °C legend, Pacific-centred (recipes
+  `ocean-el-nino`, `ocean-la-nina`; recipe key `arrangement`)
 
 ## Installation
 
@@ -167,13 +170,15 @@ land/sea mask). Each layer is **data** (a gridded field classified onto an order
 **background** (fixed colors: mixed by weight, or a coastal halo). Every map also gets a one-stud
 **land shadow**: the ocean cells just east of land, in Earth Blue, as on the official design (391
 of its 392 Earth Blue tiles sit there). The shadow is drawn first, uses 392 of the kit's 393 Earth
-Blue tiles, and the ocean layer covers the other 6,786 ocean cells. Four recipes are bundled:
+Blue tiles, and the ocean layer covers the other 6,786 ocean cells. Six recipes are bundled:
 
 | Recipe | Land | Ocean | Data needed |
 |---|---|---|---|
 | `official-31203` | White | the official design grid, one-to-one (exact: 10,240/10,240; shadow off, the design already has it) | none (packaged) |
 | `official-31203-bathymetry` | White | shadow in Earth Blue; depth ranked into the official counts and color order of the other eight colors, blended | ETOPO 2022 |
 | `ocean-sst` | White | shadow; annual mean SST 1991-2020, cold to warm, counts within one kit's supply net of the shadow | ERSST v5 |
+| `ocean-el-nino` | White | shadow; SST anomaly of December 1997 (strong El Niño) on the shared ENSO legend below; hung as B | ERSST v5 December 1997 |
+| `ocean-la-nina` | White | shadow; SST anomaly of December 1988 (strong La Niña) on the same legend; hung as B | ERSST v5 December 1988 |
 | `land-elevation` | elevation on 10 plate colors (green to brown to grey to white) | shadow; Bright Bluish Green (Dark Turquoise) with a Medium Azur coastal halo that fades evenly offshore; needs more Bright Bluish Green tiles than one kit holds (reported as beyond-kit) | ETOPO 2022 |
 
 ```bash
@@ -212,6 +217,52 @@ outer = 3.0                 # up to here: ring color on an even Poisson-disk sub
 spacing = 2.0               # minimum distance between those fade cells
 ```
 
+#### ENSO maps
+
+`ocean-el-nino` and `ocean-la-nina` show the NOAA ERSST v5 sea surface temperature anomaly
+(`ssta`, °C against the 1971-2000 climatology) of December 1997, a strong El Niño, and December
+1988, a strong La Niña. Both read the per-month NCEI files (`ersst-v5-1997-12`,
+`ersst-v5-1988-12`, 134,832 bytes each, pinned by SHA-256) and share one fixed legend, so the two
+boards compare tile for tile. The legend reads cold to warm with zero in the middle class, uses
+only the kit's nine ocean colors, and its bounds were chosen to keep the tiles beyond one kit to a
+minimum (no `blend` texture, so every tile states its class exactly):
+
+| Color | Anomaly (°C) |
+|---|---|
+| Earth Blue | below -1.5 |
+| Bright Bluish Green | -1.5 to -0.5 |
+| Medium Azur | -0.5 to -0.25 |
+| Bright Green | -0.25 to -0.1 |
+| Bright Yellowish Green | -0.1 to +0.1 |
+| Brick Yellow | +0.1 to +0.3 |
+| Flame Yellowish Orange | +0.3 to +0.5 |
+| Bright Orange | +0.5 to +1.0 |
+| Vibrant Coral | +1.0 and above |
+
+A value on a bound takes the upper class. Both maps are hung as combination B (America in the
+centre, so the Pacific is whole) by the recipe key `arrangement = "B"`; `--arrangement` on the
+command line wins, and the build output says where the arrangement came from (`- from the recipe`,
+`- from --arrangement`, `- default`; the report JSON has `arrangement_source`). A recipe without
+the key is hung as A, as before.
+
+One kit is not quite enough: the El Niño map needs 1,114 ocean tiles beyond one kit's supply and
+the La Niña map 1,155 (the shadow's 390 Earth Blue tiles counted). The build prints the °C range
+and cells of each color and `Tiles beyond one kit: N`; `parts list <layout> --kits 1` lists the
+same tiles per color and `parts export <layout> --kits 1 --bricklink wanted.xml` writes them as a
+wanted list.
+
+```bash
+lego-image-processor map build ocean-el-nino --fetch -o el-nino.json --preview el-nino.png
+lego-image-processor map build ocean-la-nina --fetch -o la-nina.json --preview la-nina.png
+lego-image-processor parts list el-nino.json --kits 1
+lego-image-processor map build ocean-el-nino --arrangement A -o el-nino-A.json   # override
+```
+
+The El Niño map is meant to move to the 2026-27 event once it peaks. NCEI's per-month files from
+2010 on are netCDF-4, which this reader does not read yet (it rejects them with a clear message),
+so that swap needs a netCDF-4 reader first; it will then be a new dataset entry and a changed
+`dataset` line and title in `ocean-el-nino`, with the same id and legend.
+
 A recipe is a TOML file (format "1"). A minimal data layer:
 
 ```toml
@@ -219,6 +270,7 @@ A recipe is a TOML file (format "1"). A minimal data layer:
 format = "1"
 id = "my-map"
 title = "My map"
+arrangement = "A"                    # optional: A | B | C (or europe-africa, americas, asia-australia)
 
 [land]
 role = "background"

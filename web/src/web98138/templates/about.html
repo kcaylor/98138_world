@@ -12,7 +12,7 @@
 <h2>Maps are layers and recipes</h2>
 <p>Every map is a land layer plus an ocean layer. Each layer is either <strong>data-driven</strong>, a gridded dataset reprojected onto the kit's grid and classified onto an ordered scale of LEGO colors, or a <strong>background</strong>, such as the official white land or a calm ocean color with subtle shading. A short recipe file describes the dataset, the classification, the colors and the texture, so anyone can rebuild a map exactly. Datasets are pinned by checksum and cited on each map's page.</p>
 <ul>
-{% for m in maps %}<li><a href="/maps/{{ m.id }}/A">{{ m.title }}</a>: {{ m.description }}</li>{% endfor %}
+{% for m in maps %}<li><a href="/maps/{{ m.id }}/{{ m.default_combination }}">{{ m.title }}</a>: {{ m.description }}</li>{% endfor %}
 </ul>
 
 <h2>Three ways to hang the frames</h2>

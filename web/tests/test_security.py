@@ -62,7 +62,7 @@ def test_healthz(client):
     r = client.get("/healthz")
     assert r.status_code == 200
     j = r.json()
-    assert j["status"] == "ok" and j["variants"] == 6 and j["generated_at"]
+    assert j["status"] == "ok" and j["variants"] == 9 and j["generated_at"]
 
 
 def test_manifest_public(client, site_dir):

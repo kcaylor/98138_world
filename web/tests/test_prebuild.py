@@ -80,7 +80,8 @@ def test_nothing_to_buy_has_no_topup_export(manifest):
 
 
 def test_map_page_data(manifest):
-    off, sst = manifest["maps"]
+    off, sst, nino = manifest["maps"]
+    assert off["default_combination"] == "A" and nino["default_combination"] == "B"
     assert off["title"] and off["description"]
     assert off["datasets"] == [] and off["citations"]          # kit design source
     assert [l["class"] for l in sst["layers"]] == ["land", "ocean"]

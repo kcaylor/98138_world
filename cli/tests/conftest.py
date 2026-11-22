@@ -84,6 +84,8 @@ def fixture_registry(tmp_path, monkeypatch):
     fr = FixtureRegistry(tmp_path)
     etopo = FIXTURE_DATASETS / "etopo2022_1deg.npy"
     ersst = FIXTURE_DATASETS / "ersst_v5_annual_2deg.nc"
+    months = {"ersst-v5-1997-12": FIXTURE_DATASETS / "ersst_v5_199712_ssta.nc",  # feature 009
+              "ersst-v5-1988-12": FIXTURE_DATASETS / "ersst_v5_198812_ssta.nc"}
     for row in data["datasets"]:
         if row["id"] == "etopo2022-surface-10m":
             row.update(format="npy", filename=etopo.name, size=etopo.stat().st_size, sha256=_sha(etopo),
@@ -93,6 +95,10 @@ def fixture_registry(tmp_path, monkeypatch):
             row.update(filename=ersst.name, size=ersst.stat().st_size, sha256=_sha(ersst),
                        variables={"sst": {"units": "degC"}})
             fr.files[row["id"]] = ersst
+        elif row["id"] in months:
+            f = months[row["id"]]
+            row.update(filename=f.name, size=f.stat().st_size, sha256=_sha(f))
+            fr.files[row["id"]] = f
     fr.registry_path.write_text(json.dumps(data), encoding="utf-8")
     monkeypatch.setattr(reg, "REGISTRY_PATH", fr.registry_path)
     monkeypatch.setenv("LEGO_IMAGE_PROCESSOR_CACHE", str(fr.cache_dir))

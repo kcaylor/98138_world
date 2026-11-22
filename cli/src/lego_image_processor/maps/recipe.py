@@ -15,6 +15,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 from ..datasets.registry import DatasetEntry, load_registry
 from ..kit.part_colors import load_part_colors
+from ..layout.arrangement import Arrangement, ArrangementError, parse_arrangement, valid_values
 
 FORMAT = "1"
 DEFAULT_SEED = 31203
@@ -32,7 +33,7 @@ HALO_DEFAULTS = {"inner": 1.5, "outer": 3.0, "spacing": 2.0}
 LOCAL_FORMATS = ("netcdf3", "npy", "dods")
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{1,63}$")
 
-_TOP_KEYS = {"format", "id", "title", "description", "seed", "land", "ocean", "shadow"}
+_TOP_KEYS = {"format", "id", "title", "description", "seed", "arrangement", "land", "ocean", "shadow"}
 _SHADOW_KEYS = {"enabled", "color", "direction"}
 _DATA_KEYS = {"role", "colors", "dataset", "local", "variable", "transform", "classification", "texture"}
 _BACKGROUND_KEYS = {"role", "colors", "weights", "texture"}
@@ -116,6 +117,7 @@ class Recipe:
     seed: int = DEFAULT_SEED
     path: Optional[Path] = None
     shadow: Shadow = Shadow()
+    arrangement: Optional[Arrangement] = None  # feature 009: the recipe's default; None = key absent
 
     @property
     def layers(self) -> Tuple[Layer, Layer]:
@@ -412,8 +414,23 @@ def _parse(data: Dict[str, Any], raw: bytes, path: Optional[Path], base_dir: Pat
     land = _layer(data["land"], "land", base_dir)
     ocean = _layer(data["ocean"], "ocean", base_dir)
     shadow = _shadow(data.get("shadow"))
+    arrangement = _arrangement(data.get("arrangement"))
     return Recipe(format=fmt, id=rid, title=title, description=description, seed=seed, land=land,
-                  ocean=ocean, sha256=hashlib.sha256(raw).hexdigest(), path=path, shadow=shadow)
+                  ocean=ocean, sha256=hashlib.sha256(raw).hexdigest(), path=path, shadow=shadow,
+                  arrangement=arrangement)
+
+
+def _arrangement(v: Any) -> Optional[Arrangement]:
+    """The optional top-level ``arrangement`` (feature 009): how the frames are hung by default."""
+    if v is None:
+        return None
+    rule = f"must be one of {', '.join(valid_values())}"
+    if not isinstance(v, str):
+        raise RecipeError("arrangement", rule)
+    try:
+        return parse_arrangement(v)
+    except ArrangementError:
+        raise RecipeError("arrangement", rule)
 
 
 def _shadow(t: Any) -> Shadow:

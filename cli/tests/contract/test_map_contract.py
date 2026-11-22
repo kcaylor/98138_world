@@ -14,7 +14,8 @@ from lego_image_processor.datasets import cache as cache_mod
 
 DISCLAIMER = "Not affiliated with or endorsed by The LEGO Group."
 RECIPES = Path(__file__).resolve().parents[1] / "fixtures" / "recipes"
-BUNDLED = ("official-31203", "official-31203-bathymetry", "ocean-sst", "land-elevation")
+BUNDLED = ("official-31203", "official-31203-bathymetry", "ocean-sst", "land-elevation", "ocean-el-nino",
+           "ocean-la-nina")
 
 
 @pytest.fixture

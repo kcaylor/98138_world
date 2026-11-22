@@ -126,3 +126,15 @@ def test_parts_commands_end_with_disclaimer(runner, tmp_path):
     as_json = runner.invoke(cli, ["parts", "list", str(layout), "--format", "json"])
     assert json.loads(as_json.output)["disclaimer"] == DISCLAIMER
     assert json.loads((DATA_DIR / "part_numbers.json").read_text(encoding="utf-8"))["source"]["disclaimer"] == DISCLAIMER
+
+
+def test_readme_and_runbook_describe_the_enso_maps():
+    """Feature 009, FR-017: README and runbook name both ENSO recipes and the `arrangement` key."""
+    root = Path(__file__).resolve().parents[2]
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    runbook = (root.parent / "docs" / "runbook.md").read_text(encoding="utf-8")
+    for text in (readme, runbook):
+        assert "ocean-el-nino" in text and "ocean-la-nina" in text
+        assert "2026-27" in text
+    assert 'arrangement = "B"' in readme
+    assert DISCLAIMER in readme

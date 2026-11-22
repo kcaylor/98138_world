@@ -112,3 +112,11 @@ def layer_report(*, cls: str, role: str, part_id: str, colors: Sequence[str], fi
     rep["warnings"] = warnings
     rep["thresholds"] = dict(THRESHOLDS)
     return rep
+
+
+def extra_tiles(supply_rows: Sequence[Mapping[str, Any]]) -> int:
+    """Tiles needed beyond one kit's supply (feature 009, FR-016): the sum over a layer report's
+    ``supply`` rows of ``max(0, used - supplied)``. A color not in the kit has ``supplied`` 0 and
+    counts in full; the shadow is already in ``used``. ``parts list --kits 1`` reports the same
+    quantity as ``to_buy`` (no spares, loose or missing parts)."""
+    return sum(max(0, int(r["used"]) - int(r["supplied"])) for r in supply_rows)

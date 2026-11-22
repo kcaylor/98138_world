@@ -26,8 +26,8 @@ def _edit(site, fn):
 
 def test_load_ok(site_dir):
     cat = Catalog.load(site_dir)
-    assert [m.id for m in cat.maps] == ["official-31203", "ocean-sst"]
-    assert cat.variant_count == 6
+    assert [m.id for m in cat.maps] == ["official-31203", "ocean-sst", "ocean-el-nino"]
+    assert cat.variant_count == 9
     assert cat.map("ocean-sst").title == "Ocean temperature"
     assert cat.map("nope") is None
     assert cat.file("ocean-sst", "B", "bricklink").name == "bricklink.xml"

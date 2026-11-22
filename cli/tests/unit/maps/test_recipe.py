@@ -231,9 +231,10 @@ class TestLocal:
 
 
 class TestBundled:
-    def test_four_bundled(self):
+    def test_six_bundled(self):
         ids = set(bundled_recipes())
-        assert {"official-31203", "official-31203-bathymetry", "ocean-sst", "land-elevation"} <= ids
+        assert {"official-31203", "official-31203-bathymetry", "ocean-sst", "land-elevation",
+                "ocean-el-nino", "ocean-la-nina"} <= ids
 
     def test_load_by_id(self):
         r = load_recipe("official-31203")
@@ -253,3 +254,31 @@ class TestBundled:
     def test_unknown_recipe(self):
         with pytest.raises(RecipeError):
             load_recipe("no-such-recipe")
+
+
+class TestArrangementKey:
+    """Optional top-level ``arrangement`` (feature 009, FR-010; contracts/recipe-arrangement.md)."""
+
+    @staticmethod
+    def _with(value_line):
+        return BASE.replace('seed = 7\n', f'seed = 7\n{value_line}\n')
+
+    @pytest.mark.parametrize("value", ['"B"', '"b"', '"americas"', '" B "'])
+    def test_valid_values_parse_to_b(self, value):
+        r = parse_recipe(self._with(f"arrangement = {value}"))
+        assert r.arrangement is not None and r.arrangement.id == "B"
+        assert r.format == "1"
+
+    def test_absent_is_none(self):
+        assert parse_recipe(BASE).arrangement is None
+
+    @pytest.mark.parametrize("value", ['"D"', "2", "true", "{ id = \"B\" }"])
+    def test_invalid_values(self, value):
+        e = _err(self._with(f"arrangement = {value}"))
+        assert e.path == "arrangement"
+        for name in ("A", "B", "C", "europe-africa", "americas", "asia-australia"):
+            assert name in e.rule
+
+    def test_unknown_top_level_key_still_rejected(self):
+        e = _err(self._with('arrangment = "B"'))
+        assert e.path == "arrangment" and "unknown key" in e.rule

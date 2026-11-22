@@ -118,3 +118,19 @@ class TestOrdered:
         v[3, 3] = np.nan
         with pytest.raises(MapBuildError, match="missing"):
             classify(v, _mask(), Classification(method="quantile"), ("a", "b"))
+
+
+class TestEnsoBinsMembership:
+    """The ENSO legend (feature 009, data-model.md Shared legend.class membership): [lower, upper),
+    end classes open."""
+
+    BOUNDS = (-9, -1.5, -0.5, -0.25, -0.1, 0.1, 0.3, 0.5, 1.0, 9)
+    COLORS = tuple(f"lego_c{i}" for i in range(9))
+
+    def test_bound_values_take_the_upper_class(self):
+        values = np.zeros((H, W))
+        row = [-4.76, -1.5, -0.1, -0.0999, 0.0, 0.0999, 0.1, 0.5, 1.0, 4.93]
+        values[0, :len(row)] = row
+        r = classify(values, _mask(), Classification(method="bins", bounds=self.BOUNDS), self.COLORS)
+        assert r.classes[0, :len(row)].tolist() == [0, 1, 4, 4, 4, 4, 5, 7, 8, 8]
+        assert r.below == 0 and r.above == 0
