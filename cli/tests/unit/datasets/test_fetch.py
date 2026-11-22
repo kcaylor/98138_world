@@ -107,3 +107,36 @@ def test_default_opener_is_blocked_in_tests(tmp_path):
     # the session offline guard turns any real download attempt into a FetchError
     with pytest.raises(FetchError):
         fetch(_entry(url="https://127.0.0.1:9/x"), cache_dir=tmp_path)
+
+
+def test_transient_network_error_is_retried(tmp_path):
+    e = _entry()
+    calls = []
+    good = Opener()
+
+    def flaky(url, *a, **k):
+        calls.append(url)
+        if len(calls) < 3:
+            raise OSError("The read operation timed out")
+        return good(url)
+
+    pauses = []
+    path, downloaded = fetch(e, cache_dir=tmp_path, opener=flaky, sleep=pauses.append)
+    assert downloaded and path.read_bytes() == DATA
+    assert len(calls) == 3 and pauses == [10.0, 20.0]
+
+
+def test_gives_up_after_attempts_and_does_not_retry_mismatch(tmp_path):
+    calls = []
+
+    def down(url, *a, **k):
+        calls.append(url)
+        raise OSError("no route to host")
+
+    with pytest.raises(FetchError):
+        fetch(_entry(), cache_dir=tmp_path, opener=down, attempts=2)
+    assert len(calls) == 2
+    bad = Opener(b"x" * len(DATA))
+    with pytest.raises(ChecksumMismatchError):
+        fetch(_entry(), cache_dir=tmp_path, opener=bad)
+    assert not list(tmp_path.rglob("*.part"))

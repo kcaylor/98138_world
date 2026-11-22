@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import time
 import urllib.request
 from pathlib import Path
 from typing import Callable, Mapping, Optional, Tuple, Union
@@ -125,14 +126,40 @@ resolve_entry = resolve
 Opener = Callable[..., object]
 
 
-def _default_opener(url: str, timeout: float = 60.0):
+# Server-side subsets (e.g. NOAA THREDDS/OPeNDAP) can take minutes before the first byte arrives.
+FETCH_TIMEOUT_S = 300.0
+FETCH_ATTEMPTS = 3
+
+
+def _default_opener(url: str, timeout: float = FETCH_TIMEOUT_S):
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     return urllib.request.urlopen(req, timeout=timeout)  # noqa: S310 (pinned https URL)
 
 
 def fetch(entry: DatasetEntry, *, cache_dir: Optional[PathLike] = None,
-          opener: Optional[Opener] = None, force: bool = False) -> Tuple[Path, bool]:
+          opener: Optional[Opener] = None, force: bool = False,
+          attempts: Optional[int] = None, sleep: Optional[Callable[[float], None]] = None
+          ) -> Tuple[Path, bool]:
     """Download ``entry`` into the cache, verified. Returns ``(path, downloaded)``.
+
+    Network failures (``FetchError``) are retried up to ``attempts`` times with a growing pause;
+    checksum or size mismatches are not retried.
+    """
+    attempts = FETCH_ATTEMPTS if attempts is None else max(1, attempts)
+    sleep = sleep or time.sleep
+    for attempt in range(1, attempts + 1):
+        try:
+            return _fetch_once(entry, cache_dir=cache_dir, opener=opener, force=force)
+        except FetchError:
+            if attempt >= attempts:
+                raise
+            sleep(10.0 * attempt)
+    raise AssertionError("unreachable")
+
+
+def _fetch_once(entry: DatasetEntry, *, cache_dir: Optional[PathLike] = None,
+                opener: Optional[Opener] = None, force: bool = False) -> Tuple[Path, bool]:
+    """One download attempt; see :func:`fetch`.
 
     Streams to ``<filename>.part``, checks size and SHA-256, then renames atomically. A mismatch
     or an interrupted download removes the part file. A valid cached file is not downloaded again.

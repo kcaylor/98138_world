@@ -65,3 +65,6 @@ poetry.lock
 # LEGO instruction PDFs are never committed or packaged (feature 003, FR-002)
 *.pdf
 demo-output/
+
+# Web app (feature 008): prebuilt site output
+web/site-output/

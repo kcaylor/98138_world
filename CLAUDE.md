@@ -68,10 +68,18 @@ Layout positions use columns as hung and record `metadata.arrangement` (absent =
 --arrangement` computes per-cell values in kit (A) columns and the shadow, halo and mix on the board
 as hung; `layout arrange` re-hangs any layout without recomputing.
 
+The web site (feature 008, see `specs/008-web-app/` and `docs/deploy.md`) shows the four bundled
+maps in combinations A, B and C and offers every build file. `web/` (package `web98138`, FastAPI +
+Jinja2, no JS, no cookies) has two halves: `python -m web98138.prebuild --out DIR [--fetch]` builds
+all 12 variants with the CLI library (`build_map`, `write_preview`, `build_parts_list`, exports,
+`build_sheet_set`/`render_pdf`) plus `manifest.json` (sizes, SHA-256, tool and dataset versions,
+page data); the service (`web98138.app`, `WEB98138_SITE_DIR=DIR uvicorn web98138.app:app`) only
+serves that output and never imports `lego_image_processor`. The `Dockerfile` (two stages) runs the
+prebuild at image build time; `fly.toml` deploys app `world-98138`.
+
 1. **Python CLI** (`cli/`, package `lego_image_processor`), written to be released as open source.
-   This is the only part that exists today.
-2. **Web application** on Fly.io at 98138.world, planned. It must call the CLI as a library or
-   subprocess and never duplicate its logic.
+2. **Web application** (`web/`) on Fly.io at 98138.world. It calls the CLI library at build time and
+   never duplicates its logic; the runtime image has no CLI dependencies.
 
 ### Layout
 
@@ -83,6 +91,11 @@ as hung; `layout arrange` re-hangs any layout without recomputing.
   sections, page model, PDF and SVG backends, per-section counts; feature 006), `cli/` (Click commands), `data/` (runtime reference data, shipped with the package).
 - `cli/tools/`: maintainer-only tools (`kit31203`, `partcolors`, `fixtures004`), not packaged.
 - `cli/tests/`: `unit/`, `integration/`, `contract/` (CLI I/O), `fixtures/`.
+- `web/`: `src/web98138/` (`prebuild.py`, `catalog.py`, `app.py`, `templates/`, `static/`),
+  `scripts/prebuild.py`, `tests/` (offline; a session fixture prebuilds `official-31203` and
+  `ocean-sst` from the CLI's dataset fixtures), pinned `requirements.txt` (runtime) and
+  `requirements-build.txt` (CLI deps for the image build). `web/site-output/` is git-ignored.
+- `Dockerfile`, `.dockerignore`, `fly.toml` at the root (the build context needs `cli/` and `web/`).
 - `specs/NNN-name/`: Spec Kit artifacts for each feature.
 
 ### Working rules
@@ -94,3 +107,5 @@ as hung; `layout arrange` re-hangs any layout without recomputing.
 - Anything user-facing must say: "Not affiliated with or endorsed by The LEGO Group." Never imply
   endorsement or partnership.
 - Run tests: `cd cli && poetry run pytest` (without Poetry: `uv venv --python 3.11 && uv pip install -e . pytest pytest-cov pytest-benchmark`, then `.venv/bin/pytest`).
+- Web tests: `cd web && uv venv --python 3.11 && uv pip install -e ../cli -e . pytest httpx2 pypdf`, then
+  `.venv/bin/pytest`. Never run `fly` commands that change the deployed app without the owner.

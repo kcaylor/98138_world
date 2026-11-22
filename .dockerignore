@@ -1,0 +1,25 @@
+# Keep the build context to what the Dockerfile needs: cli/ (package) and web/ (service).
+.git
+**/.git
+**/.venv
+**/venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.coverage
+**/htmlcov
+**/*.egg-info
+**/*.pdf
+.DS_Store
+web/site-output
+demo-output
+cli/tests
+web/tests
+specs
+docs
+scripts
+.specify
+.claude
+.agents
+AGENTS.md
+CLAUDE.md
