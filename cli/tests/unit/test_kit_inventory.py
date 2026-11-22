@@ -116,3 +116,14 @@ def test_malformed_rejected(mutate, rule):
         parse_inventory(data, "bad_inventory.json")
     assert "bad_inventory.json" in str(info.value)
     assert rule in str(info.value)
+
+
+def test_supplied_for_looks_up_by_part_and_color(inv):
+    """005 research R11: supply depends on the part, not only on the color key."""
+    assert inv.supplied("lego_bright_green") == 601            # part-blind (tile supply)
+    assert inv.supplied_for("6141", "lego_bright_green") == 0  # no Bright Green plates in the kit
+    assert inv.supplied_for("98138", "lego_bright_green") == 601
+    assert inv.supplied_for("6141", "lego_white") == 3064
+    assert inv.supplied_for("98138", "lego_white") == 0
+    assert inv.supplied_for("98138", "lego_bright_bluish_green") == 1879
+    assert inv.supplied_for("3001", "lego_white") == 0

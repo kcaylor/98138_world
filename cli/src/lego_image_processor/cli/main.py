@@ -22,6 +22,7 @@ from .validate import validate
 from .kit import kit
 from .map import map_group
 from .dataset import dataset
+from .parts import parts
 
 cli.add_command(quantize)
 cli.add_command(stats)
@@ -30,6 +31,7 @@ cli.add_command(validate)
 cli.add_command(kit)
 cli.add_command(map_group)
 cli.add_command(dataset)
+cli.add_command(parts)
 
 
 def main() -> None:

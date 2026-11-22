@@ -1,4 +1,4 @@
-# Contract: CLI (005) [PROVISIONAL: Q1, Q2, Q4, Q5]
+# Contract: CLI (005)
 
 All human output ends with `Not affiliated with or endorsed by The LEGO Group.`; JSON files carry
 `"disclaimer"`. `-q` suppresses human output (errors still go to stderr). No command uses the
@@ -24,6 +24,9 @@ Shared top-up options (both `parts` commands):
 | `--all-columns` | table also shows element ID and Rebrickable IDs (default columns: part, color, BrickLink, needed, owned, to buy) |
 | `-q` | quiet |
 
+With `-o`, the command prints one summary line and the disclaimer (nothing with `-q`); with
+`--format json` and no `-o`, stdout is the JSON alone (it carries the disclaimer).
+
 Human output: layout path and source (recipe id if any); owned inputs; table of lots; totals;
 unverified lots with reasons (warning); "Prices: upload the list to BrickLink or Rebrickable to
 price it."; citations incl. "Catalog data: Rebrickable"; disclaimer. Exit 0 even with
@@ -42,7 +45,9 @@ unverified lots.
 
 At least one of `--bricklink`, `--rebrickable` is required (usage error otherwise). Unverified lots
 without `--allow-partial` → exit 6, nothing written, lots named. Nothing to buy → no file, message
-"Nothing to buy: the owned parts cover this layout.", exit 0. Output: files written, lots and
+"Nothing to buy: the owned parts cover this layout.", exit 0 (with `--allow-partial` and only
+unverified lots to buy: "Nothing verified to buy; no file written."). Unverified lots with nothing
+left to buy (fully owned) do not block an export. Output: files written, lots and
 pieces exported, omitted lots (if partial), the BrickLink note "Uploading adds these quantities to
 items already on the chosen wanted list.", disclaimer.
 

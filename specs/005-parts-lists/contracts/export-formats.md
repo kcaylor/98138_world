@@ -1,4 +1,4 @@
-# Contract: marketplace files (005) [PROVISIONAL: Q1, Q4]
+# Contract: marketplace files (005)
 
 Sources: research R2 (BrickLink help 207, archived 2026-06-18) and R3 (Rebrickable "Importing
 Parts", archived 2026-03-05). Neither file carries a disclaimer or timestamp (Q4); bytes are

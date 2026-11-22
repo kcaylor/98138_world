@@ -4,15 +4,18 @@ Source: prompt (fallback 2B). Scoping answers taken from the user's brief of 202
 `docs/vision.md` (outcome, scope, constraints, priority), relayed by the coordinating agent; no
 separate four-question round was held.
 Phase: done
-Status: done (uncommitted; awaiting user review)
+Status: done (committed in 22a468b)
 Updated: 2026-11-22
 
 ## Open questions
-1. Rebrickable CSV license (still open). rebrickable.com/downloads/ returned HTTP 402 to the
-   fetcher again on 2026-11-22; no license was found. `part_colors.json` cites the pinned
-   Rebrickable snapshots (URL, SHA-256, access date), records facts with citations, does not
-   redistribute the files, and states the open question in `source.license_note`. No license was
-   invented. Needs the user to confirm Rebrickable's terms.
+1. Rebrickable CSV license: RESOLVED by feature 005 (research R5, task T042). The Rebrickable
+   downloads page, archived 2026-10-29
+   (`http://web.archive.org/web/20261029125803id_/https://rebrickable.com/downloads/`, SHA-256
+   `1c514a79f8cb70a0faacccf7174ee4329a307a6d91221b8c318b6982a7b91b75`), says the catalog is
+   "Free for personal and commercial use, provided you acknowledge Rebrickable as your data
+   source." and that scraping its web pages is against its terms. `part_colors.json` now records
+   these terms in `source.terms` (the tool checks the quoted text against the pinned page) and an
+   acknowledgement; outputs that carry Rebrickable IDs acknowledge Rebrickable.
 
 (Q1–Q6 answered by the user on 2026-11-22; see Decisions.)
 
@@ -79,7 +82,15 @@ Updated: 2026-11-22
   BrickLink's 4073 was not checked against a pinned BrickLink part page (agent)
 - implement: land-elevation ocean background = the kit's nine tile colors mixed in the official
   counts (cluster 1.5): the only kit-tile mix that covers 7,178 cells within one kit's supply
-  (blues alone supply 3,879). It looks busy next to the land data. NEEDS USER REVIEW (product look)
+  (blues alone supply 3,879). It looks busy next to the land data. NEEDS USER REVIEW (product look).
+  SUPERSEDED, see the next entry.
+- user (project owner, after implement, 2026-11-22): the nine-color kit mix drowned the land, so
+  the `land-elevation` ocean was changed to a quiet three-blue background: Bright Bluish Green /
+  Medium Azur / Earth Blue at weights 70/20/10 (`mix`, cluster 1.5). This exceeds one kit's tiles
+  by design (5,024 Bright Bluish Green against 1,879 in the kit, 718 Earth Blue against 393); the
+  shortfall is reported as beyond-kit, like the non-kit plate colors (`validate`, and in feature
+  005 `parts list --kits 1`: 3,145 Bright Bluish Green and 325 Earth Blue tiles to buy). The recipe
+  comment, recipe-format contract and cli/README describe the three-blue ocean (user)
 - implement: land-elevation bins (m) 0,150,300,500,750,1000,1500,2000,2500,3000,9000 on Dark
   Green -> White; no empty class, min neighbour ΔE00 11.2 on real data (agent)
 - implement: Miller agreement measured 0.909375 (research had rounded to 91.0%); projection file,
@@ -98,14 +109,17 @@ Updated: 2026-11-22
   warnings; 0.36 s
 - land-elevation: buildable as a layout; validate 71.6% (PARTIALLY BUILDABLE), 9 violations = the 9
   non-kit plate colors (color_unavailable on 6141); warning `beyond_kit`; variance lost 8.6%,
-  26 land cells filled (0.9%); 0.33 s
+  26 land cells filled (0.9%); 0.33 s (figures from the nine-color ocean build; the three-blue
+  ocean adds two tile colors beyond one kit, see Decisions; re-measured on 2026-11-22 with the
+  three-blue ocean: validate 37.7% PARTIALLY BUILDABLE, 11 violations = 9 non-kit plate colors plus
+  Bright Bluish Green and Earth Blue tiles over one kit's supply)
 - fit-projection --check and partcolors build --check: no differences
 - tests: 666 passed (436 before), offline
 
 ## Blocked tasks
 
 ## Deferred findings
-- [MEDIUM] Rebrickable CSV license could not be confirmed (HTTP 402 again at implement); see Open questions.
+- [RESOLVED by 005] Rebrickable CSV license could not be confirmed at 004 implement (HTTP 402); confirmed from the archived downloads page in 005 (see Open questions).
 - [MEDIUM] ETOPO subset checksum depends on NCEI's OPeNDAP server producing the same bytes; a server change fails loudly and needs a new registry version. Full-file alternative's checksum not measured (478 MB).
 - [MEDIUM] SC-006 timing is tested on fixtures (T062); real-data timing only in the quickstart run (T066).
 - [RESOLVED] Derived-tier threshold: full data 26.7%, fixture 26.71%, test threshold 25.7%.

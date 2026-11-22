@@ -4,8 +4,8 @@
 
 **Created**: 2026-11-22
 
-**Status**: Planned (reserved decisions carry a recommended answer marked **[PROVISIONAL]**; see
-Clarifications and `run-state.md`. Confirm them before implement.)
+**Status**: Implemented (reserved decisions Q1–Q6 confirmed by the user on 2026-11-22, each as
+recommended; see Clarifications and `run-state.md`)
 
 **Input**: User description: "Feature 005: parts lists and ordering. From any layout (official
 design, recipe build, image-derived), produce a parts list using verified part and color IDs
@@ -66,7 +66,7 @@ Facts that shape this feature (details and sources in `research.md`):
   (`kit_31203_inventory.json`, page 159) for the land and ocean elements, including the extras LEGO
   packs (for example 3,064 White plates for 3,062 positions) (auto-resolved: 003 data, `KitInventory.supplied`).
 - Q: Does the parts list cover the frame, section bases and other non-map kit parts? → A: No; see
-  reserved decision Q6 [PROVISIONAL]. Layouts only describe map positions.
+  reserved decision Q6 (user-confirmed). Layouts only describe map positions.
 - Q: Are prices estimated? → A: No. Prices need a marketplace API with an account and credentials
   (a third-party service and secrets, both reserved) and change daily; the outputs name where to
   price a list (BrickLink and Rebrickable both price an imported list) and carry no prices
@@ -74,7 +74,7 @@ Facts that shape this feature (details and sources in `research.md`):
 - Q: How are spares handled? → A: Optional, off by default: `--spares PCT` adds `ceil(PCT% of the
   shortfall)` to each lot that has a shortfall. No default percentage is claimed, because no cited
   source gives LEGO's spare rate; the official kit's measured extras (used vs supplied, from 003)
-  are shown for reference (agent decision within Q5 [PROVISIONAL]: constitution V forbids invented
+  are shown for reference (agent decision within Q5, user-confirmed: constitution V forbids invented
   reference numbers).
 - Q: How does output stay deterministic? → A: Lots sorted by part (plate, then tile) and LEGO color
   ID; JSON keys in fixed order; no timestamps in export files (auto-resolved: 004 FR-006 pattern).
@@ -87,26 +87,26 @@ Facts that shape this feature (details and sources in `research.md`):
   numbers, or `Element,Quantity`; extra fields are ignored (auto-resolved: research R3).
 
 Reserved decisions (run-policy: product scope, file formats others use, CLI flags), each with a
-recommended provisional answer:
+answer the user confirmed on 2026-11-22 (each the planner's recommendation):
 
-- **Q1** [PROVISIONAL] How does a maker describe the parts they already own? → `--kits N` (whole
+- **Q1** (user-confirmed) How does a maker describe the parts they already own? → `--kits N` (whole
   kits, default 0) plus repeatable `--owned FILE` (loose parts) and `--missing FILE` (pieces absent
   from a secondhand kit), both in Rebrickable's documented import CSV (`Part,Color,Quantity` with
   Rebrickable numbers, or `Element,Quantity`).
-- **Q2** [PROVISIONAL] Colors without a cited row (mostly image-derived layouts) → the parts list
+- **Q2** (user-confirmed) Colors without a cited row (mostly image-derived layouts) → the parts list
   shows them as unverified with no marketplace IDs; `parts export` exits 6 and writes nothing
   unless `--allow-partial`, which writes the verified lots and lists the omitted ones.
-- **Q3** [PROVISIONAL] Widen the cited color tables → yes: rebuild `part_colors.json` from the
+- **Q3** (user-confirmed) Widen the cited color tables → yes: rebuild `part_colors.json` from the
   same pinned snapshots for every opaque color of both parts that passes the 004 join rules plus a
   new rule (the color appears on BrickLink's archived catalog page for that part): 44 plate and 40
   tile colors (US4).
-- **Q4** [PROVISIONAL] Disclaimer in marketplace files → BrickLink XML and Rebrickable CSV carry
+- **Q4** (user-confirmed) Disclaimer in marketplace files → BrickLink XML and Rebrickable CSV carry
   no disclaimer (fixed third-party import formats, as decided for layout CSV in 003); the command's
   output and the parts list JSON carry it.
-- **Q5** [PROVISIONAL] CLI surface → new group `parts` with `parts list` and `parts export`, and
+- **Q5** (user-confirmed) CLI surface → new group `parts` with `parts list` and `parts export`, and
   `kit part-numbers`; options in `contracts/cli.md`; spares off by default; no `CONDITION` unless
   `--condition new|used`.
-- **Q6** [PROVISIONAL] Scope of a list → map pieces only (plates and tiles at layout positions);
+- **Q6** (user-confirmed) Scope of a list → map pieces only (plates and tiles at layout positions);
   frame, section bases and other kit parts are out of scope for 005.
 
 ## User Scenarios & Testing *(mandatory)*

@@ -84,7 +84,7 @@ match Rebrickable's (rule 3). With the wider table, the feature-002 image fixtur
 (`tests/fixtures/images/test_128x80_quantized.png` → `layout`) resolves every lot: Bright Red
 plate and tile, White, Nougat and Brick Yellow tiles were the uncited ones today.
 
-**Decision (provisional, Q3)**: replace the hand-reviewed list (`REVIEWED`) with "every color
+**Decision (Q3, user-confirmed)**: replace the hand-reviewed list (`REVIEWED`) with "every color
 listed for the part", keep rules 1–4, add rule 5, and keep kit rows authoritative. Existing 23 rows
 must come out unchanged (`--check` compares).
 

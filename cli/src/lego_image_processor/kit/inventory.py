@@ -20,6 +20,7 @@ ROLES = ("land", "ocean", "section_base", "frame_other")
 EXPECTED_LINES = 32
 EXPECTED_PIECES = 11694
 INVENTORY_PAGE = 159
+MAP_ROLE_FOR_PART = {"6141": "land", "98138": "ocean"}
 
 
 class UnsupportedKitError(ValueError):
@@ -69,7 +70,20 @@ class KitInventory:
         return self.by_role("ocean")
 
     def supplied(self, color_key: str) -> int:
+        """All elements with ``color_key``, whatever their part (kept for existing callers)."""
         return sum(e.quantity for e in self.elements if e.color_key == color_key)
+
+    def supplied_for(self, part_id: str, color_key: str) -> int:
+        """Pieces of ``part_id`` (6141 plate, 98138 tile) in ``color_key`` that one kit supplies.
+
+        Only map elements whose role matches the part count: a Bright Green *plate* gets 0 even
+        though the kit has 601 Bright Green *tiles* (feature 005 research R11).
+        """
+        role = MAP_ROLE_FOR_PART.get(str(part_id))
+        if role is None:
+            return 0
+        return sum(e.quantity for e in self.elements
+                   if e.role == role and e.color_key == color_key and str(part_id) in e.part_ids)
 
 
 def _fail(filename: str, rule: str) -> ValueError:

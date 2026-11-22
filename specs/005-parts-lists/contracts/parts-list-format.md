@@ -1,4 +1,4 @@
-# Contract: parts list JSON (005) [PROVISIONAL: Q5]
+# Contract: parts list JSON (005)
 
 ```json
 {
@@ -28,13 +28,20 @@
      "needed": 618, "kit_supply": 0, "loose": 0, "owned": 0, "shortfall": 618, "spares": 0,
      "to_buy": 618, "surplus": 0}
   ],
-  "totals": {"lots": 2, "needed": 968, "owned": 0, "to_buy": 968, "verified_lots": 1, "unverified_lots": 1},
-  "citations": [{"id": "brickset", "title": "…", "url": "…", "accessed": "…"}, "…"],
-  "acknowledgement": "Catalog data: Rebrickable (rebrickable.com), BrickLink, LDraw, Brickset.",
+  "totals": {"lots": 2, "needed": 968, "owned": 0, "to_buy": 968, "lots_to_buy": 2, "spares": 0,
+             "surplus": 0, "verified_lots": 1, "unverified_lots": 1},
+  "unverified": [{"part_id": "6141", "color_key": "lego_bright_red", "reason": "no cited color for part", "needed": 618}],
+  "citations": [{"id": "kit-31203-instructions", "title": "…", "url": "…", "sha256": "…", "pages": [159], "used_for": "kit supply (parts inventory page)"},
+                {"id": "bricklink-4073", "title": "…", "url": "…", "sha256": "…", "accessed": "…"}, "…",
+                {"id": "rebrickable-terms", "title": "Rebrickable catalog terms", "url": "…", "sha256": "…", "accessed": "…", "text": "Free for personal and commercial use, …"}],
+  "acknowledgement": "Catalog data: Rebrickable (rebrickable.com), BrickLink, LDraw, Brickset; kit inventory from the LEGO 31203 building instructions.",
+  "prices": "Prices: none are estimated. Upload the list to BrickLink or Rebrickable to price it; both price an imported list.",
   "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
 }
 ```
 
 Rules: key order as shown; no timestamps; `map` is null for image-derived layouts; unverified lots
 carry `layout_color` and `reason` and no `lego`/`bricklink`/`rebrickable` keys; `spares_percent` is
-a decimal string; lots ordered plate → tile, LEGO color ID, unverified last by key.
+a decimal string; lots ordered plate → tile, LEGO color ID, unverified last (plate → tile, then key).
+(The example's Bright Red plate lot was unverified before US4; it is cited now. Implemented totals
+add `lots_to_buy`, `spares` and `surplus`, and the file adds `unverified` and `prices`.)

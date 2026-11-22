@@ -26,26 +26,30 @@
     "6141": {"name": "Plate, Round 1 x 1", "lego_design_ids": ["6141"],
              "bricklink": {"item_type": "P", "item_no": "4073", "alternates": ["6141", "15570", "30057", "34823", "39799", "44325", "51809", "54003", "113470"],
                            "colors": ["Black", "Blue", "…"], "citation": "bricklink-4073"},
-             "rebrickable": {"part_num": "6141", "citation": "rebrickable-6141"}},
+             "rebrickable": {"part_num": "6141", "name": "Plate Round 1 x 1 with Solid Stud", "citation": "rebrickable-6141"}},
     "98138": {"name": "Tile, Round 1 x 1", "lego_design_ids": ["98138", "35381"],
               "bricklink": {"item_type": "P", "item_no": "98138", "alternates": ["35380", "35381", "39797", "118864"],
                             "colors": ["Aqua", "Black", "…"], "citation": "bricklink-98138"},
-              "rebrickable": {"part_num": "98138", "citation": "rebrickable-98138"}}
+              "rebrickable": {"part_num": "98138", "name": "Tile Round 1 x 1", "citation": "rebrickable-98138"}}
   }
 }
 ```
 
 `lego_design_ids`: 6141 from the kit inventory's design ID and Rebrickable's LEGO list; for the
 tile, 98138 and 35381 (the kit elements' design ID) — both listed by Rebrickable. `--check`
-regenerates and must report "no differences".
+regenerates and must report "no differences". As built, each page also has a `title`, `source.rules`
+lists the six consistency rules the tool enforces, and `bricklink.colors` is the BrickLink color
+names of the catalog page's "All" tab (100 for 4073, 93 for 98138).
 
 ## `data/part_colors.json` (changed)
 
 - `source.license_note` → `source.terms`: `{"text": "Free for personal and commercial use, provided
   you acknowledge Rebrickable as your data source.", "url": "http://web.archive.org/web/20261029125803id_/https://rebrickable.com/downloads/",
   "sha256": "1c514a79f8cb70a0faacccf7174ee4329a307a6d91221b8c318b6982a7b91b75", "accessed": "2026-11-22"}`.
-- `source.join_rules` gains rule 5 (BrickLink part page lists the color); `source.snapshots` gains
-  the two BrickLink part pages.
+- `source.join_rules` gains rule 5 (BrickLink part page lists the color with the same BrickLink
+  id); `source.snapshots` gains the two BrickLink part pages and the Rebrickable downloads page
+  (`rebrickable-terms`; the tool checks the quoted terms text on it); `source.acknowledgement`
+  is added.
 - US4 (Q3): rows for every opaque color passing rules 1–5 (measured 44 plate, 40 tile); existing
   rows byte-identical in content; `in_kit` unchanged. The loader's forbidden-word and kit-equality
   checks stay.

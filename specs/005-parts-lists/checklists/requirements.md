@@ -31,7 +31,7 @@
 
 ## Notes
 
-- Reserved decisions Q1–Q6 are not `[NEEDS CLARIFICATION]` markers: each carries a provisional
-  answer marked **[PROVISIONAL]** in spec.md and is listed in run-state.md. Confirm before implement.
+- Reserved decisions Q1–Q6 are not `[NEEDS CLARIFICATION]` markers: each was answered by the user
+  on 2026-11-22 (the recommended options) and is recorded in spec.md and run-state.md.
 - Marketplace format names (BrickLink XML, Rebrickable CSV, `MINQTY`) are kept because they are the
   user-facing contract named in the request, not implementation choices.

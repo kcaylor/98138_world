@@ -73,7 +73,7 @@ class TestBuild:
 
     @pytest.mark.parametrize("name,path,words", [
         ("bad_bounds.toml", "ocean.classification.bounds", ["strictly increasing"]),
-        ("wrong_part_color.toml", "land.colors[0]", ["lego_earth_blue", "6141"]),
+        ("wrong_part_color.toml", "land.colors[0]", ["lego_medium_blue", "6141"]),
     ])
     def test_recipe_error_writes_nothing(self, runner, tmp_path, name, path, words):
         out = tmp_path / "x.json"

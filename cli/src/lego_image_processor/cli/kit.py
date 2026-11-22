@@ -113,4 +113,40 @@ def part_colors(part: str, output_format: str) -> None:
             click.echo(line)
         click.echo()
     click.echo("Sources: " + "; ".join(f"{c.title} <{c.url}>" for c in table.citations))
+    terms = table.source.get("terms") or {}
+    if terms:
+        click.echo(f"Rebrickable terms: \"{terms['text']}\" <{terms['url']}>")
+    click.echo(table.source.get("acknowledgement") or "Catalog data: Rebrickable (rebrickable.com).")
+    click.echo(DISCLAIMER)
+
+
+@kit.command("part-numbers")
+@click.option("--kit", "kit_id", default="31203", show_default=True, help="Kit ID")
+@click.option("--format", "output_format", type=click.Choice(["table", "json"]), default="table",
+              show_default=True)
+def part_numbers(kit_id: str, output_format: str) -> None:
+    """Show each marketplace's number for the two map parts, with cited sources (feature 005)."""
+    from ..kit.part_numbers import PART_NUMBERS_PATH, load_part_numbers
+
+    _check_kit(kit_id)
+    if output_format == "json":
+        click.echo(PART_NUMBERS_PATH.read_text(encoding="utf-8"), nl=False)
+        return
+    table = load_part_numbers()
+    rows = [(p.part_id, p.name, ", ".join(p.lego_design_ids),
+             f"{p.bricklink_item_type} {p.bricklink_item_no}", ", ".join(p.bricklink_alternates),
+             p.rebrickable_part_num, len(p.bricklink_colors))
+            for p in table.parts.values()]
+    for line in _table(["part", "name", "LEGO design", "BrickLink", "BrickLink alternates",
+                        "Rebrickable", "BrickLink colors"], rows):
+        click.echo(line)
+    click.echo()
+    click.echo("Wanted lists use each marketplace's own number: BrickLink item "
+               f"{table.get('6141').bricklink_item_no} for the plate (6141 is an alternate there), "
+               f"Rebrickable part {table.get('6141').rebrickable_part_num}; "
+               f"the tile is {table.get('98138').bricklink_item_no} on both.")
+    click.echo("Sources:")
+    for page in table.pages:
+        click.echo(f"  {page.title} <{page.url}> SHA-256 {page.sha256}, accessed {page.accessed}")
+    click.echo("Catalog data: Rebrickable (rebrickable.com), BrickLink.")
     click.echo(DISCLAIMER)

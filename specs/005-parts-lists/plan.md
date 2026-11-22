@@ -56,15 +56,15 @@ dominated by JSON load).
 | V. Buildable and honest | Marketplace IDs only from cited files; unverified lots never get IDs; no spare rate or price invented; exports exclude unverified lots. | PASS |
 | VI. CLI-first | `parts list|export`, `kit part-numbers` over library functions in `lego_image_processor.parts`. | PASS |
 | VII. Test-first, offline | Unit tests first for resolution, arithmetic, owned parsing, exporters; contract tests for CLI; no network. | PASS |
-| VIII. LEGO compliance | Disclaimer on human output and JSON; marketplace import files carry none (Q4, reserved, following the user's 003 CSV decision). | PASS (pending Q4) |
+| VIII. LEGO compliance | Disclaimer on human output and JSON; marketplace import files carry none (Q4, reserved, following the user's 003 CSV decision). | PASS (Q4 confirmed) |
 
 **Post-design re-check**: PASS. Complexity Tracking empty.
 
-## Reserved decisions (provisional; see spec Clarifications and run-state.md)
+## Reserved decisions (user-confirmed 2026-11-22; see spec Clarifications and run-state.md)
 
 Q1 owned-parts input; Q2 unverified lots in exports; Q3 widen color tables; Q4 no disclaimer in
 marketplace files; Q5 CLI surface (`parts list|export`, `kit part-numbers`, flags); Q6 map pieces
-only. Each has a recommended answer applied provisionally in the design below.
+only. The user confirmed each recommended answer; the design below applies them.
 
 ## Project Structure
 

@@ -1,11 +1,12 @@
-# Test fixture: a tile color on the land plate. Not affiliated with or endorsed by The LEGO Group.
+# Test fixture: a tile color that is not made as a land plate (Medium Blue: cited for 98138, not
+# listed on BrickLink's 4073 page). Not affiliated with or endorsed by The LEGO Group.
 format = "1"
 id = "wrong-part-color"
 title = "Wrong part color"
 
 [land]
 role = "background"
-colors = ["lego_earth_blue"]
+colors = ["lego_medium_blue"]
 
 [ocean]
 role = "background"

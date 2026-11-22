@@ -1,6 +1,9 @@
 """Colors in which the kit's two map parts are made, with cited IDs (FR-016; ``part_colors.json``).
 
-Part 6141 (1x1 round plate, land) and 98138 (1x1 round tile, ocean). Kit colors must equal
+Part 6141 (1x1 round plate, land) and 98138 (1x1 round tile, ocean). Since feature 005 the table
+holds every opaque color of both parts that passes the five join rules (``tools/partcolors``), and
+``source.terms`` records Rebrickable's terms: free for personal and commercial use with
+acknowledgement of Rebrickable as the data source. Kit colors must equal
 ``kit_colors.json``, which stays the authority for them. Rows with a missing ID or a note that
 marks them as an estimate are rejected (constitution V).
 Not affiliated with or endorsed by The LEGO Group.
@@ -77,6 +80,10 @@ def parse_part_colors(data: Dict[str, Any]) -> PartColorTable:
     source = data.get("source")
     if not isinstance(source, dict) or source.get("disclaimer") != DISCLAIMER:
         raise _fail(f"source.disclaimer must be {DISCLAIMER!r}")
+    terms = source.get("terms")
+    if not isinstance(terms, dict) or not all(isinstance(terms.get(k), str) and terms[k]
+                                              for k in ("text", "url", "sha256", "accessed")):
+        raise _fail("source.terms (Rebrickable's terms: text, url, sha256, accessed) is required")
     try:
         cits = [Citation.from_dict(c) for c in source.get("citations") or []]
     except ValueError as exc:
