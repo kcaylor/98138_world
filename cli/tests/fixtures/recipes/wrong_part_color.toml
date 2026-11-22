@@ -1,0 +1,12 @@
+# Test fixture: a tile color on the land plate. Not affiliated with or endorsed by The LEGO Group.
+format = "1"
+id = "wrong-part-color"
+title = "Wrong part color"
+
+[land]
+role = "background"
+colors = ["lego_earth_blue"]
+
+[ocean]
+role = "background"
+colors = ["lego_medium_azur"]

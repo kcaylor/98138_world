@@ -9,6 +9,8 @@ description = "A CLI tool that converts images to LEGO-compatible color palettes
 authors = ["LEGO Image Processor Team"]
 readme = "README.md"
 packages = [{include = "lego_image_processor", from = "src"}]
+# Bundled map recipes (feature 004) ship with the package next to the JSON reference data.
+include = [{path = "src/lego_image_processor/maps/recipes/*.toml", format = ["sdist", "wheel"]}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -17,6 +19,8 @@ numpy = "^1.24.0"
 scikit-image = "^0.21.0"
 click = "^8.1.0"
 tqdm = "^4.65.0"
+# Imported directly since feature 004 (netCDF-3 reader, nearest fill, texture noise); BSD-3-Clause.
+scipy = "^1.11"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"

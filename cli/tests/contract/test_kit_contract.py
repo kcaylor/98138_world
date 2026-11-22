@@ -94,3 +94,31 @@ class TestKitColors:
         result = runner.invoke(cli, ["kit", "colors", "--kit", "999"])
         assert result.exit_code == 1
         assert "Kit ID '999' not supported" in result.output
+
+
+class TestKitPartColors:
+    def test_table(self, runner):
+        result = runner.invoke(cli, ["kit", "part-colors", "--part", "6141"])
+        assert result.exit_code == 0, result.output
+        lines = _lines(result.output)
+        assert lines[-1] == DISCLAIMER
+        white = next(l for l in lines if l.startswith("lego_white"))
+        assert "White (1)" in white and "614101" in white and "yes" in white
+        green = next(l for l in lines if l.startswith("lego_dark_green"))
+        assert "Dark Green (28)" in green and "Green (6)" in green and "Green (2)" in green and "no" in green
+
+    def test_both_parts_by_default(self, runner):
+        result = runner.invoke(cli, ["kit", "part-colors"])
+        assert result.exit_code == 0
+        assert "6141" in result.output and "98138" in result.output
+
+    def test_json(self, runner):
+        result = runner.invoke(cli, ["kit", "part-colors", "--part", "98138", "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["disclaimer"] == DISCLAIMER
+        assert len(data["colors"]) == 9 and all(c["in_kit"] for c in data["colors"])
+        assert {"lego", "bricklink", "rebrickable", "element_id"} <= set(data["colors"][0])
+
+    def test_bad_part_is_usage_error(self, runner):
+        assert runner.invoke(cli, ["kit", "part-colors", "--part", "3001"]).exit_code == 2

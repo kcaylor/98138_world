@@ -20,12 +20,16 @@ from .stats import stats
 from .layout import layout
 from .validate import validate
 from .kit import kit
+from .map import map_group
+from .dataset import dataset
 
 cli.add_command(quantize)
 cli.add_command(stats)
 cli.add_command(layout)
 cli.add_command(validate)
 cli.add_command(kit)
+cli.add_command(map_group)
+cli.add_command(dataset)
 
 
 def main() -> None:

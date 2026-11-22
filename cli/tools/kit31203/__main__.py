@@ -267,5 +267,57 @@ def review(pdf, cache_dir, out) -> None:
     click.echo(DISCLAIMER)
 
 
+@main.command("fit-projection")
+@click.option("--dataset", "dataset_path", type=click.Path(path_type=Path, dir_okay=False),
+              help="ETOPO 2022 10-arc-minute DODS file (default: the verified cached copy)")
+@click.option("--cache-dir", type=click.Path(path_type=Path), help="Cache root (default: per-user cache).")
+@click.option("--check", is_flag=True, help="Compare the fit with the committed projection; write nothing.")
+@click.option("--date", "generated_on", default=None, help="generated_on date, YYYY-MM-DD (default: today).")
+def fit_projection(dataset_path, cache_dir, check, generated_on) -> None:
+    """Fit the kit grid's projection to the kit mask and write kit_31203_projection.json."""
+    import numpy as np
+
+    from kit31203 import projection_fit
+    from lego_image_processor.datasets import get_entry, read_dataset, resolve, verify
+    from lego_image_processor.datasets.cache import DatasetError
+    from lego_image_processor.maps.build import land_mask_array
+    from lego_image_processor.maps.projection import PROJECTION_PATH
+
+    entry = get_entry("etopo2022-surface-10m")
+    try:
+        if dataset_path:
+            verify(entry, dataset_path)
+            path = dataset_path
+        else:
+            path = resolve(entry, cache_dir)
+    except DatasetError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(getattr(exc, "exit_code", 1))
+    g = read_dataset(entry, path, "z")
+    result = projection_fit.fit(g.values, g.lat, g.lon, land_mask_array())
+    committed = json.loads(PROJECTION_PATH.read_text(encoding="utf-8"))
+    for m, f in result["fits"].items():
+        click.echo(f"{m:16s} equator row {f['equator_row']:5.1f}  scale {f['scale']:5.1f}  agreement {f['agreement']:.3f}")
+    click.echo(f"left edge {result['left_edge_lon']} (column correlation {result['column_correlation']})")
+    keys = ("model", "left_edge_lon", "deg_per_col", "equator_row", "rows_per_radian", "agreement")
+    if check:
+        diffs = [k for k in keys if committed.get(k) != result[k]]
+        if diffs:
+            for k in diffs:
+                click.echo(f"difference: {k}: committed {committed.get(k)} fitted {result[k]}", err=True)
+            sys.exit(1)
+        click.echo("no differences")
+        click.echo(DISCLAIMER)
+        return
+    out = dict(committed)
+    out.update({k: result[k] for k in keys})
+    out["source"] = dict(committed.get("source", {}))
+    out["source"]["generated_on"] = generated_on or _dt.date.today().isoformat()
+    out["source"]["dataset"] = {"id": entry.id, "sha256": entry.sha256}
+    PROJECTION_PATH.write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
+    click.echo(f"Wrote {PROJECTION_PATH}")
+    click.echo(DISCLAIMER)
+
+
 if __name__ == "__main__":
     main()

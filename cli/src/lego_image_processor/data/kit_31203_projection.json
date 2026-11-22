@@ -1,0 +1,28 @@
+{
+  "kit": "31203",
+  "model": "equirectangular",
+  "width": 128,
+  "height": 80,
+  "left_edge_lon": -168.9,
+  "deg_per_col": 2.8125,
+  "equator_row": 42.2,
+  "rows_per_radian": 26.3,
+  "agreement": {
+    "equirectangular": 0.942,
+    "miller": 0.909,
+    "mercator": 0.87
+  },
+  "source": {
+    "title": "Kit 31203 grid projection fitted to the kit's land/sea mask",
+    "method": "Land fraction of ETOPO 2022 (surface > 0 m) per kit cell; a cell is predicted land when the fraction is >= 0.5 and compared with the kit mask. The left-edge longitude is fitted first from the column profile of land; then, per model, the equator row and the scale (rows per unit of the model's y) by grid search in steps of 0.1.",
+    "mask": "lego_world_map_land_sea_mask.json",
+    "dataset": {
+      "id": "etopo2022-surface-10m",
+      "sha256": "575c7a0c84f18b41430a723f26475fa41b1d787c94fa641f0d0705291e3991fd"
+    },
+    "generator": "tools/kit31203 fit-projection",
+    "generated_on": "2026-11-22",
+    "notes": "Measured in specs/004-map-recipes/research.md R2. Cells span 2.8125 deg of longitude and about 2.18 deg of latitude; the top row reaches about 89.8 N, the bottom row about 82.3 S. The kit's own mask always decides which cells are land and ocean.",
+    "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
+  }
+}

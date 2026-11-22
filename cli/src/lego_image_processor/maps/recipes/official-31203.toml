@@ -1,0 +1,38 @@
+# The official LEGO 31203 World Map design as a recipe (exact acceptance tier, FR-020).
+# The ocean layer's data is the official design grid itself (a packaged categorical dataset),
+# mapped one-to-one onto the kit's nine tile colors. No download is needed.
+# Not affiliated with or endorsed by The LEGO Group.
+format = "1"
+id = "official-31203"
+title = "Official 31203 World Map design"
+description = "White land and the official ocean pattern, reproduced cell for cell from the design grid extracted from the kit's building instructions."
+seed = 31203
+
+[land]
+role = "background"
+colors = ["lego_white"]
+weights = [1]
+
+[ocean]
+role = "data"
+dataset = "kit31203-design"
+variable = "color"
+colors = [
+  "lego_earth_blue", "lego_brick_yellow", "lego_flame_yellowish_orange", "lego_vibrant_coral",
+  "lego_bright_orange", "lego_bright_yellowish_green", "lego_medium_azur", "lego_bright_green",
+  "lego_bright_bluish_green",
+]
+
+[ocean.classification]
+method = "categorical"
+
+[ocean.classification.categories]
+lego_earth_blue = "lego_earth_blue"
+lego_brick_yellow = "lego_brick_yellow"
+lego_flame_yellowish_orange = "lego_flame_yellowish_orange"
+lego_vibrant_coral = "lego_vibrant_coral"
+lego_bright_orange = "lego_bright_orange"
+lego_bright_yellowish_green = "lego_bright_yellowish_green"
+lego_medium_azur = "lego_medium_azur"
+lego_bright_green = "lego_bright_green"
+lego_bright_bluish_green = "lego_bright_bluish_green"
