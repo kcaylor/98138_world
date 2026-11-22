@@ -48,14 +48,20 @@ lego-image-processor map build land-elevation -o elev.json --preview elev.png --
 lego-image-processor map build official-31203-bathymetry -o bathy.json --preview bathy.png
 ```
 
-- `official.png` is the kit's own design, rebuilt exactly (10,240 of 10,240 studs match).
-- `sst.png` is ocean temperature (blue = cold, coral = warm) on white land. It uses only the kit's
-  tiles, so one kit builds it.
+- Every map except `official.png` gets a one-stud land shadow: the 392 ocean studs just east of
+  land are Earth Blue, as on the official design. A recipe can turn it off or recolor it with a
+  `[shadow]` table.
+- `official.png` is the kit's own design, rebuilt exactly (10,240 of 10,240 studs match). Its
+  recipe turns the shadow off because the design grid already contains it.
+- `sst.png` is ocean temperature (blue = cold, coral = warm) on white land, with the shadow. It
+  uses only the kit's tiles, so one kit builds it.
 - `elev.png` is land elevation on ten plate colors (green, then tan and brown, then grey and
-  white) with a quiet blue ocean.
-- `bathy.png` is the official design's colors re-ordered by real ocean depth. About 27% of ocean
-  studs land on the same color as LEGO's, because the official ocean is an artistic texture, not
-  a strict depth map.
+  white). The ocean is calm Dark Turquoise (Bright Bluish Green) with a Medium Azure halo along the
+  coasts that fades evenly offshore, plus the Earth Blue shadow.
+- `bathy.png` is the official design's colors re-ordered by real ocean depth, with the shadow
+  drawing the official Earth Blue. About 32% of ocean studs land on the same color as LEGO's
+  (27% before the shadow), because the official ocean is an artistic texture, not a strict depth
+  map.
 - `--fetch` downloads a recipe's dataset only if it is not cached; without it a build never uses
   the network and tells you what to fetch.
 - Each build prints a suitability report: how much detail is lost at stud scale, how many cells
@@ -76,7 +82,8 @@ lego-image-processor parts list elev.json --kits 1   # only what one kit doesn't
 lego-image-processor parts list elev.json --kits 3
 ```
 
-With one kit the elevation map needs 6,382 more pieces; with three, 2,912. You can also describe
+With one kit the elevation map needs 6,330 more pieces (3,418 of them Bright Bluish Green tiles);
+with three, 2,912. You can also describe
 an incomplete secondhand kit with `--missing missing.csv`, or loose parts you own with
 `--owned owned.csv`. Both take Rebrickable's import CSV (`Part,Color,Quantity`).
 

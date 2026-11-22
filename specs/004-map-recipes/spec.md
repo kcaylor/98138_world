@@ -420,3 +420,47 @@ political-map-like patches) and confirm the expected warnings.
   secondary input).
 - Only kit 31203 is supported as the template.
 - Not affiliated with or endorsed by The LEGO Group.
+
+
+## Amendment 2026-11-22: shadow, halo
+
+Requested and decided by the project owner after reviewing the built maps (run-state.md,
+Decisions).
+
+**Measured on the official design** (`kit_31203_design.json`): of the 392 ocean cells whose western
+neighbour is land, 391 are Earth Blue and 1 is Brick Yellow; 391 of the design's 392 Earth Blue
+cells are among them. The official ocean therefore has a one-stud drop shadow cast east in one
+color (research R13).
+
+- **FR-026** (land shadow): every map MUST, by default, give the ocean cells at (x, y) whose
+  western neighbour (x-1, y) is land the shadow color, Earth Blue (`lego_earth_blue`). There is no
+  wrap at the map edge. On the kit mask this is 392 cells, within the kit's 393 Earth Blue tiles.
+- **FR-027** (order and supply): the shadow cells MUST be assigned before the ocean layer is
+  classified or textured; the ocean layer covers only the remaining ocean cells. A supply-capped
+  classification (`rank-to-supply`) MUST use one kit's supply minus the shadow's use of its color,
+  so a one-kit map stays within one kit. The suitability report MUST count the shadow's tiles in
+  the ocean layer's supply rows.
+- **FR-028** (recipe settings): an optional top-level `[shadow]` table MUST accept `enabled`
+  (bool, default true), `color` (a 98138 tile color, default `lego_earth_blue`) and `direction`
+  (only `"east"`); other values and unknown keys are errors naming the key path
+  (contracts/recipe-format.md).
+- **FR-029** (acceptance tiers): `official-31203` MUST still reproduce the design exactly
+  (FR-020); its recipe disables the shadow, because the design grid already contains it.
+  `official-31203-bathymetry` gets the shadow, which draws the official Earth Blue; its other
+  eight colors are ranked by depth over the remaining cells with the official counts, so every
+  color count still equals the official design's. FR-021's floor (>= 24% ocean agreement) and
+  median-depth order (now over the eight ranked colors) still apply; measured agreement rises from
+  26.7% to 32.0% on the real data (31.9% on the test fixture).
+- **FR-030** (coastal halo): background oceans MUST offer a texture `kind = "halo"` with two colors
+  (offshore base, coast ring) and parameters `inner`, `outer`, `spacing` (studs; defaults 1.5,
+  3.0, 2.0): ocean cells at Euclidean distance d from land (distance transform over ocean cells)
+  with d <= inner take the ring color; inner < d <= outer take it on an even Poisson-disk subset
+  (no two closer than `spacing`, deterministic from the recipe seed); farther cells take the base.
+  The shadow overrides the halo. Halo is for the ocean background only and takes no weights.
+- **FR-031** (bundled land map): `land-elevation`'s ocean MUST be Dark Turquoise
+  (`lego_bright_bluish_green`) with a Medium Azure (`lego_medium_azur`) halo, inner 1.5, outer 3.0,
+  spacing 2.0, plus the shadow. The clustered `mix` texture stays available but is no longer the
+  default for any bundled land map.
+- **FR-032** (provenance): the report and the layout's `metadata.map` MUST record the shadow
+  (enabled, color, direction, cells) and each layer's texture parameters (halo inner, outer,
+  spacing). Layout schema stays 2.0.

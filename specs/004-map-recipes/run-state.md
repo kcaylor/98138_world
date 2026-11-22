@@ -5,7 +5,7 @@ Source: prompt (fallback 2B). Scoping answers taken from the user's brief of 202
 separate four-question round was held.
 Phase: done
 Status: done (committed in 22a468b)
-Updated: 2026-11-22
+Updated: 2026-11-22 (amendment: shadow, halo)
 
 ## Open questions
 1. Rebrickable CSV license: RESOLVED by feature 005 (research R5, task T042). The Rebrickable
@@ -99,6 +99,34 @@ Updated: 2026-11-22
   file exactly ("no differences") in ~2 s (agent)
 - implement: derived-tier fixture threshold 25.7% (fixture measured 26.71%, minus 1 point) (agent)
 - converge: assessed every FR/SC/edge case against code and tests; no new tasks (agent)
+- user (2026-11-22, amendment): restore the land shadow: ocean cells east of land in Earth Blue, on
+  by default for every map, settable by a recipe `[shadow]` table (enabled, color, direction =
+  east); assigned before the ocean layer; supply-capped classification uses supply net of the
+  shadow; official-31203 turns it off to stay exact; bathymetry gets it (spec FR-026-FR-029) (user)
+- user (2026-11-22, amendment): background ocean texture `halo` (approved prototype option B):
+  Dark Turquoise base, Medium Azure within 1.5 studs of land, Poisson-disk fade (spacing 2.0) to
+  3.0 studs; used for land-elevation's ocean instead of the 70/20/10 `mix`; `mix` kept for other
+  uses (spec FR-030, FR-031) (user)
+- user (2026-11-22, amendment): white ice sheets from ETOPO 2022 bedrock requested, then WITHDRAWN
+  by the owner before implementation after realising the map is an elevation map (ice-sheet tops
+  are elevation): no bedrock dataset, no ice recipe feature, no fixture; land-elevation stays a
+  true elevation map (user)
+- amendment: bathymetry's Earth Blue becomes the shadow, not a depth class: the recipe ranks the
+  other eight colors with their official counts over the 6,786 non-shadow cells, so all nine
+  totals still equal the official design's (alternative: keep Earth Blue as a ranked class with
+  share 1, which gives 393 Earth Blue / 723 Brick Yellow) (agent; owner to review)
+- amendment: owner's statement "every Earth Blue stud has land to its west" measured as 391 of 392;
+  the rule reproduces the design's shadow with one cell of difference each way (research R13) (agent)
+- amendment: halo randomness uses the ocean layer seed `(seed, 1)` and runs over the ocean layer's
+  cells only (shadow excluded), so it follows the prototype's rule but is not pixel-identical to
+  the prototype image (agent; owner to review)
+- amendment: halo takes exactly two colors (base, ring) and no weights; ocean only (agent)
+- amendment: report's ocean supply rows include the shadow tiles (an Earth Blue row is appended
+  when the layer itself does not use the shadow color); `map build`/`map check` print a
+  "Land shadow" line (agent)
+- amendment: bathymetry fixture threshold 30.8% (fixture measured 31.88%, minus 1 point) (agent)
+- amendment: `scripts/demo.sh` step 8 piped `sheets counts` into `head -20`, which failed the
+  script under `pipefail` (broken pipe); now `sed -n '1,21p'` (agent)
 
 ## Results (T066, real data in the session scratchpad cache)
 - official-31203: 10,240 / 10,240; validate FULLY BUILDABLE, 0 violations; 0.29 s
@@ -115,6 +143,21 @@ Updated: 2026-11-22
   Bright Bluish Green and Earth Blue tiles over one kit's supply)
 - fit-projection --check and partcolors build --check: no differences
 - tests: 666 passed (436 before), offline
+
+
+## Results (amendment 2026-11-22, T075: `scripts/demo.sh` on real cached data)
+- Shadow: 392 cells, Earth Blue, cast east, on official-31203-bathymetry, ocean-sst and
+  land-elevation; off on official-31203
+- official-31203: 10,240 / 10,240; FULLY BUILDABLE
+- official-31203-bathymetry: ocean agreement 2,298 / 7,178 = 32.0% (26.7% before); every count
+  equals the official design's; FULLY BUILDABLE, 0 violations
+- ocean-sst: FULLY BUILDABLE, 0 violations (Earth Blue 393 = 392 shadow + 1 ranked)
+- land-elevation ocean: 5,297 Bright Bluish Green, 1,489 Medium Azur, 392 Earth Blue; validate
+  38.2% PARTIALLY BUILDABLE, 10 violations (9 non-kit plate colors, Bright Bluish Green 5,297 >
+  1,879); `parts list --kits 1`: 10,240 needed, 6,943 owned, 6,330 to buy in 10 lots (3,418
+  Bright Bluish Green tiles plus nine plate colors), surplus 3,033; `--kits 2` 4,451; `--kits 3`
+  2,912
+- tests: 879 passed (852 before), offline
 
 ## Blocked tasks
 

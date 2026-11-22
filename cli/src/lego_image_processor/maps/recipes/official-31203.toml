@@ -8,6 +8,12 @@ title = "Official 31203 World Map design"
 description = "White land and the official ocean pattern, reproduced cell for cell from the design grid extracted from the kit's building instructions."
 seed = 31203
 
+# The official design already contains the land shadow (391 of its 392 Earth Blue tiles sit just
+# east of land), and this recipe copies the design cell for cell, so the shadow is turned off here;
+# drawing it again would overwrite one Brick Yellow cell and break the exact match.
+[shadow]
+enabled = false
+
 [land]
 role = "background"
 colors = ["lego_white"]

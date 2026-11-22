@@ -6,6 +6,12 @@
   class counts never change. No cell moves more than one class.
 - ``mix`` (background layers): Gaussian-smoothed white noise (sigma = ``cluster`` studs) ranked
   into the colors by weight, giving exact counts and soft patches.
+- ``halo`` (ocean background, amendment 2026-11-22): the base color everywhere; cells within
+  ``inner`` studs (Euclidean) of land take the ring color; cells between ``inner`` and ``outer``
+  take it on an even Poisson-disk subset (no two closer than ``spacing``), so the ring fades
+  evenly into the base offshore.
+- ``shadow_mask``: the one-stud land shadow cast east, ocean cells whose western neighbour is
+  land (no wrap at the map edge). The build assigns these before the ocean layer.
 
 Randomness comes from ``numpy.random.default_rng(seed)``, drawn in row-major order.
 Not affiliated with or endorsed by The LEGO Group.
@@ -72,4 +78,47 @@ def fill_background(mask: np.ndarray, weights: Sequence[float], *, cluster: floa
     counts = largest_remainder(weights, len(idx))
     flat = classes.reshape(-1)
     flat[idx[order]] = np.repeat(np.arange(len(weights)), counts)
+    return classes
+
+
+def shadow_mask(land: np.ndarray, direction: str = "east") -> np.ndarray:
+    """Ocean cells that take the land shadow: those whose western neighbour is land."""
+    land = np.asarray(land, dtype=bool)
+    if direction != "east":  # pragma: no cover - recipe validation allows east only
+        raise ValueError(f"unknown shadow direction {direction!r}")
+    out = np.zeros_like(land)
+    out[:, 1:] = land[:, :-1]
+    return out & ~land
+
+
+def poisson_disk(mask: np.ndarray, spacing: float, rng: np.random.Generator) -> np.ndarray:
+    """An even random subset of ``mask``: cells visited in random order, each kept unless a kept
+    cell lies closer than ``spacing`` studs."""
+    mask = np.asarray(mask, dtype=bool)
+    pts = np.zeros_like(mask)
+    ys, xs = np.nonzero(mask)
+    r = int(np.ceil(spacing))
+    r2 = spacing * spacing
+    H, W = mask.shape
+    for i in rng.permutation(len(ys)):
+        y, x = int(ys[i]), int(xs[i])
+        y0, x0 = max(0, y - r), max(0, x - r)
+        yy, xx = np.nonzero(pts[y0:min(H, y + r + 1), x0:min(W, x + r + 1)])
+        if len(yy) and (((yy + y0 - y) ** 2 + (xx + x0 - x) ** 2) < r2).any():
+            continue
+        pts[y, x] = True
+    return pts
+
+
+def fill_halo(mask: np.ndarray, land: np.ndarray, *, inner: float, outer: float, spacing: float,
+              seed) -> np.ndarray:
+    """Halo classes for the cells in ``mask``: 0 = base, 1 = coast ring; -1 elsewhere."""
+    from scipy.ndimage import distance_transform_edt
+
+    mask = np.asarray(mask, dtype=bool)
+    dist = distance_transform_edt(~np.asarray(land, dtype=bool))
+    classes = np.where(mask, 0, -1)
+    classes[mask & (dist <= inner)] = 1
+    band = mask & (dist > inner) & (dist <= outer)
+    classes[band & poisson_disk(band, spacing, np.random.default_rng(seed))] = 1
     return classes

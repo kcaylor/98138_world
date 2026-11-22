@@ -61,6 +61,10 @@ def echo_report(report: Dict[str, Any], echo=click.echo) -> None:
             d = layer["dataset"]
             head += f": {d['id']} {d['version']}, {layer.get('classification')}"
         echo(head)
+        sh = report.get("shadow") or {}
+        if layer["class"] == "ocean" and sh.get("cells"):
+            echo(f"  Land shadow (cast {sh['direction']}): {sh['cells']:,} cells of {sh['color']}, assigned "
+                 "first and counted in the table below")
         if layer["role"] == "data":
             vl = layer.get("variance_lost")
             echo(f"  Variance lost below grid scale: {_pct(vl)}; filled from neighbours: "

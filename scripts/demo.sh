@@ -52,7 +52,7 @@ step "8. Build sheets (PDF, plus SVG pages)"
 "$LIP" sheets build "$OUT/official.json" -o "$OUT/official-sheets.pdf"
 "$LIP" sheets build "$OUT/land-elevation.json" -o "$OUT/land-elevation-sheets.pdf"
 "$LIP" sheets build "$OUT/ocean-sst.json" -o "$OUT/ocean-sst-svg" --format svg
-"$LIP" sheets counts "$OUT/official.json" | head -20
+"$LIP" sheets counts "$OUT/official.json" | sed -n '1,21p'   # sed reads it all (no broken pipe)
 
 step "9. Make your own recipe"
 "$LIP" map recipes --copy ocean-sst "$OUT/my-sst.toml" --force

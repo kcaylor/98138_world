@@ -187,6 +187,20 @@ work in isolation; full suite green.
 - [X] T066 Run `specs/004-map-recipes/quickstart.md` end to end with real cached datasets; record results (agreements, sizes, timings) in `specs/004-map-recipes/run-state.md`
 - [X] T067 Run the full suite (`pytest -q`) with and without network blocked; confirm 436 existing tests still pass
 
+
+---
+
+## Amendment 2026-11-22: shadow, halo (spec FR-026-FR-032)
+
+- [X] T068 [P] Tests first: recipe `[shadow]` parsing and errors, `halo` texture parsing and errors, `shadow_mask`, `fill_halo` (ring, band spacing, seed) in `cli/tests/unit/maps/test_shadow_halo.py`
+- [X] T069 [P] Tests first: shadow on the bundled maps (392 cells, Earth Blue, report and `metadata.map`), official-31203 exact with the shadow off, SST within one kit, land-elevation halo, shadow off/recolor, `map check` output in `cli/tests/integration/test_map_shadow.py`
+- [X] T070 `Shadow` and `[shadow]` table, halo texture validation in `cli/src/lego_image_processor/maps/recipe.py`
+- [X] T071 `shadow_mask`, `poisson_disk`, `fill_halo` in `cli/src/lego_image_processor/maps/texture.py`
+- [X] T072 Build: shadow first, ocean layer on the remaining cells, supply net of the shadow, shadow in report/provenance, halo parameters in provenance (`maps/build.py`, `maps/suitability.py` `extra_use`); shadow line in `map build`/`map check` output (`cli/map.py`)
+- [X] T073 Recipes: `official-31203` shadow off (comment), `official-31203-bathymetry` eight ranked colors with the official counts, `ocean-sst` comment, `land-elevation` halo ocean
+- [X] T074 Update bathymetry fixture threshold (30.8%) and existing tests; contracts/recipe-format.md, data-model.md, research R13, cli/README.md, docs/runbook.md, scripts/demo.sh (step 8 broken pipe)
+- [X] T075 Run `scripts/demo.sh` end to end on real cached data; record results in run-state.md
+
 ---
 
 ## Dependencies & execution order

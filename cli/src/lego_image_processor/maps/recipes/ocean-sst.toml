@@ -1,6 +1,7 @@
 # Annual mean sea surface temperature, 1991-2020 (NOAA ERSST v5), on the kit's nine tile colors.
 # Cells are ranked cold to warm and given colors in proportion to one kit's supply, so the map
-# can be built from one kit. Not affiliated with or endorsed by The LEGO Group.
+# can be built from one kit. The land shadow (on by default) takes 392 Earth Blue tiles first; the
+# ranking uses what is left of one kit's supply. Not affiliated with or endorsed by The LEGO Group.
 format = "1"
 id = "ocean-sst"
 title = "Ocean temperature"

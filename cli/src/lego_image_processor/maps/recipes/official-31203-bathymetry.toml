@@ -2,6 +2,10 @@
 # Ocean depth (ETOPO 2022) is ranked into the kit's nine tile colors with the official design's
 # counts, colors ordered by their median depth in the official design (research R1), then
 # softened with a blend texture that swaps cells in pairs so the counts never change.
+# The land shadow (on by default) draws the official design's Earth Blue: the 392 ocean cells just
+# east of land. Earth Blue is therefore not a depth class; the other eight colors are ranked over
+# the remaining 6,786 ocean cells with the official counts, so every color count equals the
+# official design's.
 # Not affiliated with or endorsed by The LEGO Group.
 format = "1"
 id = "official-31203-bathymetry"
@@ -19,17 +23,19 @@ role = "data"
 dataset = "etopo2022-surface-10m"
 variable = "z"
 transform = "negate"          # depth in metres = -elevation
-# shallow -> deep, in the official design's median-depth order
+# shallow -> deep, in the official design's median-depth order (Earth Blue, the shallowest, is
+# the shadow)
 colors = [
-  "lego_earth_blue", "lego_brick_yellow", "lego_flame_yellowish_orange", "lego_vibrant_coral",
+  "lego_brick_yellow", "lego_flame_yellowish_orange", "lego_vibrant_coral",
   "lego_bright_orange", "lego_bright_yellowish_green", "lego_medium_azur", "lego_bright_green",
   "lego_bright_bluish_green",
 ]
 
 [ocean.classification]
 method = "rank"
-# the official design's count of each color (kit_31203_design.json counts.used)
-shares = [392, 724, 597, 203, 230, 1019, 1606, 529, 1878]
+# the official design's count of each color (kit_31203_design.json counts.used); Earth Blue (392)
+# comes from the shadow
+shares = [724, 597, 203, 230, 1019, 1606, 529, 1878]
 
 [ocean.texture]
 kind = "blend"

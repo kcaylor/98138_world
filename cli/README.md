@@ -161,14 +161,17 @@ The part-color snapshots live in `<cache>/sources/partcolors/` (`elements.csv.gz
 
 A map is a land layer plus an ocean layer on the fixed kit 31203 template (128×80 grid, the kit's
 land/sea mask). Each layer is **data** (a gridded field classified onto an ordered color scale) or
-**background** (fixed colors, mixed by weight). Four recipes are bundled:
+**background** (fixed colors: mixed by weight, or a coastal halo). Every map also gets a one-stud
+**land shadow**: the ocean cells just east of land, in Earth Blue, as on the official design (391
+of its 392 Earth Blue tiles sit there). The shadow is drawn first, uses 392 of the kit's 393 Earth
+Blue tiles, and the ocean layer covers the other 6,786 ocean cells. Four recipes are bundled:
 
 | Recipe | Land | Ocean | Data needed |
 |---|---|---|---|
-| `official-31203` | White | the official design grid, one-to-one (exact: 10,240/10,240) | none (packaged) |
-| `official-31203-bathymetry` | White | depth ranked into the official counts and color order, blended | ETOPO 2022 |
-| `ocean-sst` | White | annual mean SST 1991-2020, cold to warm, counts within one kit's supply | ERSST v5 |
-| `land-elevation` | elevation on 10 plate colors (green to brown to grey to white) | three kit blues (Bright Bluish Green, Medium Azur, Earth Blue at 70/20/10), mixed; needs more blue tiles than one kit holds (reported as beyond-kit) | ETOPO 2022 |
+| `official-31203` | White | the official design grid, one-to-one (exact: 10,240/10,240; shadow off, the design already has it) | none (packaged) |
+| `official-31203-bathymetry` | White | shadow in Earth Blue; depth ranked into the official counts and color order of the other eight colors, blended | ETOPO 2022 |
+| `ocean-sst` | White | shadow; annual mean SST 1991-2020, cold to warm, counts within one kit's supply net of the shadow | ERSST v5 |
+| `land-elevation` | elevation on 10 plate colors (green to brown to grey to white) | shadow; Bright Bluish Green (Dark Turquoise) with a Medium Azur coastal halo that fades evenly offshore; needs more Bright Bluish Green tiles than one kit holds (reported as beyond-kit) | ETOPO 2022 |
 
 ```bash
 lego-image-processor map recipes                                   # list (and whether data is cached)
@@ -186,8 +189,25 @@ Every build prints a suitability report: share of the data's variance lost below
 cells filled from neighbours, cells per class, the closest neighbouring colors (CIEDE2000) and
 color counts against one kit's supply, with warnings above 50% variance lost, 5% filled, an empty
 class or ΔE00 below 5. `--preview` writes a PNG (8×8 pixels per stud, cited RGB; not a build
-sheet). The texture rule of a recipe (`blend` for data layers, `mix` for backgrounds) replaces the
-"shadowing" idea of feature 002; there is no separate shadowing option.
+sheet). The texture rule of a recipe (`blend` for data layers, `mix` or `halo` for backgrounds)
+replaces the "shadowing" idea of feature 002. The land shadow is set by an optional top-level
+`[shadow]` table:
+
+```toml
+[shadow]                    # optional; this is the default
+enabled = true              # false turns it off (official-31203 does, its grid already has it)
+color = "lego_earth_blue"   # any 98138 tile color
+direction = "east"          # the only direction for now
+
+[ocean]                     # a calm ocean background with a coastal halo
+role = "background"
+colors = ["lego_bright_bluish_green", "lego_medium_azur"]   # offshore base, coast ring
+[ocean.texture]
+kind = "halo"
+inner = 1.5                 # studs from land (Euclidean): all ring color
+outer = 3.0                 # up to here: ring color on an even Poisson-disk subset, seeded
+spacing = 2.0               # minimum distance between those fade cells
+```
 
 A recipe is a TOML file (format "1"). A minimal data layer:
 
@@ -306,9 +326,8 @@ wanted list adds to the quantities already there. The marketplace files carry no
 are fixed import formats); the command output and the JSON parts list carry it. No prices are
 estimated: BrickLink and Rebrickable both price an imported list.
 
-Example (land-elevation from the real datasets): 6,382 pieces in 11 lots beyond one kit (3,145
-Bright Bluish Green and 325 Earth Blue tiles plus nine plate colors), 4,178 beyond two kits,
-2,912 beyond three. The official design needs nothing beyond one kit.
+Example (land-elevation from the real datasets): 6,330 pieces in 10 lots beyond one kit (3,418
+Bright Bluish Green tiles plus nine plate colors), 4,451 beyond two kits, 2,912 beyond three. The official design needs nothing beyond one kit.
 
 ### Build sheets
 

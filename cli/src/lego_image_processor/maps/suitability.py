@@ -52,7 +52,10 @@ def min_neighbour_delta_e(colors: Sequence[str], rgb: Optional[Mapping[str, Tupl
 def layer_report(*, cls: str, role: str, part_id: str, colors: Sequence[str], field, classes: np.ndarray,
                  ordered: bool, layer_cells: int, rgb: Optional[Mapping[str, Tuple[int, int, int]]] = None,
                  below: int = 0, above: int = 0, bounds: Sequence[float] = (),
-                 dataset: Optional[Mapping[str, Any]] = None, method: Optional[str] = None) -> Dict[str, Any]:
+                 dataset: Optional[Mapping[str, Any]] = None, method: Optional[str] = None,
+                 extra_use: Optional[Mapping[str, int]] = None) -> Dict[str, Any]:
+    """``extra_use``: tiles of the layer's part used outside the layer (the land shadow); they
+    count against one kit's supply in the ``supply`` rows."""
     warnings: List[Dict[str, str]] = []
     counts = [int((classes == i).sum()) for i in range(len(colors))]
     rep: Dict[str, Any] = {"class": cls, "role": role, "part_id": part_id, "cells": int(layer_cells)}
@@ -92,7 +95,9 @@ def layer_report(*, cls: str, role: str, part_id: str, colors: Sequence[str], fi
     rep["class_counts"] = [{"key": k, "cells": n} for k, n in zip(colors, counts)]
     supply = kit_supply().get(part_id, {})
     rows = []
-    for k, n in zip(colors, counts):
+    extra = dict(extra_use or {})
+    use = [(k, n + int(extra.pop(k, 0))) for k, n in zip(colors, counts)] + list(extra.items())
+    for k, n in use:
         s = int(supply.get(k, 0))
         rows.append({"key": k, "used": n, "supplied": s, "within": n <= s, "in_kit": k in supply})
     rep["supply"] = rows
