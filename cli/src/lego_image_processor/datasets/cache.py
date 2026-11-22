@@ -101,10 +101,40 @@ def verify(entry: DatasetEntry, path: PathLike, hint: bool = True) -> None:
         if actual_size != entry.size:
             raise ChecksumMismatchError(path, f"{entry.size} bytes", f"{actual_size} bytes",
                                         what="size", entry_id=entry.id, hint=hint and entry.kind != "local")
+    if entry.content_sha256 and not entry.sha256:
+        _verify_content(entry, path, hint=hint)
+        return
     actual = sha256_file(path)
     if actual != entry.sha256:
         raise ChecksumMismatchError(path, entry.sha256, actual, entry_id=entry.id,
                                     hint=hint and entry.kind != "local")
+
+
+def content_sha256(entry: DatasetEntry, path: PathLike) -> str:
+    """The content checksum of ``path`` for ``entry`` (feature 012): SHA-256 over the decoded data
+    of the entry's variable(s) and coordinates; see ``readers.netcdf3_content_sha256``."""
+    from .readers import netcdf3_content_sha256
+
+    h = hashlib.sha256()
+    names = sorted(entry.variables) or []
+    if len(names) == 1:
+        return netcdf3_content_sha256(path, names[0])
+    for name in names:
+        h.update(netcdf3_content_sha256(path, name).encode())
+    return h.hexdigest()
+
+
+def _verify_content(entry: DatasetEntry, path: Path, hint: bool = True) -> None:
+    try:
+        actual = content_sha256(entry, path)
+    except ValueError as exc:
+        actual = f"unreadable ({exc})"
+    if actual != entry.content_sha256:
+        err = ChecksumMismatchError(path, entry.content_sha256, actual, what="content SHA-256",
+                                    entry_id=entry.id, hint=hint and entry.kind != "local")
+        err.args = (str(err) + " The server builds this file on request: if its data changed, "
+                    "check it and pin a new version (content_sha256) in datasets.json.",)
+        raise err
 
 
 def resolve(entry: DatasetEntry, cache_dir: Optional[PathLike] = None) -> Path:
@@ -133,7 +163,8 @@ FETCH_ATTEMPTS = 3
 
 def _default_opener(url: str, timeout: float = FETCH_TIMEOUT_S):
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    return urllib.request.urlopen(req, timeout=timeout)  # noqa: S310 (pinned https URL)
+    # Pinned URL: https, or http for an entry that states http_only and pins its SHA-256 (012).
+    return urllib.request.urlopen(req, timeout=timeout)  # noqa: S310
 
 
 def fetch(entry: DatasetEntry, *, cache_dir: Optional[PathLike] = None,
@@ -206,9 +237,12 @@ def _fetch_once(entry: DatasetEntry, *, cache_dir: Optional[PathLike] = None,
         if entry.size is not None and size != entry.size:
             raise ChecksumMismatchError(final, f"{entry.size} bytes", f"{size} bytes", what="size",
                                         entry_id=entry.id, hint=False)
-        actual = h.hexdigest()
-        if actual != entry.sha256:
-            raise ChecksumMismatchError(final, entry.sha256, actual, entry_id=entry.id, hint=False)
+        if entry.sha256:
+            actual = h.hexdigest()
+            if actual != entry.sha256:
+                raise ChecksumMismatchError(final, entry.sha256, actual, entry_id=entry.id, hint=False)
+        else:
+            _verify_content(entry, part, hint=False)
         os.replace(part, final)
     except OSError as exc:
         _remove(part)

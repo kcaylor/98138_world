@@ -86,6 +86,8 @@ def fixture_registry(tmp_path, monkeypatch):
     ersst = FIXTURE_DATASETS / "ersst_v5_annual_2deg.nc"
     months = {"ersst-v5-1997-12": FIXTURE_DATASETS / "ersst_v5_199712_ssta.nc",  # feature 009
               "ersst-v5-1988-12": FIXTURE_DATASETS / "ersst_v5_198812_ssta.nc"}
+    npp = FIXTURE_DATASETS / "mod17a3_npp_1deg.tif"       # feature 012
+    chla = FIXTURE_DATASETS / "modis_chla_4deg_6mo.nc"    # feature 012
     for row in data["datasets"]:
         if row["id"] == "etopo2022-surface-10m":
             row.update(format="npy", filename=etopo.name, size=etopo.stat().st_size, sha256=_sha(etopo),
@@ -99,6 +101,15 @@ def fixture_registry(tmp_path, monkeypatch):
             f = months[row["id"]]
             row.update(filename=f.name, size=f.stat().st_size, sha256=_sha(f))
             fr.files[row["id"]] = f
+        elif row["id"] == "mod17a3-npp-mean-2000-2015":  # feature 012: 1 degree, read as 2x2 blocks
+            row.update(filename=npp.name, size=npp.stat().st_size, sha256=_sha(npp),
+                       grid={**row.get("grid", {}), "block": 2})
+            fr.files[row["id"]] = npp
+        elif row["id"] == "modis-aqua-chla-2013-2024":  # feature 012: content checksum of the fixture
+            from lego_image_processor.datasets.readers import netcdf3_content_sha256
+            row.update(filename=chla.name, size=chla.stat().st_size,
+                       content_sha256=netcdf3_content_sha256(chla, "chlor_a"))
+            fr.files[row["id"]] = chla
     fr.registry_path.write_text(json.dumps(data), encoding="utf-8")
     monkeypatch.setattr(reg, "REGISTRY_PATH", fr.registry_path)
     monkeypatch.setenv("LEGO_IMAGE_PROCESSOR_CACHE", str(fr.cache_dir))

@@ -26,6 +26,10 @@ A CLI tool that converts images to LEGO-compatible color palettes and generates 
 - **ENSO maps** (feature 009): sea surface temperature anomaly of a strong El Niño (December 1997)
   and a strong La Niña (December 1988) on one shared °C legend, Pacific-centred (recipes
   `ocean-el-nino`, `ocean-la-nina`; recipe key `arrangement`)
+- **Living planet** (feature 012): plant productivity (MODIS MOD17A3 net primary production,
+  2000-2015) on land and ocean chlorophyll-a (MODIS-Aqua, 2013-2024) at sea, with ice in White and a
+  Black land shadow (recipe `living-planet`; strip GeoTIFF reader, climatology means, `log10`
+  transform, `no_data` rules)
 
 ## Installation
 
@@ -170,7 +174,7 @@ land/sea mask). Each layer is **data** (a gridded field classified onto an order
 **background** (fixed colors: mixed by weight, or a coastal halo). Every map also gets a one-stud
 **land shadow**: the ocean cells just east of land, in Earth Blue, as on the official design (391
 of its 392 Earth Blue tiles sit there). The shadow is drawn first, uses 392 of the kit's 393 Earth
-Blue tiles, and the ocean layer covers the other 6,786 ocean cells. Six recipes are bundled:
+Blue tiles, and the ocean layer covers the other 6,786 ocean cells. Seven recipes are bundled:
 
 | Recipe | Land | Ocean | Data needed |
 |---|---|---|---|
@@ -179,6 +183,7 @@ Blue tiles, and the ocean layer covers the other 6,786 ocean cells. Six recipes 
 | `ocean-sst` | White | shadow; annual mean SST 1991-2020, cold to warm, counts within one kit's supply net of the shadow | ERSST v5 |
 | `ocean-el-nino` | White | shadow; SST anomaly of December 1997 (strong El Niño) on the shared ENSO legend below; hung as B | ERSST v5 December 1997 |
 | `ocean-la-nina` | White | shadow; SST anomaly of December 1988 (strong La Niña) on the same legend; hung as B | ERSST v5 December 1988 |
+| `living-planet` | net primary production 2000-2015 on six plate colors (Tan to Green), ice White | chlorophyll-a 2013-2024 on five tile colors (Blue to Dark Green), sea ice White, shadow Black | MOD17A3 NPP, MODIS-Aqua chl-a, ETOPO 2022 |
 | `land-elevation` | elevation on 10 plate colors (green to brown to grey to white) | shadow; Bright Bluish Green (Dark Turquoise) with a Medium Azur coastal halo that fades evenly offshore; needs more Bright Bluish Green tiles than one kit holds (reported as beyond-kit) | ETOPO 2022 |
 
 ```bash
@@ -263,6 +268,48 @@ The El Niño map is meant to move to the 2026-27 event once it peaks. NCEI's per
 so that swap needs a netCDF-4 reader first; it will then be a new dataset entry and a changed
 `dataset` line and title in `ocean-el-nino`, with the same id and legend.
 
+#### Living planet
+
+`living-planet` shows where the planet is green. Land: MODIS MOD17A3 annual net primary production,
+mean of 2000-2015 (NTSG, University of Montana, Collection 5.5), in g C m⁻² yr⁻¹: Brick Yellow
+[BrickLink Tan] below 100, Sand Yellow [Dark Tan] 100-250, Sand Green 250-400, Bright Yellowish
+Green [Lime] 400-600, Bright Green 600-850, Dark Green [Green] 850 and above, with a light blend.
+Land with no NPP value (deserts, rock, ice) counts as 0; a land cell whose land is mostly
+unvegetated and poleward of 55° is White (ice). Ocean: MODIS-Aqua chlorophyll-a (NASA OBPG
+R2022.0 via NOAA CoastWatch ERDDAP), the mean of every valid month of 2013-2024 per pixel, on
+log10: Bright Blue [Blue] below 0.08 mg m⁻³, Dark Azur [Dark Azure] 0.08-0.15, Medium Azur 0.15-0.3,
+Bright Bluish Green [Dark Turquoise] 0.3-1, Earth Green [Dark Green] 1 and above. Polar ocean the
+satellite never saw (poleward of 60°), or saw in fewer than 12 months (poleward of 70°), is White
+(sea ice). The land shadow is Black. Expect about 6,600 pieces beyond one kit.
+
+The map uses these general recipe and dataset options (full contract in
+`specs/012-living-planet/contracts/recipe-and-datasets.md`):
+
+```toml
+[ocean]
+transform = "log10"          # none | negate | log10 (values <= 0 become missing)
+[ocean.classification]
+method = "bins"
+bounds = [0.001, 0.08, 0.15, 0.3, 1.0, 1000]   # with log10: in the variable's units, compared on log10
+
+[ocean.no_data]              # optional, data layers
+color = "lego_white"         # any color of the layer's part
+rule = "unobserved"          # no valid source value and poleward of min_lat ...
+min_lat = 60
+sparse_lat = 70              # ... or poleward of sparse_lat with < min_steps valid steps
+min_steps = 12               #     (needs a dataset with reduce = "climatology-mean")
+
+[land.no_data]
+value = 0                    # class pixels without a value take this (needs a land/ocean split)
+color = "lego_white"
+rule = "share"               # share of the cell's pixels without a value and poleward of min_lat
+min_lat = 55
+min_share = 0.5              # ... above this
+```
+
+No-data cells are assigned before the layer is classified (the land shadow still wins), are
+counted in the layer's supply table, and are printed as `No data (<rule>): N cells of <color>`.
+
 A recipe is a TOML file (format "1"). A minimal data layer:
 
 ```toml
@@ -313,10 +360,18 @@ lego-image-processor dataset fetch --recipe land-elevation
 |---|---|---|---|
 | `etopo2022-surface-10m`: ETOPO 2022 surface elevation, 10-arc-minute OPeNDAP subset of the 60-arc-second grid (NOAA NCEI) | 9,357,398 B | Public domain (U.S. Government work) | NOAA National Centers for Environmental Information. 2022: ETOPO 2022 15 Arc-Second Global Relief Model. https://doi.org/10.25921/fd45-gt74 |
 | `ersst-v5-ltm-1991-2020`: NOAA ERSST v5 monthly long-term mean SST, 1991-2020 (NOAA PSL) | 1,160,004 B | Public domain (NOAA) | Huang, B., et al., 2017: Extended Reconstructed Sea Surface Temperature, Version 5 (ERSSTv5). J. Climate, 30, 8179-8205. https://doi.org/10.1175/JCLI-D-16-0836.1. NOAA ERSST V5 data provided by the NOAA PSL, Boulder, Colorado, USA, from their website at https://psl.noaa.gov |
+| `mod17a3-npp-mean-2000-2015`: MODIS MOD17A3 annual NPP, mean of 2000-2015, 30-arc-second GeoTIFF (NTSG, University of Montana) | 384,939,658 B | NASA-funded open data, no stated restrictions | Zhao, M., Heinsch, F. A., Nemani, R. R., & Running, S. W. (2005). Remote Sensing of Environment, 95, 164-176. https://doi.org/10.1016/j.rse.2004.12.011 |
+| `modis-aqua-chla-2013-2024`: MODIS-Aqua chlorophyll-a, monthly 2013-2024, every 12th 4 km pixel (NASA OBPG R2022.0 via NOAA CoastWatch ERDDAP) | 147,236,600 B | NASA Earth Science data policy (open) | NASA OBPG (2022), MODIS-Aqua Level-3 Mapped Chlorophyll Data, R2022.0. https://doi.org/10.5067/AQUA/MODIS/L3M/CHL/2022 |
 | `kit31203-design`: the official design grid | packaged | facts from the official instructions | see `kit_31203_design.json` |
 
 Each download is pinned by URL, exact size and SHA-256, downloaded to a temporary file, verified
-and then moved into the per-user cache (`$LEGO_IMAGE_PROCESSOR_CACHE`, else
+and then moved into the per-user cache. Two exceptions (feature 012): the ERDDAP chlorophyll file
+is built by the server on each request and carries the request time in its header, so it is
+pinned by `content_sha256`, a SHA-256 over its decoded data and coordinates; and the NTSG host
+serves the NPP GeoTIFF over plain HTTP only, so that entry states why (`http_only`) and is pinned
+by its file SHA-256. GeoTIFF files are read strip by strip and averaged in `grid.block` × `grid.block`
+pixel blocks (12 for NPP, 0.1°), so the 43200 × 16800 image is never decoded whole. Files go into
+the per-user cache (`$LEGO_IMAGE_PROCESSOR_CACHE`, else
 `$XDG_CACHE_HOME/lego-image-processor`, else `~/.cache/lego-image-processor`; `--cache-dir`
 overrides it). Cached files are re-verified on every use. Citations and licenses are written into
 every layout and report. Exit codes: 3 dataset not cached, 4 checksum or size mismatch, 5 network

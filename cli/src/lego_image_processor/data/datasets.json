@@ -159,6 +159,76 @@
       "notes": "netCDF-3 classic (per-month NCEI files before 2010; later months are netCDF-4), ssta(time=1, lev=1, lat=89, lon=180) float32, _FillValue -999 over land and missing cells. date_modified 2017-06-30T12:18:00Z. Dataset DOI: 10.7289/V5T72FNM. Niño 3.4 mean anomaly −1.97 °C."
     },
     {
+      "id": "mod17a3-npp-mean-2000-2015",
+      "version": "c55-mean-2000-2015",
+      "kind": "download",
+      "title": "MODIS MOD17A3 annual net primary production, mean of 2000-2015 (Collection 5.5, 30 arc-second)",
+      "publisher": "Numerical Terradynamic Simulation Group (NTSG), University of Montana",
+      "url": "http://files.ntsg.umt.edu/data/NTSG_Products/MOD17/GeoTIFF/MOD17A3/GeoTIFF_30arcsec/MOD17A3_Science_NPP_mean_00_15.tif",
+      "http_only": "files.ntsg.umt.edu serves this file over plain HTTP only (the HTTPS endpoint timed out on 2026-11-22); integrity comes from the pinned size and SHA-256",
+      "size": 384939658,
+      "sha256": "cba00628246f0d0030f5ab86a52f3d0ffed5e6bfb31a9580b959483522e8ffef",
+      "format": "geotiff",
+      "filename": "MOD17A3_Science_NPP_mean_00_15.tif",
+      "variables": {
+        "npp": {
+          "units": "g C m-2 yr-1",
+          "description": "annual net primary production, mean of 2000-2015 (band 1, uint16 x 0.1); 65535 = fill (ocean, barren, ice, urban)",
+          "scale_factor": 0.1,
+          "valid_max": 65499,
+          "fill": 65535
+        }
+      },
+      "grid": {
+        "block": 12,
+        "registration": "cell",
+        "resolution_deg": 0.1,
+        "lat": [
+          -60,
+          80
+        ],
+        "lon": [
+          -180,
+          180
+        ]
+      },
+      "class_rule": {
+        "land_from": {
+          "dataset": "etopo2022-surface-10m",
+          "variable": "z",
+          "split_at": 0.0
+        }
+      },
+      "license": "NASA-funded MODIS product, openly distributed by NTSG with no stated restrictions; NASA Earth Science data policy (open data, no restrictions)",
+      "citation": "Zhao, M., Heinsch, F. A., Nemani, R. R., & Running, S. W. (2005). Improvements of the MODIS terrestrial gross and net primary production global data set. Remote Sensing of Environment, 95, 164-176. Also: Zhao, M., & Running, S. W. (2010). Drought-induced reduction in global terrestrial net primary production from 2000 through 2009. Science, 329, 940-943.",
+      "doi": "10.1016/j.rse.2004.12.011",
+      "notes": "GeoTIFF 43200 x 16800, LZW, one row per strip, 80N to 60S, Last-Modified 2016-07-02; product readme: http://files.ntsg.umt.edu/data/NTSG_Products/MOD17/GeoTIFF/MOD17A3/readme.txt. Read strip by strip as means of 12 x 12 valid pixels (0.1 degree; research R1 of specs/012-living-planet). Land/ocean from ETOPO 2022 (z > 0) because the file stores ocean and barren land alike as fill. Not the current v061 (LP DAAC), which needs Earthdata Login."
+    },
+    {
+      "id": "modis-aqua-chla-2013-2024",
+      "version": "r2022.0-2013-01-2024-12-stride12",
+      "kind": "download",
+      "title": "MODIS-Aqua chlorophyll-a, monthly, 2013-2024 (R2022.0 L3 SMI, every 12th 4 km pixel, about 0.5 degree)",
+      "publisher": "NASA Ocean Biology Processing Group; distributed by NOAA NMFS SWFSC ERD (CoastWatch ERDDAP)",
+      "url": "https://coastwatch.pfeg.noaa.gov/erddap/griddap/erdMH1chlamday_R2022SQ.nc?chlor_a%5B(2013-01-16T00:00:00Z):1:(2024-12-16T00:00:00Z)%5D%5B(89.97916):12:(-89.97917)%5D%5B(-179.9792):12:(179.9792)%5D",
+      "size": 147236600,
+      "content_sha256": "184c7b1ddcb80a62ced53c9f93a0e599b205aedd155965cf8dc1878beb55708c",
+      "format": "netcdf3",
+      "filename": "erdMH1chlamday_R2022SQ_2013-2024_s12.nc",
+      "variables": {
+        "chlor_a": {
+          "units": "mg m-3",
+          "description": "chlorophyll-a concentration (OCI algorithm); mean over all valid months per pixel",
+          "reduce": "climatology-mean"
+        }
+      },
+      "license": "NASA Earth Science data policy: open data, no restrictions (https://science.nasa.gov/earth-science/earth-science-data/data-information-policy/)",
+      "citation": "NASA Ocean Biology Processing Group (2022). MODIS-Aqua Level-3 Mapped Chlorophyll Data, Version R2022.0. NASA Ocean Biology DAAC, doi:10.5067/AQUA/MODIS/L3M/CHL/2022. Distributed by NOAA NMFS SWFSC ERD (ERDDAP dataset erdMH1chlamday_R2022SQ).",
+      "doi": "10.5067/AQUA/MODIS/L3M/CHL/2022",
+      "acknowledgement": "Data served by NOAA CoastWatch West Coast Node ERDDAP (https://coastwatch.pfeg.noaa.gov/erddap/).",
+      "notes": "One ERDDAP request: 142 monthly composites (2024 has 10), 360 x 720, netCDF-3, chlor_a(time, latitude, longitude) float32, NaN fill. ERDDAP builds the file on request and writes the request time into the global history attribute, so the file bytes change per request; the pin is content_sha256 over the decoded data and coordinates (specs/012-living-planet research R2). If it fails, the data changed: check it against the previous copy and pin a new version."
+    },
+    {
       "id": "kit31203-design",
       "version": "003",
       "kind": "packaged",

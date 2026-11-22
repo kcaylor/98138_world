@@ -76,24 +76,29 @@ def layer_units(recipe: Recipe) -> Dict[str, str]:
     return out
 
 
-def _bound(b: float) -> str:
+def _bound(b: float, signed: bool = True) -> str:
     if b == 0:
         return "0"
     text = f"{abs(b):.2f}".rstrip("0").rstrip(".")
+    if text == "0":  # small positive bounds (e.g. 0.001 mg m-3) keep their significant digits
+        text = f"{abs(b):.3g}"
+    if not signed:
+        return ("-" if b < 0 else "") + text
     return ("+" if b > 0 else "-") + text
 
 
 def legend_ranges(bounds) -> List[str]:
     """Range text per class: ``below b1``, ``b(i) to b(i+1)``, ``b(n-1) and above`` (end classes
-    open; membership [lower, upper))."""
+    open; membership [lower, upper)). Signs are shown only when a bound is negative (012)."""
     n = len(bounds) - 1
     if n < 1:
         return []
     if n == 1:
         return ["all values"]
-    out = [f"below {_bound(bounds[1])}"]
-    out += [f"{_bound(bounds[i])} to {_bound(bounds[i + 1])}" for i in range(1, n - 1)]
-    out.append(f"{_bound(bounds[n - 1])} and above")
+    signed = any(b < 0 for b in bounds)
+    out = [f"below {_bound(bounds[1], signed)}"]
+    out += [f"{_bound(bounds[i], signed)} to {_bound(bounds[i + 1], signed)}" for i in range(1, n - 1)]
+    out.append(f"{_bound(bounds[n - 1], signed)} and above")
     return out
 
 
@@ -123,6 +128,12 @@ def echo_report(report: Dict[str, Any], echo=click.echo, units: Optional[Dict[st
         if layer["class"] == "ocean" and sh.get("cells"):
             echo(f"  Land shadow (cast {sh['direction']}): {sh['cells']:,} cells of {sh['color']}, assigned "
                  "first and counted in the table below")
+        nd = layer.get("no_data")
+        if nd:
+            params = ", ".join(f"{k} {nd[k]:g}" for k in ("min_lat", "min_share", "sparse_lat", "min_steps",
+                                                          "value") if nd.get(k) is not None)
+            echo(f"  No data ({nd['rule']}): {nd['cells']:,} cells of {nd['color']} ({params}), assigned "
+                 "before classification and counted in the table below")
         if layer["role"] == "data":
             vl = layer.get("variance_lost")
             echo(f"  Variance lost below grid scale: {_pct(vl)}; filled from neighbours: "
@@ -217,7 +228,8 @@ def build(recipe, output, preview, report_path, cache_dir, do_fetch, compare_off
                 path, _ = fetch(entry, cache_dir=cache_dir)
             except DatasetError as exc:
                 raise _dataset_failure(exc)
-            echo(f"Fetched {entry.id}: {path} (SHA-256 verified)")
+            what = "content SHA-256" if entry.content_sha256 and not entry.sha256 else "SHA-256"
+            echo(f"Fetched {entry.id}: {path} ({what} verified)")
     try:
         result = build_map(r, cache_dir=cache_dir, compare_official=compare_official or None,
                            arrangement=arrangement)
