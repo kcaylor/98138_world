@@ -37,7 +37,7 @@ Probe (`scripts006/rl_probe.py`, ReportLab 5.1.0 in a scratch venv): 40 section 
 circles with labels and a footer → 632,358 bytes in 0.26 s; two builds byte-identical with
 `invariant=1`; pypdf 7.1.1 extracted every label and the disclaimer.
 
-**Decision (provisional, Q7)**: PDF via ReportLab as the primary output (required runtime
+**Decision (Q7, user-confirmed 2026-11-22)**: PDF via ReportLab as the primary output (required runtime
 dependency `reportlab >=4.4,<6`, BSD) and SVG via the standard library from the same page model.
 Tests read PDFs with pypdf (BSD-3, already in the maintainer group; added to the dev group).
 

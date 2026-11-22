@@ -31,6 +31,6 @@
 
 ## Notes
 
-- Reserved decisions Q7–Q8 are not `[NEEDS CLARIFICATION]` markers: each carries a provisional
-  answer marked **[PROVISIONAL]** in spec.md and is listed in run-state.md. Confirm before implement.
+- Reserved decisions Q7–Q8 were answered by the user on 2026-11-22 (the planner's recommendations);
+  recorded in spec.md Clarifications and run-state.md.
 - Format names (PDF, SVG) and the 8.0 mm pitch are kept because they are the user-facing contract (printable output at true scale), not implementation choices.

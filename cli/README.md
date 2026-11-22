@@ -17,6 +17,9 @@ A CLI tool that converts images to LEGO-compatible color palettes and generates 
 - **Parts lists and ordering** (feature 005): a parts list with cited LEGO, BrickLink and
   Rebrickable IDs from any layout, kit top-up (only what you do not own), a BrickLink wanted list
   and a Rebrickable parts CSV (`parts` commands, `kit part-numbers`)
+- **Build sheets** (feature 006): printable section-by-section pages at true scale with numbered
+  studs and per-section counts, as a PDF or SVG pages, plus per-section counts JSON (`sheets`
+  commands)
 
 ## Installation
 
@@ -307,6 +310,40 @@ Example (land-elevation from the real datasets): 6,382 pieces in 11 lots beyond 
 Bright Bluish Green and 325 Earth Blue tiles plus nine plate colors), 4,178 beyond two kits,
 2,912 beyond three. The official design needs nothing beyond one kit.
 
+### Build sheets
+
+A printable guide for placing the 10,240 pieces: an overview page (whole map, the 8 × 5 section
+grid, frame boundaries, totals, provenance), legend pages (each lot's number, swatch, LEGO,
+BrickLink and Rebrickable names and IDs, total) and one page per section base, 40 in all.
+
+```bash
+lego-image-processor sheets build elev.json -o elev-sheets.pdf                # PDF, Letter
+lego-image-processor sheets build elev.json -o elev-sheets.pdf --paper a4     # A4
+lego-image-processor sheets build elev.json -o two.pdf --sections B2,C2       # reprint two sections
+lego-image-processor sheets build elev.json -o elev-svg --format svg          # page-01.svg ...
+lego-image-processor sheets counts elev.json                                  # pieces per section
+lego-image-processor sheets counts elev.json -o elev-counts.json              # as JSON
+```
+
+- **Sections** are labelled by column letter A–H (west to east) and row number 1–5 (north to
+  south), so `C2` is columns 32–47, rows 16–31. Pages run column by column (A1 … A5, B1 … H5),
+  the order of the kit's section instructions. Frames: columns A–B, C–F, G–H. North is up.
+- **Studs** are drawn at true scale (8.0 mm pitch, from LDraw's approximation 1 stud = 20 LDU =
+  8 mm), each in its lot's cited color with the lot number on it (black or white, whichever
+  contrasts more), so the sheet also works in black and white. Land plates have a ring; ocean
+  tiles are plain. Lot numbers follow the parts list's lot order and are the same on every page.
+- **Print at 100% (no fit-to-page).** Every page has a 100 mm scale bar: measure it. A 16 × 16
+  base laid on a printed section should match the grid.
+- Each section page lists the section's pieces per lot (they sum to 256); `sheets counts` gives the
+  same numbers for sorting pieces into 40 bags.
+- Unverified lots (colors without cited IDs) are marked "no cited IDs" and the overview warns.
+- PDF text is Latin-1 (standard Helvetica, not embedded): a `--title` with other characters fails
+  for PDF and works for SVG. Output is deterministic: the same layout and options give identical
+  bytes.
+- The pages are drawn from the layout data with circles, lines and text only; no LEGO artwork,
+  logo, instruction image or crop is used. Every page carries "Not affiliated with or endorsed
+  by The LEGO Group."
+
 ### Python library
 
 ```python
@@ -329,6 +366,12 @@ from lego_image_processor.parts import (OwnedInputs, build_parts_list, read_layo
 pl = build_parts_list(read_layout("elev.json"), owned=OwnedInputs(kits=1))
 pl.totals(); pl.to_json(); to_bricklink_xml(pl, condition="U"); to_rebrickable_csv(pl)
 resolve_color("6141", "lego_brick_yellow", "5")      # cited IDs, or Unresolved(reason)
+
+from lego_image_processor.sheets import build_sheet_set, render_pdf, render_svg, section_counts
+
+sheet_set = build_sheet_set(read_layout("elev.json"), paper="letter", sections="B2,C2")
+pdf_bytes = render_pdf(sheet_set); svg_pages = render_svg(sheet_set)   # [(name, text), ...]
+section_counts(read_layout("elev.json")).to_json()
 ```
 
 Maintainer tools (from `cli/`, need the pinned sources in the cache; `--check` must report

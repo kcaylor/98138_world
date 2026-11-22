@@ -1,8 +1,9 @@
-# Contract: CLI (006) [PROVISIONAL: Q7, Q8]
+# Contract: CLI (006) (Q7, Q8 user-confirmed)
 
 Human output ends with `Not affiliated with or endorsed by The LEGO Group.` No network. Exit codes:
-0 ok; 1 input error (layout unreadable, unknown section label, non-Latin-1 title for PDF, output
-path problem); 2 Click usage.
+0 ok; 1 input error (layout unreadable, layout without all 10,240 positions, unknown section label,
+non-Latin-1 title for PDF, output path problem: PDF path is a directory or its directory is
+missing, SVG output is an existing file); 2 Click usage. Nothing is written on an error.
 
 ## `sheets build LAYOUT -o PATH`
 

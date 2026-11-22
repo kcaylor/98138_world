@@ -26,9 +26,11 @@ ascending `instruction_page`.
 ## Page model
 
 `PageSize(name, width_mm, height_mm)`: letter 215.9 × 279.4, a4 210 × 297.
-`Page(size, items, number, total)`; items: `Rect(x, y, w, h, fill, stroke, stroke_w)`,
-`Circle(cx, cy, r, fill, stroke, stroke_w)`, `Line(x1, y1, x2, y2, stroke, w)`,
-`Text(x, y, text, size_pt, align, bold, color)`. Origin top-left, mm. Colors as RGB tuples.
+`Page(size, items, number, total, kind, label)` (kind overview | legend | section; label = section
+label); items: `Rect(x, y, w, h, fill, stroke, stroke_w)`, `Circle(cx, cy, r, fill, stroke,
+stroke_w)`, `Line(x1, y1, x2, y2, stroke, w)`, `Text(x, y, text, size_pt, align, bold, color)`, each
+with `tag` and `data` (key/value pairs, e.g. a stud's x, y and lot; written as SVG `class` and
+`data-*`). Origin top-left, mm, text `y` is the baseline. Colors as RGB tuples.
 
 ## SheetSet
 

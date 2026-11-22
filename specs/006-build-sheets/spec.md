@@ -4,8 +4,8 @@
 
 **Created**: 2026-11-22
 
-**Status**: Planned (assumes feature 005 is built as planned; reserved decisions carry a
-recommended answer marked **[PROVISIONAL]**; see Clarifications and `run-state.md`)
+**Status**: Implemented (reserved decisions Q7–Q8 confirmed by the user on 2026-11-22; see
+Clarifications and `run-state.md`)
 
 **Input**: User description: "Feature 006: build sheets. Printable, section-by-section,
 paint-by-number pages with per-section color counts, matching the kit's physical structure (40
@@ -76,13 +76,13 @@ Facts that shape this feature (details in `research.md`):
   PDF, no LEGO logo, no LEGO fonts or instruction-style step graphics (auto-resolved: CLAUDE.md,
   constitution VIII).
 
-Reserved decisions (run-policy: file formats others use, new dependency, CLI flags), each with a
-recommended provisional answer:
+Reserved decisions (run-policy: file formats others use, new dependency, CLI flags), answered by
+the user on 2026-11-22 (the planner's recommendations):
 
-- **Q7** [PROVISIONAL] Output format and dependency → PDF as the primary output via ReportLab
+- **Q7** (user-confirmed) Output format and dependency → PDF as the primary output via ReportLab
   (BSD, new required dependency), plus SVG (one file per page, standard library) as a second
   format for the web app and for users who print from a browser.
-- **Q8** [PROVISIONAL] CLI and page conventions → new group `sheets` with `sheets build LAYOUT -o
+- **Q8** (user-confirmed) CLI and page conventions → new group `sheets` with `sheets build LAYOUT -o
   PATH [--format pdf|svg] [--paper letter|a4] [--sections LIST] [--title TEXT]` and `sheets counts
   LAYOUT [-o PATH]`; default paper Letter; section grids at true scale (8.0 mm pitch) with a
   printed 100 mm scale check; section labels A1–H5.

@@ -58,7 +58,7 @@ downsampling and whether the colors available for each part can carry the patter
 | 003 | Kit reference data: verified part IDs and inventory, color ID mappings, the official design as named colors (built; projection findings recorded as notes for 004) |
 | 004 | Map recipes and canonical datasets: download/cache, reprojection, classification, color scales, texture, suitability (built). Examples: the official design as a recipe (exact), the official look from bathymetry (derived, 26.7% ocean cell agreement), an ocean temperature map, a land elevation map |
 | 005 | Parts lists and ordering (built): parts list with cited LEGO, BrickLink and Rebrickable IDs from any layout (plate = BrickLink 4073 / Rebrickable 6141, tile = 98138), kit top-up from `--kits`, loose and missing parts, BrickLink wanted-list XML and Rebrickable CSV; 44 plate and 40 tile colors cited |
-| 006 | Build sheets |
+| 006 | Build sheets (built): overview, legend and 40 section pages (A1–H5, 16 × 16 at true scale, 8.0 mm pitch) with numbered studs and per-section counts, as PDF (ReportLab) or SVG pages, plus per-section counts JSON (`sheets build`, `sheets counts`) |
 | later | Web app at 98138.world on top of the CLI |
 
 Not affiliated with or endorsed by The LEGO Group.
