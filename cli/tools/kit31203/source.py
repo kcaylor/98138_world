@@ -8,6 +8,7 @@ import urllib.request
 from pathlib import Path
 from typing import Callable, Mapping, Optional
 
+from lego_image_processor.datasets.cache import cache_root  # one definition (feature 004, R12)
 from lego_image_processor.kit.source import PINNED_SHA256, PINNED_URL
 
 DEFAULT_URL = PINNED_URL
@@ -37,15 +38,6 @@ class ChecksumError(SourceError):
         )
 
 
-def cache_root(env: Optional[Mapping[str, str]] = None) -> Path:
-    """``$LEGO_IMAGE_PROCESSOR_CACHE``, else ``$XDG_CACHE_HOME/lego-image-processor``,
-    else ``~/.cache/lego-image-processor``."""
-    env = os.environ if env is None else env
-    if env.get("LEGO_IMAGE_PROCESSOR_CACHE"):
-        return Path(env["LEGO_IMAGE_PROCESSOR_CACHE"])
-    if env.get("XDG_CACHE_HOME"):
-        return Path(env["XDG_CACHE_HOME"]) / "lego-image-processor"
-    return Path.home() / ".cache" / "lego-image-processor"
 
 
 def cached_pdf_path(root: Path) -> Path:

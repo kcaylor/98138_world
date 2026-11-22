@@ -50,6 +50,17 @@ regenerate or check the data, from `cli/`: `poetry install --with maintainer`, t
 `PYTHONPATH=tools poetry run python -m kit31203 extract --check` (add `--pdf <local copy>` to skip
 the download; exit 0 and "no differences" means the committed data is reproducible).
 
+Maps are built from recipes (feature 004, see `specs/004-map-recipes/`): TOML files in
+`cli/src/lego_image_processor/maps/recipes/` (`official-31203`, `official-31203-bathymetry`,
+`ocean-sst`, `land-elevation`), built with `map build <recipe> -o layout.json`. Datasets are
+pinned in `data/datasets.json` (URL, size, SHA-256, citation, license) and cached per user; only
+`dataset fetch` and `map build --fetch` use the network. The kit projection
+(`kit_31203_projection.json`) and the plate/tile colors beyond the kit (`part_colors.json`, from
+checksum-pinned Rebrickable, LDraw and BrickLink snapshots) are regenerated with
+`PYTHONPATH=tools python -m kit31203 fit-projection --check` and
+`PYTHONPATH=tools python -m partcolors build --check`. Tests use small derived fixtures in
+`cli/tests/fixtures/datasets/` (each with a `.source.json`); never commit downloaded datasets.
+
 1. **Python CLI** (`cli/`, package `lego_image_processor`), written to be released as open source.
    This is the only part that exists today.
 2. **Web application** on Fly.io at 98138.world, planned. It must call the CLI as a library or
@@ -58,8 +69,11 @@ the download; exit 0 and "no differences" means the committed data is reproducib
 ### Layout
 
 - `cli/src/lego_image_processor/`: `core/` (image I/O, quantization), `palette/` (LEGO colors,
-  CIEDE2000 matching), `analysis/`, `layout/` (grid, land/sea mask, kit spec, validator), `cli/`
-  (Click commands), `data/` (runtime reference data, shipped with the package).
+  CIEDE2000 matching), `analysis/`, `layout/` (grid, land/sea mask, kit spec, validator), `kit/`
+  (kit reference data, part colors), `datasets/` (registry, verified cache, readers), `maps/`
+  (recipes, projection, reprojection, classification, texture, suitability, build, preview),
+  `cli/` (Click commands), `data/` (runtime reference data, shipped with the package).
+- `cli/tools/`: maintainer-only tools (`kit31203`, `partcolors`, `fixtures004`), not packaged.
 - `cli/tests/`: `unit/`, `integration/`, `contract/` (CLI I/O), `fixtures/`.
 - `specs/NNN-name/`: Spec Kit artifacts for each feature.
 

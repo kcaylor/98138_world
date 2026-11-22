@@ -3,7 +3,7 @@
 Source: prompt (fallback 2B) + user answers to 4 scoping questions, 2026-11-21
 Phase: done
 Status: done
-Updated: 2026-11-21 (implement: phases 1-7 done, T001-T075; converge: 1 task appended and built, then converged)
+Updated: 2026-11-22 (user confirmed CSV disclaimer, coin-flip colors, 3062b exemption); 2026-11-21 (implement: phases 1-7 done, T001-T075; converge: 1 task appended and built, then converged)
 
 ## Open questions
 (none; E1–E4 resolved, see Decisions)
@@ -71,6 +71,10 @@ Updated: 2026-11-21 (implement: phases 1-7 done, T001-T075; converge: 1 task app
 - polish: specs/001-image-processing/tasks.md: 30 tasks marked [X] after checking code/tests (some landed under other names, noted in the file); unbuilt US1/US2 options and all US3 batch tasks left unchecked (agent)
 - converge round 1: 1 finding appended as T075 (plan performance goal for loaders had no check; measured 0.6 ms warm-import cold load); built. Round 2: converged; the CSV disclaimer finding is parked (format decision) (agent)
 
+- user review (2026-11-22): `layout -f csv` output gets no disclaimer; CSV format kept as is (user)
+- user review (2026-11-22): the four coin-flip colors at (32,16), (16,32), (21,34), (33,34) stay as resolved in `cli/tools/kit31203/overrides.json` (user)
+- user review (2026-11-22): the `3062b` exemption for the legacy v1.0 fixture (T019) and the grep guard test (T034) stays for now (user)
+
 ## Quickstart run (T072, 2026-11-21; uv venv in place of `poetry run`)
 
 | Section | Command | Result |
@@ -116,9 +120,9 @@ vs the previous mask (T059: no test expectations to update).
 ## Blocked tasks
 
 ## Deferred findings
-- [MEDIUM, needs user: file format] FR-021 / constitution VIII: `layout -f csv` writes no disclaimer (CSV has only a header and position rows), and with `-q` nothing user-facing carries it. Options: a trailing `# Not affiliated ...` comment row, an extra column, or a sidecar note; each changes a file format other people use, so it is parked.
-- [needs user] US2 coin-flip colors at (32,16), (16,32), (21,34), (33,34) still await maintainer review (see Decisions).
-- [HIGH, needs user] SC-006/US1-5 require zero occurrences of `3062b`/land "brick" in tests, but US3-4 needs a schema-1.0 fixture (T019 legacy_v1_layout.json) and the grep guard (T034) names the patterns. Tasks exclude those two files; confirm this exception or say how to test rejection otherwise.
+- [MEDIUM, resolved by user 2026-11-22: no CSV disclaimer] FR-021 / constitution VIII: `layout -f csv` writes no disclaimer (CSV has only a header and position rows), and with `-q` nothing user-facing carries it. Options: a trailing `# Not affiliated ...` comment row, an extra column, or a sidecar note; each changes a file format other people use, so it is parked.
+- [resolved by user 2026-11-22: keep as resolved] US2 coin-flip colors at (32,16), (16,32), (21,34), (33,34) still await maintainer review (see Decisions).
+- [HIGH, resolved by user 2026-11-22: exemption stays for now] SC-006/US1-5 require zero occurrences of `3062b`/land "brick" in tests, but US3-4 needs a schema-1.0 fixture (T019 legacy_v1_layout.json) and the grep guard (T034) names the patterns. Tasks exclude those two files; confirm this exception or say how to test rejection otherwise.
 - [MEDIUM] Role naming drift: spec FR-005 says "baseplate, frame/other"; data-model uses `section_base`, `frame_other`.
 - [MEDIUM, resolved in implement] Ambiguity rule "d1 exceeds a maximum distance" (research R6) has no value; set to ΔE00 12.0 (see Decisions).
 - [MEDIUM] Plan performance goal (loaders < 100 ms) has no benchmark task.

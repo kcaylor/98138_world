@@ -1,0 +1,30 @@
+# Annual mean sea surface temperature, 1991-2020 (NOAA ERSST v5), on the kit's nine tile colors.
+# Cells are ranked cold to warm and given colors in proportion to one kit's supply, so the map
+# can be built from one kit. Not affiliated with or endorsed by The LEGO Group.
+format = "1"
+id = "ocean-sst"
+title = "Ocean temperature"
+description = "Annual mean sea surface temperature, 1991-2020, on the kit's nine tile colors, cold to warm."
+seed = 31203
+
+[land]
+role = "background"
+colors = ["lego_white"]
+weights = [1]
+
+[ocean]
+role = "data"
+dataset = "ersst-v5-ltm-1991-2020"
+variable = "sst"
+colors = [   # cold -> warm
+  "lego_earth_blue", "lego_bright_bluish_green", "lego_medium_azur", "lego_bright_green",
+  "lego_bright_yellowish_green", "lego_brick_yellow", "lego_flame_yellowish_orange",
+  "lego_bright_orange", "lego_vibrant_coral",
+]
+
+[ocean.classification]
+method = "rank-to-supply"
+
+[ocean.texture]
+kind = "blend"
+width = 0.25

@@ -1,0 +1,108 @@
+{
+  "registry_version": "1",
+  "source": {
+    "title": "Canonical datasets for 98138.world map recipes",
+    "generator": "curated by hand from the publishers' pages (specs/004-map-recipes/research.md R3, R4)",
+    "generated_on": "2026-11-22",
+    "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
+  },
+  "datasets": [
+    {
+      "id": "etopo2022-surface-10m",
+      "version": "2022-v1-60s-stride10",
+      "kind": "download",
+      "title": "ETOPO 2022 surface elevation, 10 arc-minute subset of the 60 arc-second grid",
+      "publisher": "NOAA National Centers for Environmental Information",
+      "url": "https://www.ngdc.noaa.gov/thredds/dodsC/global/ETOPO2022/60s/60s_surface_elev_netcdf/ETOPO_2022_v1_60s_N90W180_surface.nc.dods?z%5B0:10:10799%5D%5B0:10:21599%5D",
+      "size": 9357398,
+      "sha256": "575c7a0c84f18b41430a723f26475fa41b1d787c94fa641f0d0705291e3991fd",
+      "format": "dods",
+      "filename": "etopo2022_surface_10m.dods",
+      "variables": {
+        "z": {
+          "units": "m",
+          "description": "surface elevation relative to EGM2008, positive up; ice-sheet tops over Greenland and Antarctica"
+        }
+      },
+      "grid": {
+        "fill": -99999,
+        "registration": "cell",
+        "resolution_deg": 0.16667,
+        "lat": [
+          -90,
+          90
+        ],
+        "lon": [
+          -180,
+          180
+        ]
+      },
+      "class_rule": {
+        "split_at": 0.0
+      },
+      "license": "Public domain (U.S. Government work, NOAA NCEI)",
+      "citation": "NOAA National Centers for Environmental Information. 2022: ETOPO 2022 15 Arc-Second Global Relief Model. NOAA National Centers for Environmental Information.",
+      "doi": "10.25921/fd45-gt74",
+      "notes": "OPeNDAP subset: every 10th sample of the 60 arc-second surface grid (1080 x 2160, float32, DAP2 binary). Land is z > 0 m, ocean z <= 0 m; depth = -z. If NCEI's server ever returns different bytes the checksum check fails; a new registry version is then needed (data unchanged). Alternative: the full 60 arc-second netCDF (about 478 MB), checksum not pinned."
+    },
+    {
+      "id": "ersst-v5-ltm-1991-2020",
+      "version": "v5-ltm-1991-2020",
+      "kind": "download",
+      "title": "NOAA ERSST v5 monthly long-term mean sea surface temperature, 1991-2020",
+      "publisher": "NOAA Physical Sciences Laboratory (data: NOAA NCEI)",
+      "url": "https://downloads.psl.noaa.gov/Datasets/noaa.ersst.v5/sst.mon.ltm.1991-2020.nc",
+      "size": 1160004,
+      "sha256": "b4f20ecfbf5e4c9276ff9e72adbf6205663e9efd64a3b1e74a0fcd2b3c72e99f",
+      "format": "netcdf3",
+      "filename": "sst.mon.ltm.1991-2020.nc",
+      "variables": {
+        "sst": {
+          "units": "degC",
+          "description": "sea surface temperature, annual mean of the 12 monthly long-term means",
+          "reduce": "annual-mean"
+        }
+      },
+      "grid": {
+        "registration": "node",
+        "resolution_deg": 2.0,
+        "lat": [
+          -88,
+          88
+        ],
+        "lon": [
+          0,
+          358
+        ]
+      },
+      "class_rule": {
+        "missing_is_land": true
+      },
+      "license": "Public domain (NOAA); the file's license attribute reads 'No constraints on data access or use'",
+      "acknowledgement": "NOAA ERSST V5 data provided by the NOAA PSL, Boulder, Colorado, USA, from their website at https://psl.noaa.gov",
+      "citation": "Huang, B., P. W. Thorne, V. F. Banzon, T. Boyer, G. Chepurin, J. H. Lawrimore, M. J. Menne, T. M. Smith, R. S. Vose, and H.-M. Zhang, 2017: Extended Reconstructed Sea Surface Temperature, Version 5 (ERSSTv5): Upgrades, Validations, and Intercomparisons. J. Climate, 30, 8179-8205.",
+      "doi": "10.1175/JCLI-D-16-0836.1",
+      "notes": "netCDF-3 classic, sst(12, 89, 180), missing over land and sea ice (-9.96921e36). The file was last modified 2021-02-09. Its global 'climatology' attribute names 1971-2000, but the file name, the PSL listing and climatology_bounds give the 1991-2020 normal. Dataset DOI: 10.7289/V5T72FNM."
+    },
+    {
+      "id": "kit31203-design",
+      "version": "003",
+      "kind": "packaged",
+      "format": "kit-design",
+      "title": "Official LEGO 31203 World Map design grid",
+      "publisher": "Extracted by this project (feature 003)",
+      "variables": {
+        "color": {
+          "units": "category",
+          "description": "kit color key of each of the 10,240 positions"
+        }
+      },
+      "class_rule": {
+        "kit_mask": true
+      },
+      "license": "Facts extracted from the official building instructions; see kit_31203_design.json source block",
+      "citation": "LEGO 31203 World Map building instructions, https://www.lego.com/cdn/product-assets/product.bi.core.pdf/6372756.pdf (SHA-256 b593e2f4befbc227c5b12fec9b58a1bd6141d19b54de5f5336dcc8cc9eb43c4c), section pages; extracted to kit_31203_design.json",
+      "notes": "Packaged with the tool; no download. Already on the kit grid, so no reprojection."
+    }
+  ]
+}

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, Any
 
-# Land: 1x1 round plate, LEGO design 6141 (BrickLink/Rebrickable 4073), element 614101.
+# Land: 1x1 round plate, LEGO design 6141 (Rebrickable 6141, BrickLink 4073), element 614101.
 # Ocean: 1x1 round tile, BrickLink/Rebrickable 98138 (LEGO design 35381).
 LAND_PART_TYPE = "plate"
 LAND_PART_ID = "6141"

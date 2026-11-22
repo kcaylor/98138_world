@@ -292,3 +292,30 @@ class TestSchemaVersion:
         assert "6141" in msg
         assert "lego-image-processor layout <image> -o <layout.json>" in msg
         assert isinstance(info.value, ValueError)
+
+
+class TestMapProvenance:
+    """`metadata.map` provenance block (feature 004, Q3): additive, schema stays 2.0."""
+
+    def _grid(self, **kw):
+        positions = [PositionPlacement(x=0, y=0, color_id="lego_white", color_name="White",
+                                       lego_color_code="1", part_type="plate", lego_part_id="6141")]
+        return PositionPlacementGrid(width=1, height=1, positions=positions, source_image="recipe:demo",
+                                     generated_at="2026-11-22T00:00:00Z", **kw)
+
+    def test_written_and_preserved(self):
+        block = {"recipe": {"id": "demo", "format": "1", "sha256": "0" * 64, "title": "Demo"},
+                 "layers": [], "seed": 1, "disclaimer": "Not affiliated with or endorsed by The LEGO Group."}
+        g = self._grid(map_metadata=block)
+        data = json.loads(g.to_json())
+        assert data["metadata"]["map"] == block
+        assert data["metadata"]["schema_version"] == "2.0"
+        again = PositionPlacementGrid.from_json(g.to_json())
+        assert again.map_metadata == block
+        assert json.loads(again.to_json())["metadata"]["map"] == block
+
+    def test_absent_by_default(self):
+        g = self._grid()
+        assert g.map_metadata is None
+        assert "map" not in json.loads(g.to_json())["metadata"]
+        assert PositionPlacementGrid.from_json(g.to_json()).map_metadata is None

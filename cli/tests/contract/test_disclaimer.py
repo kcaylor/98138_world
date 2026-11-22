@@ -63,3 +63,47 @@ def test_kit_commands(runner, command):
 def test_every_data_file_source_has_disclaimer(path):
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     assert data["source"]["disclaimer"] == DISCLAIMER
+
+
+# --- Feature 004 commands (FR-023) ------------------------------------------------------------
+
+@pytest.mark.parametrize("command", [
+    ["map", "recipes"], ["map", "check", "official-31203"], ["dataset", "list"],
+    ["dataset", "info", "ersst-v5-ltm-1991-2020"], ["dataset", "fetch", "kit31203-design"],
+    ["kit", "part-colors"],
+])
+def test_feature_004_human_output(runner, command):
+    result = runner.invoke(cli, command)
+    assert result.exit_code == 0, result.output
+    assert _last_line(result.output) == DISCLAIMER
+
+
+def test_map_build_output_report_and_layout(runner, tmp_path):
+    out, report = tmp_path / "o.json", tmp_path / "r.json"
+    result = runner.invoke(cli, ["map", "build", "official-31203", "-o", str(out), "--report", str(report)])
+    assert result.exit_code == 0, result.output
+    assert _last_line(result.output) == DISCLAIMER
+    meta = json.loads(out.read_text(encoding="utf-8"))["metadata"]
+    assert meta["disclaimer"] == DISCLAIMER and meta["map"]["disclaimer"] == DISCLAIMER
+    assert json.loads(report.read_text(encoding="utf-8"))["disclaimer"] == DISCLAIMER
+
+
+@pytest.mark.parametrize("command", [["dataset", "list", "--format", "json"],
+                                     ["kit", "part-colors", "--format", "json"]])
+def test_feature_004_json(runner, command):
+    result = runner.invoke(cli, command)
+    assert result.exit_code == 0
+    assert json.loads(result.output)["disclaimer"] == DISCLAIMER
+
+
+def test_errors_end_with_disclaimer(runner, tmp_path):
+    result = runner.invoke(cli, ["map", "build", "ocean-sst", "-o", str(tmp_path / "x.json"),
+                                 "--cache-dir", str(tmp_path)])
+    assert result.exit_code == 3
+    assert _last_line(result.output) == DISCLAIMER
+
+
+def test_bundled_recipes_carry_disclaimer():
+    from lego_image_processor.maps.recipe import bundled_recipes
+    for path in bundled_recipes().values():
+        assert DISCLAIMER in path.read_text(encoding="utf-8")

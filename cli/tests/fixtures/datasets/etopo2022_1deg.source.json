@@ -1,0 +1,25 @@
+{
+  "fixture": "etopo2022_1deg.npy",
+  "dataset": "etopo2022-surface-10m",
+  "version": "2022-v1-60s-stride10",
+  "source_sha256": "575c7a0c84f18b41430a723f26475fa41b1d787c94fa641f0d0705291e3991fd",
+  "source_url": "https://www.ngdc.noaa.gov/thredds/dodsC/global/ETOPO2022/60s/60s_surface_elev_netcdf/ETOPO_2022_v1_60s_N90W180_surface.nc.dods?z%5B0:10:10799%5D%5B0:10:21599%5D",
+  "method": "nanmean of 6x6 blocks of the 10-arc-minute DODS subset, rounded to int16 metres; rows south to north, cell-registered 1 degree, lat [-90, 90], lon [-180, 180]",
+  "license": "Public domain (U.S. Government work, NOAA NCEI)",
+  "citation": "NOAA National Centers for Environmental Information. 2022: ETOPO 2022 15 Arc-Second Global Relief Model. NOAA National Centers for Environmental Information.",
+  "doi": "10.25921/fd45-gt74",
+  "generator": "tools/fixtures004/make_fixtures.py",
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group.",
+  "grid": {
+    "lat": [
+      -90,
+      90
+    ],
+    "lon": [
+      -180,
+      180
+    ]
+  },
+  "units": "m",
+  "sha256": "cafe1b6a0332f1e75015107f72f36f976476810207532f3f14b6f0bf853cc2ca"
+}

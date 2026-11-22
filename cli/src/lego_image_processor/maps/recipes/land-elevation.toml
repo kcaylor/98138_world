@@ -1,0 +1,40 @@
+# Land elevation (ETOPO 2022 surface, ice-sheet tops over Greenland and Antarctica) on an ordered
+# scale of 1x1 round plate colors, low greens through tans and browns to grey and white. Most of
+# these plate colors are not in kit 31203; each is listed with cited LEGO, BrickLink and
+# Rebrickable IDs in part_colors.json (`kit part-colors --part 6141`).
+# The ocean is a quiet background of three blue tile colors so the land data stands out. It needs
+# more blue tiles than one kit holds; the shortfall is reported as beyond-kit, like the plates.
+# Not affiliated with or endorsed by The LEGO Group.
+format = "1"
+id = "land-elevation"
+title = "Land elevation"
+description = "Land elevation in metres on ten plate colors; the ocean is a subtly shaded blue background."
+seed = 31203
+
+[land]
+role = "data"
+dataset = "etopo2022-surface-10m"
+variable = "z"
+colors = [   # low -> high
+  "lego_dark_green", "lego_bright_green", "lego_bright_yellowish_green", "lego_brick_yellow",
+  "lego_sand_yellow", "lego_medium_nougat", "lego_reddish_brown", "lego_dark_brown",
+  "lego_medium_stone_grey", "lego_white",
+]
+
+[land.classification]
+method = "bins"
+# metres; values below 0 go to the first class and above the last bound to the last class
+bounds = [0, 150, 300, 500, 750, 1000, 1500, 2000, 2500, 3000, 9000]
+
+[land.texture]
+kind = "blend"
+width = 0.25
+
+[ocean]
+role = "background"
+colors = ["lego_bright_bluish_green", "lego_medium_azur", "lego_earth_blue"]
+weights = [70, 20, 10]
+
+[ocean.texture]
+kind = "mix"
+cluster = 1.5
