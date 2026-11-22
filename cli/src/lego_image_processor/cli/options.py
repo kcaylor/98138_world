@@ -30,6 +30,19 @@ ARRANGEMENT_HELP = ("How the kit's three frames are hung (LEGO 31203 building in
                     "C = 2·3·1, Asia and Australia. Also europe-africa, americas, asia-australia.")
 
 
+RECIPE_DEFAULT_HELP = (" Default: the recipe's `arrangement`, else A; an explicit --arrangement wins.")
+
+
 def arrangement_option(required: bool = False, default="A"):
-    kw = {"required": True} if required else {"default": default, "show_default": True}
-    return click.option("--arrangement", "-a", type=ArrangementType(), help=ARRANGEMENT_HELP, **kw)
+    """``default=None`` (``map build``/``map check``, feature 009) means "not given", so the
+    recipe's own ``arrangement`` key can apply."""
+    if required:
+        kw = {"required": True}
+        help_text = ARRANGEMENT_HELP
+    elif default is None:
+        kw = {"default": None}
+        help_text = ARRANGEMENT_HELP.replace(" (default)", "") + RECIPE_DEFAULT_HELP
+    else:
+        kw = {"default": default, "show_default": True}
+        help_text = ARRANGEMENT_HELP
+    return click.option("--arrangement", "-a", type=ArrangementType(), help=help_text, **kw)

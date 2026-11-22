@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -47,6 +47,7 @@ class MapResult:
     classes: Dict[str, np.ndarray] = field(default_factory=dict)
     fields: Dict[str, Optional[LayerField]] = field(default_factory=dict)
     agreement: Optional[Dict[str, Any]] = None
+    arrangement: Optional[Arrangement] = None  # as hung (feature 009: resolved by resolve_arrangement)
 
 
 def land_mask_array() -> np.ndarray:
@@ -61,6 +62,18 @@ def land_mask_array() -> np.ndarray:
 def missing_datasets(recipe: Recipe, cache_dir=None) -> List[DatasetEntry]:
     """Download entries the recipe needs that are not in the cache (for ``--fetch``)."""
     return [e for e in recipe.datasets() if e.kind == "download" and not is_cached(e, cache_dir)]
+
+
+def resolve_arrangement(recipe: Recipe,
+                        arrangement: Optional[Arrangement] = None) -> Tuple[Arrangement, str]:
+    """The arrangement to hang ``recipe`` and where it came from (feature 009, FR-011):
+    a passed ``arrangement`` (CLI ``--arrangement`` or a library argument) -> ``"option"``; else the
+    recipe's ``arrangement`` key -> ``"recipe"``; else A -> ``"default"``."""
+    if arrangement is not None:
+        return arrangement, "option"
+    if recipe.arrangement is not None:
+        return recipe.arrangement, "recipe"
+    return parse_arrangement(None), "default"
 
 
 def _rolled_field(fld: LayerField, arrangement: Arrangement) -> LayerField:
@@ -87,7 +100,10 @@ def _layer_classes(layer: Layer, mask: np.ndarray, seed: int, cache_dir, *, land
         return classes, None, None
     entry = layer.dataset
     path = None if entry.kind == "packaged" else resolve(entry, cache_dir)
-    grid = read_dataset(entry, path, layer.variable, transform=layer.transform)
+    try:
+        grid = read_dataset(entry, path, layer.variable, transform=layer.transform)
+    except ValueError as exc:  # unreadable file (e.g. netCDF-4 given as netcdf3): exit 1, no traceback
+        raise MapBuildError(f"{layer.cls}: cannot read {entry.id}: {exc}") from exc
     categorical = layer.classification.method == "categorical"
     kit_mask = arrangement.unroll(mask)
     fld = reproject_layer(grid, load_kit_projection(), kit_mask, layer.cls, categorical=categorical)
@@ -153,9 +169,10 @@ def _layer_provenance(layer: Layer) -> Dict[str, Any]:
 
 def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool] = None,
               arrangement: Optional[Arrangement] = None) -> MapResult:
-    """Build ``recipe`` from packaged or cached data, hung as ``arrangement`` (default A). Raises
+    """Build ``recipe`` from packaged or cached data, hung as ``arrangement`` (default: the
+    recipe's ``arrangement``, else A; see ``resolve_arrangement``). Raises
     ``DatasetNotCachedError`` (never downloads), ``ChecksumMismatchError`` or ``MapBuildError``."""
-    arrangement = arrangement or parse_arrangement(None)
+    arrangement, arrangement_source = resolve_arrangement(recipe, arrangement)
     land = arrangement.roll(land_mask_array())  # as hung
     table = load_part_colors()
     H, W = land.shape
@@ -221,7 +238,8 @@ def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool
     agreement = agreement_with_official(layout, arrangement) if compare_official else None
     report = {
         "recipe_id": recipe.id, "recipe_title": recipe.title, "recipe_sha256": recipe.sha256,
-        "seed": recipe.seed, "arrangement": arrangement.record(), "shadow": recipe.shadow.provenance(n_shadow), "layers": layer_reports, "thresholds": dict(THRESHOLDS),
+        "seed": recipe.seed, "arrangement": arrangement.record(),
+        "arrangement_source": arrangement_source, "shadow": recipe.shadow.provenance(n_shadow), "layers": layer_reports, "thresholds": dict(THRESHOLDS),
         "citations": citations,
         "warnings": [w for r in layer_reports for w in r["warnings"]],
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -231,7 +249,7 @@ def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool
     if agreement is not None:
         report["agreement_with_official"] = agreement
     return MapResult(recipe=recipe, layout=layout, report=report, classes=classes, fields=fields,
-                     agreement=agreement)
+                     agreement=agreement, arrangement=arrangement)
 
 
 def check_recipe(recipe: Recipe, *, cache_dir=None, arrangement: Optional[Arrangement] = None) -> Dict[str, Any]:

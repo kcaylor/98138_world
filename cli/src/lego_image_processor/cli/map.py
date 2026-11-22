@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import shutil
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import click
 
@@ -17,7 +17,8 @@ from ..datasets.cache import DatasetError, fetch, is_cached
 from ..kit.source import DISCLAIMER
 from ..maps.build import build_map, missing_datasets
 from ..maps.classify import MapBuildError
-from ..maps.recipe import RecipeError, bundled_recipes, load_recipe
+from ..maps.recipe import Recipe, RecipeError, bundled_recipes, load_recipe
+from ..maps.suitability import extra_tiles
 from .options import arrangement_option
 
 
@@ -55,7 +56,63 @@ def _pct(share) -> str:
     return "n/a" if share is None else f"{share * 100:.1f}%"
 
 
-def echo_report(report: Dict[str, Any], echo=click.echo) -> None:
+_SOURCE_TEXT = {"recipe": "from the recipe", "option": "from --arrangement", "default": "default"}
+_UNIT_TEXT = {"degc": "°C", "degree_c": "°C", "degrees_c": "°C", "celsius": "°C"}
+
+
+def arrangement_line(report: Dict[str, Any], arrangement) -> str:
+    """``Arrangement: B (...) - from the recipe`` (feature 009, FR-012)."""
+    source = _SOURCE_TEXT.get(report.get("arrangement_source", ""), "")
+    return f"Arrangement: {arrangement.describe()}" + (f" - {source}" if source else "")
+
+
+def layer_units(recipe: Recipe) -> Dict[str, str]:
+    """Display units of each data layer's variable, from the recipe's dataset entry."""
+    out = {}
+    for layer in recipe.layers:
+        if layer.dataset is not None and layer.variable:
+            u = str((layer.dataset.variables or {}).get(layer.variable, {}).get("units", "") or "")
+            out[layer.cls] = _UNIT_TEXT.get(u.lower(), u)
+    return out
+
+
+def _bound(b: float) -> str:
+    if b == 0:
+        return "0"
+    text = f"{abs(b):.2f}".rstrip("0").rstrip(".")
+    return ("+" if b > 0 else "-") + text
+
+
+def legend_ranges(bounds) -> List[str]:
+    """Range text per class: ``below b1``, ``b(i) to b(i+1)``, ``b(n-1) and above`` (end classes
+    open; membership [lower, upper))."""
+    n = len(bounds) - 1
+    if n < 1:
+        return []
+    if n == 1:
+        return ["all values"]
+    out = [f"below {_bound(bounds[1])}"]
+    out += [f"{_bound(bounds[i])} to {_bound(bounds[i + 1])}" for i in range(1, n - 1)]
+    out.append(f"{_bound(bounds[n - 1])} and above")
+    return out
+
+
+def _echo_legend(layer: Dict[str, Any], units: str, echo) -> None:
+    bounds = layer.get("class_bounds") or []
+    counts = layer.get("class_counts") or []
+    if layer.get("classification") != "bins" or len(bounds) != len(counts) + 1:
+        return
+    echo(f"  Legend ({units}):" if units else "  Legend:")
+    ranges = legend_ranges(bounds)
+    kw = max(len(c["key"]) for c in counts)
+    rw = max(len(t) for t in ranges)
+    cw = max(len(f"{c['cells']:,}") for c in counts)
+    for c, text in zip(counts, ranges):
+        echo(f"    {c['key']:<{kw}}  {text:<{rw}}  {c['cells']:>{cw},}")
+
+
+def echo_report(report: Dict[str, Any], echo=click.echo, units: Optional[Dict[str, str]] = None) -> None:
+    units = units or {}
     for layer in report["layers"]:
         head = f"{layer['class'].capitalize()} layer ({layer['role']}, part {layer['part_id']}, {layer['cells']:,} cells)"
         if layer.get("dataset"):
@@ -80,6 +137,8 @@ def echo_report(report: Dict[str, Any], echo=click.echo) -> None:
                  "yes" if r["within"] else "no") for r in layer["supply"]]
         for line in _table(["  color", "cells", "one kit", "within"], [("  " + a, b, c, d) for a, b, c, d in rows]):
             echo(line)
+        _echo_legend(layer, units.get(layer["class"], ""), echo)
+        echo(f"  Tiles beyond one kit: {extra_tiles(layer['supply']):,}")
     warnings = report["warnings"]
     if warnings:
         echo(f"Warnings ({len(warnings)}):")
@@ -137,7 +196,7 @@ def map_group() -> None:
               help="Download the recipe's missing pinned datasets (verified) before building")
 @click.option("--compare-official", is_flag=True, default=None,
               help="Print cell agreement with the official design (always on for official-31203*)")
-@arrangement_option()
+@arrangement_option(default=None)
 @click.option("--quiet", "-q", is_flag=True, help="Suppress output")
 def build(recipe, output, preview, report_path, cache_dir, do_fetch, compare_official, arrangement, quiet):
     """Build RECIPE (a recipe file or a bundled recipe id) into a schema 2.0 layout.
@@ -147,6 +206,7 @@ def build(recipe, output, preview, report_path, cache_dir, do_fetch, compare_off
         lego-image-processor map build official-31203 -o official.json --preview official.png
         lego-image-processor map build ocean-sst -o sst.json --fetch
         lego-image-processor map build land-elevation --arrangement B -o elev-B.json
+        lego-image-processor map build ocean-el-nino -o el-nino.json   # hung as B (recipe)
     """
     echo = (lambda *a, **k: None) if quiet else click.echo
     r = _load(recipe)
@@ -166,8 +226,8 @@ def build(recipe, output, preview, report_path, cache_dir, do_fetch, compare_off
     except MapBuildError as exc:
         raise CommandError(f"Cannot build {r.id}: {exc}", 1)
     echo(f"Recipe: {r.id} - {r.title} (format {r.format}, SHA-256 {r.sha256})")
-    echo(f"Arrangement: {arrangement.describe()}")
-    echo_report(result.report, echo)
+    echo(arrangement_line(result.report, result.arrangement))
+    echo_report(result.report, echo, layer_units(r))
     if result.agreement:
         echo_agreement(result.agreement, echo)
     try:
@@ -193,7 +253,7 @@ def build(recipe, output, preview, report_path, cache_dir, do_fetch, compare_off
 @click.argument("recipe")
 @click.option("--report", "report_path", type=click.Path(dir_okay=False), help="Write the report (JSON)")
 @click.option("--cache-dir", type=click.Path(file_okay=False), help="Dataset cache root (default: per-user cache)")
-@arrangement_option()
+@arrangement_option(default=None)
 def check(recipe, report_path, cache_dir, arrangement):
     """Run the suitability check on RECIPE without writing a layout (exit 0 even with warnings)."""
     r = _load(recipe)
@@ -204,8 +264,8 @@ def check(recipe, report_path, cache_dir, arrangement):
     except MapBuildError as exc:
         raise CommandError(f"Cannot build {r.id}: {exc}", 1)
     click.echo(f"Suitability check: {r.id} - {r.title}")
-    click.echo(f"Arrangement: {arrangement.describe()}")
-    echo_report(result.report)
+    click.echo(arrangement_line(result.report, result.arrangement))
+    echo_report(result.report, units=layer_units(r))
     if report_path:
         _write_json(report_path, result.report)
         click.echo(f"Report: {report_path}")
@@ -244,8 +304,9 @@ def recipes(copy_args, force, cache_dir):
         ds = [e for e in r.datasets()]
         names = ", ".join(e.id for e in ds) or "-"
         cached = "yes" if all(is_cached(e, cache_dir) for e in ds) else "no"
-        rows.append((rid, r.title, layers, names, cached))
-    for line in _table(["id", "title", "layers", "datasets", "cached"], rows):
+        arr = r.arrangement.id if r.arrangement is not None else "A"
+        rows.append((rid, r.title, arr, layers, names, cached))
+    for line in _table(["id", "title", "arrangement", "layers", "datasets", "cached"], rows):
         click.echo(line)
     click.echo()
     click.echo("Build one with: lego-image-processor map build <id> -o layout.json [--fetch]")

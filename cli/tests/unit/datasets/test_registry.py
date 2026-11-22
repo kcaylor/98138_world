@@ -89,3 +89,33 @@ class TestRules:
     def test_unknown_class_rule(self):
         with pytest.raises(RegistryError, match="class_rule"):
             parse_registry(_with(class_rule={"magic": 1}))
+
+
+ENSO = {
+    "ersst-v5-1997-12": ("v5-1997-12", "ersst.v5.199712.nc",
+                         "9f96dbe3aadf8b261e607a8337de02425c65e67803929c592bf1271b2c4e9ebe"),
+    "ersst-v5-1988-12": ("v5-1988-12", "ersst.v5.198812.nc",
+                         "f6d21ff447213c6abd32ee32bb1a4a26b5d847a5abb3dee33baed3f250bb14db"),
+}
+
+
+class TestEnsoEntries:
+    """Feature 009: the two ERSST v5 per-month files (contracts/datasets.md)."""
+
+    @pytest.mark.parametrize("dataset_id", sorted(ENSO))
+    def test_pinned_entry(self, dataset_id):
+        version, filename, sha = ENSO[dataset_id]
+        e = get_entry(dataset_id)
+        assert e.version == version
+        assert e.kind == "download" and e.format == "netcdf3"
+        assert e.size == 134_832 and e.sha256 == sha
+        assert e.filename == filename
+        assert e.url == f"https://www.ncei.noaa.gov/pub/data/cmb/ersst/v5/netcdf/{filename}"
+        assert set(e.variables) == {"ssta"}
+        assert e.variables["ssta"]["units"] == "degC"
+        assert "reduce" not in e.variables["ssta"]
+        assert e.class_rule == {"missing_is_land": True}
+        assert e.doi == "10.1175/JCLI-D-16-0836.1"
+        assert "10.7289/V5T72FNM" in e.citation
+        assert "No constraints on data access or use" in e.license
+        assert "NCEI" in e.publisher

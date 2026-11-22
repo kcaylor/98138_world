@@ -127,7 +127,42 @@ centre). Look at `elev-B.png`: the Pacific is now whole, and the shadow and halo
 across the old edge. `layout arrange` just moves frames, so any layout can be re-hung. The B sheets
 draw the frame lines after columns 32 and 64 and name each frame.
 
-### 8. Make your own map
+### 8. ENSO maps: El Niño and La Niña
+
+Four commands from nothing to both layouts and their top-up lists (the first two fetch the two
+pinned NOAA ERSST v5 per-month files, 134,832 bytes each, checked by SHA-256):
+
+```bash
+lego-image-processor map build ocean-el-nino --fetch -o el-nino.json --preview el-nino.png --report el-nino-report.json
+lego-image-processor map build ocean-la-nina --fetch -o la-nina.json --preview la-nina.png --report la-nina-report.json
+lego-image-processor parts list el-nino.json --kits 1
+lego-image-processor parts list la-nina.json --kits 1
+```
+
+What to look for:
+
+- each build prints `Arrangement: B (americas, frames 3·1·2, America in the centre) - from the
+  recipe`: the recipes set `arrangement = "B"` so the Pacific is whole;
+- a `Legend (°C):` block with nine lines from `below -1.5` (Earth Blue) to `+1 and above`
+  (Vibrant Coral), the same in both maps; in `el-nino.png` the eastern equatorial Pacific is
+  orange and coral, in `la-nina.png` it is blue-green;
+- `Tiles beyond one kit: 1,114` (El Niño) and `1,155` (La Niña) under the ocean table, with an
+  `over_supply` warning naming the colors;
+- the ERSST v5 citation (doi 10.1175/JCLI-D-16-0836.1 and dataset doi 10.7289/V5T72FNM) and the
+  license;
+- `parts list --kits 1` lists only ocean tiles to buy, totalling the same 1,114 and 1,155; no
+  land plates. `parts export el-nino.json --kits 1 --bricklink wanted.xml` writes them as a
+  BrickLink wanted list.
+
+To hang either map another way, pass `--arrangement A` (or C): the flag wins over the recipe and
+the output says `- from --arrangement`; `layout arrange el-nino.json --arrangement A -o
+el-nino-A.json` re-hangs a built layout without rebuilding.
+
+The El Niño map is meant to move to the 2026-27 event once it peaks. NCEI's per-month files from
+2010 on are netCDF-4, which needs a new reader first; the swap is then a new dataset entry and a
+changed `dataset` line and title in `ocean-el-nino`.
+
+### 9. Make your own map
 
 ```bash
 lego-image-processor map recipes --copy ocean-sst my-map.toml
@@ -140,7 +175,7 @@ lego-image-processor map build my-map.toml -o my-map.json --preview my-map.png
 `--part 6141` lists the plate colors. A recipe can also point to your own gridded data file, if it
 declares the file's checksum, citation and license (see `specs/004-map-recipes/quickstart.md`).
 
-### 9. From an image (the original feature 001/002 path)
+### 10. From an image (the original feature 001/002 path)
 
 ```bash
 lego-image-processor quantize photo.jpg -o photo_lego.png    # snap colors to LEGO colors

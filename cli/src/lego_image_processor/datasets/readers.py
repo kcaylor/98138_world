@@ -1,7 +1,8 @@
 """Readers for the registry's file formats, with no new dependencies (research R5).
 
 - ``dods``: DAP2 binary (OPeNDAP ``.dods``): DDS text, ``Data:\\n``, then XDR arrays.
-- ``netcdf3``: netCDF-3 classic via ``scipy.io.netcdf_file``.
+- ``netcdf3``: netCDF-3 classic via ``scipy.io.netcdf_file`` (size-1 leading axes dropped;
+  netCDF-4/HDF5 files rejected by signature).
 - ``npy``: a NumPy array plus a cell-registered extent (rows south to north).
 - ``kit-design``: the packaged official design grid (categorical, already on the kit grid).
 
@@ -67,15 +68,37 @@ def _attr(var, name):
     return v
 
 
+_NETCDF3_SIGNATURES = (b"CDF\x01", b"CDF\x02")
+_HDF5_SIGNATURE = b"\x89HDF"
+
+
+def _check_netcdf3_signature(path) -> None:
+    """netCDF-3 classic or 64-bit offset only; name netCDF-4/HDF5 files plainly (009 R2)."""
+    with open(path, "rb") as fh:
+        head = fh.read(4)
+    if head in _NETCDF3_SIGNATURES:
+        return
+    if head == _HDF5_SIGNATURE:
+        raise ValueError(f"{path}: not a netCDF-3 classic file (netCDF-4/HDF5 signature); "
+                         "this reader reads netCDF-3 only")
+    raise ValueError(f"{path}: not a netCDF-3 classic file")
+
+
 def read_netcdf3(path, variable: str, reduce: Optional[str] = None) -> SourceGrid:
-    """Read a (time,) lat, lon variable; ``reduce="annual-mean"`` averages 12 months where all
-    months are valid."""
+    """Read a ``(..., lat, lon)`` variable.
+
+    Leading axes of size 1 (e.g. ``time=1, lev=1`` in the ERSST per-month files) are dropped.
+    ``reduce="annual-mean"`` averages a 12-step leading axis where all months are valid; any other
+    leading axis larger than 1 is an error naming the dimensions.
+    """
     from scipy.io import netcdf_file
 
+    _check_netcdf3_signature(path)
     with netcdf_file(str(path), "r", mmap=False) as f:
         if variable not in f.variables:
             raise ValueError(f"{path}: variable {variable!r} not found ({sorted(f.variables)})")
         var = f.variables[variable]
+        dims = tuple(var.dimensions)
         raw = np.array(var[:], dtype=float)
         for name in ("missing_value", "_FillValue"):
             mv = _attr(var, name)
@@ -90,21 +113,30 @@ def read_netcdf3(path, variable: str, reduce: Optional[str] = None) -> SourceGri
         units = _attr(var, "units") or ""
         lat = np.array(f.variables["lat"][:], dtype=float)
         lon = np.array(f.variables["lon"][:], dtype=float)
-    if raw.ndim == 3:
-        if reduce == "annual-mean":
-            if raw.shape[0] != 12:
-                raise ValueError(f"{path}: annual-mean needs 12 months, found {raw.shape[0]}")
-            values = raw.mean(axis=0)  # NaN wherever any month is missing
-        elif raw.shape[0] == 1:
-            values = raw[0]
-        else:
-            raise ValueError(f"{path}: {variable} has {raw.shape[0]} time steps; declare a reduce rule")
-    elif raw.ndim == 2:
-        values = raw
+    if raw.ndim < 2:
+        raise ValueError(f"{path}: {variable} must have latitude and longitude axes")
+    lead = raw.shape[:-2]
+    names = dims[:-2] if len(dims) == raw.ndim else tuple(f"dim{i}" for i in range(len(lead)))
+    keep = [i for i, n in enumerate(lead) if n != 1]
+    field = raw.reshape(tuple(lead[i] for i in keep) + raw.shape[-2:])
+    if reduce == "annual-mean":
+        steps = field.shape[0] if field.ndim == 3 else (1 if field.ndim == 2 else None)
+        if steps != 12:
+            if steps is None:
+                raise ValueError(_leading_error(path, variable, names, lead))
+            raise ValueError(f"{path}: annual-mean needs 12 months, found {steps}")
+        values = field.mean(axis=0)  # NaN wherever any month is missing
+    elif field.ndim == 2:
+        values = field
     else:
-        raise ValueError(f"{path}: {variable} must be 2-D or 3-D")
+        raise ValueError(_leading_error(path, variable, names, lead))
     values, lat, lon = normalise(values, lat, lon)
     return SourceGrid(values=values, lat=lat, lon=lon, units=units)
+
+
+def _leading_error(path, variable, names, lead) -> str:
+    axes = ", ".join(f"{n}={s}" for n, s in zip(names, lead))
+    return f"{path}: {variable} has leading axes {axes}; declare a reduce rule"
 
 
 def read_npy(path, grid: Dict[str, Any]) -> SourceGrid:

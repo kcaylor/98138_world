@@ -77,6 +77,11 @@ page data); the service (`web98138.app`, `WEB98138_SITE_DIR=DIR uvicorn web98138
 serves that output and never imports `lego_image_processor`. The `Dockerfile` (two stages) runs the
 prebuild at image build time; `fly.toml` deploys app `world-98138`.
 
+ENSO maps (feature 009, see `specs/009-enso-sst-maps/`): recipes `ocean-el-nino` (ERSST v5 `ssta`,
+Dec 1997) and `ocean-la-nina` (Dec 1988) share one °C `bins` legend on the kit's nine ocean colors
+and set the optional recipe key `arrangement = "B"` (an explicit `--arrangement` wins; the report
+records `arrangement_source`). The netCDF-3 reader drops size-1 leading axes and rejects netCDF-4.
+
 1. **Python CLI** (`cli/`, package `lego_image_processor`), written to be released as open source.
 2. **Web application** (`web/`) on Fly.io at 98138.world. It calls the CLI library at build time and
    never duplicates its logic; the runtime image has no CLI dependencies.
