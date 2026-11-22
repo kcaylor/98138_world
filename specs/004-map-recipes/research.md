@@ -246,4 +246,32 @@ writes `<filename>.part`, verifies size and SHA-256, then renames. The cache hel
 package (`lego_image_processor/datasets/cache.py`); `cli/tools/kit31203/source.py` imports
 `cache_root` from it so there is one definition.
 
+## R13. Land shadow and coastal halo (amendment 2026-11-22)
+
+**Shadow, measured** on `kit_31203_design.json` with the kit mask: 392 ocean cells have land
+directly to the west (x-1, same row; none at x = 0). Of these, 391 are Earth Blue and 1 is Brick
+Yellow; the design has 392 Earth Blue cells, 391 of them in this set (the other one is elsewhere).
+The kit holds 393 Earth Blue tiles. So the design's Earth Blue is a one-stud drop shadow cast
+east, and a rule "ocean cell east of land = Earth Blue" reproduces it with 1 cell of difference
+each way.
+
+**Decision**: shadow on by default, Earth Blue, east, drawn before the ocean layer. For
+`official-31203-bathymetry`, Earth Blue leaves the depth scale (it is the shadow, not a depth
+class); the other eight colors keep their official counts and median-depth order. Agreement with
+the official ocean: 32.0% on real data (2,298 / 7,178), 31.88% on the 1-degree fixture (test
+threshold 30.8%, measured minus 1 point as before); it was 26.7% / 26.71%.
+**Alternative rejected**: keeping Earth Blue as a ranked class with share 1 (keeps nine ranked
+colors) would make the Earth Blue total 393 and Brick Yellow 723, so the counts would no longer
+equal the official design's.
+
+**Halo**: the owner approved prototype option B (scratchpad `proto/ocean_options.py`): base Dark
+Turquoise; Euclidean distance to land (`scipy.ndimage.distance_transform_edt`) <= 1.5 → Medium
+Azure; 1.5 < d <= 3.0 → Medium Azure on a Poisson-disk subset (minimum spacing 2.0); farther →
+base; shadow on top. Implemented as texture `halo`, with parameters in the recipe. The Poisson-disk
+pass visits band cells in a random order from `default_rng((seed, 1))` (the ocean layer's seed,
+as for the other textures) and only over the ocean layer's cells (shadow cells excluded), so the
+result is not pixel-identical to the prototype (which used `default_rng(31203)` over all ocean
+cells) but follows the same rule. On the real land-elevation map: 5,297 Bright Bluish Green,
+1,489 Medium Azure, 392 Earth Blue.
+
 Not affiliated with or endorsed by The LEGO Group.

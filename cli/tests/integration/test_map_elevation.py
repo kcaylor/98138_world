@@ -43,7 +43,7 @@ def test_no_empty_class_and_distinct_colors(built):
 
 
 def test_ocean_background_is_quiet_blue(built):
-    # A land map's ocean is a plain background: three blues, mostly the main one.
+    # A land map's ocean is a calm background: the base, its coastal halo and the Earth Blue shadow.
     counts = built.layout.compute_statistics().color_frequency_by_part_type["tile"]
     assert set(counts) == {"lego_bright_bluish_green", "lego_medium_azur", "lego_earth_blue"}
     assert counts["lego_bright_bluish_green"] > sum(counts.values()) / 2

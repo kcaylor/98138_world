@@ -1,7 +1,8 @@
 """Derived acceptance tier on the 1-degree ETOPO fixture (FR-021, SC-003, Q5).
 
-Measured agreement on the fixture: 26.71% (full 10' data: 26.72%). The fixture threshold is the
-measured value minus 1 point (25.7%), above the spec's 24% floor.
+Measured agreement on the fixture: 26.71% before the land shadow, 31.88% with it (004 amendment
+2026-11-22: the shadow draws the official Earth Blue cells). The fixture threshold is the measured
+value minus 1 point (30.8%), above the spec's 24% floor.
 """
 
 import numpy as np
@@ -14,7 +15,7 @@ from lego_image_processor.maps.build import build_map, land_mask_array
 from lego_image_processor.maps.recipe import load_recipe
 from lego_image_processor.palette.loader import LegoPalette
 
-FIXTURE_THRESHOLD = 0.257
+FIXTURE_THRESHOLD = 0.308
 
 
 @pytest.fixture

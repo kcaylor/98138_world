@@ -1,7 +1,8 @@
 """Resolve a layout color to cited catalog IDs (feature 005 FR-005).
 
-A lot is verified only when the cited part-color table has a row for the layout's part and color
-key and the layout's ``lego_color_code`` equals that row's LEGO color ID. Marketplace part numbers
+A lot is verified only when the cited part-color table has a row for the layout's part whose LEGO
+color ID equals the layout's ``lego_color_code``. Colors match by LEGO ID, not by name or key, so a
+palette's "Dark Red" (154) resolves to the cited "New Dark Red" (154). Marketplace part numbers
 come from ``part_numbers.json``. Nothing is guessed: any other case is unverified, with a reason.
 Not affiliated with or endorsed by The LEGO Group.
 """
@@ -15,7 +16,7 @@ from ..kit.part_colors import PartColor, PartColorTable, load_part_colors
 from ..kit.part_numbers import PartNumberTable, PartNumbers, load_part_numbers
 
 REASON_NO_COLOR = "no cited color for part"
-REASON_CODE_MISMATCH = "color code mismatch"
+REASON_CODE_MISMATCH = "color code mismatch"  # missing, invalid, or inconsistent LEGO color ID
 REASON_NOT_ON_PART_PAGE = "color not listed on BrickLink's catalog page for the part"
 
 
@@ -93,18 +94,17 @@ def resolve_color(part_id: str, color_key: str, lego_color_code: Union[str, int,
     part_colors = part_colors or load_part_colors()
     part_numbers = part_numbers or load_part_numbers()
     try:
-        row = part_colors.get(str(part_id), color_key)
+        part_colors.for_part(str(part_id))
         numbers = part_numbers.get(str(part_id))
     except KeyError:
-        return Unresolved(REASON_NO_COLOR)
-    if row is None:
         return Unresolved(REASON_NO_COLOR)
     try:
         code = int(str(lego_color_code).strip())
     except (TypeError, ValueError):
         return Unresolved(REASON_CODE_MISMATCH)
-    if code != row.lego.id:
-        return Unresolved(REASON_CODE_MISMATCH)
+    row = part_colors.by_lego_id(str(part_id), code)
+    if row is None:
+        return Unresolved(REASON_NO_COLOR)
     if row.bricklink.name not in numbers.bricklink_colors:
         return Unresolved(REASON_NOT_ON_PART_PAGE)
     return ResolvedColor(part=numbers, color=row)

@@ -273,9 +273,11 @@ def build_parts_list(layout: Union[LayoutInput, PositionPlacementGrid],
             code = ",".join(sorted(codes[(part_id, color_key)]))
         else:
             res = resolve_color(part_id, color_key, code)
-        supply = max(0, owned.kits * inv.supplied_for(part_id, color_key)
-                     - owned.missing((part_id, color_key)))
-        loose = owned.loose((part_id, color_key))
+        # Supply and owned parts are keyed by the cited color, which may be named differently.
+        ck = res.color.key if isinstance(res, ResolvedColor) else color_key
+        supply = max(0, owned.kits * inv.supplied_for(part_id, ck)
+                     - owned.missing((part_id, ck)))
+        loose = owned.loose((part_id, ck))
         shortfall = max(0, needed - supply - loose)
         spares = -((-shortfall * p.numerator) // (100 * p.denominator)) if shortfall else 0
         lots.append(Lot(part_id=part_id, color_key=color_key, layout_color_name=name,

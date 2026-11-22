@@ -2,13 +2,14 @@
 # scale of 1x1 round plate colors, low greens through tans and browns to grey and white. Most of
 # these plate colors are not in kit 31203; each is listed with cited LEGO, BrickLink and
 # Rebrickable IDs in part_colors.json (`kit part-colors --part 6141`).
-# The ocean is a quiet background of three blue tile colors so the land data stands out. It needs
-# more blue tiles than one kit holds; the shortfall is reported as beyond-kit, like the plates.
+# The ocean is a quiet background so the land data stands out: Dark Turquoise (Bright Bluish Green)
+# offshore, a Medium Azure ring along the coasts that fades evenly into it, and the land shadow
+# (on by default) in Earth Blue just east of land.
 # Not affiliated with or endorsed by The LEGO Group.
 format = "1"
 id = "land-elevation"
 title = "Land elevation"
-description = "Land elevation in metres on ten plate colors; the ocean is a subtly shaded blue background."
+description = "Land elevation in metres on ten plate colors; the ocean is a calm blue background with a coastal halo and land shadow."
 seed = 31203
 
 [land]
@@ -32,9 +33,10 @@ width = 0.25
 
 [ocean]
 role = "background"
-colors = ["lego_bright_bluish_green", "lego_medium_azur", "lego_earth_blue"]
-weights = [70, 20, 10]
+colors = ["lego_bright_bluish_green", "lego_medium_azur"]   # offshore base, coast ring
 
 [ocean.texture]
-kind = "mix"
-cluster = 1.5
+kind = "halo"
+inner = 1.5     # studs from land: all Medium Azure
+outer = 3.0     # studs from land: Medium Azure on an even Poisson-disk subset, fading out
+spacing = 2.0   # minimum distance between those fade cells

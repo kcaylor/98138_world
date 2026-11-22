@@ -28,7 +28,7 @@ from .projection import load_kit_projection
 from .recipe import Layer, Recipe
 from .reproject import LayerField, reproject_layer
 from .suitability import THRESHOLDS, kit_supply, layer_report
-from .texture import apply_blend, fill_background
+from .texture import apply_blend, fill_background, fill_halo, shadow_mask
 
 _LAYER_SEED = {"land": 0, "ocean": 1}
 
@@ -57,10 +57,17 @@ def missing_datasets(recipe: Recipe, cache_dir=None) -> List[DatasetEntry]:
     return [e for e in recipe.datasets() if e.kind == "download" and not is_cached(e, cache_dir)]
 
 
-def _layer_classes(layer: Layer, mask: np.ndarray, seed: int, cache_dir):
+def _layer_classes(layer: Layer, mask: np.ndarray, seed: int, cache_dir, *, land=None, supply=None):
+    """Classes for ``layer`` on the cells in ``mask``. ``land`` is the kit land mask (for the halo);
+    ``supply`` overrides one kit's supply (the build passes it net of the shadow)."""
     seq = (seed, _LAYER_SEED[layer.cls])
     if layer.role == "background":
-        classes = fill_background(mask, layer.weights, cluster=layer.texture.cluster, seed=seq)
+        if layer.texture.kind == "halo":
+            land = land_mask_array() if land is None else land
+            t = layer.texture
+            classes = fill_halo(mask, land, inner=t.inner, outer=t.outer, spacing=t.spacing, seed=seq)
+        else:
+            classes = fill_background(mask, layer.weights, cluster=layer.texture.cluster, seed=seq)
         return classes, None, None
     entry = layer.dataset
     path = None if entry.kind == "packaged" else resolve(entry, cache_dir)
@@ -68,7 +75,7 @@ def _layer_classes(layer: Layer, mask: np.ndarray, seed: int, cache_dir):
     categorical = layer.classification.method == "categorical"
     fld = reproject_layer(grid, load_kit_projection(), mask, layer.cls, categorical=categorical)
     cr = classify(fld.values, mask, layer.classification, layer.colors, categories=grid.categories,
-                  supply=kit_supply().get(layer.part_id, {}))
+                  supply=kit_supply().get(layer.part_id, {}) if supply is None else supply)
     classes = cr.classes
     if layer.texture.kind == "blend":
         classes = apply_blend(cr, fld.values, mask, width=layer.texture.width, seed=seq)
@@ -106,7 +113,8 @@ def _layer_provenance(layer: Layer) -> Dict[str, Any]:
     out: Dict[str, Any] = {"class": layer.cls, "role": layer.role, "part_id": layer.part_id,
                            "colors": list(layer.colors)}
     if layer.role == "background":
-        out["weights"] = list(layer.weights)
+        if layer.weights:
+            out["weights"] = list(layer.weights)
     else:
         out["variable"] = layer.variable
         out["transform"] = layer.transform
@@ -117,6 +125,9 @@ def _layer_provenance(layer: Layer) -> Dict[str, Any]:
         out["texture"]["width"] = layer.texture.width
     elif layer.texture.kind == "mix":
         out["texture"]["cluster"] = layer.texture.cluster
+    elif layer.texture.kind == "halo":
+        t = layer.texture
+        out["texture"].update(inner=t.inner, outer=t.outer, spacing=t.spacing)
     return out
 
 
@@ -130,9 +141,20 @@ def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool
     classes: Dict[str, np.ndarray] = {}
     fields: Dict[str, Optional[LayerField]] = {}
     layer_reports = []
+    # The land shadow is assigned first; the ocean layer covers the remaining ocean cells and a
+    # supply-capped classification gets one kit's supply net of the shadow (amendment FR-027).
+    shadow = shadow_mask(land, recipe.shadow.direction) if recipe.shadow.enabled else np.zeros_like(land)
+    n_shadow = int(shadow.sum())
+    labels[shadow] = recipe.shadow.color
+    shadow_use = {recipe.shadow.color: n_shadow} if n_shadow else {}
+    ocean_supply = dict(kit_supply().get(OCEAN_PART_ID, {}))
+    for k, n in shadow_use.items():
+        if k in ocean_supply:
+            ocean_supply[k] = max(0, ocean_supply[k] - n)
     for layer in recipe.layers:
-        mask = land if layer.cls == "land" else ~land
-        cl, fld, cr = _layer_classes(layer, mask, recipe.seed, cache_dir)
+        mask = land if layer.cls == "land" else ~land & ~shadow
+        cl, fld, cr = _layer_classes(layer, mask, recipe.seed, cache_dir, land=land,
+                                     supply=ocean_supply if layer.cls == "ocean" else None)
         if (cl[mask] < 0).any():  # pragma: no cover - guarded by classify
             raise MapBuildError(f"{layer.cls}: some cells got no class")
         classes[layer.cls], fields[layer.cls] = cl, fld
@@ -144,7 +166,8 @@ def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool
                            layer_cells=int(mask.sum()), below=getattr(cr, "below", 0),
                            above=getattr(cr, "above", 0), bounds=getattr(cr, "bounds", ()),
                            dataset=layer.dataset.provenance() if layer.dataset else None,
-                           method=layer.classification.method if layer.classification else None)
+                           method=layer.classification.method if layer.classification else None,
+                           extra_use=shadow_use if layer.cls == "ocean" else None)
         if fld is not None and layer.classification.ordered:
             rep["median_by_color"] = _medians(fld.values, np.where(mask, cl, -1), layer.colors)
         layer_reports.append(rep)
@@ -162,6 +185,7 @@ def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool
     provenance = {
         "recipe": {"id": recipe.id, "format": recipe.format, "title": recipe.title, "sha256": recipe.sha256},
         "layers": [_layer_provenance(layer) for layer in recipe.layers],
+        "shadow": recipe.shadow.provenance(n_shadow),
         "seed": recipe.seed,
         "tool_version": __version__,
         "disclaimer": DISCLAIMER,
@@ -173,7 +197,7 @@ def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool
     agreement = agreement_with_official(layout) if compare_official else None
     report = {
         "recipe_id": recipe.id, "recipe_title": recipe.title, "recipe_sha256": recipe.sha256,
-        "seed": recipe.seed, "layers": layer_reports, "thresholds": dict(THRESHOLDS),
+        "seed": recipe.seed, "shadow": recipe.shadow.provenance(n_shadow), "layers": layer_reports, "thresholds": dict(THRESHOLDS),
         "citations": citations,
         "warnings": [w for r in layer_reports for w in r["warnings"]],
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),

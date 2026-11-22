@@ -32,11 +32,20 @@ def test_uncited_color():
     # Medium Blue is excluded for the plate (not on BrickLink's 4073 page) but cited for the tile
     assert resolve_color("6141", "lego_medium_blue", "102") == Unresolved(REASON_NO_COLOR)
     assert isinstance(resolve_color("98138", "lego_medium_blue", "102"), ResolvedColor)
-    assert resolve_color("6141", "lego_unknown", "1") == Unresolved(REASON_NO_COLOR)
+    assert resolve_color("6141", "lego_unknown", "999") == Unresolved(REASON_NO_COLOR)
     assert resolve_color("3001", "lego_white", "1") == Unresolved(REASON_NO_COLOR)
 
 
+def test_matches_by_lego_id_not_name():
+    # The palette's "Dark Red" key differs from the cited "New Dark Red"; both are LEGO 154.
+    res = resolve_color("98138", "lego_dark_red", "154")
+    assert isinstance(res, ResolvedColor)
+    assert (res.lego_id, res.lego_name) == (154, "New Dark Red")
+    # The ID decides: an unfamiliar key with LEGO 1 is White; a known key with an uncited ID is not.
+    assert resolve_color("6141", "lego_unknown", "1").lego_name == "White"
+    assert resolve_color("6141", "lego_white", "999") == Unresolved(REASON_NO_COLOR)
+
+
 def test_code_mismatch():
-    assert resolve_color("6141", "lego_white", "2") == Unresolved(REASON_CODE_MISMATCH)
     assert resolve_color("6141", "lego_white", "x") == Unresolved(REASON_CODE_MISMATCH)
     assert resolve_color("6141", "lego_white", None) == Unresolved(REASON_CODE_MISMATCH)

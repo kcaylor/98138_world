@@ -212,3 +212,17 @@ def test_legacy_schema_rejected(runner, tmp_path):
 def test_sheets_in_help(runner):
     r = runner.invoke(cli, ["sheets", "--help"])
     assert r.exit_code == 0 and "build" in r.output and "counts" in r.output
+
+
+def test_svg_rebuild_removes_stale_pages_only(runner, layouts, tmp_path):
+    out = tmp_path / "svg"
+    r = runner.invoke(cli, ["sheets", "build", str(layouts["few"]), "-o", str(out), "--format", "svg"])
+    assert r.exit_code == 0, r.output
+    (out / "notes.txt").write_text("keep me", encoding="utf-8")
+    (out / "page-cover.svg").write_text("<svg/>", encoding="utf-8")  # not one of our page names
+    r = runner.invoke(cli, ["sheets", "build", str(layouts["few"]), "-o", str(out), "--format", "svg",
+                            "--sections", "A1"])
+    assert r.exit_code == 0, r.output
+    pages = sorted(p.name for p in out.glob("page-*.svg") if p.name != "page-cover.svg")
+    assert len(pages) < 42 and pages == [f"page-{i:02d}.svg" for i in range(1, len(pages) + 1)]
+    assert (out / "notes.txt").exists() and (out / "page-cover.svg").exists()

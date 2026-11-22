@@ -38,7 +38,7 @@ def test_within_supply_and_buildable(built):
 def test_filled_share_reported(built):
     ocean = next(l for l in built.report["layers"] if l["class"] == "ocean")
     assert 0.02 < ocean["filled_share"] < 0.05
-    assert ocean["filled_cells"] == round(ocean["filled_share"] * 7178)
+    assert ocean["filled_cells"] == round(ocean["filled_share"] * ocean["cells"])
     assert not [w for w in ocean["warnings"] if w["code"] in ("filled", "detail_lost", "empty_class")]
 
 

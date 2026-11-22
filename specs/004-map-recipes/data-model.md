@@ -11,6 +11,7 @@ Python dataclasses (frozen unless noted). File shapes are in `contracts/`.
 | `title`, `description` | str | title required |
 | `seed` | int | default 31203; used by every texture in the recipe |
 | `land`, `ocean` | Layer | both required |
+| `shadow` | Shadow | optional `[shadow]` table; default on (amendment 2026-11-22) |
 | `sha256` | str | of the recipe file bytes (computed, not written in the file) |
 | `path` | Path | where it was read from |
 
@@ -50,6 +51,20 @@ Ordered methods: value order → class order (ties broken row-major).
 | `none` | — | |
 | `blend` | `width` 0–0.5 (fraction of a class) | data layers; moves ≤ 1 class; rank methods swap in pairs |
 | `mix` | `cluster` ≥ 0 (studs, Gaussian sigma) | background layers; exact counts by weight |
+| `halo` | `inner` > 0, `outer` ≥ inner, `spacing` > 0 (studs; defaults 1.5, 3.0, 2.0) | ocean background only; exactly two colors (base, ring); no weights; ring within `inner` of land, Poisson-disk subset of the `inner`–`outer` band (amendment) |
+
+## Shadow (amendment 2026-11-22)
+
+| Field | Type | Rules |
+|---|---|---|
+| `enabled` | bool | default true |
+| `color` | str | default `lego_earth_blue`; a 98138 tile color in the kit table or `part_colors.json` |
+| `direction` | str | `"east"` only: ocean cells whose western neighbour is land (no wrap) |
+
+The shadow cells are assigned before the ocean layer; the ocean layer's cells are the remaining
+ocean cells. `rank-to-supply` uses one kit's supply minus the shadow's use of its color. The
+report's ocean `supply` rows count the shadow's tiles. Report and `metadata.map` carry
+`shadow` {enabled, color, direction, cells}.
 
 ## DatasetEntry (registry)
 
@@ -105,7 +120,8 @@ min_neighbour_delta_e00 (pair), supply[] {key, used, supplied, within}, warnings
 ## MapProvenance (layout `metadata.map`)
 
 `recipe` {id, format, sha256, title}, `layers[]` {cls, role, dataset {id, version, sha256,
-citation, license, doi}, variable, classification method}, `seed`, `tool_version`, `disclaimer`.
+citation, license, doi}, variable, classification method, texture {kind, parameters}}, `shadow`
+{enabled, color, direction, cells}, `seed`, `tool_version`, `disclaimer`.
 
 ## MapResult
 

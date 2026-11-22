@@ -64,6 +64,13 @@ class PartColorTable:
                 return c
         return None
 
+    def by_lego_id(self, part_id: str, lego_id: int) -> Optional[PartColor]:
+        """The cited row for ``part_id`` whose LEGO color ID is ``lego_id``, if any."""
+        for c in self.for_part(part_id):
+            if c.lego.id == lego_id:
+                return c
+        return None
+
     def any_part(self, key: str) -> Optional[PartColor]:
         for rows in self.parts.values():
             for c in rows:

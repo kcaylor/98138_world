@@ -25,16 +25,21 @@ TRANSFORMS = ("none", "negate")
 METHODS = ("bins", "quantile", "rank", "rank-to-supply", "categorical")
 RANK_METHODS = ("quantile", "rank", "rank-to-supply")
 DATA_TEXTURES = ("none", "blend")
-BACKGROUND_TEXTURES = ("none", "mix")
+BACKGROUND_TEXTURES = ("none", "mix", "halo")
+SHADOW_DIRECTIONS = ("east",)
+DEFAULT_SHADOW_COLOR = "lego_earth_blue"
+HALO_DEFAULTS = {"inner": 1.5, "outer": 3.0, "spacing": 2.0}
 LOCAL_FORMATS = ("netcdf3", "npy", "dods")
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{1,63}$")
 
-_TOP_KEYS = {"format", "id", "title", "description", "seed", "land", "ocean"}
+_TOP_KEYS = {"format", "id", "title", "description", "seed", "land", "ocean", "shadow"}
+_SHADOW_KEYS = {"enabled", "color", "direction"}
 _DATA_KEYS = {"role", "colors", "dataset", "local", "variable", "transform", "classification", "texture"}
 _BACKGROUND_KEYS = {"role", "colors", "weights", "texture"}
 _CLASS_KEYS = {"bins": {"method", "bounds"}, "quantile": {"method"}, "rank": {"method", "shares"},
                "rank-to-supply": {"method"}, "categorical": {"method", "categories"}}
-_TEXTURE_KEYS = {"none": {"kind"}, "blend": {"kind", "width"}, "mix": {"kind", "cluster"}}
+_TEXTURE_KEYS = {"none": {"kind"}, "blend": {"kind", "width"}, "mix": {"kind", "cluster"},
+                 "halo": {"kind", "inner", "outer", "spacing"}}
 _LOCAL_REQUIRED = ("path", "format", "sha256", "variable", "citation", "license")
 _LOCAL_OPTIONAL = {"title", "lat", "lon", "fill", "split_at", "missing_is_land", "units"}
 
@@ -64,6 +69,22 @@ class Texture:
     kind: str = "none"
     width: float = 0.0
     cluster: float = 0.0
+    inner: float = 0.0     # halo: cells within this distance of land (studs) take the ring color
+    outer: float = 0.0     # halo: cells up to this distance fade on an even Poisson-disk subset
+    spacing: float = 0.0   # halo: minimum distance between ring-colored cells in the fade band
+
+
+@dataclass(frozen=True)
+class Shadow:
+    """A one-stud drop shadow: ocean cells whose western neighbour is land (amendment FR-026)."""
+
+    enabled: bool = True
+    color: str = DEFAULT_SHADOW_COLOR
+    direction: str = "east"
+
+    def provenance(self, cells: int) -> Dict[str, Any]:
+        return {"enabled": self.enabled, "color": self.color, "direction": self.direction,
+                "cells": int(cells)}
 
 
 @dataclass(frozen=True)
@@ -94,6 +115,7 @@ class Recipe:
     description: str = ""
     seed: int = DEFAULT_SEED
     path: Optional[Path] = None
+    shadow: Shadow = Shadow()
 
     @property
     def layers(self) -> Tuple[Layer, Layer]:
@@ -202,7 +224,8 @@ def _texture(t: Any, cls: str, role: str, method: Optional[str], ncolors: int) -
     where = f"{cls}.texture"
     if t is None:
         if role == "background" and ncolors > 1:
-            raise RecipeError(where, "a background with more than one color needs kind = \"mix\"")
+            raise RecipeError(where, "a background with more than one color needs kind = \"mix\" or "
+                                     "\"halo\"")
         return Texture()
     if not isinstance(t, dict):
         raise RecipeError(where, "must be a table")
@@ -220,13 +243,27 @@ def _texture(t: Any, cls: str, role: str, method: Optional[str], ncolors: int) -
         if not 0 < w <= 0.5:
             raise RecipeError(f"{where}.width", "must be > 0 and <= 0.5")
         return Texture(kind="blend", width=w)
+    if kind == "halo":
+        if cls != "ocean":
+            raise RecipeError(f"{where}.kind", "halo is a coastal texture for the ocean background only")
+        if ncolors != 2:
+            raise RecipeError(f"{cls}.colors", "halo needs two colors: the offshore base, then the coast "
+                                               "ring")
+        v = {k: _number(t.get(k, d), f"{where}.{k}") for k, d in HALO_DEFAULTS.items()}
+        if v["inner"] <= 0:
+            raise RecipeError(f"{where}.inner", "must be > 0 (studs)")
+        if v["outer"] < v["inner"]:
+            raise RecipeError(f"{where}.outer", "must be >= inner")
+        if v["spacing"] <= 0:
+            raise RecipeError(f"{where}.spacing", "must be > 0 (studs)")
+        return Texture(kind="halo", **v)
     if kind == "mix":
         c = _number(t.get("cluster", 0.0), f"{where}.cluster")
         if c < 0:
             raise RecipeError(f"{where}.cluster", "must be >= 0")
         return Texture(kind="mix", cluster=c)
     if role == "background" and ncolors > 1:
-        raise RecipeError(where, "a background with more than one color needs kind = \"mix\"")
+        raise RecipeError(where, "a background with more than one color needs kind = \"mix\" or \"halo\"")
     return Texture()
 
 
@@ -285,6 +322,13 @@ def _layer(t: Any, cls: str, base_dir: Path) -> Layer:
                 raise RecipeError(f"{cls}.{k}", "a background layer takes colors, weights and texture only")
         _check_keys(t, _BACKGROUND_KEYS, cls)
         colors = _colors(t, cls, None)
+        tex = t.get("texture")
+        if isinstance(tex, dict) and tex.get("kind") == "halo":
+            texture = _texture(tex, cls, role, None, len(colors))
+            if "weights" in t:
+                raise RecipeError(f"{cls}.weights", "halo sets colors by distance from land; weights are "
+                                                    "for mix")
+            return Layer(cls=cls, role=role, colors=colors, weights=(), texture=texture)
         w = t.get("weights", [1] * len(colors))
         if not isinstance(w, list) or len(w) != len(colors):
             raise RecipeError(f"{cls}.weights", f"needs one weight per color ({len(colors)})")
@@ -367,8 +411,31 @@ def _parse(data: Dict[str, Any], raw: bytes, path: Optional[Path], base_dir: Pat
             raise RecipeError(cls, "layer table is required (a map has a land and an ocean layer)")
     land = _layer(data["land"], "land", base_dir)
     ocean = _layer(data["ocean"], "ocean", base_dir)
+    shadow = _shadow(data.get("shadow"))
     return Recipe(format=fmt, id=rid, title=title, description=description, seed=seed, land=land,
-                  ocean=ocean, sha256=hashlib.sha256(raw).hexdigest(), path=path)
+                  ocean=ocean, sha256=hashlib.sha256(raw).hexdigest(), path=path, shadow=shadow)
+
+
+def _shadow(t: Any) -> Shadow:
+    """The top-level ``[shadow]`` table; absent means on, Earth Blue, cast east."""
+    if t is None:
+        return Shadow()
+    if not isinstance(t, dict):
+        raise RecipeError("shadow", "must be a table")
+    _check_keys(t, _SHADOW_KEYS, "shadow")
+    enabled = t.get("enabled", True)
+    if not isinstance(enabled, bool):
+        raise RecipeError("shadow.enabled", "must be true or false")
+    direction = t.get("direction", "east")
+    if direction not in SHADOW_DIRECTIONS:
+        raise RecipeError("shadow.direction", f"must be one of {', '.join(SHADOW_DIRECTIONS)}")
+    color = t.get("color", DEFAULT_SHADOW_COLOR)
+    if not isinstance(color, str):
+        raise RecipeError("shadow.color", "must be a color key string")
+    if load_part_colors().get(PART_FOR_CLASS["ocean"], color) is None:
+        raise RecipeError("shadow.color", f"{color!r} is not a color of the ocean tile (part "
+                                          f"{PART_FOR_CLASS['ocean']}); see `kit part-colors --part 98138`")
+    return Shadow(enabled=enabled, color=color, direction=direction)
 
 
 def bundled_recipes(directory: Optional[Path] = None) -> Dict[str, Path]:
