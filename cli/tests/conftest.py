@@ -117,3 +117,10 @@ class FakeResponse:
 
     def close(self):
         pass
+
+
+@pytest.fixture(autouse=True)
+def _no_fetch_retry_pause(monkeypatch):
+    """Dataset downloads retry with a pause; tests never wait for it."""
+    from lego_image_processor.datasets import cache
+    monkeypatch.setattr(cache.time, "sleep", lambda s: None)
