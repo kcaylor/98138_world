@@ -150,6 +150,24 @@ lego-image-processor parts list image.json
 
 `layout` needs a 128×80 image whose colors are already LEGO colors.
 
+## The web site locally (feature 008)
+
+The site at 98138.world is the same outputs, prebuilt and served. To run it on your machine:
+
+```bash
+cd ~/dev/98138_world/web
+uv venv --python 3.11 && uv pip install -e ../cli -e . pytest httpx2 pypdf
+.venv/bin/python -m web98138.prebuild --out site-output      # ~30 s; add --fetch if datasets aren't cached
+WEB98138_SITE_DIR=site-output .venv/bin/uvicorn web98138.app:app --port 8080
+open http://127.0.0.1:8080/
+```
+
+Look for: the gallery of four maps; on a map page the A/B/C switch (the preview shifts by whole
+frames), the parts summary (official, bathymetry and ocean temperature say one kit covers every
+piece; land elevation needs about 6,300 more), the lots table with BrickLink and Rebrickable IDs,
+the downloads list (top-up files only appear when one kit is not enough), and the citations. Try it
+at phone width. `.venv/bin/pytest` runs the web tests offline. Deploying: `docs/deploy.md`.
+
 ## Checks that need you
 
 These can't be automated:

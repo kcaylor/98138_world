@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% set nav = 'about' %}
+{% block title %}About · 98138.world{% endblock %}
+{% block main %}
+<article class="prose">
+<h1>About 98138.world</h1>
+<p class="lede">A fan project that turns the LEGO World Map kit into a canvas for real data. The name is the part number of the 1×1 round tile the kit's oceans are made of.</p>
+
+<h2>The kit as a template</h2>
+<p>The World Map kit (31203) is a 128 × 80 grid of 10,240 studs: 3,062 land positions take a white 1×1 round plate (part 6141) and 7,178 ocean positions take a 1×1 round tile (part 98138) in nine colors. This project keeps that grid, that coastline and those two part types fixed, and changes only the colors.</p>
+
+<h2>Maps are layers and recipes</h2>
+<p>Every map is a land layer plus an ocean layer. Each layer is either <strong>data-driven</strong>, a gridded dataset reprojected onto the kit's grid and classified onto an ordered scale of LEGO colors, or a <strong>background</strong>, such as the official white land or a calm ocean color with subtle shading. A short recipe file describes the dataset, the classification, the colors and the texture, so anyone can rebuild a map exactly. Datasets are pinned by checksum and cited on each map's page.</p>
+<ul>
+{% for m in maps %}<li><a href="/maps/{{ m.id }}/A">{{ m.title }}</a>: {{ m.description }}</li>{% endfor %}
+</ul>
+
+<h2>Three ways to hang the frames</h2>
+<p>The board is three frames side by side: frame 1 America, frame 2 Europe &amp; Africa, frame 3 Asia &amp; Australia. The building instructions (pp. 7–8, “1 world – 3 combinations”) show three ways to hang them. Because the grid spans exactly 360° of longitude, each one is still a continuous map, just centred differently. Every combination uses the same pieces.</p>
+<dl class="combo-list">
+{% for a in arrangements %}
+  <div><dt>Combination {{ a.id }}</dt><dd>{{ a.description }} (left to right: {{ a.frames | join(" · ") }})</dd></div>
+{% endfor %}
+</dl>
+<div class="combo-figs">
+{% for a in arrangements %}
+<figure><img src="/maps/{{ maps[0].id }}/{{ a.id }}/thumb.png" width="384" height="240" class="stud-img" alt="{{ maps[0].title }} hung as combination {{ a.id }}, {{ a.centre }} in the centre"><figcaption>{{ a.id }}: {{ a.centre }}</figcaption></figure>
+{% endfor %}
+</div>
+<p class="note">Source: {{ manifest.arrangement_source.title }}, pp. 7–8.</p>
+
+<h2>What you can download</h2>
+<p>For every map and combination: the layout (every stud's position and color), a parts list with LEGO, BrickLink and Rebrickable IDs (in full, and topped up from one 31203 kit you already own), a BrickLink wanted list, a Rebrickable parts CSV, and printable build sheets: an overview, a color legend and 40 section pages at true scale with numbered studs.</p>
+
+<h2>Open source and privacy</h2>
+<p>Everything here is built by an open-source command-line tool; the site only serves files that tool made. Source code, recipes and data citations: <a href="{{ REPO_URL }}">{{ REPO_URL }}</a>.</p>
+<p>This site sets no cookies, uses no analytics or trackers, and loads nothing from other sites.</p>
+
+<h2>Not affiliated with LEGO</h2>
+<p>{{ DISCLAIMER }} LEGO is a trademark of the LEGO Group, which does not sponsor, authorize or endorse this site. Official part numbers are given for buyers' convenience only. The kit 31203 is retired, so expect to buy secondhand.</p>
+<p class="note">{{ manifest.acknowledgement }}</p>
+</article>
+{% endblock %}

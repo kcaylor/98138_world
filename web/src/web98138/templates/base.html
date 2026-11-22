@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}98138.world{% endblock %}</title>
+<meta name="description" content="{% block description %}Buildable LEGO World Map-style mosaics of real data, on the kit 31203 template. A fan project; not affiliated with or endorsed by The LEGO Group.{% endblock %}">
+<link rel="stylesheet" href="/static/style.css?v={{ asset_version }}">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="/"><span class="brand-dots" aria-hidden="true"><i></i><i></i><i></i></span>98138.world</a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="/"{% if nav == 'maps' %} aria-current="page"{% endif %}>Maps</a></li>
+        <li><a href="/about"{% if nav == 'about' %} aria-current="page"{% endif %}>About</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="main" class="wrap">
+{% block main %}{% endblock %}
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    {% block footer_extra %}{% endblock %}
+    <p class="disclaimer"><strong>{{ DISCLAIMER }}</strong> LEGO is a trademark of the LEGO Group. Part and color numbers are given for buyers' convenience only.</p>
+    <p>Open source: <a href="{{ REPO_URL }}">{{ REPO_URL | replace("https://", "") }}</a>. No cookies, no trackers, no analytics.
+    Built {{ manifest.generated_at[:10] }} with lego-image-processor {{ manifest.tools.lego_image_processor }}{% if manifest.tools.git_commit %} (commit {{ manifest.tools.git_commit[:7] }}){% endif %}; <a href="/manifest.json">build manifest</a>.</p>
+  </div>
+</footer>
+</body>
+</html>

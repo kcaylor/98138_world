@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% set nav = 'maps' %}
+{% block main %}
+<section class="hero">
+  <h1>The LEGO World Map, re-imagined with real data</h1>
+  <p class="lede">The World Map kit (31203) is a 128 × 80 grid of 10,240 round pieces: white plates for land, tiles in nine colors for the ocean. This site keeps that grid and its coastline as a fixed template and fills it from global datasets. Pick a map, choose how to hang the three frames, and download everything you need to build it.</p>
+</section>
+<section aria-labelledby="maps-heading">
+  <h2 id="maps-heading" class="section-title">Maps</h2>
+  <ul class="gallery">
+  {% for m in maps %}
+    <li class="card">
+      <a href="/maps/{{ m.id }}/A" class="card-link">
+        <img src="/maps/{{ m.id }}/A/thumb.png" width="384" height="240" alt="Stud preview of the {{ m.title }} map" class="stud-img">
+        <span class="card-body">
+          <span class="card-title">{{ m.title }}</span>
+          <span class="card-text">{{ m.description }}</span>
+          <span class="card-meta">{% set s = m.data.variants.A.summary %}{{ s.lots }} lots · {% if s.to_buy_with_kit == 0 %}one kit builds it{% else %}{{ s.to_buy_with_kit | n }} pieces beyond one kit{% endif %}</span>
+        </span>
+      </a>
+    </li>
+  {% endfor %}
+  </ul>
+</section>
+<section class="how" aria-labelledby="how-heading">
+  <h2 id="how-heading" class="section-title">How it works</h2>
+  <ol class="steps">
+    <li><strong>Template.</strong> The kit's grid, coastline and two part types never change.</li>
+    <li><strong>Layers.</strong> Each map is a land layer and an ocean layer, each either data-driven (a dataset classified onto an ordered color scale) or a shaded background.</li>
+    <li><strong>Build files.</strong> Every map comes with a parts list with BrickLink and Rebrickable IDs, wanted lists, and printable section-by-section build sheets.</li>
+  </ol>
+  <p><a href="/about">More about the project and the three frame combinations</a></p>
+</section>
+{% endblock %}

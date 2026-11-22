@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% set nav = 'maps' %}
+{% set s = variant.summary %}
+{% block title %}{{ map.title }} · Combination {{ combination }} · 98138.world{% endblock %}
+{% block description %}{{ map.description }} Combination {{ combination }}: {{ arrangement.description }}.{% endblock %}
+{% block main %}
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Maps</a> <span aria-hidden="true">/</span> <span>{{ map.title }}</span></nav>
+<h1>{{ map.title }}</h1>
+<p class="lede">{{ map.description }}</p>
+
+<section class="viewer" aria-label="Preview">
+  <nav class="combos" aria-label="Frame combination">
+    <span class="combos-label" id="combo-label">Hang the frames as</span>
+    <ul aria-labelledby="combo-label">
+    {% for a in arrangements %}
+      <li><a href="/maps/{{ map.id }}/{{ a.id }}"{% if a.id == combination %} aria-current="page"{% endif %}><span class="combo-id">{{ a.id }}</span> <span class="combo-name">{{ a.centre }}</span></a></li>
+    {% endfor %}
+    </ul>
+  </nav>
+  <figure class="preview">
+    <img src="/maps/{{ map.id }}/{{ combination }}/preview.png" width="1280" height="800" class="stud-img"
+         alt="Stud preview of the {{ map.title }} map hung as combination {{ combination }}, {{ arrangement.centre }} in the centre">
+    <figcaption><strong>Combination {{ combination }}:</strong> {{ arrangement.description }}. Left to right: {{ arrangement.frames | join(" · ") }}. One square per stud; 128 × 80 studs.</figcaption>
+  </figure>
+</section>
+
+<div class="columns">
+<section aria-labelledby="dl-heading" class="panel">
+  <h2 id="dl-heading">Downloads <span class="sub">for combination {{ combination }}</span></h2>
+  <ul class="downloads">
+  {% for kind in download_kinds %}{% set f = variant.files.get(kind) %}
+    {% if f %}
+    <li><a href="/maps/{{ map.id }}/{{ combination }}/download/{{ kind }}" download="{{ f.filename }}"><span class="dl-name">{{ f.description }}</span><span class="dl-meta">{{ f | ext }} · {{ f.bytes | size }}</span></a></li>
+    {% elif kind == 'bricklink-1kit' %}
+    <li class="dl-none">One kit covers every piece; nothing to buy. <span class="dl-meta">No top-up wanted list or CSV needed.</span></li>
+    {% endif %}
+  {% endfor %}
+  </ul>
+  <p class="note">{{ manifest.price_note }} {{ manifest.bricklink_note }} Print build sheets at 100% (no fit-to-page) and check the 100 mm scale bar.</p>
+</section>
+
+<section aria-labelledby="parts-heading" class="panel">
+  <h2 id="parts-heading">Parts</h2>
+  <dl class="stats">
+    <div><dt>Pieces</dt><dd>{{ s.pieces | n }}</dd></div>
+    <div><dt>Lots</dt><dd>{{ s.lots }}</dd></div>
+    <div><dt>One 31203 kit covers</dt><dd>{{ s.one_kit_covers | n }} <span class="pct">({{ (100 * s.one_kit_covers / s.pieces) | round(1) }}%)</span></dd></div>
+    <div><dt>To buy with one kit</dt><dd>{% if s.to_buy_with_kit %}{{ s.to_buy_with_kit | n }} <span class="pct">in {{ s.lots_to_buy_with_kit }} lots</span>{% else %}nothing{% endif %}</dd></div>
+  </dl>
+  <p class="note">Map pieces only (no frames or baseplates). Every arrangement uses the same pieces; only the frames' order changes.</p>
+</section>
+</div>
+
+<section aria-labelledby="lots-heading" class="panel">
+  <h2 id="lots-heading">Lots</h2>
+  <div class="table-scroll" role="region" aria-labelledby="lots-heading" tabindex="0">
+  <table class="lots">
+    <thead><tr><th scope="col">Color (LEGO)</th><th scope="col">Part</th><th scope="col">BrickLink item / color</th><th scope="col">Rebrickable part / color</th><th scope="col" class="num">Needed</th><th scope="col" class="num">One kit has</th><th scope="col" class="num">To buy</th></tr></thead>
+    <tbody>
+    {% for lot in variant.lots %}
+      <tr>
+        {% if lot.verified %}
+        <th scope="row"><svg class="swatch" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6" fill="rgb({{ lot.rgb | join(',') }})"/></svg>{{ lot.lego.name }} <span class="id">({{ lot.lego.id }}; element {{ lot.lego.element_id }})</span></th>
+        <td>{{ part_labels.get(lot.part_id, lot.part_type) }} <span class="id">{{ lot.part_id }}</span></td>
+        <td>{{ lot.bricklink.item_no }} / {{ lot.bricklink.color_name }} <span class="id">({{ lot.bricklink.color_id }})</span></td>
+        <td>{{ lot.rebrickable.part_num }} / {{ lot.rebrickable.color_name }} <span class="id">({{ lot.rebrickable.color_id }})</span></td>
+        {% else %}
+        <th scope="row">{{ lot.layout_color.name }} <span class="id">(no cited IDs: {{ lot.reason }})</span></th>
+        <td>{{ part_labels.get(lot.part_id, lot.part_type) }} <span class="id">{{ lot.part_id }}</span></td><td>–</td><td>–</td>
+        {% endif %}
+        <td class="num">{{ lot.needed | n }}</td><td class="num">{{ lot.kit_supply | n }}</td><td class="num">{{ lot.to_buy | n }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="note ack">{{ manifest.acknowledgement }} Rebrickable part and color IDs courtesy of <a href="https://rebrickable.com">Rebrickable</a>.</p>
+</section>
+
+<div class="columns">
+<section aria-labelledby="layers-heading" class="panel">
+  <h2 id="layers-heading">How this map is made</h2>
+  <ul class="layers">
+  {% for l in data.layers %}
+    <li><strong>{{ l.class | capitalize }}:</strong> {{ role_label.get(l.role, l.role) }}{% if l.dataset %} ({{ l.dataset }}{% if l.classification %}, {{ l.classification }}{% endif %}){% endif %} on {{ l.cells | n }} {{ part_labels.get(l.part_id, l.part_id) }} pieces (part {{ l.part_id }}).</li>
+  {% endfor %}
+  {% if variant.shadow_cells %}<li>Land shadow: {{ variant.shadow_cells | n }} ocean studs just east of land, as on the official design.</li>{% endif %}
+  </ul>
+  <p class="note">Recipe <code>{{ map.id }}</code>, SHA-256 <code class="hash">{{ data.recipe.sha256[:16] }}…</code></p>
+  {% if variant.warnings %}
+  <h3>Suitability notes</h3>
+  <ul class="warnings">
+  {% for w in variant.warnings %}<li>{{ w }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+</section>
+
+<section aria-labelledby="data-heading" class="panel">
+  <h2 id="data-heading">Data and sources</h2>
+  {% for c in data.citations %}
+  <div class="citation">
+    <p class="cite-title">{{ c.title }}{% if c.version %} <span class="id">({{ c.version }})</span>{% endif %}</p>
+    <p>{{ c.citation }}{% if c.doi %} <a href="https://doi.org/{{ c.doi }}">https://doi.org/{{ c.doi }}</a>{% endif %}</p>
+    <p><strong>License:</strong> {{ c.license }}</p>
+    {% if c.acknowledgement %}<p>{{ c.acknowledgement }}</p>{% endif %}
+  </div>
+  {% endfor %}
+  {% for d in data.datasets %}
+  <p class="note">Pinned file: {{ d.id }}, {{ d.size | size }}, SHA-256 <code class="hash">{{ d.sha256[:16] }}…</code></p>
+  {% endfor %}
+  <p class="note">Frame combinations: {{ manifest.arrangement_source.title }}, pp. 7–8.</p>
+</section>
+</div>
+{% endblock %}
