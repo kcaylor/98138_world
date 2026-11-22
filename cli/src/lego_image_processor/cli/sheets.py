@@ -7,6 +7,7 @@ Not affiliated with or endorsed by The LEGO Group.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import click
@@ -18,6 +19,7 @@ from ..sheets.legend import PART_LABEL
 from ..sheets.model import is_latin1
 from .map import CommandError
 
+_PAGE_SVG = re.compile(r"page-\d+\.svg")
 PRINT_LINE = "Print at 100% (no fit-to-page); check the 100 mm scale bar."
 
 
@@ -70,6 +72,11 @@ def build_cmd(layout_path, output, output_format, paper, section_list, title, qu
         output.write_bytes(payload)
     else:
         output.mkdir(parents=True, exist_ok=True)
+        # Remove page files left by an earlier, longer build; only our own page-NN.svg names.
+        keep = {name for name, _ in payload}
+        for stale in output.glob("page-*.svg"):
+            if stale.name not in keep and _PAGE_SVG.fullmatch(stale.name) and stale.is_file():
+                stale.unlink()
         for name, text in payload:
             (output / name).write_text(text, encoding="utf-8", newline="\n")
     if quiet:

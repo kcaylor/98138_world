@@ -283,7 +283,8 @@ counts, join-rule exclusions and that all 23 existing rows are unchanged.
 - **FR-004**: The tool MUST read any schema 2.0 layout and group its positions into lots by part
   and color key, counting the quantity needed per lot.
 - **FR-005**: Each lot MUST be resolved against the cited tables: kit colors and part colors for
-  the lot's part, with the layout's `lego_color_code` equal to the cited LEGO color ID. A resolved
+  the lot's part, matched by LEGO color ID: the cited row whose LEGO color ID equals the layout's
+  `lego_color_code`, whatever the layout's color key or name (user decision, 2026-11-22). A resolved
   lot carries LEGO color name and ID, element ID, BrickLink item number, color name and ID,
   Rebrickable part number, color name and ID, RGB and citation IDs. Any other lot is unverified,
   carries only the layout's color name and code and the reason, and MUST NOT carry marketplace IDs.

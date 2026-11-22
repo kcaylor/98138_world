@@ -14,7 +14,8 @@ Updated: 2026-11-22
 For user review (agent decisions made during implement, details in Decisions):
 1. Metallic and glow colors in the widened part-color table (cited and orderable): keep or restrict.
 2. Match a cited row by LEGO color id when a layout's key differs (palette "Dark Red" 154 =
-   "New Dark Red" 154): currently not matched (FR-005 as written).
+   "New Dark Red" 154): RESOLVED by the user 2026-11-22: match by LEGO ID, not name. FR-005
+   updated; `PartColorTable.by_lego_id`; supply and owned parts use the cited row's key.
 3. An unverified lot fully covered by owned parts does not block `parts export`.
 
 ## Decisions

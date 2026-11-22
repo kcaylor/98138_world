@@ -26,7 +26,7 @@ A CLI tool that converts images to LEGO-compatible color palettes and generates 
 ```bash
 cd cli
 poetry install
-# without Poetry: uv venv && uv pip install -e . pytest pytest-cov pytest-benchmark
+# without Poetry: uv venv --python 3.11 && uv pip install -e . pytest pytest-cov pytest-benchmark
 ```
 
 ## Usage

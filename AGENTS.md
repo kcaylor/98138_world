@@ -86,4 +86,4 @@ checksum-pinned Rebrickable, LDraw and BrickLink snapshots) are regenerated with
   `tests/fixtures/`.
 - Anything user-facing must say: "Not affiliated with or endorsed by The LEGO Group." Never imply
   endorsement or partnership.
-- Run tests: `cd cli && poetry run pytest` (without Poetry: `uv venv && uv pip install -e . pytest pytest-cov pytest-benchmark`, then `.venv/bin/pytest`).
+- Run tests: `cd cli && poetry run pytest` (without Poetry: `uv venv --python 3.11 && uv pip install -e . pytest pytest-cov pytest-benchmark`, then `.venv/bin/pytest`).

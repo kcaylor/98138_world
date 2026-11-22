@@ -71,7 +71,7 @@ def test_lots_grouped_and_ordered():
                      ("6141", "lego_black"), ("6141", "lego_medium_blue")]  # unverified last
     assert [l.needed for l in pl.lots] == [30, 12, 7, 20, 4, 5]
     assert _lot(pl, "6141", "lego_medium_blue").reason == "no cited color for part"
-    assert _lot(pl, "6141", "lego_black").reason == "color code mismatch"
+    assert _lot(pl, "6141", "lego_black").reason == "no cited color for part"  # LEGO ID 999
     t = pl.totals()
     assert t == {"lots": 6, "needed": 78, "owned": 0, "to_buy": 78, "lots_to_buy": 6, "spares": 0,
                  "surplus": 0, "verified_lots": 4, "unverified_lots": 2}

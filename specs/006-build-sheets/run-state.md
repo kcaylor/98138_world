@@ -18,7 +18,8 @@ For user review (agent decisions made during implement, details in Decisions):
 3. Stud numbers are 8 pt bold (about 2.8 mm), 6 pt for 3-digit numbers, instead of the planned
    "3 mm high", so two digits fit inside the plate ring.
 4. `sheets build --format svg` writes into an existing directory without deleting older
-   `page-NN.svg` files from a larger earlier build (no deletion of user files).
+   `page-NN.svg` files from a larger earlier build. RESOLVED by the user 2026-11-22: stale
+   files named exactly `page-<digits>.svg` are now removed; other files are never touched.
 
 ## Decisions
 - user (2026-11-22): Q7 PDF via ReportLab (BSD) plus SVG pages and a per-section counts JSON;
