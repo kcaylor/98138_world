@@ -1,4 +1,4 @@
-"""Readers for the registry's file formats, with no new dependencies (research R5).
+"""Readers for the registry's file formats (004 research R5; netCDF-4 needs h5py, feature 013).
 
 - ``dods``: DAP2 binary (OPeNDAP ``.dods``): DDS text, ``Data:\\n``, then XDR arrays.
 - ``netcdf3``: netCDF-3 classic via ``scipy.io.netcdf_file`` (size-1 leading axes dropped;
@@ -6,6 +6,7 @@
 - ``npy``: a NumPy array plus a cell-registered extent (rows south to north).
 - ``kit-design``: the packaged official design grid (categorical, already on the kit grid).
 - ``geotiff`` (feature 012): a strip GeoTIFF, block-averaged while reading (``geotiff.py``).
+- ``netcdf4`` (feature 013): netCDF-4/HDF5 via h5py (``netcdf4.py``), one file or a multi-file entry.
 
 Not affiliated with or endorsed by The LEGO Group.
 """
@@ -257,7 +258,7 @@ def _land_from_mask(g: SourceGrid, rule: Dict[str, Any], cache_dir=None) -> Sour
 
     entry = get_entry(rule["dataset"])
     mask_grid = read_dataset(entry, resolve(entry, cache_dir), rule["variable"])
-    if mask_grid.on_kit_grid:
+    if mask_grid.on_kit_grid or mask_grid.points:
         raise ValueError(f"land_from dataset {entry.id} is not a gridded field")
     g = extend_latitudes(g, float(mask_grid.lat[0]), float(mask_grid.lat[-1]))
     ri = _nearest_index(mask_grid.lat, g.lat)
@@ -301,6 +302,14 @@ def read_dataset(entry: DatasetEntry, path, variable: str, transform: str = "non
         g = read_dods(path, variable, fill=entry.grid.get("fill"))
     elif entry.format == "netcdf3":
         g = read_netcdf3(path, variable, reduce=spec.get("reduce"))
+    elif entry.format == "netcdf4":  # feature 013 (h5py); a multi-file entry's path is its directory
+        from .netcdf4 import read_netcdf4, read_netcdf4_files
+
+        if entry.files:
+            g = read_netcdf4_files([Path(path) / f.name for f in entry.files], variable,
+                                   reduce=spec.get("reduce"))
+        else:
+            g = read_netcdf4(path, variable, reduce=spec.get("reduce"))
     elif entry.format == "npy":
         g = read_npy(path, entry.grid)
     elif entry.format == "geotiff":

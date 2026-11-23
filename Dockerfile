@@ -24,9 +24,10 @@ RUN pip install --no-deps ./cli \
 # Optional: record the source commit in the manifest (fly deploy --build-arg GIT_COMMIT=...).
 ARG GIT_COMMIT=""
 ENV GIT_COMMIT=${GIT_COMMIT}
-# Downloads the seven pinned public datasets (~543 MB, SHA-256 or content SHA-256 verified; the
-# MOD17A3 NPP GeoTIFF comes over plain HTTP, pinned by SHA-256, feature 012), then builds
-# 7 maps x 3 combinations (~128 MB, ~70 s plus downloads, peak ~650 MB RAM on the builder).
+# Downloads the pinned public datasets (~561 MB, SHA-256 or content SHA-256 verified; the
+# MOD17A3 NPP GeoTIFF comes over plain HTTP, pinned by SHA-256, feature 012; GPCP and 60 NSIDC
+# sea-ice files are netCDF-4, read with h5py, feature 013), then builds
+# 8 maps x 3 combinations (~146 MB, ~75 s plus downloads, peak ~650 MB RAM on the builder).
 RUN python -m web98138.prebuild --fetch --out /site
 
 FROM ${PYTHON_IMAGE} AS runtime

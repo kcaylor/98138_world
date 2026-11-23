@@ -8,3 +8,5 @@ click>=8.1,<9
 tqdm>=4.65,<5
 scipy>=1.11,<2
 reportlab>=4.4,<6
+# netCDF-4/HDF5 reader (feature 013); exact pin, see specs/013-rainfall/research.md R1
+h5py==3.16.0

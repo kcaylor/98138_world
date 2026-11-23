@@ -1,0 +1,94 @@
+# Rainfall: global annual mean precipitation on land and sea (feature 013).
+#
+# Data: GPCP v2.3 monthly long-term mean 1991-2020 (NOAA PSL; Adler et al. 2018), annual mean of
+# the 12 months, mm/day. Each kit cell takes the bilinear interpolation of the 2.5 degree field at
+# its centre (periodic in longitude; rows beyond the outermost source rows take those rows).
+#
+# Land (1x1 round plates, part 6141), mm/day (mm/yr):
+#   Brick Yellow [BrickLink Tan] below 0.5 (182.5) | Sand Yellow [Dark Tan] 0.5-1 (182.5-365) |
+#   Sand Green 1-1.5 (365-547.5) | Bright Yellowish Green [Lime] 1.5-2.5 (547.5-912.5) |
+#   Bright Green 2.5-4 (912.5-1460) | Dark Green [Green] 4 and above (1460)
+# Ice sheets take White plates: Antarctica (land south of 60 S) and Greenland (a box; Iceland,
+# south of 67 N and east of 26 W, is left out). They stop the dry Antarctic plateau reading as
+# desert.
+#
+# Ocean (1x1 round tiles, part 98138), mm/day (mm/yr):
+#   Light Royal Blue [Bright Light Blue] below 0.75 (273.75) | Medium Azur 0.75-1.5 (273.75-547.5) |
+#   Dark Azur 1.5-3 (547.5-1095) | Bright Blue [Blue] 3-5 (1095-1825) |
+#   Earth Blue [Dark Blue] 5 and above (1825)
+# Sea ice takes White tiles: NOAA/NSIDC sea ice concentration CDR v6, the 1991-2020 mean of each
+# hemisphere's minimum month (September north, February south) is at least 0.7 over the cell, or
+# the cell has no NSIDC ocean pixel and lies poleward of 60 degrees (coasts, ice shelves).
+# The outer bounds 0 and 1000 only close the list (bins needs one more bound than colors).
+#
+# Land shadow: Black tiles one stud east of land. Known, accepted trade-off: the shadow is weak
+# against Earth Blue on wet coasts (dE00 about 16).
+# Most colors here are beyond kit 31203: expect about 8,140 pieces beyond one kit
+# (`parts list <layout> --kits 1`); Earth Blue about 567 (the kit has 393).
+# Approved by the owner from prototype round 3, variant 3A (2026-11-22).
+# Not affiliated with or endorsed by The LEGO Group.
+format = "1"
+id = "rainfall"
+title = "Rainfall"
+description = "Global rainfall: annual mean precipitation 1991-2020 (GPCP) on land and sea, from desert tan to rainforest green and from pale to deep blue, with ice in white."
+seed = 31203
+
+[land]
+role = "data"
+dataset = "gpcp-v23-ltm-1991-2020"
+variable = "precip"
+sampling = "bilinear"
+colors = [   # dry -> wet
+  "lego_brick_yellow", "lego_sand_yellow", "lego_sand_green", "lego_bright_yellowish_green",
+  "lego_bright_green", "lego_dark_green",
+]
+
+[land.classification]
+method = "bins"
+bounds = [0, 0.5, 1.0, 1.5, 2.5, 4.0, 1000]   # mm/day
+
+[land.legend]
+units = "mm/yr"
+factor = 365
+
+[[land.override]]
+name = "Antarctica"
+color = "lego_white"
+lat_max = -60
+
+[[land.override]]
+name = "Greenland"
+color = "lego_white"
+lat_min = 59
+lon_min = -75
+lon_max = -10
+exclude = [{ lat_max = 67, lon_min = -26 }]   # Iceland
+
+[ocean]
+role = "data"
+dataset = "gpcp-v23-ltm-1991-2020"
+variable = "precip"
+sampling = "bilinear"
+colors = [   # dry -> wet
+  "lego_light_royal_blue", "lego_medium_azur", "lego_dark_azur", "lego_bright_blue",
+  "lego_earth_blue",
+]
+
+[ocean.classification]
+method = "bins"
+bounds = [0, 0.75, 1.5, 3.0, 5.0, 1000]   # mm/day
+
+[ocean.legend]
+units = "mm/yr"
+factor = 365
+
+[[ocean.override]]
+name = "sea ice"
+color = "lego_white"
+dataset = "nsidc-cdr-v6-seaice-minimum-1991-2020"
+variable = "cdr_seaice_conc_monthly"
+min_value = 0.7
+unobserved_lat = 60
+
+[shadow]
+color = "lego_black"

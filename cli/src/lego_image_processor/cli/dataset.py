@@ -82,7 +82,8 @@ def fetch_cmd(ids, recipe, cache_dir):
             raise CommandError(str(exc), exc.exit_code)
         if downloaded:
             what = "content SHA-256" if e.content_sha256 and not e.sha256 else "SHA-256"
-            click.echo(f"Fetched {e.id} ({e.size:,} bytes, {what} verified): {path}")
+            n = f"{len(e.files)} files, " if e.files else ""
+            click.echo(f"Fetched {e.id} ({n}{e.size:,} bytes, {what} verified): {path}")
         else:
             click.echo(f"{e.id}: already cached and verified: {path}")
         click.echo(f"  Citation: {e.citation}" + (f" https://doi.org/{e.doi}" if e.doi else ""))
@@ -105,6 +106,8 @@ def info(dataset_id, cache_dir):
     fields = [("id", e.id), ("title", e.title), ("publisher", e.publisher), ("version", e.version),
               ("kind", e.kind), ("url", e.url), ("size", _size(e) + " bytes" if e.size else ""),
               ("sha256", e.sha256), ("content sha256", e.content_sha256),
+              ("files", f"{len(e.files)} (each pinned by size and SHA-256; manifest SHA-256 "
+                        f"{e.files_sha256})" if e.files else ""),
               ("http only", e.http_only), ("format", e.format),
               ("variables", "; ".join(f"{k} [{v.get('units', '')}] {v.get('description', '')}".strip()
                                       for k, v in e.variables.items())),

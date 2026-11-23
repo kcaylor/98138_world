@@ -243,7 +243,8 @@ def build_site(out, maps: Optional[Iterable[str]] = None,
             echo(f"{map_id} {c}: {len(v['files'])} files, {size / 1e6:.1f} MB, "
                  f"{time.monotonic() - t0:.1f} s")
         datasets = [{"id": e.id, "version": e.version, "sha256": e.sha256, "url": e.url, "size": e.size,
-                     **({"content_sha256": e.content_sha256} if e.content_sha256 else {})}
+                     **({"content_sha256": e.content_sha256} if e.content_sha256 else {}),
+                     **({"files": len(e.files), "files_sha256": e.files_sha256} if e.files else {})}
                     for e in recipe.datasets() if e.kind == "download"]
         rows.append({"id": recipe.id, "title": recipe.title, "description": recipe.description,
                      "recipe": {"format": recipe.format, "sha256": recipe.sha256},

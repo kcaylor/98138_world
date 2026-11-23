@@ -2,7 +2,7 @@
 
 LEGO World Map-style mosaics of real data. The World Map kit (31203) is used as a fixed template,
 a 128 × 80 grid of 10,240 studs with the kit's coastline, and any suitable gridded map (ocean
-temperature, elevation, bathymetry, plant productivity, ocean chlorophyll, ...) becomes a buildable mosaic with a cited parts list,
+temperature, elevation, bathymetry, plant productivity, ocean chlorophyll, rainfall, ...) becomes a buildable mosaic with a cited parts list,
 marketplace wanted lists and printable build sheets.
 
 Not affiliated with or endorsed by The LEGO Group.

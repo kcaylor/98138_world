@@ -106,7 +106,9 @@
   </div>
   {% endfor %}
   {% for d in data.datasets %}
-  {% if d.sha256 %}
+  {% if d.files %}
+  <p class="note">Pinned files: {{ d.id }}, {{ d.files }} files, {{ d.size | size }} in all, each pinned by SHA-256; manifest SHA-256 <code class="hash">{{ d.files_sha256[:16] }}…</code></p>
+  {% elif d.sha256 %}
   <p class="note">Pinned file: {{ d.id }}, {{ d.size | size }}, SHA-256 <code class="hash">{{ d.sha256[:16] }}…</code></p>
   {% else %}
   <p class="note">Pinned file: {{ d.id }}, {{ d.size | size }}, content SHA-256 <code class="hash">{{ d.content_sha256[:16] }}…</code> (built on request by the server; the checksum covers the data, not the file header)</p>

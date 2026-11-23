@@ -35,8 +35,9 @@ class TestShipped:
 
     def test_downloads_are_small_open_and_pinned(self):
         reg = load_registry()
-        # feature 012 entries are checked in TestLivingPlanetEntries (large, NASA open data)
-        downloads = [e for e in reg.entries if e.kind == "download" and e.id not in LIVING_PLANET]
+        # feature 012 entries are checked in TestLivingPlanetEntries (large, NASA open data), feature
+        # 013 entries in tests/unit/datasets/test_multifile.py (NSIDC: multi-file, "no constraints")
+        downloads = [e for e in reg.entries if e.kind == "download" and e.id not in LIVING_PLANET + RAINFALL]
         assert len(downloads) >= 2
         for e in downloads:
             assert e.url.startswith("https://")
@@ -123,6 +124,7 @@ class TestEnsoEntries:
 
 
 LIVING_PLANET = ("mod17a3-npp-mean-2000-2015", "modis-aqua-chla-2013-2024")
+RAINFALL = ("gpcp-v23-ltm-1991-2020", "nsidc-cdr-v6-seaice-minimum-1991-2020")
 
 
 class TestLivingPlanetEntries:
