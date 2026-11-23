@@ -40,6 +40,8 @@ def test_map_page_and_downloads(rainfall_client, rainfall_site):
     assert DISCLAIMER in html
     for c, v in m["variants"].items():
         for kind, f in v["files"].items():
+            if kind == "cells":  # feature 015: palette chooser data, served inline, not a download
+                continue
             path = f"/maps/rainfall/{c}/" + (f"{kind}.png" if kind in ("preview", "thumb")
                                               else f"download/{kind}")
             resp = rainfall_client.get(path)

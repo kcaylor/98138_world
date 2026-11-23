@@ -2,7 +2,8 @@
 
 Run ``python -m web98138.prebuild --out DIR [--fetch] [--prices FILE | --no-prices]
 [--allow-partial-prices]``. It calls the same library functions as the CLI commands ``map build``,
-``parts list``, ``parts export``, ``parts estimate`` and ``sheets build``; nothing here computes a
+``map cells`` (feature 015), ``parts list``, ``parts export``, ``parts estimate`` and ``sheets
+build``; nothing here computes a
 map, a parts list, a price or a sheet itself (constitution VI). Only ``--fetch`` uses the network,
 to download missing pinned datasets (verified by SHA-256); prices come from a committed snapshot
 file (feature 011), never from the network.
@@ -45,6 +46,9 @@ KINDS: Dict[str, tuple] = {
     "rebrickable-1kit": ("rebrickable-1kit.csv", "text/csv; charset=utf-8",
                          "Rebrickable parts CSV: pieces to buy on top of one kit"),
     "layout": ("layout.json", "application/json", "Layout: all 10,240 positions (schema 2.0)"),
+    # feature 015: the palette chooser's data (served for the map page, not a download)
+    "cells": ("cells.json", "application/json",
+              "Per-cell classes, values, shadow and ice regions for the palette chooser"),
 }
 PREVIEW_SCALE = 10
 THUMB_SCALE = 3
@@ -157,6 +161,7 @@ def build_variant(recipe, combination: str, out: Path, rel: str, *, cache_dir=No
     from lego_image_processor.datasets.cache import DatasetError
     from lego_image_processor.layout.arrangement import parse_arrangement
     from lego_image_processor.maps.build import build_map
+    from lego_image_processor.maps.cells import map_cells
     from lego_image_processor.maps.classify import MapBuildError
     from lego_image_processor.maps.preview import write_preview
     from lego_image_processor.parts import (OwnedInputs, build_parts_list, to_bricklink_xml,
@@ -197,6 +202,8 @@ def build_variant(recipe, combination: str, out: Path, rel: str, *, cache_dir=No
         csv_text = to_rebrickable_csv(pl, False)
         if csv_text is not None:
             files[kind] = csv_text.encode("utf-8")
+    files["cells"] = (json.dumps(map_cells(result), ensure_ascii=False, separators=(",", ":"))
+                      + "\n").encode("utf-8")
     for paper in ("letter", "a4"):
         sheet_set = build_sheet_set(layout, layout_path=KINDS["layout"][0], paper=paper,
                                     layout_sha256=sha)

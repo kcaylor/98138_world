@@ -41,6 +41,8 @@ def test_map_page_and_downloads(living_client, living_site):
     assert "content SHA-256 <code" in html and "SHA-256 <code class=\"hash\">…" not in html
     for c, v in m["variants"].items():
         for kind, f in v["files"].items():
+            if kind == "cells":  # feature 015: palette chooser data, served inline, not a download
+                continue
             path = f"/maps/living-planet/{c}/" + (f"{kind}.png" if kind in ("preview", "thumb")
                                                    else f"download/{kind}")
             resp = living_client.get(path)

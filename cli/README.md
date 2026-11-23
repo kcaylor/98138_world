@@ -200,6 +200,7 @@ lego-image-processor map build official-31203 -o official.json --preview officia
 lego-image-processor map build ocean-sst -o sst.json --fetch       # --fetch downloads missing pinned data
 lego-image-processor map build land-elevation -o elev.json --report elev-report.json
 lego-image-processor map check land-elevation                      # suitability report only
+lego-image-processor map cells land-elevation -o cells.json        # per-cell classes/values for recoloring (015)
 lego-image-processor map recipes --copy ocean-sst my-map.toml      # start a new recipe
 lego-image-processor validate sst.json
 ```

@@ -27,6 +27,7 @@
   }
 }
 *, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; background: var(--bg); color: var(--ink);
@@ -157,3 +158,45 @@ h3 { font-size: 1rem; margin: 1.2em 0 .4em; }
   .lots td:nth-child(2) { min-width: 6.5rem; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* palette chooser (feature 015) */
+.palette h2 { margin-bottom: .4em; }
+.pc-note { margin: 0 0 .6rem; }
+.pc-status:empty { display: none; }
+.pc-status { border-left: 3px solid var(--focus); padding: .2rem 0 .2rem .7rem; margin: .5rem 0; font-size: .9rem; }
+.palette fieldset { border: 1px solid var(--line); border-radius: 10px; padding: .6rem .9rem .8rem; margin: 0 0 .9rem; min-width: 0; }
+.palette legend { font-weight: 650; padding: 0 .3rem; }
+.pc-ice label { display: inline-flex; align-items: center; gap: .35rem; margin-right: 1.2rem; }
+.pc-count label, .pc-label { color: var(--muted); font-size: .9rem; }
+.pc-count input { width: 4.5rem; }
+.pc-bounds { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin: .3rem 0; }
+.pc-bounds input { width: 6.5rem; }
+.palette input, .palette select, .palette button { font: inherit; font-size: .92rem; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 6px; padding: .3rem .45rem; max-width: 100%; }
+.palette input[type="radio"] { padding: 0; }
+.palette input[aria-invalid="true"] { border-color: #c0392b; outline: 2px solid #c0392b; }
+.palette button { cursor: pointer; background: var(--accent); color: var(--accent-ink); border-color: var(--accent); padding: .45rem .9rem; }
+.pc-error:empty { display: none; }
+.pc-error { color: #c0392b; font-size: .87rem; margin: .2rem 0; }
+.pc-table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+.pc-table th, .pc-table td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.pc-table thead th { background: var(--bg); font-weight: 600; white-space: nowrap; }
+.pc-table tbody th { font-weight: 500; }
+.pc-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pc-table select { width: 100%; min-width: 12rem; }
+.pc-swatch { display: inline-block; width: 1.1rem; height: 1.1rem; border-radius: 50%; vertical-align: -3px; margin-right: .45rem;
+  box-shadow: inset -2px -3px 0 rgba(0, 0, 0, .18), 0 0 0 1px rgba(0, 0, 0, .25); }
+.pc-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 1rem; margin: 0 0 .9rem; }
+.pc-shadow label { color: var(--muted); font-size: .9rem; }
+.pc-palette summary { cursor: pointer; font-weight: 600; }
+.pc-palette h4 { margin: .8rem 0 .4rem; font-size: .92rem; }
+.pc-chips { list-style: none; padding: 0; margin: 0; display: grid; gap: .35rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr)); }
+.pc-chip { display: flex; align-items: center; gap: .1rem; font-size: .82rem; padding: .25rem .4rem; border-radius: 8px; border: 2px solid transparent; }
+.pc-chip.kit .pc-chip-name { font-weight: 700; }
+.pc-chip.used { border-color: var(--accent); }
+.pc-chip-l { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pc-noscript { margin: -.5rem 0 1rem; }
+@media (max-width: 520px) {
+  .pc-table select { min-width: 9rem; }
+  .pc-bounds input { width: 5.5rem; }
+}

@@ -15,10 +15,13 @@ Not affiliated with or endorsed by The LEGO Group.
   file; tool, recipe and dataset versions; the data shown on the pages). Only `--fetch` uses the
   network, to download missing pinned datasets.
 - **Service** (`web98138.app`, FastAPI + Jinja2): checks the output at start-up and serves pages and
-  files from it. It never imports the CLI library, builds maps or downloads data. No JavaScript, no
-  cookies, nothing loaded from other sites.
+  files from it. It never imports the CLI library, builds maps or downloads data. Every page works
+  without JavaScript; map pages load one hand-written first-party script, `static/palette.js`
+  (feature 015), the "Try other colors" palette chooser, which recolors the prebuilt
+  `cells.json` in the browser (preview only). No cookies, no storage, nothing loaded from other
+  sites.
 
-Routes: `/`, `/about`, `/maps/<map>/<A|B|C>`, `.../preview.png`, `.../thumb.png`,
+Routes: `/`, `/about`, `/maps/<map>/<A|B|C>`, `.../preview.png`, `.../thumb.png`, `.../cells.json`,
 `.../download/<kind>` (`layout`, `parts`, `parts-1kit`, `bricklink`, `rebrickable`,
 `bricklink-1kit`, `rebrickable-1kit`, `sheets-letter`, `sheets-a4`), `/manifest.json`, `/healthz`,
 `/robots.txt`. Contract: `specs/008-web-app/contracts/routes.md`.
