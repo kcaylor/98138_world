@@ -319,5 +319,72 @@ def fit_projection(dataset_path, cache_dir, check, generated_on) -> None:
     click.echo(DISCLAIMER)
 
 
+@main.command("ice-mask")
+@click.option("--dataset", "dataset_path", type=click.Path(path_type=Path, dir_okay=False),
+              help="ERSST v5 1991-2020 long-term monthly means (default: the verified cached copy)")
+@click.option("--cache-dir", type=click.Path(path_type=Path), help="Cache root (default: per-user cache).")
+@click.option("--check", is_flag=True, help="Compare with the committed kit_31203_ice.json; write nothing.")
+@click.option("--date", "generated_on", default=None, help="generated_on date, YYYY-MM-DD (default: today).")
+def ice_mask(dataset_path, cache_dir, check, generated_on) -> None:
+    """Derive the land-ice and sea-ice cells (feature 012) and write kit_31203_ice.json."""
+    from lego_image_processor.datasets import get_entry, resolve, verify
+    from lego_image_processor.datasets.cache import DatasetError
+    from lego_image_processor.datasets.readers import read_netcdf3
+    from lego_image_processor.maps.ice import (ICE_PATH, LAND_ICE_REGIONS, SEA_ICE_RULE,
+                                               derive_ice_regions, ice_document)
+
+    entry = get_entry(SEA_ICE_RULE["dataset"])
+    try:
+        if dataset_path:
+            verify(entry, dataset_path)
+            path = dataset_path
+        else:
+            path = resolve(entry, cache_dir)
+    except DatasetError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(getattr(exc, "exit_code", 1))
+    grid = read_netcdf3(path, SEA_ICE_RULE["variable"], reduce=SEA_ICE_RULE["reduce"])
+    ice = derive_ice_regions(grid)
+    click.echo(f"land ice: {int(ice.land.sum())} cells; sea ice: {int(ice.sea.sum())} cells")
+    committed = json.loads(ICE_PATH.read_text(encoding="utf-8")) if ICE_PATH.exists() else None
+    source = {
+        "title": "Ice-covered cells of the kit 31203 grid (palette chooser, feature 012)",
+        "generator": "cli/tools/kit31203 ice-mask",
+        "generated_on": generated_on or (committed or {}).get("source", {}).get("generated_on")
+        or _dt.date.today().isoformat(),
+        "land_ice": {"rule": "land cells whose centre lies in a region (strict bounds, minus "
+                             "excluded boxes); the regions of the 013-rainfall design",
+                     "regions": [dict(r) for r in LAND_ICE_REGIONS],
+                     "mask": "lego_world_map_land_sea_mask.json",
+                     "projection": "kit_31203_projection.json"},
+        "sea_ice": {"rule": "ocean cells whose 1991-2020 warmest-month mean SST (cell mean of the "
+                            "ERSST v5 values, as maps reproject) is at or below max_value, or "
+                            "with no ERSST value and a centre poleward of unobserved_lat",
+                    **{k: SEA_ICE_RULE[k] for k in ("variable", "reduce", "max_value", "unobserved_lat")},
+                    "dataset": {"id": entry.id, "version": entry.version, "url": entry.url,
+                                "sha256": entry.sha256, "citation": entry.citation,
+                                "license": entry.license}},
+        "disclaimer": DISCLAIMER,
+    }
+    doc = ice_document(ice, source)
+    if check:
+        if committed is None:
+            click.echo(f"difference: {ICE_PATH} does not exist", err=True)
+            sys.exit(1)
+        diffs = [k for k in ("land_ice", "sea_ice") if committed.get(k) != doc[k]]
+        diffs += [f"source.{k}" for k in ("land_ice", "sea_ice")
+                  if committed.get("source", {}).get(k) != source[k]]
+        if diffs:
+            for k in diffs:
+                click.echo(f"difference: {k}", err=True)
+            sys.exit(1)
+        click.echo("no differences")
+        click.echo(DISCLAIMER)
+        return
+    ICE_PATH.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
+    click.echo(f"Wrote {ICE_PATH}")
+    click.echo(DISCLAIMER)
+
+
 if __name__ == "__main__":
     main()

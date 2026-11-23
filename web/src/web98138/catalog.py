@@ -18,7 +18,8 @@ FORMAT_VERSION = "1"
 DOWNLOAD_KINDS = ("layout", "parts", "parts-1kit", "bricklink", "rebrickable", "bricklink-1kit",
                   "rebrickable-1kit", "sheets-letter", "sheets-a4")
 IMAGE_KINDS = ("preview", "thumb")
-KINDS = DOWNLOAD_KINDS + IMAGE_KINDS
+DATA_KINDS = ("cells",)   # feature 012: palette chooser data, served inline, never a download
+KINDS = DOWNLOAD_KINDS + IMAGE_KINDS + DATA_KINDS
 ESTIMATE_KINDS = ("full", "one_kit")
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 

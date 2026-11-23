@@ -17,12 +17,36 @@
     {% endfor %}
     </ul>
   </nav>
-  <figure class="preview">
-    <img src="/maps/{{ map.id }}/{{ combination }}/preview.png" width="1280" height="800" class="stud-img"
+  <figure class="preview" id="preview-figure">
+    <img id="preview-img" src="/maps/{{ map.id }}/{{ combination }}/preview.png" width="1280" height="800" class="stud-img"
          alt="Stud preview of the {{ map.title }} map hung as combination {{ combination }}, {{ arrangement.centre }} in the centre">
     <figcaption><strong>Combination {{ combination }}:</strong> {{ arrangement.description }}. Left to right: {{ arrangement.frames | join(" · ") }}. One square per stud; 128 × 80 studs.</figcaption>
   </figure>
 </section>
+
+{% if variant.files.cells %}
+<section id="palette" class="panel palette" aria-labelledby="palette-heading" data-cells="/maps/{{ map.id }}/{{ combination }}/cells.json" hidden>
+  <h2 id="palette-heading">Try other colors</h2>
+  <p class="pc-note"><strong>Preview only: parts lists, prices, build sheets and downloads use the map's default colors.</strong> Pick a color for each class from the colors each part is made in, change the number of classes and their bounds, and show ice as White. Your choices stay in this page's address, so you can share the link.</p>
+  <p class="pc-status" role="status" aria-live="polite"></p>
+  <fieldset class="pc-ice">
+    <legend>Ice-covered regions</legend>
+    <label><input type="radio" name="pc-ice" value="data" checked> Show the map's data</label>
+    <label><input type="radio" name="pc-ice" value="white"> Show as White ice</label>
+    <p class="note pc-ice-note"></p>
+  </fieldset>
+  <div class="pc-layers"></div>
+  <div class="pc-actions"><div class="pc-shadow"></div><button type="button" class="pc-reset">Reset to the map's colors</button></div>
+  <details class="pc-palette">
+    <summary>All colors the parts are made in</summary>
+    <p class="note">BrickLink names, light to dark; the number is CIE L* (higher is lighter). Bold = in kit 31203; outlined = in use above. Swatches use the on-screen RGB from the cited color tables, so real plastic looks a little different.</p>
+    <div class="pc-swatches"></div>
+  </details>
+  <p class="note">{{ DISCLAIMER }}</p>
+</section>
+<noscript><p class="note pc-noscript">The color chooser needs JavaScript. The preview above shows the map's colors, and every download works without it.</p></noscript>
+<script src="/static/palette.js?v={{ asset_version }}" defer></script>
+{% endif %}
 
 <div class="columns">
 <section aria-labelledby="dl-heading" class="panel">

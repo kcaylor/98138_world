@@ -70,12 +70,27 @@ as hung; `layout arrange` re-hangs any layout without recomputing.
 
 The web site (feature 008, see `specs/008-web-app/` and `docs/deploy.md`) shows the four bundled
 maps in combinations A, B and C and offers every build file. `web/` (package `web98138`, FastAPI +
-Jinja2, no JS, no cookies) has two halves: `python -m web98138.prebuild --out DIR [--fetch]` builds
+Jinja2, no cookies; works without JS, one first-party script since 012) has two halves: `python -m web98138.prebuild --out DIR [--fetch]` builds
 all 12 variants with the CLI library (`build_map`, `write_preview`, `build_parts_list`, exports,
 `build_sheet_set`/`render_pdf`) plus `manifest.json` (sizes, SHA-256, tool and dataset versions,
 page data); the service (`web98138.app`, `WEB98138_SITE_DIR=DIR uvicorn web98138.app:app`) only
 serves that output and never imports `lego_image_processor`. The `Dockerfile` (two stages) runs the
 prebuild at image build time; `fly.toml` deploys app `world-98138`.
+
+Palette chooser (feature 012, see `specs/012-palette-chooser/`): `map cells <recipe> -o
+cells.json [--arrangement]` (library `maps/cells.py`, `map_cells(result)`) exports per cell, as
+hung, each layer's built class and data value, default bounds (recipe `bins`, or boundaries between
+built rank classes), the shadow, the ice regions and both parts' cited colors with CIE L*. Ice
+regions are packaged in `data/kit_31203_ice.json` (`maps/ice.py`; land ice: Antarctica south of
+60° S and a Greenland box without Iceland; sea ice: ERSST v5 1991–2020 warmest month ≤ −1.5 °C or
+no value poleward of 60°), regenerated with `PYTHONPATH=tools python -m kit31203 ice-mask --check`.
+The prebuild writes `cells.json` per variant (manifest kind `cells`, served at
+`/maps/<id>/<C>/cells.json`, not a download); map pages load the hand-written first-party
+`web/src/web98138/static/palette.js` (CSP `script-src 'self'; connect-src 'self'`) to recolor a
+canvas, edit classes and bounds, show ice as White, and keep the state in the URL fragment. Preview
+only: parts lists, prices, sheets and downloads never change. Pages still work without JS (008
+FR-009 as amended by 012 FR-020). Web tests run the script's pure functions under Node when it
+is installed.
 
 1. **Python CLI** (`cli/`, package `lego_image_processor`), written to be released as open source.
 2. **Web application** (`web/`) on Fly.io at 98138.world. It calls the CLI library at build time and
@@ -86,12 +101,12 @@ prebuild at image build time; `fly.toml` deploys app `world-98138`.
 - `cli/src/lego_image_processor/`: `core/` (image I/O, quantization), `palette/` (LEGO colors,
   CIEDE2000 matching), `analysis/`, `layout/` (grid, land/sea mask, kit spec, validator, frame arrangements; feature 007), `kit/`
   (kit reference data, part colors), `datasets/` (registry, verified cache, readers), `maps/`
-  (recipes, projection, reprojection, classification, texture, suitability, build, preview),
+  (recipes, projection, reprojection, classification, texture, suitability, build, preview, ice regions and chooser cells; feature 012),
   `parts/` (parts lists, cited IDs, marketplace exports; feature 005), `sheets/` (build sheets:
   sections, page model, PDF and SVG backends, per-section counts; feature 006), `cli/` (Click commands), `data/` (runtime reference data, shipped with the package).
-- `cli/tools/`: maintainer-only tools (`kit31203`, `partcolors`, `fixtures004`), not packaged.
+- `cli/tools/`: maintainer-only tools (`kit31203` incl. `ice-mask`, `partcolors`, `fixtures004`), not packaged.
 - `cli/tests/`: `unit/`, `integration/`, `contract/` (CLI I/O), `fixtures/`.
-- `web/`: `src/web98138/` (`prebuild.py`, `catalog.py`, `app.py`, `templates/`, `static/`),
+- `web/`: `src/web98138/` (`prebuild.py`, `catalog.py`, `app.py`, `templates/`, `static/`, incl. `palette.js`),
   `scripts/prebuild.py`, `tests/` (offline; a session fixture prebuilds `official-31203` and
   `ocean-sst` from the CLI's dataset fixtures), pinned `requirements.txt` (runtime) and
   `requirements-build.txt` (CLI deps for the image build). `web/site-output/` is git-ignored.

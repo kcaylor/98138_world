@@ -88,8 +88,10 @@ def read_netcdf3(path, variable: str, reduce: Optional[str] = None) -> SourceGri
     """Read a ``(..., lat, lon)`` variable.
 
     Leading axes of size 1 (e.g. ``time=1, lev=1`` in the ERSST per-month files) are dropped.
-    ``reduce="annual-mean"`` averages a 12-step leading axis where all months are valid; any other
-    leading axis larger than 1 is an error naming the dimensions.
+    ``reduce="annual-mean"`` averages a 12-step leading axis where all months are valid;
+    ``reduce="monthly-max"`` (feature 012, the sea-ice rule) takes the warmest of the 12 months,
+    NaN only where every month is missing; any other leading axis larger than 1 is an error
+    naming the dimensions.
     """
     from scipy.io import netcdf_file
 
@@ -119,13 +121,18 @@ def read_netcdf3(path, variable: str, reduce: Optional[str] = None) -> SourceGri
     names = dims[:-2] if len(dims) == raw.ndim else tuple(f"dim{i}" for i in range(len(lead)))
     keep = [i for i, n in enumerate(lead) if n != 1]
     field = raw.reshape(tuple(lead[i] for i in keep) + raw.shape[-2:])
-    if reduce == "annual-mean":
+    if reduce in ("annual-mean", "monthly-max"):
         steps = field.shape[0] if field.ndim == 3 else (1 if field.ndim == 2 else None)
         if steps != 12:
             if steps is None:
                 raise ValueError(_leading_error(path, variable, names, lead))
-            raise ValueError(f"{path}: annual-mean needs 12 months, found {steps}")
-        values = field.mean(axis=0)  # NaN wherever any month is missing
+            raise ValueError(f"{path}: {reduce} needs 12 months, found {steps}")
+        if reduce == "annual-mean":
+            values = field.mean(axis=0)  # NaN wherever any month is missing
+        else:
+            valid = np.isfinite(field).any(axis=0)
+            values = np.where(valid, np.max(np.where(np.isfinite(field), field, -np.inf), axis=0),
+                              np.nan)
     elif field.ndim == 2:
         values = field
     else:

@@ -228,6 +228,9 @@ DNS record.
   a dataset MUST show that dataset's citation and license.
 - **FR-009**: Pages MUST work without JavaScript, set no cookies, and load nothing from third
   parties (no trackers, analytics, fonts or scripts from other sites).
+  *Amended by feature 012 (FR-020, owner decision 2026-11-22): the only script allowed is the
+  site's own hand-written `/static/palette.js` on map pages (progressive enhancement; no inline
+  script, no front-end build); pages still work fully without it.*
 - **FR-010**: Pages MUST be usable on a 360 px wide phone without horizontal scrolling, and meet
   basic accessibility: one `h1` per page, landmarks, text alternatives for images, visible focus,
   sufficient contrast, a language attribute, and the current combination exposed to assistive

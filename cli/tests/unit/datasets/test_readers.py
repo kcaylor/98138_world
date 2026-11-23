@@ -89,6 +89,20 @@ class TestNetcdf3:
         assert np.nanmax(np.abs(g.values - 5.5)) < 1e-5
         assert g.units == "degC"
 
+    def test_monthly_max_where_any_month_valid(self, tmp_path):
+        # feature 012: the warmest month (for the sea-ice rule); NaN only where every month is
+        # missing
+        data = np.ones((12, 3, 4), dtype=np.float32) * np.arange(12, dtype=np.float32)[:, None, None]
+        data[11, 0, 0] = -9.96921e36
+        data[:, 0, 1] = -9.96921e36
+        p = tmp_path / "s.nc"
+        self._write(p, data)
+        g = read_netcdf3(p, "sst", reduce="monthly-max")
+        assert g.values.shape == (3, 4)
+        assert g.values[2, 2] == pytest.approx(10.0)   # (lat 10, lon 0): month 12 missing
+        assert np.isnan(g.values[2, 3])                  # (lat 10, lon 90): all months missing
+        assert g.values[0, 0] == pytest.approx(11.0)
+
     def test_single_time_without_reduce(self, tmp_path):
         p = tmp_path / "s.nc"
         self._write(p, np.full((1, 3, 4), 2.0, dtype=np.float32))

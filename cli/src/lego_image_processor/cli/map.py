@@ -274,6 +274,63 @@ def check(recipe, report_path, cache_dir, arrangement):
 
 
 @map_group.command()
+@click.argument("recipe")
+@click.option("--output", "-o", required=True, type=click.Path(dir_okay=False), help="JSON file to write")
+@click.option("--cache-dir", type=click.Path(file_okay=False), help="Dataset cache root (default: per-user cache)")
+@arrangement_option(default=None)
+def cells(recipe, output, cache_dir, arrangement):
+    """Write RECIPE's per-cell classes, values, shadow and ice regions for recoloring (JSON).
+
+    The file feeds the web site's palette chooser (feature 012): each layer's built class and
+    data value per cell, default class bounds, the land shadow, the ice-covered cells and the
+    cited colors of both parts with CIE L*. It is a preview aid only: layouts, parts lists,
+    prices and build sheets do not use it. Never downloads (build first with `map build --fetch`).
+
+    \b
+    Example:
+        lego-image-processor map cells land-elevation -o cells.json --arrangement B
+    """
+    from ..maps.cells import map_cells
+
+    r = _load(recipe)
+    try:
+        result = build_map(r, cache_dir=cache_dir, compare_official=False, arrangement=arrangement)
+    except DatasetError as exc:
+        raise _dataset_failure(exc)
+    except MapBuildError as exc:
+        raise CommandError(f"Cannot build {r.id}: {exc}", 1)
+    data = map_cells(result)
+    click.echo(f"Recipe: {r.id} - {r.title} (format {r.format}, SHA-256 {r.sha256})")
+    click.echo(arrangement_line(result.report, result.arrangement))
+    for cls in ("land", "ocean"):
+        layer = data["layers"][cls]
+        head = f"{cls.capitalize()} layer: {layer['role']}"
+        if layer["role"] == "data":
+            head += f", {layer['method']}"
+        head += f", {layer['cells']:,} cells, {len(layer['colors'])} colors"
+        if layer.get("bounds"):
+            head += f", bounds {layer['bounds_source']} ({layer.get('units', '')})"
+        click.echo(head)
+        if layer["role"] == "data" and "no_value" in layer:
+            click.echo(f"  {len(layer['no_value']):,} cells have no source value and take the nearest "
+                       f"value ({layer['no_value_ice']:,} of them in ice regions)")
+    sh = data["shadow"]
+    if sh["enabled"]:
+        click.echo(f"Land shadow: {sh['cells']:,} cells of {sh['color']}")
+    click.echo(f"Ice regions: {len(data['ice']['land']):,} land-ice cells, "
+               f"{len(data['ice']['sea']):,} sea-ice cells (kit_31203_ice.json, as hung)")
+    try:
+        text = json.dumps(data, ensure_ascii=False, separators=(",", ":")) + "\n"
+        Path(output).write_text(text, encoding="utf-8")
+    except OSError as exc:
+        raise CommandError(f"Cannot write output: {exc}", 1)
+    click.echo(f"Cells: {output} ({len(text.encode('utf-8')):,} bytes)")
+    click.echo(data["note"])
+    echo_citations(result.report["citations"])
+    click.echo(DISCLAIMER)
+
+
+@map_group.command()
 @click.option("--copy", "copy_args", nargs=2, metavar="ID DEST", help="Copy a bundled recipe to DEST to start a new one")
 @click.option("--force", is_flag=True, help="With --copy: overwrite DEST")
 @click.option("--cache-dir", type=click.Path(file_okay=False), help="Dataset cache root (for the cached column)")
