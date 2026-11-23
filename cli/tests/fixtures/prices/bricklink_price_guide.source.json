@@ -1,0 +1,9 @@
+{
+  "fixture": "bricklink_price_guide.json",
+  "synthetic": true,
+  "note": "Synthetic values for tests; not BrickLink data.",
+  "lots": "official 31203 layout's 10 lots; land-elevation plate colors except Dark Brown (LEGO 308); Medium Azur tile priced from stock only",
+  "generator": "tools/fixtures011/make_price_fixture.py",
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group.",
+  "sha256": "38f9aea806e94683529a8be9b80d63f6f275448659c836d890cf376beaca9f35"
+}

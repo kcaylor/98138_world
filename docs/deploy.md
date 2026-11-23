@@ -6,6 +6,12 @@ and prebuilds every map in every frame combination (6 × 3 = 18 variants, ~110 M
 The running container only serves those files: it never downloads data or builds maps, and it
 fits Fly's smallest machine (shared-cpu-1x, 256 MB; measured ~60 MB RSS).
 
+Map pages show price estimates (feature 011) from the committed BrickLink price snapshot
+`cli/src/lego_image_processor/data/bricklink_price_guide.json`, installed with the CLI as package
+data. The image build never calls BrickLink and holds no BrickLink credentials; the prebuild
+**fails** if no snapshot is committed, or if the committed one is partial ("no price snapshot is
+packaged …"). See "Refreshing prices" below.
+
 Configuration: `fly.toml` (app `world-98138`, region `sjc`, internal port 8080, forced HTTPS,
 auto stop/start with `min_machines_running = 0`, health check `GET /healthz`), `Dockerfile`
 (two stages, `python:3.11.18-slim-bookworm`, runs as uid 10001), `.dockerignore`.
@@ -14,6 +20,9 @@ Not affiliated with or endorsed by The LEGO Group.
 
 ## 0. Before you start
 
+- A complete price snapshot is committed (`git ls-files cli/src/lego_image_processor/data/
+  bricklink_price_guide.json` prints it). Until it is, `docker build` and `fly deploy` stop at the
+  prebuild by design; this is also the merge gate for feature 011.
 - `flyctl` installed and logged in: `fly auth login` (check with `fly auth whoami`).
 - Run every command below from the repository root (where `fly.toml` is).
 - Optional local check (needs Docker; see "Smoke test" at the end).
@@ -106,6 +115,28 @@ variants from the pinned datasets; the files only change when the code, recipes 
 Useful: `fly logs` (startup and errors; access logs are off for privacy), `fly status`,
 `fly machine list`. To avoid cold starts set `min_machines_running = 1` in `fly.toml` and redeploy
 (one always-on 256 MB machine).
+
+## Refreshing prices
+
+Prices are only as fresh as the committed snapshot; pages say so once it is older than 90 days at
+build time. Before a deploy that should carry new prices, on a machine whose IP the BrickLink API
+token allows (specs/011-price-estimates/quickstart.md §4–5):
+
+```bash
+cd cli
+export BRICKLINK_CONSUMER_KEY=… BRICKLINK_CONSUMER_SECRET=… BRICKLINK_TOKEN_VALUE=… BRICKLINK_TOKEN_SECRET=…
+poetry run lego-image-processor parts prices fetch -o src/lego_image_processor/data/bricklink_price_guide.json
+# if it stops: rerun the same command with --resume
+git status          # the snapshot only; never a *.progress.json
+poetry run pytest tests/unit/prices/test_packaged_snapshot.py
+git add src/lego_image_processor/data/bricklink_price_guide.json && git commit
+```
+
+Then deploy as above. The credentials never go into the repository, the image or Fly secrets.
+To check the site build locally without the network:
+`python -m web98138.prebuild --out /tmp/site --prices cli/tests/fixtures/prices/bricklink_price_guide.json`
+(`--no-prices` builds pages without the price panel; `--allow-partial-prices` accepts a partial
+snapshot, and the pages then say it is partial). Neither option is used by the `Dockerfile`.
 
 ## Smoke test with Docker (optional, for anyone with Docker)
 

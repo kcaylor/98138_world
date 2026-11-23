@@ -40,7 +40,10 @@ def test_list_table(runner, layouts):
     assert r.exit_code == 0, r.output
     assert "4073 / White (1)" in r.output and "98138 / Dark Turquoise (39)" in r.output
     assert "Totals: 10 lots, 10,240 pieces needed" in r.output
-    assert "Prices: none are estimated" in r.output and "Catalog data: Rebrickable" in r.output
+    assert ("Prices: none in this file. Estimate them offline with `lego-image-processor parts "
+            "estimate LAYOUT` (BrickLink price guide snapshot), or upload the list to BrickLink or "
+            "Rebrickable to price it.") in r.output
+    assert "Catalog data: Rebrickable" in r.output
     assert _last(r.output) == DISCLAIMER
 
 

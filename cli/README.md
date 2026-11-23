@@ -23,6 +23,10 @@ A CLI tool that converts images to LEGO-compatible color palettes and generates 
 - **Map arrangements** (feature 007): the kit's three frames can be hung in three orders
   (combination A Europe and Africa in the centre, B America, C Asia and Australia); build any map
   in any of them (`map build --arrangement`) or re-hang an existing layout (`layout arrange`)
+- **Price estimates** (feature 011): an estimated cost for any layout, for every piece and for
+  what one 31203 kit does not cover, from a dated, cited BrickLink price guide snapshot, offline
+  (`parts estimate`); the maintainer refreshes the snapshot with the BrickLink API
+  (`parts prices fetch`)
 - **ENSO maps** (feature 009): sea surface temperature anomaly of a strong El Niño (December 1997)
   and a strong La Niña (December 1988) on one shared °C legend, Pacific-centred (recipes
   `ocean-el-nino`, `ocean-la-nina`; recipe key `arrangement`)
@@ -378,11 +382,60 @@ declaration, `ITEMTYPE`/`ITEMID`/`COLOR`/`MINQTY`, `CONDITION` only with `--cond
 Rebrickable `Part,Color,Quantity` CSV. With unverified lots it exits 6 and writes nothing unless
 `--allow-partial`. When nothing is to buy it writes no file. Uploading to an existing BrickLink
 wanted list adds to the quantities already there. The marketplace files carry no disclaimer (they
-are fixed import formats); the command output and the JSON parts list carry it. No prices are
-estimated: BrickLink and Rebrickable both price an imported list.
+are fixed import formats); the command output and the JSON parts list carry it. Parts lists carry
+no prices; `parts estimate` (below) estimates them offline, and BrickLink and Rebrickable both price
+an imported list.
 
 Example (land-elevation from the real datasets): 6,330 pieces in 10 lots beyond one kit (3,418
 Bright Bluish Green tiles plus nine plate colors), 4,451 beyond two kits, 2,912 beyond three. The official design needs nothing beyond one kit.
+
+### Price estimates
+
+`parts estimate` prices a layout offline from a price snapshot: the packaged
+`data/bricklink_price_guide.json` by default, or `--prices FILE`. It gives two estimates: **every
+piece** (the parts list with no kit) and **on top of one 31203 kit** (each lot's `to_buy` with one
+kit). Each lot is priced at the BrickLink price guide's 6-month average of new parts sold
+(quantity-weighted, USD, VAT excluded, worldwide), with a range from the lowest to the highest sale;
+a lot with no sales uses the current for-sale average (said so); a lot with neither, or not in the
+snapshot, is unpriced and the estimate is marked incomplete with the unpriced piece count. Totals
+are exact sums rounded half-up to cents; whole dollars are rounded once from the exact sum.
+
+```bash
+lego-image-processor parts estimate elev.json                                # table
+lego-image-processor parts estimate elev.json --lines                        # every lot line
+lego-image-processor parts estimate elev.json --as-of 2027-06-01 --stale-days 90
+lego-image-processor parts estimate elev.json -o elev-estimate.json          # JSON (no timestamps)
+lego-image-processor parts estimate elev.json --prices tests/fixtures/prices/bricklink_price_guide.json
+```
+
+Prices older than `--stale-days` (default 90) at `--as-of` (default today, UTC) print a warning;
+incomplete, stale or partial estimates still exit 0. The JSON is a pure function of the layout,
+the snapshot, `--as-of` and `--stale-days` (format: `specs/011-price-estimates/contracts/
+estimate-format.md`). Estimate only; excludes shipping, fees and taxes; prices vary by seller and
+over time. Price data: BrickLink price guide (bricklink.com). BrickLink is a trademark of LEGO
+BrickLink, Inc. Not endorsed by BrickLink.
+
+**Refreshing the snapshot (maintainer, online).** `parts prices fetch` is the only command that
+calls BrickLink. It reads OAuth 1.0 credentials from `BRICKLINK_CONSUMER_KEY`,
+`BRICKLINK_CONSUMER_SECRET`, `BRICKLINK_TOKEN_VALUE` and `BRICKLINK_TOKEN_SECRET` (never printed,
+logged or written) and makes two price-guide requests (sold, stock) per lot, one per second. The
+API base URL and parameters are cited reference data (`data/bricklink_api.json`, `checked: false`
+until the owner verifies them against the live documentation).
+
+```bash
+lego-image-processor parts prices fetch -o /tmp/smoke.json --lot 98138:140      # one-lot smoke check
+lego-image-processor parts prices fetch -o src/lego_image_processor/data/bricklink_price_guide.json
+lego-image-processor parts prices fetch -o PATH --resume                         # after a stop
+lego-image-processor parts prices fetch -o PATH --all-colors                     # all 84 cited lots
+```
+
+The default lot set is every lot the bundled recipes can use (19); `--all-colors` takes every cited
+plate and tile color, `--lot PART:LEGO_COLOR_ID` (repeatable) only the named ones. Progress is
+saved per lot to `<output stem>.progress.json` (git- and docker-ignored); on a stop the output is
+untouched unless `--write-partial`, and `--resume` fetches only the rest. Exit codes: 1 input or
+missing variable, 5 network/API failure after retries or the daily limit, 7 credentials rejected
+(for example the token's IP address setting), 130 Ctrl-C. The summary lists the largest unit-price
+changes since the previous snapshot; review the file, then commit it.
 
 ### Build sheets
 

@@ -68,3 +68,6 @@ demo-output/
 
 # Web app (feature 008): prebuilt site output
 web/site-output/
+
+# Feature 011: price fetch progress files (never committed)
+*.progress.json

@@ -23,6 +23,7 @@ from .kit import kit
 from .map import map_group
 from .dataset import dataset
 from .parts import parts
+from . import prices as _prices  # noqa: F401,E402  registers `parts estimate` (feature 011)
 from .sheets import sheets
 
 cli.add_command(quantize)
