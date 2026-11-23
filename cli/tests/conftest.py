@@ -62,8 +62,14 @@ class FixtureRegistry:
 
         e = get_entry(dataset_id)
         dest = cached_path(e, self.cache_dir)
+        src = self.files[dataset_id]
+        if isinstance(src, list):  # feature 013: a multi-file entry (dest is its directory)
+            dest.mkdir(parents=True, exist_ok=True)
+            for f in src:
+                shutil.copyfile(f, dest / f.name)
+            return dest
         dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(self.files[dataset_id], dest)
+        shutil.copyfile(src, dest)
         return dest
 
     def place_all(self):
@@ -86,6 +92,10 @@ def fixture_registry(tmp_path, monkeypatch):
     ersst = FIXTURE_DATASETS / "ersst_v5_annual_2deg.nc"
     months = {"ersst-v5-1997-12": FIXTURE_DATASETS / "ersst_v5_199712_ssta.nc",  # feature 009
               "ersst-v5-1988-12": FIXTURE_DATASETS / "ersst_v5_198812_ssta.nc"}
+    npp = FIXTURE_DATASETS / "mod17a3_npp_1deg.tif"       # feature 012
+    chla = FIXTURE_DATASETS / "modis_chla_4deg_6mo.nc"    # feature 012
+    gpcp = FIXTURE_DATASETS / "gpcp_v23_ltm_10deg.nc"     # feature 013
+    nsidc = sorted(FIXTURE_DATASETS.glob("nsidc_cdr_v6_*_4x.nc"))  # feature 013: 4 of the 60 files
     for row in data["datasets"]:
         if row["id"] == "etopo2022-surface-10m":
             row.update(format="npy", filename=etopo.name, size=etopo.stat().st_size, sha256=_sha(etopo),
@@ -99,6 +109,23 @@ def fixture_registry(tmp_path, monkeypatch):
             f = months[row["id"]]
             row.update(filename=f.name, size=f.stat().st_size, sha256=_sha(f))
             fr.files[row["id"]] = f
+        elif row["id"] == "mod17a3-npp-mean-2000-2015":  # feature 012: 1 degree, read as 2x2 blocks
+            row.update(filename=npp.name, size=npp.stat().st_size, sha256=_sha(npp),
+                       grid={**row.get("grid", {}), "block": 2})
+            fr.files[row["id"]] = npp
+        elif row["id"] == "modis-aqua-chla-2013-2024":  # feature 012: content checksum of the fixture
+            from lego_image_processor.datasets.readers import netcdf3_content_sha256
+            row.update(filename=chla.name, size=chla.stat().st_size,
+                       content_sha256=netcdf3_content_sha256(chla, "chlor_a"))
+            fr.files[row["id"]] = chla
+        elif row["id"] == "gpcp-v23-ltm-1991-2020":
+            row.update(filename=gpcp.name, size=gpcp.stat().st_size, sha256=_sha(gpcp))
+            fr.files[row["id"]] = gpcp
+        elif row["id"] == "nsidc-cdr-v6-seaice-minimum-1991-2020":
+            row["files"] = [{"url": f"https://noaadata.apps.nsidc.org/NOAA/G02202_V6/fixture/{f.name}",
+                             "size": f.stat().st_size, "sha256": _sha(f)} for f in nsidc]
+            row["size"] = sum(f.stat().st_size for f in nsidc)
+            fr.files[row["id"]] = nsidc
     fr.registry_path.write_text(json.dumps(data), encoding="utf-8")
     monkeypatch.setattr(reg, "REGISTRY_PATH", fr.registry_path)
     monkeypatch.setenv("LEGO_IMAGE_PROCESSOR_CACHE", str(fr.cache_dir))

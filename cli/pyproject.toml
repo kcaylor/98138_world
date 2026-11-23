@@ -23,6 +23,8 @@ tqdm = "^4.65.0"
 scipy = "^1.11"
 # Build sheets PDF (feature 006); BSD license, pure-Python wheel (needs Pillow, charset-normalizer).
 reportlab = ">=4.4,<6"
+# netCDF-4/HDF5 reader (feature 013: GPCP, NSIDC sea ice; ERSST per-month files); BSD-3-Clause.
+h5py = "^3.16.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"

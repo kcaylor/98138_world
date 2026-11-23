@@ -54,9 +54,9 @@ def test_default_run_writes_a_snapshot_parts_estimate_uses(runner, api, tmp_path
     out = tmp_path / "bricklink_price_guide.json"
     r = _fetch(runner, "-o", out)
     assert r.exit_code == 0, r.output
-    assert len(api.opener.requests) == 38                                    # 19 lots x 2
+    assert len(api.opener.requests) == 50                                    # 25 lots x 2
     snap = load_snapshot(out)
-    assert snap.complete and len(snap.lots) == 19 and snap.lot_set["kind"] == "recipes"
+    assert snap.complete and len(snap.lots) == 25 and snap.lot_set["kind"] == "recipes"
     assert {l.lot.key for l in snap.lots} == {l.key for l in recipe_lots()}
     assert "Wrote price snapshot" in r.output and r.output.rstrip().endswith(DISCLAIMER)
     # SC-004: at most one request per second of (fake) time.
@@ -79,14 +79,14 @@ def test_interrupted_then_resumed(runner, api, tmp_path):
     api.use(FakeBrickLink(fail_after=14, fail_with=urllib.error.URLError("connection refused")))
     r = _fetch(runner, "-o", out, "--max-attempts", "2")
     assert r.exit_code == 5, r.output
-    assert "7 of 19 lots saved in" in r.output and "--resume" in r.output
+    assert "7 of 25 lots saved in" in r.output and "--resume" in r.output
     assert not out.exists()
     second = api.use(FakeBrickLink())
     r = _fetch(runner, "-o", out, "--max-attempts", "2", "--resume")
     assert r.exit_code == 0, r.output
-    assert len(second.requests) == 24                                        # 12 lots x 2
+    assert len(second.requests) == 36                                        # 18 lots x 2
     snap = load_snapshot(out)
-    assert snap.complete and len(snap.lots) == 19
+    assert snap.complete and len(snap.lots) == 25
     assert not (tmp_path / "snap.progress.json").exists()
 
 

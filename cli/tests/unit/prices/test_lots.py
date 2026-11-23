@@ -36,10 +36,10 @@ def test_lot_ref_unknown_color():
 
 def test_recipe_lots_default_set():
     lots = recipe_lots()
-    assert len(lots) == 19
-    assert sum(l.part_id == "6141" for l in lots) == 10
-    assert sum(l.part_id == "98138" for l in lots) == 9
-    assert len({l.key for l in lots}) == 19
+    assert len(lots) == 25
+    assert sum(l.part_id == "6141" for l in lots) == 11
+    assert sum(l.part_id == "98138" for l in lots) == 14
+    assert len({l.key for l in lots}) == 25
     assert list(lots) == sorted(lots, key=lambda l: (0 if l.part_id == "6141" else 1, l.lego_color_id))
     # the land-elevation shadow color (Earth Blue, the default shadow) is included
     assert ("98138", 140) in {l.key for l in lots}
