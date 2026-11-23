@@ -214,3 +214,31 @@ def test_kit_part_colors_acknowledges_rebrickable(runner):
     r = runner.invoke(cli, ["kit", "part-colors", "--part", "6141"])
     assert "Catalog data: Rebrickable" in r.output and "Free for personal and commercial use" in r.output
     assert _last(r.output) == DISCLAIMER
+
+
+# --- leftovers in the box (feature 014) ---------------------------------------------------------
+
+def test_list_leftovers_table_with_one_kit(runner, layouts):
+    r = runner.invoke(cli, ["parts", "list", str(layouts["official"]), "--kits", "1"])
+    assert r.exit_code == 0, r.output
+    assert "Left over in the box (1 kit of 31203):" in r.output
+    assert "Left over in the box: 890 pieces" in r.output
+    lines = r.output.split("Left over in the box (1 kit of 31203):", 1)[1].splitlines()
+    white = next(l for l in lines if l.startswith("plate"))
+    assert white.split()[-3:] == ["3,064", "3,062", "2"]
+    coral = next(l for l in lines if "Vibrant Coral (353)" in l)
+    assert coral.split()[-3:] == ["601", "203", "398"]
+    assert _last(r.output) == DISCLAIMER
+
+
+def test_list_no_leftover_table_without_kits(runner, layouts):
+    r = runner.invoke(cli, ["parts", "list", str(layouts["official"])])
+    assert r.exit_code == 0 and "Left over in the box" not in r.output
+
+
+def test_list_leftovers_json(runner, layouts):
+    r = runner.invoke(cli, ["parts", "list", str(layouts["small"]), "--kits", "1", "--format", "json"])
+    d = json.loads(r.output)
+    assert len(d["leftovers"]) == 10 and d["totals"]["leftover"] == 11130 - 30 - 20
+    coral = next(x for x in d["leftovers"] if x["color_key"] == "lego_vibrant_coral")
+    assert (coral["kit_supply"], coral["used"], coral["leftover"]) == (601, 0, 601)

@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from ..kit.colors import load_kit_color_table
 from ..kit.inventory import load_kit_inventory
 from ..kit.part_colors import load_part_colors
 from ..kit.part_numbers import load_part_numbers
@@ -151,12 +152,46 @@ class Lot:
 
 
 @dataclass(frozen=True)
+class Leftover:
+    """One kit map element (part in a color) and how many of its pieces stay in the box (014).
+
+    ``kit_supply`` is the owned kits' supply of this part in this color (minus missing pieces;
+    loose parts are not in the box); ``used`` is the layout positions of this part in this cited
+    color. A kit color the layout does not use is left over whole.
+    """
+
+    part_id: str
+    color_key: str
+    lego_name: str
+    lego_id: int
+    element_id: str
+    rgb: Tuple[int, int, int]
+    kit_supply: int
+    used: int
+
+    @property
+    def part_type(self) -> str:
+        return PART_TYPE[self.part_id]
+
+    @property
+    def leftover(self) -> int:
+        return max(0, self.kit_supply - self.used)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"part_id": self.part_id, "part_type": self.part_type, "color_key": self.color_key,
+                "lego": {"name": self.lego_name, "id": self.lego_id, "element_id": self.element_id},
+                "rgb": list(self.rgb), "kit_supply": self.kit_supply, "used": self.used,
+                "leftover": self.leftover}
+
+
+@dataclass(frozen=True)
 class PartsList:
     layout: Dict[str, Any]
     owned: OwnedInputs
     lots: Tuple[Lot, ...]
     citations: Tuple[Dict[str, Any], ...]
     kit_id: str = "31203"
+    leftovers: Tuple[Leftover, ...] = ()
 
     @property
     def verified_lots(self) -> Tuple[Lot, ...]:
@@ -182,6 +217,7 @@ class PartsList:
             "surplus": sum(l.surplus for l in lots),
             "verified_lots": len(self.verified_lots),
             "unverified_lots": len(self.unverified_lots),
+            "leftover": sum(l.leftover for l in self.leftovers),
         }
 
     def to_dict(self) -> Dict[str, Any]:
@@ -196,6 +232,7 @@ class PartsList:
                       "ignored_rows": o.ignored_rows,
                       "spares_percent": percent_text(o.spares_percent)},
             "lots": [l.to_dict() for l in self.lots],
+            "leftovers": [l.to_dict() for l in self.leftovers],
             "totals": self.totals(),
             "unverified": [{"part_id": l.part_id, "color_key": l.color_key, "reason": l.reason,
                             "needed": l.needed} for l in self.unverified_lots],
@@ -258,6 +295,22 @@ def _citations(lots: Tuple[Lot, ...]) -> Tuple[Dict[str, Any], ...]:
     return tuple(out)
 
 
+def _leftovers(inv, owned: OwnedInputs, used: Counter) -> Tuple[Leftover, ...]:
+    """One row per kit map element, plates then tiles by LEGO color id (feature 014 FR-001)."""
+    table = load_kit_color_table()
+    rows = []
+    for e in inv.by_role("land") + inv.by_role("ocean"):
+        part_id = {"land": "6141", "ocean": "98138"}[e.role]
+        kc = table.by_key(e.color_key)
+        supply = max(0, owned.kits * inv.supplied_for(part_id, e.color_key)
+                     - owned.missing((part_id, e.color_key)))
+        rows.append(Leftover(part_id=part_id, color_key=e.color_key, lego_name=kc.lego.name,
+                             lego_id=kc.lego.id, element_id=e.element_id, rgb=tuple(kc.rgb),
+                             kit_supply=supply, used=used[(part_id, e.color_key)]))
+    rows.sort(key=lambda l: (PART_ORDER[l.part_id], l.lego_id))
+    return tuple(rows)
+
+
 def build_parts_list(layout: Union[LayoutInput, PositionPlacementGrid],
                      layout_path: Optional[Union[str, Path]] = None,
                      owned: Optional[OwnedInputs] = None, kit_id: str = "31203",
@@ -282,6 +335,7 @@ def build_parts_list(layout: Union[LayoutInput, PositionPlacementGrid],
         codes.setdefault(key, set()).add(str(pos.lego_color_code))
     p = owned.spares_percent
     lots: List[Lot] = []
+    used: Counter = Counter()
     for (part_id, color_key), needed in counts.items():
         name, code = labels[(part_id, color_key)]
         if len(codes[(part_id, color_key)]) > 1:
@@ -291,6 +345,8 @@ def build_parts_list(layout: Union[LayoutInput, PositionPlacementGrid],
             res = resolve_color(part_id, color_key, code)
         # Supply and owned parts are keyed by the cited color, which may be named differently.
         ck = res.color.key if isinstance(res, ResolvedColor) else color_key
+        if isinstance(res, ResolvedColor):
+            used[(part_id, ck)] += needed
         supply = max(0, owned.kits * inv.supplied_for(part_id, ck)
                      - owned.missing((part_id, ck)))
         loose = owned.loose((part_id, ck))
@@ -314,4 +370,4 @@ def build_parts_list(layout: Union[LayoutInput, PositionPlacementGrid],
         "arrangement": _arrangement_block(grid),
     }
     return PartsList(layout=layout_block, owned=owned, lots=lots_t, citations=_citations(lots_t),
-                     kit_id=kit_id)
+                     kit_id=kit_id, leftovers=_leftovers(inv, owned, used))

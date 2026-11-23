@@ -68,9 +68,25 @@ def test_summary_from_parts_lists(manifest):
     off = manifest["maps"][0]
     s = off["variants"]["A"]["summary"]
     assert s == {"lots": 10, "pieces": 10240, "one_kit_covers": 10240, "to_buy_with_kit": 0,
-                 "lots_to_buy_with_kit": 0, "unverified_lots": 0}
+                 "lots_to_buy_with_kit": 0, "unverified_lots": 0, "left_over_with_kit": 890}
     lot = off["variants"]["A"]["lots"][0]
     assert {"lego", "bricklink", "rebrickable", "needed", "kit_supply", "to_buy", "rgb"} <= set(lot)
+
+
+def test_leftovers_from_one_kit_parts_list(manifest, site_dir):
+    """Feature 014: the one-kit leftovers come from the CLI library, kit colors not used included."""
+    from lego_image_processor.layout.grid import PositionPlacementGrid
+    from lego_image_processor.parts import OwnedInputs, build_parts_list
+
+    for m in manifest["maps"]:
+        v = m["variants"]["A"]
+        rows = v["leftovers"]
+        assert len(rows) == 10 and v["summary"]["left_over_with_kit"] == sum(r["leftover"] for r in rows)
+        layout = PositionPlacementGrid.from_json((site_dir / v["files"]["layout"]["path"]).read_text())
+        assert rows == [l.to_dict() for l in build_parts_list(layout, owned=OwnedInputs(kits=1)).leftovers]
+    white = manifest["maps"][0]["variants"]["A"]["leftovers"][0]
+    assert (white["lego"]["name"], white["kit_supply"], white["used"], white["leftover"]) == \
+        ("White", 3064, 3062, 2)
 
 
 def test_nothing_to_buy_has_no_topup_export(manifest):

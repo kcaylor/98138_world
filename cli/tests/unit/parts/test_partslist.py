@@ -74,7 +74,8 @@ def test_lots_grouped_and_ordered():
     assert _lot(pl, "6141", "lego_black").reason == "no cited color for part"  # LEGO ID 999
     t = pl.totals()
     assert t == {"lots": 6, "needed": 78, "owned": 0, "to_buy": 78, "lots_to_buy": 6, "spares": 0,
-                 "surplus": 0, "verified_lots": 4, "unverified_lots": 2}
+                 "surplus": 0, "verified_lots": 4, "unverified_lots": 2,
+                 "leftover": 0}
 
 
 def test_json_shape_and_determinism():
@@ -82,7 +83,7 @@ def test_json_shape_and_determinism():
     a, b = pl.to_json(), build_parts_list(make_grid(UNCITED), layout_path="x.json").to_json()
     assert a == b
     d = json.loads(a)
-    assert list(d) == ["format_version", "kit", "layout", "owned", "lots", "totals", "unverified",
+    assert list(d) == ["format_version", "kit", "layout", "owned", "lots", "leftovers", "totals", "unverified",
                        "citations", "acknowledgement", "prices", "disclaimer"]
     assert d["disclaimer"] == DISCLAIMER and "Rebrickable" in d["acknowledgement"]
     assert d["layout"]["map"] is None

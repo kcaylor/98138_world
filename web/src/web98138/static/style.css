@@ -1,6 +1,7 @@
 /* 98138.world. Hand-written, no build step. Not affiliated with or endorsed by The LEGO Group. */
 :root {
-  --bg: #f5f3ee;
+  --bg: #e9e9e9;          /* neutral light gray so White studs show (feature 014) */
+  --stud-mat: #e9e9e9;    /* surround of every stud preview, light and dark mode */
   --surface: #ffffff;
   --ink: #1b2430;
   --muted: #5a6573;
@@ -75,7 +76,9 @@ h3 { font-size: 1rem; margin: 1.2em 0 .4em; }
 .card-title { font-weight: 650; font-size: 1.05rem; }
 .card-text { color: var(--muted); font-size: .94rem; }
 .card-meta { font-size: .85rem; color: var(--muted); margin-top: auto; padding-top: .3rem; }
-.stud-img { display: block; width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; background: #222; }
+.stud-img { display: block; width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges;
+  background: var(--stud-mat); padding: 8px; }
+.card .stud-img { border-bottom: 1px solid var(--line); }
 .how { max-width: 52rem; }
 .steps { padding-left: 1.2rem; }
 .steps li { margin: .4em 0; }
@@ -119,8 +122,9 @@ h3 { font-size: 1rem; margin: 1.2em 0 .4em; }
 .lots tbody th { font-weight: 500; min-width: 12rem; }
 .lots .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .lots tbody tr:last-child > * { border-bottom: 0; }
+.lots tfoot > tr > * { border-top: 1px solid var(--line); border-bottom: 0; font-weight: 650; }
 .swatch { vertical-align: -2px; margin-right: .45rem; }
-.swatch circle { stroke: rgba(0, 0, 0, .25); stroke-width: 1; }
+.swatch circle { stroke: rgba(0, 0, 0, .55); stroke-width: 1; }
 .id { color: var(--muted); font-size: .85em; }
 .costs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: .75rem; margin: 0 0 .6rem; }
 .cost { background: var(--bg); border-radius: 10px; padding: .7rem .8rem; }
@@ -185,7 +189,7 @@ h3 { font-size: 1rem; margin: 1.2em 0 .4em; }
 .pc-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pc-table select { width: 100%; min-width: 12rem; }
 .pc-swatch { display: inline-block; width: 1.1rem; height: 1.1rem; border-radius: 50%; vertical-align: -3px; margin-right: .45rem;
-  box-shadow: inset -2px -3px 0 rgba(0, 0, 0, .18), 0 0 0 1px rgba(0, 0, 0, .25); }
+  box-shadow: inset -2px -3px 0 rgba(0, 0, 0, .18), 0 0 0 1px rgba(0, 0, 0, .55); }
 .pc-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 1rem; margin: 0 0 .9rem; }
 .pc-shadow label { color: var(--muted); font-size: .9rem; }
 .pc-palette summary { cursor: pointer; font-weight: 600; }

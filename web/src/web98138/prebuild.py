@@ -232,9 +232,10 @@ def build_variant(recipe, combination: str, out: Path, rel: str, *, cache_dir=No
         "summary": {"lots": ft["lots"], "pieces": ft["needed"],
                     "one_kit_covers": t["needed"] - t["to_buy"], "to_buy_with_kit": t["to_buy"],
                     "lots_to_buy_with_kit": t["lots_to_buy"],
-                    "unverified_lots": ft["unverified_lots"]},
+                    "unverified_lots": ft["unverified_lots"], "left_over_with_kit": t["leftover"]},
         "nothing_to_buy_with_kit": t["to_buy"] == 0,
         "lots": [lot.to_dict() for lot in topup.lots],
+        "leftovers": [row.to_dict() for row in topup.leftovers],
         "files": entries,
         "_report": result.report,
     }

@@ -131,6 +131,15 @@ only: parts lists, prices, sheets and downloads never change. Pages still work w
 FR-009 as amended by 015 FR-020). Web tests run the script's pure functions under Node when it
 is installed.
 
+Leftovers and page background (feature 014, see `specs/014-leftovers-and-background/`): every
+parts list carries `leftovers`, one row per kit map element (White plate and the nine ocean tiles,
+supplies read from `kit_31203_inventory.json`): `kit_supply` (kits × quantity − missing; loose
+parts are not in the box), `used`, `leftover` = max(0, supply − used), plus `totals.leftover`.
+`parts list --kits N` (N ≥ 1) prints a "Left over in the box" table; marketplace exports are
+unchanged. The web prebuild writes `variants[].leftovers` and `summary.left_over_with_kit` (one
+kit) and the map page shows them. Site background `--bg: #e9e9e9`; every stud preview sits on a
+`--stud-mat` of the same gray, so White studs show.
+
 1. **Python CLI** (`cli/`, package `lego_image_processor`), written to be released as open source.
 2. **Web application** (`web/`) on Fly.io at 98138.world. It calls the CLI library at build time and
    never duplicates its logic; the runtime image has no CLI dependencies.
