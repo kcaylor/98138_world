@@ -125,6 +125,15 @@ def echo_parts_list(pl: PartsList, all_columns: bool = False, echo=click.echo) -
          f"to buy {t['to_buy']:,} pieces in {t['lots_to_buy']} lots"
          + (f" (incl. {t['spares']:,} spares)" if t["spares"] else "")
          + (f"; surplus {t['surplus']:,}" if t["surplus"] else ""))
+    if pl.owned.kits:
+        echo()
+        kits = pl.owned.kits
+        echo(f"Left over in the box ({kits} kit{'s' if kits != 1 else ''} of {pl.kit_id}):")
+        rows = [[l.part_type, f"{l.lego_name} ({l.lego_id})", f"{l.kit_supply:,}", f"{l.used:,}",
+                 f"{l.leftover:,}"] for l in pl.leftovers]
+        for line in _table(["part", "color (LEGO id)", "kit", "used", "left over"], rows):
+            echo(line)
+        echo(f"Left over in the box: {t['leftover']:,} pieces")
     if pl.unverified_lots:
         echo(f"Warning: {len(pl.unverified_lots)} unverified lot(s) have no cited marketplace IDs "
              "and cannot be exported without --allow-partial:")

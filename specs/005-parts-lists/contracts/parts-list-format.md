@@ -45,3 +45,8 @@ carry `layout_color` and `reason` and no `lego`/`bricklink`/`rebrickable` keys; 
 a decimal string; lots ordered plate → tile, LEGO color ID, unverified last (plate → tile, then key).
 (The example's Bright Red plate lot was unverified before US4; it is cited now. Implemented totals
 add `lots_to_buy`, `spares` and `surplus`, and the file adds `unverified` and `prices`.)
+
+## Addendum (feature 014): leftovers
+
+Additive, `format_version` stays "1": a `leftovers` array (after `lots`) and `totals.leftover`.
+See `specs/014-leftovers-and-background/contracts/parts-list-leftovers.md`.

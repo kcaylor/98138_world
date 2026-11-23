@@ -46,6 +46,7 @@
     <div><dt>Lots</dt><dd>{{ s.lots }}</dd></div>
     <div><dt>One 31203 kit covers</dt><dd>{{ s.one_kit_covers | n }} <span class="pct">({{ (100 * s.one_kit_covers / s.pieces) | round(1) }}%)</span></dd></div>
     <div><dt>To buy with one kit</dt><dd>{% if s.to_buy_with_kit %}{{ s.to_buy_with_kit | n }} <span class="pct">in {{ s.lots_to_buy_with_kit }} lots</span>{% else %}nothing{% endif %}</dd></div>
+    {% if s.left_over_with_kit is defined %}<div><dt>Left over in the box</dt><dd>{{ s.left_over_with_kit | n }} <span class="pct">pieces of one kit</span></dd></div>{% endif %}
   </dl>
   <p class="note">Map pieces only (no frames or baseplates). Every arrangement uses the same pieces; only the frames' order changes.</p>
 </section>
@@ -74,6 +75,25 @@
     </tbody>
   </table>
   </div>
+  {% if variant.leftovers %}
+  <h3 id="leftovers-heading">Left over in the box <span class="sub">one 31203 kit</span></h3>
+  <div class="table-scroll" role="region" aria-labelledby="leftovers-heading" tabindex="0">
+  <table class="lots leftovers">
+    <thead><tr><th scope="col">Color (LEGO)</th><th scope="col">Part</th><th scope="col" class="num">One kit has</th><th scope="col" class="num">Used</th><th scope="col" class="num">Left over</th></tr></thead>
+    <tbody>
+    {% for r in variant.leftovers %}
+      <tr class="leftover-row">
+        <th scope="row"><svg class="swatch" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6" fill="rgb({{ r.rgb | join(',') }})"/></svg>{{ r.lego.name }} <span class="id">({{ r.lego.id }}; element {{ r.lego.element_id }})</span></th>
+        <td>{{ part_labels.get(r.part_id, r.part_type) }} <span class="id">{{ r.part_id }}</span></td>
+        <td class="num">{{ r.kit_supply | n }}</td><td class="num">{{ r.used | n }}</td><td class="num">{{ r.leftover | n }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+    <tfoot><tr><th scope="row" colspan="4">Total left over</th><td class="num">{{ s.left_over_with_kit | n }}</td></tr></tfoot>
+  </table>
+  </div>
+  <p class="note">Map pieces of one kit that this map does not use, per color; a kit color the map does not use at all stays in the box whole. Pieces beyond one kit are under To buy above.</p>
+  {% endif %}
   <p class="note ack">{{ manifest.acknowledgement }} Rebrickable part and color IDs courtesy of <a href="https://rebrickable.com">Rebrickable</a>.</p>
 </section>
 

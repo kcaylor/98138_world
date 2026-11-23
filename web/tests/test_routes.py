@@ -60,6 +60,24 @@ def test_map_page_content(client, manifest):
     assert "data" in html and "background" in html
 
 
+def test_map_page_leftovers(client, manifest):
+    """Feature 014: every kit color's leftover and the total are on the map page."""
+    sst = manifest["maps"][1]
+    v = sst["variants"]["A"]
+    html = client.get("/maps/ocean-sst/A").text
+    assert "Left over in the box" in html
+    assert f"{v['summary']['left_over_with_kit']:,}" in html
+    for r in v["leftovers"]:
+        assert escape(r["lego"]["name"]) in html
+    assert html.count('class="leftover-row"') == 10
+
+
+def test_gray_background_and_stud_mat(client):
+    css = client.get("/static/style.css").text
+    assert "--bg: #e9e9e9;" in css and "--stud-mat: #e9e9e9;" in css
+    assert ".stud-img" in css and "background: var(--stud-mat)" in css
+
+
 def test_map_page_without_dataset_cites_design(client, manifest):
     html = client.get("/maps/official-31203/A").text
     assert escape(manifest["maps"][0]["citations"][0]["citation"][:40]) in html
