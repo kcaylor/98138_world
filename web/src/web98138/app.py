@@ -2,7 +2,9 @@
 
 Fixed routes only. Map IDs, combinations and download kinds are looked up in the manifest; no
 part of a URL is ever used as a file path. Nothing here imports ``lego_image_processor``: every
-file and number shown was produced by the CLI library in the build step.
+file and number shown was produced by the CLI library in the build step. Map pages load one
+first-party script, ``/static/palette.js`` (feature 015), which only recolors the prebuilt
+``cells.json`` in the browser; every page works without it.
 
 Run: ``WEB98138_SITE_DIR=DIR uvicorn web98138.app:app --port 8080``.
 Not affiliated with or endorsed by The LEGO Group.
@@ -24,11 +26,14 @@ from . import COMBINATIONS, DISCLAIMER, REPO_URL, SITE_HOST, __version__
 from .catalog import DOWNLOAD_KINDS, Catalog
 
 PKG = Path(__file__).resolve().parent
-STATIC = {"style.css": "text/css; charset=utf-8", "favicon.svg": "image/svg+xml"}
+STATIC = {"style.css": "text/css; charset=utf-8", "favicon.svg": "image/svg+xml",
+          "palette.js": "text/javascript; charset=utf-8"}
 FILE_CACHE = "public, max-age=86400"
 PAGE_CACHE = "public, max-age=300"
 SECURITY_HEADERS = {
+    # feature 015 (FR-008, FR-020): the site's own palette.js and its cells.json fetch only
     "content-security-policy": ("default-src 'none'; img-src 'self'; style-src 'self'; "
+                                "script-src 'self'; connect-src 'self'; "
                                 "base-uri 'none'; form-action 'none'; frame-ancestors 'none'"),
     "x-content-type-options": "nosniff",
     "referrer-policy": "no-referrer",
@@ -52,6 +57,15 @@ def _fmt(n: Any) -> str:
     return f"{n:,}" if isinstance(n, int) else str(n)
 
 
+def _usd(n: Any) -> str:
+    """Whole dollars from the manifest (integers computed by the CLI library): ``$1,150``."""
+    return f"${n:,}" if isinstance(n, int) and not isinstance(n, bool) else str(n)
+
+
+def _plural(n: Any, word: str) -> str:
+    return f"{_fmt(n)} {word}" + ("" if n == 1 else "s")
+
+
 def _ext(entry: Dict[str, Any]) -> str:
     return entry["path"].rsplit(".", 1)[-1].upper()
 
@@ -61,7 +75,8 @@ def create_app(site_dir) -> FastAPI:
     catalog = Catalog.load(site_dir)
     m = catalog.manifest
     etag_base = (m.get("generated_at") or "") + __version__
-    asset_version = f"{__version__}-{hashlib.sha256(catalog.raw).hexdigest()[:10]}"
+    statics = b"".join((PKG / "static" / n).read_bytes() for n in sorted(STATIC))
+    asset_version = f"{__version__}-{hashlib.sha256(catalog.raw + statics).hexdigest()[:10]}"
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, debug=False,
                   title="98138.world")
     templates = Jinja2Templates(directory=str(PKG / "templates"))
@@ -69,6 +84,8 @@ def create_app(site_dir) -> FastAPI:
     env.filters["n"] = _fmt
     env.filters["size"] = _size
     env.filters["ext"] = _ext
+    env.filters["usd"] = _usd
+    env.filters["plural"] = _plural
     env.globals.update(DISCLAIMER=DISCLAIMER, REPO_URL=REPO_URL, manifest=m,
                        asset_version=asset_version, arrangements=m["arrangements"],
                        role_label=ROLE_LABEL, part_labels=m.get("part_labels", {}),
@@ -153,6 +170,7 @@ def create_app(site_dir) -> FastAPI:
 
     get("/maps/{map_id}/{combination}/preview.png")(image("preview"))
     get("/maps/{map_id}/{combination}/thumb.png")(image("thumb"))
+    get("/maps/{map_id}/{combination}/cells.json")(image("cells"))  # feature 015, inline JSON
 
     @get("/maps/{map_id}/{combination}/download/{kind}")
     async def download(request: Request, map_id: str, combination: str, kind: str):

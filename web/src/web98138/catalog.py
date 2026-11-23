@@ -7,6 +7,7 @@ build step wrote. Not affiliated with or endorsed by The LEGO Group.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -17,11 +18,74 @@ FORMAT_VERSION = "1"
 DOWNLOAD_KINDS = ("layout", "parts", "parts-1kit", "bricklink", "rebrickable", "bricklink-1kit",
                   "rebrickable-1kit", "sheets-letter", "sheets-a4")
 IMAGE_KINDS = ("preview", "thumb")
-KINDS = DOWNLOAD_KINDS + IMAGE_KINDS
+DATA_KINDS = ("cells",)   # feature 015: palette chooser data, served inline, never a download
+KINDS = DOWNLOAD_KINDS + IMAGE_KINDS + DATA_KINDS
+ESTIMATE_KINDS = ("full", "one_kit")
+_SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
 
 class CatalogError(RuntimeError):
     """The output directory cannot be served."""
+
+
+def _get(d: Any, path: str) -> Any:
+    for key in path.split("."):
+        if not isinstance(d, dict) or key not in d:
+            raise KeyError(path)
+        d = d[key]
+    return d
+
+
+def _check(d: Any, path: str, ok, where: str, what: str) -> None:
+    try:
+        v = _get(d, path)
+    except KeyError:
+        raise CatalogError(f"{where}{path}: missing") from None
+    if not ok(v):
+        raise CatalogError(f"{where}{path}: must be {what}, found {v!r}")
+
+
+def _is_int(v: Any) -> bool:
+    return type(v) is int
+
+
+def _is_bool(v: Any) -> bool:
+    return type(v) is bool
+
+
+def _is_text(v: Any) -> bool:
+    return isinstance(v, str) and bool(v.strip())
+
+
+def check_prices(manifest: Dict[str, Any]) -> None:
+    """Price estimates (feature 011; contracts/web.md "Catalog check")."""
+    prices = manifest.get("prices")
+    if prices is None:
+        for m in manifest["maps"]:
+            for c, v in m["variants"].items():
+                if "estimates" in v:
+                    raise CatalogError(f"{m['id']} {c}: estimates present but the manifest has no "
+                                       "prices block")
+        return
+    _check(manifest, "prices.snapshot.sha256",
+           lambda v: isinstance(v, str) and bool(_SHA256.match(v)), "", "64 hex digits")
+    _check(manifest, "prices.snapshot.retrieved_on",
+           lambda v: isinstance(v, str) and bool(re.match(r"^\d{4}-\d{2}-\d{2}$", v)), "",
+           "a date")
+    for path in ("prices.source.url", "prices.estimate_note", "prices.attribution"):
+        _check(manifest, path, _is_text, "", "text")
+    for m in manifest["maps"]:
+        for c, v in m["variants"].items():
+            where = f"{m['id']} {c}: "
+            for kind in ESTIMATE_KINDS:
+                base = f"estimates.{kind}"
+                _check(v, base, lambda e: isinstance(e, dict), where, "an object")
+                for stat in ("average", "low", "high"):
+                    _check(v, f"{base}.whole_dollars.{stat}", _is_int, where, "an integer")
+                for flag in ("complete", "nothing_to_buy"):
+                    _check(v, f"{base}.{flag}", _is_bool, where, "true or false")
+                for n in ("pieces", "lots"):
+                    _check(v, f"{base}.unpriced.{n}", _is_int, where, "an integer")
 
 
 @dataclass(frozen=True)
@@ -110,4 +174,5 @@ class Catalog:
                     if target.stat().st_size != f["bytes"]:
                         raise CatalogError(f"{m['id']} {c} {kind}: {target} has size "
                                            f"{target.stat().st_size}, manifest says {f['bytes']}")
+        check_prices(manifest)
         return cls(root, manifest, raw)

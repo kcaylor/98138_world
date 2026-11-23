@@ -107,3 +107,23 @@ def test_missing_output_fails_at_startup(tmp_path):
 
     with pytest.raises(CatalogError):
         create_app(tmp_path)
+
+
+def test_site_holds_no_price_fetch_config_or_credentials(site_dir):
+    """FR-022: the build output has no API configuration, credentials or snapshot file."""
+    names = {p.name for p in site_dir.rglob("*")}
+    assert "bricklink_api.json" not in names
+    assert "bricklink_price_guide.json" not in names
+    assert not any(n.endswith(".progress.json") for n in names)
+    for p in site_dir.rglob("*"):
+        if p.is_file() and p.suffix in (".json", ".xml", ".csv", ".html"):
+            text = p.read_text(encoding="utf-8")
+            assert "BRICKLINK_" not in text, p
+            assert "oauth" not in text.lower(), p
+            assert "api.bricklink.com" not in text, p
+
+
+def test_price_panel_links_only_plainly(client):
+    html = client.get("/maps/official-31203/A").text
+    assert '<a href="https://www.bricklink.com">' in html
+    assert not re.search(r'<(?:img|link|script|iframe)[^>]+bricklink', html)

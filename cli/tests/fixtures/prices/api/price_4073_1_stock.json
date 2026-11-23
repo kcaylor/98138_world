@@ -1,0 +1,5 @@
+{"meta": {"description": "OK", "message": "OK", "code": 200},
+ "data": {"item": {"no": "4073", "type": "PART"}, "new_or_used": "N", "currency_code": "USD",
+          "min_price": "0.0100", "max_price": "2.0000", "avg_price": "0.0790",
+          "qty_avg_price": "0.0450", "unit_quantity": 3110, "total_quantity": 2104455,
+          "price_detail": [{"quantity": 1000, "unit_price": "0.0400", "shipping_available": true}]}}

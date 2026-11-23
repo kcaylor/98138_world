@@ -17,12 +17,36 @@
     {% endfor %}
     </ul>
   </nav>
-  <figure class="preview">
-    <img src="/maps/{{ map.id }}/{{ combination }}/preview.png" width="1280" height="800" class="stud-img"
+  <figure class="preview" id="preview-figure">
+    <img id="preview-img" src="/maps/{{ map.id }}/{{ combination }}/preview.png" width="1280" height="800" class="stud-img"
          alt="Stud preview of the {{ map.title }} map hung as combination {{ combination }}, {{ arrangement.centre }} in the centre">
     <figcaption><strong>Combination {{ combination }}:</strong> {{ arrangement.description }}. Left to right: {{ arrangement.frames | join(" · ") }}. One square per stud; 128 × 80 studs.</figcaption>
   </figure>
 </section>
+
+{% if variant.files.cells %}
+<section id="palette" class="panel palette" aria-labelledby="palette-heading" data-cells="/maps/{{ map.id }}/{{ combination }}/cells.json" hidden>
+  <h2 id="palette-heading">Try other colors</h2>
+  <p class="pc-note"><strong>Preview only: parts lists, prices, build sheets and downloads use the map's default colors.</strong> Pick a color for each class from the colors each part is made in, change the number of classes and their bounds, and show ice as White. Your choices stay in this page's address, so you can share the link.</p>
+  <p class="pc-status" role="status" aria-live="polite"></p>
+  <fieldset class="pc-ice">
+    <legend>Ice-covered regions</legend>
+    <label><input type="radio" name="pc-ice" value="data" checked> Show the map's data</label>
+    <label><input type="radio" name="pc-ice" value="white"> Show as White ice</label>
+    <p class="note pc-ice-note"></p>
+  </fieldset>
+  <div class="pc-layers"></div>
+  <div class="pc-actions"><div class="pc-shadow"></div><button type="button" class="pc-reset">Reset to the map's colors</button></div>
+  <details class="pc-palette">
+    <summary>All colors the parts are made in</summary>
+    <p class="note">BrickLink names, light to dark; the number is CIE L* (higher is lighter). Bold = in kit 31203; outlined = in use above. Swatches use the on-screen RGB from the cited color tables, so real plastic looks a little different.</p>
+    <div class="pc-swatches"></div>
+  </details>
+  <p class="note">{{ DISCLAIMER }}</p>
+</section>
+<noscript><p class="note pc-noscript">The color chooser needs JavaScript. The preview above shows the map's colors, and every download works without it.</p></noscript>
+<script src="/static/palette.js?v={{ asset_version }}" defer></script>
+{% endif %}
 
 <div class="columns">
 <section aria-labelledby="dl-heading" class="panel">
@@ -51,6 +75,32 @@
   <p class="note">Map pieces only (no frames or baseplates). Every arrangement uses the same pieces; only the frames' order changes.</p>
 </section>
 </div>
+
+{% if manifest.prices and variant.estimates %}{% set p = manifest.prices %}
+<section aria-labelledby="cost-heading" class="panel">
+  <h2 id="cost-heading">Estimated cost</h2>
+  <dl class="costs">
+  {% for kind in ('full', 'one_kit') %}{% set e = variant.estimates[kind] %}{% set w = e.whole_dollars %}
+    <div class="cost">
+      <dt>{{ e.label }}</dt>
+      {% if e.nothing_to_buy %}
+      <dd class="cost-figure covered">One kit covers every piece</dd>
+      {% else %}
+      <dd class="cost-figure">about {{ w.average | usd }} <span class="range">(range {{ w.low | usd }}{% if w.high != w.low %}–{{ w.high | usd }}{% endif %})</span></dd>
+      {% endif %}
+      {% if not e.complete %}
+      <dd class="incomplete">Incomplete: {{ e.unpriced.pieces | plural('piece') }} in {{ e.unpriced.lots | plural('color') }} could not be priced.</dd>
+      {% endif %}
+    </div>
+  {% endfor %}
+  </dl>
+  {% if p.staleness.stale %}<p class="cost-warning">These prices are from {{ p.snapshot.retrieved_on }} and may be out of date.</p>{% endif %}
+  {% if not p.snapshot.complete %}<p class="cost-warning">The price snapshot is partial.</p>{% endif %}
+  <p class="note">Prices from {{ p.snapshot.retrieved_on }}: {{ p.basis }} Source: <a href="{{ p.source.url }}">BrickLink price guide</a>.</p>
+  <p class="note">{{ p.estimate_note }}</p>
+  <p class="note ack">{{ p.attribution }}</p>
+</section>
+{% endif %}
 
 <section aria-labelledby="lots-heading" class="panel">
   <h2 id="lots-heading">Lots</h2>
