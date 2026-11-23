@@ -1,0 +1,16 @@
+{
+  "fixture": "nsidc_cdr_v6_s_202002_4x.nc",
+  "dataset": "nsidc-cdr-v6-seaice-minimum-1991-2020",
+  "version": "v06r00-sep-n-feb-s-1991-2020",
+  "source_sha256": "696dc9c91e46512add7050d53e2e36899e7929ed3322f20540fcdd87952ab43d",
+  "source_url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_202002_F17_v06r00.nc",
+  "method": "cdr_seaice_conc_monthly of sic_pss25_202002_F17_v06r00.nc at every 4th x and y starting at index 2 (100 km, 83 x 79), uint8 as stored; x, y, time and the CF polar_stereographic crs kept; netCDF-4 written with h5py",
+  "license": "No constraints on data access or use (the files' license attribute; NOAA@NSIDC open data)",
+  "citation": "Meier, W. N., F. Fetterer, A. K. Windnagel, J. S. Stewart, and T. Stafford, 2026: NOAA/NSIDC Climate Data Record of Passive Microwave Sea Ice Concentration, Version 6 (G02202). Boulder, Colorado USA: National Snow and Ice Data Center.",
+  "doi": "10.7265/b18j-z797",
+  "generator": "tools/fixtures004/make_fixtures.py",
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group.",
+  "source_file": "sic_pss25_202002_F17_v06r00.nc",
+  "units": "1",
+  "sha256": "9cec645b46b8e3389da368b14b7af58e8c239fef1b22bac94fa9c2b3a7b6b9a2"
+}

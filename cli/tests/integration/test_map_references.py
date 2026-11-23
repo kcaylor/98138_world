@@ -32,7 +32,8 @@ def test_datasets_registered(rid):
 
 # Feature 012: living-planet reads the 385 MB MOD17A3 GeoTIFF and a 147 MB ERDDAP file (owner
 # approved); every other bundled recipe keeps the feature 004 bound (SC-009, 15 MB together).
-LARGE_DOWNLOADS = {"living-planet": 560_000_000}
+# feature 013: rainfall needs GPCP (0.7 MB) and 60 NSIDC files (17.8 MB); SC-003 bound 20 MB
+LARGE_DOWNLOADS = {"living-planet": 560_000_000, "rainfall": 20_000_000}
 
 
 def test_downloads_for_all_bundled_recipes_under_15_mb():

@@ -159,8 +159,9 @@ the output says `- from --arrangement`; `layout arrange el-nino.json --arrangeme
 el-nino-A.json` re-hangs a built layout without rebuilding.
 
 The El Niño map is meant to move to the 2026-27 event once it peaks. NCEI's per-month files from
-2010 on are netCDF-4, which needs a new reader first; the swap is then a new dataset entry and a
-changed `dataset` line and title in `ocean-el-nino`.
+2010 on are netCDF-4; feature 013's `netcdf4` format reads them (size-1 `time`/`lev` axes dropped,
+packing decoded, as the netCDF-3 files), so the swap is a new dataset entry with
+`"format": "netcdf4"` and a changed `dataset` line and title in `ocean-el-nino`.
 
 ### 9. Living planet: plant productivity and ocean chlorophyll
 
@@ -187,7 +188,33 @@ What to look for:
 The build reads the 43200 × 16800 GeoTIFF strip by strip (12 × 12 pixel means) and needs about
 600 MB of memory.
 
-### 10. Make your own map
+### 10. Rainfall: precipitation on land and sea
+
+One command fetches GPCP v2.3 (0.7 MB, netCDF-4) and 60 NSIDC sea-ice files (17.8 MB, each checked
+by SHA-256) and builds the map:
+
+```bash
+lego-image-processor map build rainfall --fetch -o rain.json --preview rain.png --report rain-report.json
+lego-image-processor parts list rain.json --kits 1
+```
+
+What to look for:
+
+- `Override Antarctica (region): 595 cells` and `Override Greenland (region): 116 cells` of
+  `lego_white` under the land layer, `Override sea ice (dataset): 759 cells of lego_white` under the
+  ocean layer, and `Land shadow (cast east): 392 cells of lego_black`;
+- `Legend (mm/day; mm/yr):` blocks, e.g. `0.5 to 1 (182.5 to 365 mm/yr)` (Sand Yellow) and
+  `5 and above (1825 mm/yr and above)` (Earth Blue);
+- `filled from neighbours: 0 cells` (bilinear sampling needs no fill);
+- two citations (Adler et al. 2018 for GPCP; Meier et al. 2026 for NSIDC sea ice);
+- about 8,160 pieces beyond one kit (Earth Blue 567, the kit has 393).
+
+The sea-ice rule, its comparison with the approved prototype and the choice of 60 files are in
+`specs/013-rainfall/research.md` (R2). `dataset info nsidc-cdr-v6-seaice-minimum-1991-2020` shows
+the file count and a manifest checksum; a revised NSIDC file fails its checksum and needs a new
+pinned version.
+
+### 11. Make your own map
 
 ```bash
 lego-image-processor map recipes --copy ocean-sst my-map.toml
@@ -200,7 +227,7 @@ lego-image-processor map build my-map.toml -o my-map.json --preview my-map.png
 `--part 6141` lists the plate colors. A recipe can also point to your own gridded data file, if it
 declares the file's checksum, citation and license (see `specs/004-map-recipes/quickstart.md`).
 
-### 11. From an image (the original feature 001/002 path)
+### 12. From an image (the original feature 001/002 path)
 
 ```bash
 lego-image-processor quantize photo.jpg -o photo_lego.png    # snap colors to LEGO colors

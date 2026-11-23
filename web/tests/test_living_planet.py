@@ -13,7 +13,7 @@ DISCLAIMER = "Not affiliated with or endorsed by The LEGO Group."
 
 
 def test_listed_in_the_site_maps():
-    assert "living-planet" in MAP_IDS and len(MAP_IDS) == 7
+    assert "living-planet" in MAP_IDS and len(MAP_IDS) == 8   # 013 added rainfall
 
 
 def test_manifest_entry(living_site):

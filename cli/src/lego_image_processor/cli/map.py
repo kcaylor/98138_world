@@ -102,13 +102,27 @@ def legend_ranges(bounds) -> List[str]:
     return out
 
 
+def secondary_ranges(bounds, legend: Dict[str, Any]) -> List[str]:
+    """The legend ranges in a layer's secondary units (feature 013), e.g. ``182.5 to 365 mm/yr``."""
+    f, units = float(legend["factor"]), legend["units"]
+    return [t.replace(" and above", f" {units} and above") if t.endswith(" and above") else f"{t} {units}"
+            for t in legend_ranges([b * f for b in bounds])]
+
+
 def _echo_legend(layer: Dict[str, Any], units: str, echo) -> None:
     bounds = layer.get("class_bounds") or []
     counts = layer.get("class_counts") or []
     if layer.get("classification") != "bins" or len(bounds) != len(counts) + 1:
         return
-    echo(f"  Legend ({units}):" if units else "  Legend:")
+    legend = layer.get("legend")
+    if legend:
+        head = f"{units}; {legend['units']}" if units else legend["units"]
+        echo(f"  Legend ({head}):")
+    else:
+        echo(f"  Legend ({units}):" if units else "  Legend:")
     ranges = legend_ranges(bounds)
+    if legend:
+        ranges = [f"{a} ({b})" for a, b in zip(ranges, secondary_ranges(bounds, legend))]
     kw = max(len(c["key"]) for c in counts)
     rw = max(len(t) for t in ranges)
     cw = max(len(f"{c['cells']:,}") for c in counts)
@@ -133,6 +147,9 @@ def echo_report(report: Dict[str, Any], echo=click.echo, units: Optional[Dict[st
             params = ", ".join(f"{k} {nd[k]:g}" for k in ("min_lat", "min_share", "sparse_lat", "min_steps",
                                                           "value") if nd.get(k) is not None)
             echo(f"  No data ({nd['rule']}): {nd['cells']:,} cells of {nd['color']} ({params}), assigned "
+                 "before classification and counted in the table below")
+        for o in layer.get("overrides") or []:  # feature 013
+            echo(f"  Override {o['name']} ({o['kind']}): {o['cells']:,} cells of {o['color']}, assigned "
                  "before classification and counted in the table below")
         if layer["role"] == "data":
             vl = layer.get("variance_lost")

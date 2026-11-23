@@ -16,7 +16,7 @@ DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 REGISTRY_PATH = DATA_DIR / "datasets.json"
 
 KINDS = ("download", "packaged", "local")
-FORMATS = ("dods", "netcdf3", "npy", "kit-design", "geotiff")
+FORMATS = ("dods", "netcdf3", "npy", "kit-design", "geotiff", "netcdf4")
 CLASS_RULES = ("split_at", "missing_is_land", "kit_mask", "land_from")
 REDUCES = ("annual-mean", "climatology-mean")
 GEOTIFF_VARIABLE_KEYS = ("scale_factor", "add_offset", "valid_min", "valid_max", "fill")
@@ -51,9 +51,20 @@ class DatasetEntry:
     path: Optional[Path] = None  # local entries only
     content_sha256: str = ""     # feature 012: checksum of the decoded data (files built on request)
     http_only: str = ""          # feature 012: why the pinned URL is plain HTTP (needs sha256)
+    files: Tuple["DatasetFile", ...] = ()  # feature 013: the pinned files of a multi-file entry
 
     def __hash__(self) -> int:  # dict fields make the generated hash fail
-        return hash((self.id, self.version, self.kind, self.sha256, self.content_sha256, str(self.path)))
+        return hash((self.id, self.version, self.kind, self.sha256, self.content_sha256, str(self.path),
+                     self.files))
+
+    @property
+    def files_sha256(self) -> str:
+        """SHA-256 of the multi-file manifest, lines ``"<sha256>  <name>\\n"`` in list order (013)."""
+        import hashlib
+
+        if not self.files:
+            return ""
+        return hashlib.sha256("".join(f"{f.sha256}  {f.name}\n" for f in self.files).encode()).hexdigest()
 
     @property
     def mask_dataset_id(self) -> Optional[str]:
@@ -74,6 +85,9 @@ class DatasetEntry:
             out["sha256"] = self.sha256
         if self.content_sha256:
             out["content_sha256"] = self.content_sha256
+        if self.files:
+            out["files"] = len(self.files)
+            out["files_sha256"] = self.files_sha256
         if self.doi:
             out["doi"] = self.doi
         if self.acknowledgement:
@@ -83,6 +97,19 @@ class DatasetEntry:
         if self.kind == "local" and self.path is not None:
             out["local_file"] = self.path.name
         return out
+
+
+@dataclass(frozen=True)
+class DatasetFile:
+    """One pinned file of a multi-file download entry (feature 013)."""
+
+    url: str
+    size: int
+    sha256: str
+
+    @property
+    def name(self) -> str:
+        return self.url.rstrip("/").rsplit("/", 1)[-1]
 
 
 @dataclass(frozen=True)
@@ -147,8 +174,9 @@ def parse_entry(row: Dict[str, Any], where: str = "dataset") -> DatasetEntry:
             raise RegistryError(f"{where}: variables.{name} must be an object")
         if "reduce" in spec and spec["reduce"] not in REDUCES:
             raise RegistryError(f"{where}: variables.{name}.reduce must be one of {REDUCES}")
-        if spec.get("reduce") == "climatology-mean" and fmt != "netcdf3":
-            raise RegistryError(f"{where}: variables.{name}.reduce climatology-mean needs format netcdf3")
+        if spec.get("reduce") == "climatology-mean" and fmt not in ("netcdf3", "netcdf4"):
+            raise RegistryError(f"{where}: variables.{name}.reduce climatology-mean needs format netcdf3 "
+                                "or netcdf4")
         for key in GEOTIFF_VARIABLE_KEYS:
             if key in spec and (isinstance(spec[key], bool) or not isinstance(spec[key], (int, float))):
                 raise RegistryError(f"{where}: variables.{name}.{key} must be a number")
@@ -166,26 +194,29 @@ def parse_entry(row: Dict[str, Any], where: str = "dataset") -> DatasetEntry:
         raise RegistryError(f"{where}: content_sha256 must be 64 lowercase hex characters")
     if content_sha and fmt != "netcdf3":
         raise RegistryError(f"{where}: content_sha256 is supported for netcdf3 files only")
+    files = _files(row.get("files"), where, kind, http_only, sha or content_sha)
     if kind == "download":
-        for key in ("url", "size", "filename"):
+        for key in ("url", "size") + (() if files else ("filename",)):
             if row.get(key) in (None, ""):
                 raise RegistryError(f"{where}: download entries need {key}")
-        if bool(sha) == bool(content_sha):
+        if not files and bool(sha) == bool(content_sha):
             raise RegistryError(f"{where}: download entries need exactly one of sha256 and "
-                                "content_sha256")
+                                "content_sha256 (or a files list)")
         url = str(row["url"])
         if url.startswith("http://"):
             if not http_only.strip():
                 raise RegistryError(f"{where}: url must use https (or give http_only, the reason the "
                                     "host serves plain HTTP only)")
-            if not sha:
+            if not sha and not files:
                 raise RegistryError(f"{where}: an http_only entry needs sha256 (the file checksum)")
         elif not url.startswith("https://"):
             raise RegistryError(f"{where}: url must use https")
-        elif http_only:
+        elif http_only and not any(f.url.startswith("http://") for f in files):
             raise RegistryError(f"{where}: http_only is only for http:// URLs")
         if not isinstance(size, int) or isinstance(size, bool) or size <= 0:
             raise RegistryError(f"{where}: size must be a positive integer (bytes)")
+        if files and size != sum(f.size for f in files):
+            raise RegistryError(f"{where}: size must be the total of the files ({sum(f.size for f in files)})")
     if sha and not _SHA_RE.match(sha):
         raise RegistryError(f"{where}: sha256 must be 64 lowercase hex characters")
     if kind == "local" and not sha:
@@ -206,8 +237,38 @@ def parse_entry(row: Dict[str, Any], where: str = "dataset") -> DatasetEntry:
         filename=row.get("filename", "") or "", doi=row.get("doi", "") or "",
         acknowledgement=row.get("acknowledgement", "") or "", notes=row.get("notes", "") or "",
         grid=dict(row.get("grid") or {}), path=Path(path) if path else None,
-        content_sha256=content_sha, http_only=http_only,
+        content_sha256=content_sha, http_only=http_only, files=files,
     )
+
+
+def _files(raw: Any, where: str, kind: str, http_only: str, checksum: str) -> Tuple[DatasetFile, ...]:
+    """The optional ``files`` list of a multi-file download entry (feature 013)."""
+    if raw is None:
+        return ()
+    if kind != "download":
+        raise RegistryError(f"{where}: files is for download entries only")
+    if checksum:
+        raise RegistryError(f"{where}: a files list pins each file; leave out sha256 and content_sha256")
+    if not isinstance(raw, list) or len(raw) < 2:
+        raise RegistryError(f"{where}: files must be a list of at least 2 {{url, size, sha256}}")
+    out = []
+    for i, item in enumerate(raw):
+        w = f"{where}: files[{i}]"
+        if not isinstance(item, dict) or set(item) != {"url", "size", "sha256"}:
+            raise RegistryError(f"{w} must be {{url, size, sha256}}")
+        url, size, sha = item["url"], item["size"], item["sha256"]
+        if not isinstance(url, str) or not (url.startswith("https://") or
+                                            (url.startswith("http://") and http_only.strip())):
+            raise RegistryError(f"{w}.url must use https")
+        if not isinstance(size, int) or isinstance(size, bool) or size <= 0:
+            raise RegistryError(f"{w}.size must be a positive integer (bytes)")
+        if not isinstance(sha, str) or not _SHA_RE.match(sha):
+            raise RegistryError(f"{w}.sha256 must be 64 lowercase hex characters")
+        out.append(DatasetFile(url=url, size=size, sha256=sha))
+    names = [f.name for f in out]
+    if len(set(names)) != len(names) or not all(names):
+        raise RegistryError(f"{where}: file names (URL basenames) must be unique")
+    return tuple(out)
 
 
 def parse_registry(data: Dict[str, Any]) -> Registry:

@@ -229,6 +229,369 @@
       "notes": "One ERDDAP request: 142 monthly composites (2024 has 10), 360 x 720, netCDF-3, chlor_a(time, latitude, longitude) float32, NaN fill. ERDDAP builds the file on request and writes the request time into the global history attribute, so the file bytes change per request; the pin is content_sha256 over the decoded data and coordinates (specs/012-living-planet research R2). If it fails, the data changed: check it against the previous copy and pin a new version."
     },
     {
+      "id": "gpcp-v23-ltm-1991-2020",
+      "version": "v2.3-ltm-1991-2020",
+      "kind": "download",
+      "title": "GPCP v2.3 monthly precipitation, long-term mean 1991-2020",
+      "publisher": "NOAA Physical Sciences Laboratory (data: GPCP, NOAA NCEI CDR)",
+      "url": "https://downloads.psl.noaa.gov/Datasets/gpcp/precip.mon.ltm.1991-2020.nc",
+      "size": 677810,
+      "sha256": "e72475e6687f1a6f940ce89e6645b80c241a47515b03e56d0009d3aa0cf6281c",
+      "format": "netcdf4",
+      "filename": "precip.mon.ltm.1991-2020.nc",
+      "variables": {
+        "precip": {
+          "units": "mm/day",
+          "description": "precipitation rate, annual mean of the 12 monthly long-term means",
+          "reduce": "annual-mean"
+        }
+      },
+      "grid": {
+        "registration": "cell-centre",
+        "resolution_deg": 2.5,
+        "lat": [
+          -88.75,
+          88.75
+        ],
+        "lon": [
+          1.25,
+          358.75
+        ]
+      },
+      "license": "Public domain (U.S. Government work, NOAA PSL); PSL asks for the acknowledgement below",
+      "acknowledgement": "GPCP Precipitation data provided by the NOAA PSL, Boulder, Colorado, USA, from their website at https://psl.noaa.gov",
+      "citation": "Adler, R. F., M. R. P. Sapiano, G. J. Huffman, J.-J. Wang, G. Gu, D. Bolvin, L. Chiu, U. Schneider, A. Becker, E. Nelkin, P. Xie, R. Ferraro, and D.-B. Shin, 2018: The Global Precipitation Climatology Project (GPCP) Monthly Analysis (New Version 2.3) and a Review of 2017 Global Precipitation. Atmosphere, 9(4), 138.",
+      "doi": "10.3390/atmos9040138",
+      "notes": "netCDF-4/HDF5 (read with h5py), precip(12, 72, 144) float32, 2.5 degree cell centres (lat 88.75 to -88.75, lon 1.25 to 358.75), missing_value -9.96921e36 (none used), valid_range 0-100 mm/day. Created 2022-06-10 by PSL (doMonthLTMNC4); climatology_bounds give 1991-2020. PSL offers no netCDF-3 copy (its THREDDS netcdf3 subset returned HTTP 500 on 2026-11-22). Downloaded and checked 2026-11-22 (specs/013-rainfall)."
+    },
+    {
+      "id": "nsidc-cdr-v6-seaice-minimum-1991-2020",
+      "version": "v06r00-sep-n-feb-s-1991-2020",
+      "kind": "download",
+      "title": "NOAA/NSIDC CDR sea ice concentration v6, minimum month (September north, February south), 1991-2020",
+      "publisher": "National Snow and Ice Data Center (NSIDC), NOAA@NSIDC",
+      "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/",
+      "size": 17826152,
+      "files": [
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_199109_F08_v06r00.nc",
+          "size": 360726,
+          "sha256": "f76c56d4c582792e2c747b47611db2a070f7810d7eed3925f416fdcaf60c8cd3"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_199209_F11_v06r00.nc",
+          "size": 352430,
+          "sha256": "92a49c7e835d8f541d500d1bcbf6127a5e1ecba95f674e4dd9165606dd1f20ee"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_199309_F11_v06r00.nc",
+          "size": 363911,
+          "sha256": "ea89b56620452d19e9767972a5b4a5b6f29a38843f492f33ef4f5b5dfa7b208a"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_199409_F11_v06r00.nc",
+          "size": 364418,
+          "sha256": "a929817a1f304eebc61c0317993c3d4f7f01e10ee3486dd62b1d4bc9d0368ca7"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_199509_F11_v06r00.nc",
+          "size": 354947,
+          "sha256": "81e4340a0e23b808a667e8f55bd86e8c512c4b0b418d514c04d32b414709e99b"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_199609_F13_v06r00.nc",
+          "size": 349236,
+          "sha256": "730b4ebc6f8fd4fce6ac38b44f46a8dbd78f1bb23c30e5e894c0924d750fe78d"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_199709_F13_v06r00.nc",
+          "size": 360033,
+          "sha256": "ddc96f61111f053a2d548dac537a076e8253127a59ba341528cbe167b780ee09"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_199809_F13_v06r00.nc",
+          "size": 362192,
+          "sha256": "942d12504ecb8807d23e8eb25edb758d53c0c57fce9ba936af06305d7f1a0bc1"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_199909_F13_v06r00.nc",
+          "size": 361514,
+          "sha256": "73617c2068a39299a330d8ceb5f4be0dfc159ca007fa0fce2fd50b5b0f98d9c6"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_200009_F13_v06r00.nc",
+          "size": 331737,
+          "sha256": "aceb27e4da013572180773b399a422d5936f837c50acc4334df3bdb9050a5bc1"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_200109_F13_v06r00.nc",
+          "size": 355955,
+          "sha256": "8da60895c91216bff20b8fcd47f27b80cbf4a3381a80719e889e6b9e2e8bfc73"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_200209_F13_v06r00.nc",
+          "size": 349791,
+          "sha256": "129829e13ab84a67023ff4e4f053d1171a727d02142ceeead5128ae66a293e92"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_200309_F13_v06r00.nc",
+          "size": 350330,
+          "sha256": "d3975423d265d348fd32630b0e986725aea54bf0bc04c7236f3b5ba06b1ecc23"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_200409_F13_v06r00.nc",
+          "size": 328854,
+          "sha256": "82c04c57ffef09bbbd60cf39186c64319963a97beda5973697ae43f90df9d066"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_200509_F13_v06r00.nc",
+          "size": 346609,
+          "sha256": "fe6e816b1dc8e75e3b21a2e38b4d47013e8114da96c7282be1a9b08c14f6b7bb"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_200609_F13_v06r00.nc",
+          "size": 351699,
+          "sha256": "8bf30b30fee72617b5d8a8dab78835b1e262a432bb9dbba8919e7f5dc4c0e457"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_200709_F13_v06r00.nc",
+          "size": 330099,
+          "sha256": "54bf48dcaea807215b9fa3f3bd8f99dd5ddc996d0cba9086bcf82cd062c4fadd"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_200809_F17_v06r00.nc",
+          "size": 314067,
+          "sha256": "40a1aee4428dbc2a4f818911d7ec8060c5ebbcd4ce9576eb3d9cdc0dfe54bae3"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_200909_F17_v06r00.nc",
+          "size": 339388,
+          "sha256": "0f714cb3c3b325dff5fb1c48dfc81e50be1bc5866f15760d79d3ba50d13b1d65"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_201009_F17_v06r00.nc",
+          "size": 332648,
+          "sha256": "d3fb78c45d7d4fdb792a7050cbe3e21e395312c62837d57b26aa0eb431f71f0c"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_201109_F17_v06r00.nc",
+          "size": 326137,
+          "sha256": "4f61fa51e513cbfa54afef6875a5ab080ca6f80897e76747aa31e32ff44d4e08"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_201209_F17_v06r00.nc",
+          "size": 296699,
+          "sha256": "507d1be1d936cb7e4bd7ff0fd8e1dd2b75b25966a8648625b73048e98f926f31"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_201309_F17_v06r00.nc",
+          "size": 336583,
+          "sha256": "7799d92d724fdb3718b455e5d81ba9746e39a8e84f218a3f5cf6f9f5c7d5daf6"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_201409_F17_v06r00.nc",
+          "size": 335772,
+          "sha256": "b43147177d30a0cf22434bb145116a08fef22d0961c5d1d60518bde4d16df56f"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_201509_F17_v06r00.nc",
+          "size": 332786,
+          "sha256": "c824d5dadf9fb034b1f01e614ee07a19df9bdd2c8a92a539d1b03023ab4ffa2d"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_201609_F17_v06r00.nc",
+          "size": 313438,
+          "sha256": "824cde3861b53b4c3d70cd1d17cccbac4f8b212326513a3c768f8f41393abadd"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_201709_F17_v06r00.nc",
+          "size": 327069,
+          "sha256": "cfcf9594eace794ef26957956e20eab2f3c8ca698d8e2159733ff81f0c7877cc"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_201809_F17_v06r00.nc",
+          "size": 329588,
+          "sha256": "1ffdd6c771f8558fcc4b2970df7d3ef27ddb6f163da8a7a3e3571f6bb9ee4544"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_201909_F17_v06r00.nc",
+          "size": 323815,
+          "sha256": "7d92c7ff97413e24828a22eb7017877b2939fdd12c71beb5e7f85a77ff96a6cc"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/north/monthly/sic_psn25_202009_F17_v06r00.nc",
+          "size": 304518,
+          "sha256": "859bc868c1b2ed55d1eedb792dea2f3c077753ffdbb4017f3ce61112e60327ba"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_199102_F08_v06r00.nc",
+          "size": 261294,
+          "sha256": "1c586c0f461ed81adef2b4e67277bc3f018e3b3b4a2b7859c28da5c69fa1533e"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_199202_F11_v06r00.nc",
+          "size": 260796,
+          "sha256": "56b41b9b9f168b5c9d8bbd7aa9c9b03e03321894e273918e670098ca3a2c73af"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_199302_F11_v06r00.nc",
+          "size": 256757,
+          "sha256": "e02dbe482ed5db95c2f2dcd86198b1f572109721e6ce6f4e8750bc9ae9e5f586"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_199402_F11_v06r00.nc",
+          "size": 260924,
+          "sha256": "77c8b4594fe20898766f680ab76560be5a72ca22a6156ca9cffb2c413fd750d7"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_199502_F11_v06r00.nc",
+          "size": 267683,
+          "sha256": "19276450d0084a15399967d449f22bd0b397acc77815b812d21bb4f5f41df98d"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_199602_F13_v06r00.nc",
+          "size": 263164,
+          "sha256": "b3bec5cebf46a0d3a402e9adbf5863fef05d593220b495fd41cb7505583ba2f9"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_199702_F13_v06r00.nc",
+          "size": 244497,
+          "sha256": "20e1b7fdbcd99e997a90f27399641eb3c8e68a3f2415c3d631519f5d2092cdca"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_199802_F13_v06r00.nc",
+          "size": 254055,
+          "sha256": "4d836a826d92d7680155bcbe7b246e742af2e8d5b33cc19df2e66f692577ca53"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_199902_F13_v06r00.nc",
+          "size": 260966,
+          "sha256": "67f5d6734b1a747355ed997d84c8d635d1e10ddb1991abd0155681a9232e0ecf"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_200002_F13_v06r00.nc",
+          "size": 258824,
+          "sha256": "008b6f39758f87d9b977eade2c8030ad32f70a8e3cf56d75c7835c6a36cfd76b"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_200102_F13_v06r00.nc",
+          "size": 265405,
+          "sha256": "733b27ec55d4506b74eb866b48e61010eb286a0dac8345b860076d260e43562b"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_200202_F13_v06r00.nc",
+          "size": 257585,
+          "sha256": "2cf0904b7c50ff74a2b34e36042d7d48bae65107a73f1a3562b699fe70baf482"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_200302_F13_v06r00.nc",
+          "size": 266602,
+          "sha256": "1fb9d876981b8a0da88a81219f29f9351b4599cbd1178ebb2e33d7fe5c0a1955"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_200402_F13_v06r00.nc",
+          "size": 269156,
+          "sha256": "a79d4a0a8d2cec144cc7d45bfd3dcec6f1247ffd2324807c0c0d5ab7b6f36c87"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_200502_F13_v06r00.nc",
+          "size": 257100,
+          "sha256": "fc51e38ad554c5f2f753b947c7f7287df05923c3fa7f7a353faa8dda8d147c7c"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_200602_F13_v06r00.nc",
+          "size": 254080,
+          "sha256": "2eb294c78dcbb5a95fa9bd559d9085a782e15ae1ae7e5dcf92e3f912b2c6ce94"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_200702_F13_v06r00.nc",
+          "size": 255126,
+          "sha256": "a6b928801bb329b1eb1bcca36b6f48d6386480d4774fc38504cd090370e6096d"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_200802_F17_v06r00.nc",
+          "size": 262280,
+          "sha256": "5623a3f6a13dfa7f605236d79eb44310fcb0fac193441d750576a12742ffcc9a"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_200902_F17_v06r00.nc",
+          "size": 252030,
+          "sha256": "092c625b136d732bbf9ad444ee0a4a213df23be29dc3761f52c7858c074ab71b"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_201002_F17_v06r00.nc",
+          "size": 245349,
+          "sha256": "fe1d52750a085259596d686518ff77faff4f6c504ad3a7d914749af88a7fed3e"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_201102_F17_v06r00.nc",
+          "size": 237363,
+          "sha256": "06aa6bae7154a4c8fec39bc4457c43f041e30e072c2e6f59f8184ce834cdad46"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_201202_F17_v06r00.nc",
+          "size": 260242,
+          "sha256": "503a263163c0283093be0200713d0e5ef85ec253ac4cd84fdf78df72f52eb0b3"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_201302_F17_v06r00.nc",
+          "size": 256946,
+          "sha256": "45a03e84e5e10e3cce0ed2291b76546bfa5b5f6555bb2e5b852c8f1a8d842223"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_201402_F17_v06r00.nc",
+          "size": 260023,
+          "sha256": "756b86ddca47e3f1a0ebee0482b3c182065f86d613b170a1da64254fc08d97e7"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_201502_F17_v06r00.nc",
+          "size": 260747,
+          "sha256": "0e948003ed701d10f49384940ff2f55f2014dc2fdcb75596b56956746deceb5e"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_201602_F17_v06r00.nc",
+          "size": 243328,
+          "sha256": "dde912d617ef95e933a63ae73e0e328e33479312f1335bd33b3c6bb29faf6130"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_201702_F17_v06r00.nc",
+          "size": 227887,
+          "sha256": "c0efdba8b73904136cedb13b321622e17e7f906b4256f5d4e8e32a40d4747b8f"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_201802_F17_v06r00.nc",
+          "size": 234522,
+          "sha256": "7200d73c2c8150055f48b8de952ed7ae28f8d704d6fe7cc6af811df70f8038d2"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_201902_F17_v06r00.nc",
+          "size": 237342,
+          "sha256": "f628f90b3cffbf8d28dd84786f792e18569cdb3e587286477b712a173e46e9d4"
+        },
+        {
+          "url": "https://noaadata.apps.nsidc.org/NOAA/G02202_V6/south/monthly/sic_pss25_202002_F17_v06r00.nc",
+          "size": 247090,
+          "sha256": "696dc9c91e46512add7050d53e2e36899e7929ed3322f20540fcdd87952ab43d"
+        }
+      ],
+      "format": "netcdf4",
+      "variables": {
+        "cdr_seaice_conc_monthly": {
+          "units": "1",
+          "description": "sea ice area fraction; per pixel the mean over the 30 minimum-month files (September north, February south) with a valid value",
+          "reduce": "climatology-mean"
+        }
+      },
+      "grid": {
+        "projection": "NSIDC polar stereographic 25 km (EPSG:3411 north, 448 x 304; EPSG:3412 south, 332 x 316)"
+      },
+      "license": "No constraints on data access or use (the files' license attribute; NOAA@NSIDC open data)",
+      "citation": "Meier, W. N., F. Fetterer, A. K. Windnagel, J. S. Stewart, and T. Stafford, 2026: NOAA/NSIDC Climate Data Record of Passive Microwave Sea Ice Concentration, Version 6 (G02202). Boulder, Colorado USA: National Snow and Ice Data Center.",
+      "doi": "10.7265/b18j-z797",
+      "acknowledgement": "Sea ice concentration from the NOAA/NSIDC Climate Data Record (G02202 v6), National Snow and Ice Data Center, https://nsidc.org/data/g02202/versions/6",
+      "notes": "60 per-month netCDF-4 files (version v06r00): sic_psn25_YYYY09_* (north) and sic_pss25_YYYY02_* (south) for 1991-2020, each pinned by size and SHA-256; all matched NSIDC's MD5 manifests (G02202_V6/<hemisphere>/checksums/monthly/*.mnf) on 2026-11-22. cdr_seaice_conc_monthly(1, y, x) uint8, scale 0.01, _FillValue 255, valid_range 0-100 (land, coast, lake flags fall outside). The files carry projected x/y and a CF polar_stereographic crs but no latitude/longitude; the reader computes them (specs/013-rainfall research R3). The whole-record monthly aggregate is rewritten under a new name every month, so it is not pinned (research R2)."
+    },
+    {
       "id": "kit31203-design",
       "version": "003",
       "kind": "packaged",

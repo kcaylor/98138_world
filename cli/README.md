@@ -30,6 +30,9 @@ A CLI tool that converts images to LEGO-compatible color palettes and generates 
   2000-2015) on land and ocean chlorophyll-a (MODIS-Aqua, 2013-2024) at sea, with ice in White and a
   Black land shadow (recipe `living-planet`; strip GeoTIFF reader, climatology means, `log10`
   transform, `no_data` rules)
+- **Rainfall** (feature 013): annual mean precipitation 1991-2020 (GPCP v2.3) on land and sea,
+  with White ice sheets, NSIDC sea ice and a Black land shadow (recipe `rainfall`; netCDF-4 reader
+  with h5py, multi-file datasets, bilinear sampling, `override` rules, two-unit legends)
 
 ## Installation
 
@@ -174,7 +177,7 @@ land/sea mask). Each layer is **data** (a gridded field classified onto an order
 **background** (fixed colors: mixed by weight, or a coastal halo). Every map also gets a one-stud
 **land shadow**: the ocean cells just east of land, in Earth Blue, as on the official design (391
 of its 392 Earth Blue tiles sit there). The shadow is drawn first, uses 392 of the kit's 393 Earth
-Blue tiles, and the ocean layer covers the other 6,786 ocean cells. Seven recipes are bundled:
+Blue tiles, and the ocean layer covers the other 6,786 ocean cells. Eight recipes are bundled:
 
 | Recipe | Land | Ocean | Data needed |
 |---|---|---|---|
@@ -184,6 +187,7 @@ Blue tiles, and the ocean layer covers the other 6,786 ocean cells. Seven recipe
 | `ocean-el-nino` | White | shadow; SST anomaly of December 1997 (strong El Niño) on the shared ENSO legend below; hung as B | ERSST v5 December 1997 |
 | `ocean-la-nina` | White | shadow; SST anomaly of December 1988 (strong La Niña) on the same legend; hung as B | ERSST v5 December 1988 |
 | `living-planet` | net primary production 2000-2015 on six plate colors (Tan to Green), ice White | chlorophyll-a 2013-2024 on five tile colors (Blue to Dark Green), sea ice White, shadow Black | MOD17A3 NPP, MODIS-Aqua chl-a, ETOPO 2022 |
+| `rainfall` | precipitation 1991-2020 on six plate colors (Tan to Green), ice sheets White | precipitation on five tile colors (Bright Light Blue to Dark Blue), sea ice White, shadow Black | GPCP v2.3, NSIDC sea ice CDR v6 |
 | `land-elevation` | elevation on 10 plate colors (green to brown to grey to white) | shadow; Bright Bluish Green (Dark Turquoise) with a Medium Azur coastal halo that fades evenly offshore; needs more Bright Bluish Green tiles than one kit holds (reported as beyond-kit) | ETOPO 2022 |
 
 ```bash
@@ -310,6 +314,50 @@ min_share = 0.5              # ... above this
 No-data cells are assigned before the layer is classified (the land shadow still wins), are
 counted in the layer's supply table, and are printed as `No data (<rule>): N cells of <color>`.
 
+#### Rainfall
+
+`rainfall` shows global annual mean precipitation: GPCP v2.3 monthly long-term mean 1991-2020
+(NOAA PSL; Adler et al. 2018), the mean of the 12 months, sampled bilinearly at each kit cell
+centre. Land, mm/day (mm/yr): Brick Yellow [Tan] below 0.5 (182.5), Sand Yellow [Dark Tan] 0.5-1,
+Sand Green 1-1.5, Bright Yellowish Green [Lime] 1.5-2.5, Bright Green 2.5-4, Dark Green [Green] 4
+and above (1460); Antarctica (south of 60° S) and Greenland are White. Ocean: Light Royal Blue
+[Bright Light Blue] below 0.75, Medium Azur 0.75-1.5, Dark Azur 1.5-3, Bright Blue [Blue] 3-5, Earth
+Blue [Dark Blue] 5 and above (1825 mm/yr). Sea ice is White: the NOAA/NSIDC sea ice concentration
+CDR v6, the 1991-2020 mean of each hemisphere's minimum month (September north, February south), at
+least 0.7 over the cell, or no NSIDC ocean pixel poleward of 60° (coasts, ice shelves). The land
+shadow is Black (weak against Dark Blue on wet coasts: an accepted trade-off). Expect about 8,160
+pieces beyond one kit.
+
+General options it uses (full contract in `specs/013-rainfall/contracts/recipe-and-datasets.md`):
+
+```toml
+[land]
+sampling = "bilinear"        # mean (default: cell mean, nearest fill) | bilinear (at cell centres)
+
+[land.legend]                # optional: print the bins in a second unit too
+units = "mm/yr"
+factor = 365                 # "0.5 to 1 (182.5 to 365 mm/yr)"
+
+[[land.override]]            # repeatable; cells take color and leave the classification
+name = "Greenland"
+color = "lego_white"
+lat_min = 59                 # region: cell centre strictly inside the bounds ...
+lon_min = -75
+lon_max = -10
+exclude = [{ lat_max = 67, lon_min = -26 }]   # ... and outside every excluded box
+
+[[ocean.override]]
+name = "sea ice"
+color = "lego_white"
+dataset = "nsidc-cdr-v6-seaice-minimum-1991-2020"   # dataset rule: the cell's mean value ...
+variable = "cdr_seaice_conc_monthly"
+min_value = 0.7              # ... is at least this,
+unobserved_lat = 60          # or the cell has no value and lies poleward of this
+```
+
+Overrides are applied in order after any `no_data` rule (the land shadow still wins), are counted
+in the supply table, and are printed as `Override <name> (<kind>): N cells of <color>`.
+
 A recipe is a TOML file (format "1"). A minimal data layer:
 
 ```toml
@@ -362,6 +410,8 @@ lego-image-processor dataset fetch --recipe land-elevation
 | `ersst-v5-ltm-1991-2020`: NOAA ERSST v5 monthly long-term mean SST, 1991-2020 (NOAA PSL) | 1,160,004 B | Public domain (NOAA) | Huang, B., et al., 2017: Extended Reconstructed Sea Surface Temperature, Version 5 (ERSSTv5). J. Climate, 30, 8179-8205. https://doi.org/10.1175/JCLI-D-16-0836.1. NOAA ERSST V5 data provided by the NOAA PSL, Boulder, Colorado, USA, from their website at https://psl.noaa.gov |
 | `mod17a3-npp-mean-2000-2015`: MODIS MOD17A3 annual NPP, mean of 2000-2015, 30-arc-second GeoTIFF (NTSG, University of Montana) | 384,939,658 B | NASA-funded open data, no stated restrictions | Zhao, M., Heinsch, F. A., Nemani, R. R., & Running, S. W. (2005). Remote Sensing of Environment, 95, 164-176. https://doi.org/10.1016/j.rse.2004.12.011 |
 | `modis-aqua-chla-2013-2024`: MODIS-Aqua chlorophyll-a, monthly 2013-2024, every 12th 4 km pixel (NASA OBPG R2022.0 via NOAA CoastWatch ERDDAP) | 147,236,600 B | NASA Earth Science data policy (open) | NASA OBPG (2022), MODIS-Aqua Level-3 Mapped Chlorophyll Data, R2022.0. https://doi.org/10.5067/AQUA/MODIS/L3M/CHL/2022 |
+| `gpcp-v23-ltm-1991-2020`: GPCP v2.3 monthly long-term mean precipitation, 1991-2020, netCDF-4 (NOAA PSL) | 677,810 B | Public domain (U.S. Government work, NOAA PSL) | Adler, R. F., et al., 2018: The Global Precipitation Climatology Project (GPCP) Monthly Analysis (New Version 2.3) and a Review of 2017 Global Precipitation. Atmosphere, 9(4), 138. https://doi.org/10.3390/atmos9040138. GPCP Precipitation data provided by the NOAA PSL |
+| `nsidc-cdr-v6-seaice-minimum-1991-2020`: NOAA/NSIDC sea ice concentration CDR v6, September (north) and February (south) of 1991-2020, 60 netCDF-4 files | 17,826,152 B | No constraints on data access or use | Meier, W. N., et al., 2026: NOAA/NSIDC Climate Data Record of Passive Microwave Sea Ice Concentration, Version 6 (G02202). NSIDC. https://doi.org/10.7265/b18j-z797 |
 | `kit31203-design`: the official design grid | packaged | facts from the official instructions | see `kit_31203_design.json` |
 
 Each download is pinned by URL, exact size and SHA-256, downloaded to a temporary file, verified
@@ -370,7 +420,11 @@ is built by the server on each request and carries the request time in its heade
 pinned by `content_sha256`, a SHA-256 over its decoded data and coordinates; and the NTSG host
 serves the NPP GeoTIFF over plain HTTP only, so that entry states why (`http_only`) and is pinned
 by its file SHA-256. GeoTIFF files are read strip by strip and averaged in `grid.block` × `grid.block`
-pixel blocks (12 for NPP, 0.1°), so the 43200 × 16800 image is never decoded whole. Files go into
+pixel blocks (12 for NPP, 0.1°), so the 43200 × 16800 image is never decoded whole. Feature 013
+adds `format = "netcdf4"` (netCDF-4/HDF5, read with h5py; CF fill, valid range and packing; CF
+polar-stereographic x/y become latitude/longitude) and multi-file entries: a `files` list (each URL
+pinned by size and SHA-256; the entry's `size` is their total), cached together in the entry's
+version directory and averaged per pixel with `reduce = "climatology-mean"`. Files go into
 the per-user cache (`$LEGO_IMAGE_PROCESSOR_CACHE`, else
 `$XDG_CACHE_HOME/lego-image-processor`, else `~/.cache/lego-image-processor`; `--cache-dir`
 overrides it). Cached files are re-verified on every use. Citations and licenses are written into

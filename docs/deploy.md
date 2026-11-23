@@ -1,10 +1,11 @@
 # Deploying 98138.world on Fly.io
 
 The site is one small Python service (`web/`, feature 008) in one Docker image. The image build
-installs the CLI library, downloads the seven pinned public datasets (~543 MB: ~10.8 MB for the
+installs the CLI library, downloads the pinned public datasets (~561 MB: ~10.8 MB for the
 first six maps, plus 385 MB of MOD17A3 NPP and 147 MB of MODIS-Aqua chlorophyll for `living-planet`,
-feature 012; each checked by SHA-256 or, for the ERDDAP file, a content SHA-256), and prebuilds every
-map in every frame combination (7 × 3 = 21 variants, ~128 MB) into `/site`. The builder needs about
+feature 012, plus 0.7 MB of GPCP and 17.8 MB of NSIDC sea ice in 60 files for `rainfall`, feature
+013; each checked by SHA-256 or, for the ERDDAP file, a content SHA-256), and prebuilds every
+map in every frame combination (8 × 3 = 24 variants, ~146 MB) into `/site`. The builder needs about
 650 MB of RAM at peak (the NPP GeoTIFF is read strip by strip, never decoded whole) and a little
 over 1 GB of disk for the dataset cache.
 The running container only serves those files: it never downloads data or builds maps, and it
@@ -45,7 +46,7 @@ dedicated IPv6 address. Check:
 ```bash
 fly status
 fly ips list
-curl -fsS https://world-98138.fly.dev/healthz     # {"status":"ok","variants":21,...}
+curl -fsS https://world-98138.fly.dev/healthz     # {"status":"ok","variants":24,...}
 open https://world-98138.fly.dev/
 ```
 
@@ -117,7 +118,7 @@ Useful: `fly logs` (startup and errors; access logs are off for privacy), `fly s
 docker build --platform linux/amd64 -t world-98138 --build-arg GIT_COMMIT=$(git rev-parse HEAD) .
 docker run --rm world-98138 id                         # uid=10001(app)
 docker run --rm -d --name w98 -p 8080:8080 --memory 256m world-98138
-curl -fsS http://localhost:8080/healthz                 # {"status":"ok","variants":21,...}
+curl -fsS http://localhost:8080/healthz                 # {"status":"ok","variants":24,...}
 curl -s -o /dev/null -w "%{http_code} %{content_type}\n" \
   http://localhost:8080/maps/ocean-sst/B/download/sheets-letter   # 200 application/pdf
 docker stats --no-stream w98                            # memory well under 256 MiB

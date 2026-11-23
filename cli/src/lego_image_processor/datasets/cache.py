@@ -80,13 +80,24 @@ def cached_path(entry: DatasetEntry, cache_dir: Optional[PathLike] = None) -> Pa
     """Where a downloaded entry lives in the cache (local entries: their declared path)."""
     if entry.kind == "local":
         return Path(entry.path)
-    return cache_root(override=cache_dir) / "datasets" / entry.id / entry.version / entry.filename
+    base = cache_root(override=cache_dir) / "datasets" / entry.id / entry.version
+    if entry.files:  # feature 013: a multi-file entry lives in its version directory
+        return base
+    return base / entry.filename
+
+
+def file_paths(entry: DatasetEntry, cache_dir: Optional[PathLike] = None):
+    """``[(DatasetFile, path), ...]`` of a multi-file entry (feature 013)."""
+    base = cached_path(entry, cache_dir)
+    return [(f, base / f.name) for f in entry.files]
 
 
 def is_cached(entry: DatasetEntry, cache_dir: Optional[PathLike] = None) -> bool:
     """True when the file exists with the pinned size (full SHA-256 check happens on use)."""
     if entry.kind == "packaged":
         return True
+    if entry.files:
+        return all(p.is_file() and p.stat().st_size == f.size for f, p in file_paths(entry, cache_dir))
     p = cached_path(entry, cache_dir)
     if not p.is_file():
         return False
@@ -96,6 +107,10 @@ def is_cached(entry: DatasetEntry, cache_dir: Optional[PathLike] = None) -> bool
 def verify(entry: DatasetEntry, path: PathLike, hint: bool = True) -> None:
     """Check size (when pinned) and SHA-256; raise ``ChecksumMismatchError`` otherwise."""
     path = Path(path)
+    if entry.files:
+        for f in entry.files:
+            _verify_file(path / f.name, f.size, f.sha256, entry_id=entry.id, hint=hint)
+        return
     if entry.size is not None:
         actual_size = path.stat().st_size
         if actual_size != entry.size:
@@ -108,6 +123,19 @@ def verify(entry: DatasetEntry, path: PathLike, hint: bool = True) -> None:
     if actual != entry.sha256:
         raise ChecksumMismatchError(path, entry.sha256, actual, entry_id=entry.id,
                                     hint=hint and entry.kind != "local")
+
+
+def _verify_file(path: Path, size: int, sha256: str, entry_id: str, hint: bool = True) -> None:
+    """Size and SHA-256 of one file of a multi-file entry (feature 013)."""
+    if not path.is_file():
+        raise DatasetNotCachedError(entry_id, path)
+    actual_size = path.stat().st_size
+    if actual_size != size:
+        raise ChecksumMismatchError(path, f"{size} bytes", f"{actual_size} bytes", what="size",
+                                    entry_id=entry_id, hint=hint)
+    actual = sha256_file(path)
+    if actual != sha256:
+        raise ChecksumMismatchError(path, sha256, actual, entry_id=entry_id, hint=hint)
 
 
 def content_sha256(entry: DatasetEntry, path: PathLike) -> str:
@@ -142,6 +170,12 @@ def resolve(entry: DatasetEntry, cache_dir: Optional[PathLike] = None) -> Path:
     if entry.kind == "packaged":
         raise ValueError(f"dataset {entry.id} is packaged; it has no cache file")
     p = cached_path(entry, cache_dir)
+    if entry.files:
+        for _, fp in file_paths(entry, cache_dir):
+            if not fp.is_file():
+                raise DatasetNotCachedError(entry.id, fp)
+        verify(entry, p)
+        return p
     if not p.is_file():
         if entry.kind == "local":
             raise DatasetError(f"Local data file not found: {p}")
@@ -197,6 +231,18 @@ def _fetch_once(entry: DatasetEntry, *, cache_dir: Optional[PathLike] = None,
     """
     if entry.kind != "download":
         raise DatasetError(f"dataset {entry.id} is {entry.kind}; nothing to fetch")
+    if entry.files:  # feature 013: each missing or invalid file, verified one by one
+        downloaded = False
+        for f, fp in file_paths(entry, cache_dir):
+            if fp.is_file() and not force:
+                try:
+                    _verify_file(fp, f.size, f.sha256, entry.id)
+                    continue
+                except ChecksumMismatchError:
+                    pass  # replaced below
+            _download(entry, f.url, f.size, f.sha256, fp, opener)
+            downloaded = True
+        return cached_path(entry, cache_dir), downloaded
     final = cached_path(entry, cache_dir)
     if final.is_file() and not force:
         try:
@@ -204,6 +250,14 @@ def _fetch_once(entry: DatasetEntry, *, cache_dir: Optional[PathLike] = None,
             return final, False
         except ChecksumMismatchError:
             pass  # replaced below
+    _download(entry, entry.url, entry.size, entry.sha256, final, opener)
+    return final, True
+
+
+def _download(entry: DatasetEntry, url: str, expected_size: Optional[int], expected_sha: str,
+              final: Path, opener: Optional[Opener]) -> None:
+    """Stream ``url`` to ``final``.part, check size and SHA-256 (or the entry's content checksum
+    when ``expected_sha`` is empty), then rename atomically."""
     part = final.with_name(final.name + ".part")
     opener = opener or _default_opener
     try:
@@ -212,9 +266,9 @@ def _fetch_once(entry: DatasetEntry, *, cache_dir: Optional[PathLike] = None,
         size = 0
         with open(part, "wb") as out:
             try:
-                response = opener(entry.url)
+                response = opener(url)
             except Exception as exc:  # urllib.error.URLError, socket errors, timeouts
-                raise FetchError(f"Could not download {entry.id} from {entry.url}: {exc}") from exc
+                raise FetchError(f"Could not download {entry.id} from {url}: {exc}") from exc
             try:
                 while True:
                     try:
@@ -224,9 +278,9 @@ def _fetch_once(entry: DatasetEntry, *, cache_dir: Optional[PathLike] = None,
                     if not chunk:
                         break
                     size += len(chunk)
-                    if entry.size is not None and size > entry.size:
-                        raise ChecksumMismatchError(final, f"{entry.size} bytes",
-                                                    f"more than {entry.size} bytes", what="size",
+                    if expected_size is not None and size > expected_size:
+                        raise ChecksumMismatchError(final, f"{expected_size} bytes",
+                                                    f"more than {expected_size} bytes", what="size",
                                                     entry_id=entry.id, hint=False)
                     h.update(chunk)
                     out.write(chunk)
@@ -234,13 +288,13 @@ def _fetch_once(entry: DatasetEntry, *, cache_dir: Optional[PathLike] = None,
                 close = getattr(response, "close", None)
                 if close:
                     close()
-        if entry.size is not None and size != entry.size:
-            raise ChecksumMismatchError(final, f"{entry.size} bytes", f"{size} bytes", what="size",
+        if expected_size is not None and size != expected_size:
+            raise ChecksumMismatchError(final, f"{expected_size} bytes", f"{size} bytes", what="size",
                                         entry_id=entry.id, hint=False)
-        if entry.sha256:
+        if expected_sha:
             actual = h.hexdigest()
-            if actual != entry.sha256:
-                raise ChecksumMismatchError(final, entry.sha256, actual, entry_id=entry.id, hint=False)
+            if actual != expected_sha:
+                raise ChecksumMismatchError(final, expected_sha, actual, entry_id=entry.id, hint=False)
         else:
             _verify_content(entry, part, hint=False)
         os.replace(part, final)
@@ -250,7 +304,6 @@ def _fetch_once(entry: DatasetEntry, *, cache_dir: Optional[PathLike] = None,
     except BaseException:
         _remove(part)
         raise
-    return final, True
 
 
 def _remove(path: Path) -> None:
