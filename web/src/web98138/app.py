@@ -52,6 +52,15 @@ def _fmt(n: Any) -> str:
     return f"{n:,}" if isinstance(n, int) else str(n)
 
 
+def _usd(n: Any) -> str:
+    """Whole dollars from the manifest (integers computed by the CLI library): ``$1,150``."""
+    return f"${n:,}" if isinstance(n, int) and not isinstance(n, bool) else str(n)
+
+
+def _plural(n: Any, word: str) -> str:
+    return f"{_fmt(n)} {word}" + ("" if n == 1 else "s")
+
+
 def _ext(entry: Dict[str, Any]) -> str:
     return entry["path"].rsplit(".", 1)[-1].upper()
 
@@ -69,6 +78,8 @@ def create_app(site_dir) -> FastAPI:
     env.filters["n"] = _fmt
     env.filters["size"] = _size
     env.filters["ext"] = _ext
+    env.filters["usd"] = _usd
+    env.filters["plural"] = _plural
     env.globals.update(DISCLAIMER=DISCLAIMER, REPO_URL=REPO_URL, manifest=m,
                        asset_version=asset_version, arrangements=m["arrangements"],
                        role_label=ROLE_LABEL, part_labels=m.get("part_labels", {}),

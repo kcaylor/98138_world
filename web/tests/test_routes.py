@@ -191,3 +191,131 @@ def test_about(client):
                  "frames 2·3·1, Asia and Australia in the centre",
                  "pp. 7–8", "cookies", "analytics", REPO):
         assert text in html, text
+
+
+# --- feature 011: estimated cost -----------------------------------------------------------
+
+ESTIMATE_NOTE = "Estimate only; excludes shipping, fees and taxes; prices vary by seller and over time."
+ATTRIBUTION = ("Price data: BrickLink price guide (bricklink.com). BrickLink is a trademark of "
+               "LEGO BrickLink, Inc. Not endorsed by BrickLink.")
+
+
+def _usd(n):
+    return f"${n:,}"
+
+
+def _client_for(site_dir, tmp_path, fn):
+    import shutil
+
+    from fastapi.testclient import TestClient
+
+    from web98138.app import create_app
+
+    dst = tmp_path / "site"
+    shutil.copytree(site_dir, dst)
+    p = dst / "manifest.json"
+    m = json.loads(p.read_text())
+    fn(m)
+    p.write_text(json.dumps(m))
+    return TestClient(create_app(dst), base_url="https://98138.world")
+
+
+def _text(html):
+    """The page's text with tags and repeated whitespace removed."""
+    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html))
+
+
+def test_price_panel(client, manifest):
+    """US3-2, SC-006: both estimates, date, source link, wording, attribution, disclaimer."""
+    for m in manifest["maps"]:
+        for c in ("A", "B"):
+            html = client.get(f"/maps/{m['id']}/{c}").text
+            text = _text(html)
+            p = manifest["prices"]
+            assert '<h2 id="cost-heading">Estimated cost</h2>' in html
+            full = m["variants"][c]["estimates"]["full"]
+            w = full["whole_dollars"]
+            assert f"Every piece about {_usd(w['average'])} (range {_usd(w['low'])}–{_usd(w['high'])})" in text
+            one = m["variants"][c]["estimates"]["one_kit"]
+            if one["nothing_to_buy"]:
+                assert "On top of one 31203 kit One kit covers every piece" in text
+            else:
+                w1 = one["whole_dollars"]
+                assert f"On top of one 31203 kit about {_usd(w1['average'])}" in text
+            assert f"Prices from {p['snapshot']['retrieved_on']}" in text
+            assert str(escape(p["basis"])) in html
+            assert '<a href="https://www.bricklink.com">BrickLink price guide</a>' in html
+            assert ESTIMATE_NOTE in html and ATTRIBUTION in html
+            assert DISCLAIMER in html
+            assert "may be out of date" not in html and "partial" not in text
+    # the panel comes after the Parts panel and before the Lots table
+    html = client.get("/maps/ocean-sst/A").text
+    assert html.index('id="parts-heading"') < html.index('id="cost-heading"') < html.index('id="lots-heading"')
+
+
+def test_thousands_separator(client, manifest):
+    w = manifest["maps"][0]["variants"]["A"]["estimates"]["full"]["whole_dollars"]
+    html = client.get("/maps/official-31203/A").text
+    if w["high"] >= 1000:
+        assert f"{w['high']:,}" in html and "," in f"{w['high']:,}"
+
+
+def test_one_kit_covers_every_piece(client, manifest):
+    """US3-3: the official design needs nothing beyond one kit."""
+    assert manifest["maps"][0]["variants"]["A"]["estimates"]["one_kit"]["nothing_to_buy"] is True
+    text = _text(client.get("/maps/official-31203/A").text)
+    assert "On top of one 31203 kit One kit covers every piece" in text
+
+
+def _set(m, map_i, c, kind, **kw):
+    e = m["maps"][map_i]["variants"][c]["estimates"][kind]
+    for k, v in kw.items():
+        e[k] = v
+
+
+def test_incomplete_note(site_dir, tmp_path):
+    """US3-4."""
+    def edit(m):
+        _set(m, 1, "A", "full", complete=False, unpriced={"lots": 2, "pieces": 1312})
+        _set(m, 1, "A", "one_kit", complete=False, unpriced={"lots": 1, "pieces": 1})
+    with _client_for(site_dir, tmp_path, edit) as c:
+        text = _text(c.get("/maps/ocean-sst/A").text)
+        assert "Incomplete: 1,312 pieces in 2 colors could not be priced." in text
+        assert "Incomplete: 1 piece in 1 color could not be priced." in text
+        assert "Incomplete" not in _text(c.get("/maps/ocean-sst/B").text)
+
+
+def test_stale_and_partial_notes(site_dir, tmp_path):
+    """US3-5."""
+    def edit(m):
+        m["prices"]["staleness"].update(stale=True, age_days=200)
+        m["prices"]["snapshot"]["complete"] = False
+    with _client_for(site_dir, tmp_path, edit) as c:
+        text = _text(c.get("/maps/ocean-sst/A").text)
+        assert "These prices are from 2026-12-01 and may be out of date." in text
+        assert "The price snapshot is partial." in text
+
+
+def test_single_value_range(site_dir, tmp_path):
+    def edit(m):
+        _set(m, 1, "A", "full", whole_dollars={"average": 7, "low": 7, "high": 7})
+    with _client_for(site_dir, tmp_path, edit) as c:
+        text = _text(c.get("/maps/ocean-sst/A").text)
+        assert "Every piece about $7 (range $7)" in text and "$7–$7" not in text
+
+
+def test_no_price_panel_without_prices(site_dir, tmp_path):
+    def strip(m):
+        m.pop("prices")
+        for mp in m["maps"]:
+            for v in mp["variants"].values():
+                v.pop("estimates")
+    with _client_for(site_dir, tmp_path, strip) as c:
+        html = c.get("/maps/ocean-sst/A").text
+        assert "Estimated cost" not in html and "bricklink.com\">" not in html
+        assert ATTRIBUTION not in html and DISCLAIMER in html
+
+
+def test_home_page_has_no_prices(client):
+    html = client.get("/").text
+    assert "Estimated cost" not in html and "$" not in html

@@ -3,7 +3,7 @@
 A lot is one part in one color. For each lot: needed (positions in the layout), owned (whole kits
 from the cited inventory, minus missing pieces, plus loose parts), shortfall, spares (only on
 request), to buy and surplus. Map pieces only (Q6): the frame, section bases and other kit parts
-are not listed. No prices are estimated (FR-018).
+are not listed. The list carries no prices; feature 011's ``parts estimate`` prices it offline.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -30,8 +30,11 @@ PART_ORDER = {"6141": 0, "98138": 1}
 PART_TYPE = {"6141": "plate", "98138": "tile"}
 ACKNOWLEDGEMENT = ("Catalog data: Rebrickable (rebrickable.com), BrickLink, LDraw, Brickset; kit "
                    "inventory from the LEGO 31203 building instructions.")
-PRICE_NOTE = ("Prices: none are estimated. Upload the list to BrickLink or Rebrickable to price it; "
-              "both price an imported list.")
+# The parts list carries no prices (its format is unchanged); feature 011 estimates them offline
+# from a BrickLink price guide snapshot with `parts estimate` (011 FR-019, research R15).
+PRICE_NOTE = ("Prices: none in this file. Estimate them offline with `lego-image-processor parts "
+              "estimate LAYOUT` (BrickLink price guide snapshot), or upload the list to BrickLink or "
+              "Rebrickable to price it.")
 
 
 class LayoutInputError(ValueError):

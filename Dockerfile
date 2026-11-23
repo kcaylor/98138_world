@@ -28,7 +28,10 @@ ENV GIT_COMMIT=${GIT_COMMIT}
 # MOD17A3 NPP GeoTIFF comes over plain HTTP, pinned by SHA-256, feature 012; GPCP and 60 NSIDC
 # sea-ice files are netCDF-4, read with h5py, feature 013), then builds
 # 8 maps x 3 combinations (~146 MB, ~75 s plus downloads, peak ~650 MB RAM on the builder).
-RUN python -m web98138.prebuild --fetch --out /site
+# Prices (feature 011): until a complete BrickLink snapshot is committed, the site builds
+# without them. Once it is, deploy with --build-arg PREBUILD_PRICES= (or change this default).
+ARG PREBUILD_PRICES=--no-prices
+RUN python -m web98138.prebuild --fetch --out /site ${PREBUILD_PRICES}
 
 FROM ${PYTHON_IMAGE} AS runtime
 ENV PIP_NO_CACHE_DIR=1 \

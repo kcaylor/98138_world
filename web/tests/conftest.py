@@ -2,7 +2,9 @@
 
 `official-31203` needs no dataset; `ocean-sst` is built from the CLI's small derived ERSST
 fixture (cli/tests/fixtures/datasets), placed in a temporary cache behind a registry whose entry
-points at it, as the CLI's own tests do. No test uses the network.
+points at it, as the CLI's own tests do. Prices come from the CLI's synthetic fixture snapshot
+(cli/tests/fixtures/prices, feature 011) with a fixed staleness reference date. No test uses the
+network.
 """
 
 from __future__ import annotations
@@ -10,11 +12,14 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+from datetime import date
 from pathlib import Path
 
 import pytest
 
 CLI_FIXTURES = Path(__file__).resolve().parents[2] / "cli" / "tests" / "fixtures" / "datasets"
+PRICES = Path(__file__).resolve().parents[2] / "cli" / "tests" / "fixtures" / "prices" / "bricklink_price_guide.json"
+TODAY = date(2026, 12, 5)     # 4 days after the fixture snapshot
 SMALL_MAPS = ("official-31203", "ocean-sst", "ocean-el-nino")
 
 
@@ -91,7 +96,8 @@ def site_dir(tmp_path_factory, fixture_datasets) -> Path:
     from web98138.prebuild import build_site
 
     out = tmp_path_factory.mktemp("site")
-    build_site(out, maps=SMALL_MAPS, cache_dir=fixture_datasets, echo=lambda *a: None)
+    build_site(out, maps=SMALL_MAPS, cache_dir=fixture_datasets, echo=lambda *a: None,
+               prices_path=PRICES, today=TODAY)
     return out
 
 
@@ -116,7 +122,8 @@ def living_site(tmp_path_factory, fixture_datasets) -> Path:
     from web98138.prebuild import build_site
 
     out = tmp_path_factory.mktemp("living")
-    build_site(out, maps=("living-planet",), cache_dir=fixture_datasets, echo=lambda *a: None)
+    build_site(out, maps=("living-planet",), cache_dir=fixture_datasets, echo=lambda *a: None,
+               prices_path=PRICES, today=TODAY)
     return out
 
 
@@ -126,7 +133,8 @@ def rainfall_site(tmp_path_factory, fixture_datasets) -> Path:
     from web98138.prebuild import build_site
 
     out = tmp_path_factory.mktemp("rainfall")
-    build_site(out, maps=("rainfall",), cache_dir=fixture_datasets, echo=lambda *a: None)
+    build_site(out, maps=("rainfall",), cache_dir=fixture_datasets, echo=lambda *a: None,
+               prices_path=PRICES, today=TODAY)
     return out
 
 

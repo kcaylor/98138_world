@@ -1,0 +1,25 @@
+{
+  "format_version": "1",
+  "source": {
+    "title": "BrickLink Store API v1 documentation",
+    "documentation": [
+      {"id": "bricklink-api-price-guide", "title": "BrickLink API: Get Price Guide",
+       "url": "https://www.bricklink.com/v3/api.page?page=get-price-guide"},
+      {"id": "bricklink-api-auth", "title": "BrickLink API: Authorization",
+       "url": "https://www.bricklink.com/v3/api.page?page=auth"},
+      {"id": "bricklink-api-errors", "title": "BrickLink API: Error handling",
+       "url": "https://www.bricklink.com/v3/api.page?page=error-handling"},
+      {"id": "bricklink-api-terms", "title": "BrickLink API Terms of Use",
+       "url": "https://www.bricklink.com/v3/api.page?page=terms"}
+    ],
+    "accessed": "2026-11-22",
+    "checked": false,
+    "note": "bricklink.com was in maintenance on 2026-11-22; values from the documented API, to be checked against the live pages before the first fetch.",
+    "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
+  },
+  "base_url": "https://api.bricklink.com/api/store/v1",
+  "price_guide_path": "/items/{type}/{no}/price",
+  "item_types": {"P": "PART"},
+  "oauth": {"version": "1.0", "signature_method": "HMAC-SHA1", "realm": ""},
+  "daily_request_limit": 5000
+}

@@ -103,6 +103,19 @@ lat/lon, points grids), registry `files` (multi-file entries, cached in the vers
 recipe `sampling = "bilinear"`, `[[<layer>.override]]` (region or dataset rule; `maps/overrides.py`)
 and `[<layer>.legend]` (second unit). Contract: `specs/013-rainfall/contracts/recipe-and-datasets.md`.
 
+Price estimates (feature 011, see `specs/011-price-estimates/`): `parts estimate <layout>`
+prices a layout offline, every piece and on top of one 31203 kit, from a dated, cited BrickLink
+price guide snapshot (`data/bricklink_price_guide.json`, or `--prices FILE`; 6-month new sold
+average, USD, min–max range, stock fallback, otherwise unpriced and incomplete). `parts prices
+fetch -o FILE` (maintainer, the only command that calls BrickLink) reads OAuth 1.0 credentials
+from `BRICKLINK_CONSUMER_KEY`, `_CONSUMER_SECRET`, `_TOKEN_VALUE`, `_TOKEN_SECRET`, never
+written or logged; the API details are cited in `data/bricklink_api.json` (`checked: false` until
+the owner verifies them). Code: `prices/` (`parts` never imports it). Tests use the synthetic
+snapshot `cli/tests/fixtures/prices/` and mocked HTTP. The web prebuild requires a complete
+committed snapshot (`--prices FILE`, `--no-prices`, `--allow-partial-prices`) and writes
+`variants[].estimates.full`/`.one_kit` and a top-level `prices` block into the manifest; map pages
+show both in whole dollars computed by the library.
+
 1. **Python CLI** (`cli/`, package `lego_image_processor`), written to be released as open source.
 2. **Web application** (`web/`) on Fly.io at 98138.world. It calls the CLI library at build time and
    never duplicates its logic; the runtime image has no CLI dependencies.
@@ -114,8 +127,9 @@ and `[<layer>.legend]` (second unit). Contract: `specs/013-rainfall/contracts/re
   (kit reference data, part colors), `datasets/` (registry, verified cache, readers), `maps/`
   (recipes, projection, reprojection, classification, texture, suitability, build, preview),
   `parts/` (parts lists, cited IDs, marketplace exports; feature 005), `sheets/` (build sheets:
-  sections, page model, PDF and SVG backends, per-section counts; feature 006), `cli/` (Click commands), `data/` (runtime reference data, shipped with the package).
-- `cli/tools/`: maintainer-only tools (`kit31203`, `partcolors`, `fixtures004`), not packaged.
+  sections, page model, PDF and SVG backends, per-section counts; feature 006), `prices/` (price
+  snapshots, BrickLink fetch, offline estimates; feature 011), `cli/` (Click commands), `data/` (runtime reference data, shipped with the package).
+- `cli/tools/`: maintainer-only tools (`kit31203`, `partcolors`, `fixtures004`, `fixtures011`), not packaged.
 - `cli/tests/`: `unit/`, `integration/`, `contract/` (CLI I/O), `fixtures/`.
 - `web/`: `src/web98138/` (`prebuild.py`, `catalog.py`, `app.py`, `templates/`, `static/`),
   `scripts/prebuild.py`, `tests/` (offline; a session fixture prebuilds `official-31203` and

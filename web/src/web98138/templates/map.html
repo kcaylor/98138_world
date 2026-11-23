@@ -51,6 +51,32 @@
 </section>
 </div>
 
+{% if manifest.prices and variant.estimates %}{% set p = manifest.prices %}
+<section aria-labelledby="cost-heading" class="panel">
+  <h2 id="cost-heading">Estimated cost</h2>
+  <dl class="costs">
+  {% for kind in ('full', 'one_kit') %}{% set e = variant.estimates[kind] %}{% set w = e.whole_dollars %}
+    <div class="cost">
+      <dt>{{ e.label }}</dt>
+      {% if e.nothing_to_buy %}
+      <dd class="cost-figure covered">One kit covers every piece</dd>
+      {% else %}
+      <dd class="cost-figure">about {{ w.average | usd }} <span class="range">(range {{ w.low | usd }}{% if w.high != w.low %}–{{ w.high | usd }}{% endif %})</span></dd>
+      {% endif %}
+      {% if not e.complete %}
+      <dd class="incomplete">Incomplete: {{ e.unpriced.pieces | plural('piece') }} in {{ e.unpriced.lots | plural('color') }} could not be priced.</dd>
+      {% endif %}
+    </div>
+  {% endfor %}
+  </dl>
+  {% if p.staleness.stale %}<p class="cost-warning">These prices are from {{ p.snapshot.retrieved_on }} and may be out of date.</p>{% endif %}
+  {% if not p.snapshot.complete %}<p class="cost-warning">The price snapshot is partial.</p>{% endif %}
+  <p class="note">Prices from {{ p.snapshot.retrieved_on }}: {{ p.basis }} Source: <a href="{{ p.source.url }}">BrickLink price guide</a>.</p>
+  <p class="note">{{ p.estimate_note }}</p>
+  <p class="note ack">{{ p.attribution }}</p>
+</section>
+{% endif %}
+
 <section aria-labelledby="lots-heading" class="panel">
   <h2 id="lots-heading">Lots</h2>
   <div class="table-scroll" role="region" aria-labelledby="lots-heading" tabindex="0">

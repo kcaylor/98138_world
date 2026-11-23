@@ -1,0 +1,6 @@
+{"meta": {"description": "OK", "message": "OK", "code": 200},
+ "data": {"item": {"no": "4073", "type": "PART"}, "new_or_used": "N", "currency_code": "USD",
+          "min_price": "0.0100", "max_price": "0.5000", "avg_price": "0.0612",
+          "qty_avg_price": "0.0385", "unit_quantity": 1204, "total_quantity": 380211,
+          "price_detail": [{"quantity": 500, "unit_price": "0.0300", "seller_country_code": "US",
+                            "buyer_country_code": "DE", "date_ordered": "2026-11-02T00:00:00.000Z"}]}}

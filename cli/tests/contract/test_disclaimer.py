@@ -59,7 +59,10 @@ def test_kit_commands(runner, command):
     assert json.loads(as_json.output)["source"]["disclaimer"] == DISCLAIMER
 
 
-@pytest.mark.parametrize("path", sorted(DATA_DIR.glob("*.json")), ids=lambda p: p.name)
+# A stopped price fetch leaves `*.progress.json` in data/ (011 R9); it is not reference data.
+@pytest.mark.parametrize("path", sorted(p for p in DATA_DIR.glob("*.json")
+                                        if not p.name.endswith(".progress.json")),
+                         ids=lambda p: p.name)
 def test_every_data_file_source_has_disclaimer(path):
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     assert data["source"]["disclaimer"] == DISCLAIMER
@@ -138,3 +141,19 @@ def test_readme_and_runbook_describe_the_enso_maps():
         assert "2026-27" in text
     assert 'arrangement = "B"' in readme
     assert DISCLAIMER in readme
+
+
+# --- Feature 011 (T020, FR-018) -----------------------------------------------------------------
+
+def test_parts_estimate_table_and_json_carry_the_disclaimer(runner, tmp_path):
+    fixture = Path(__file__).resolve().parents[1] / "fixtures" / "prices" / "bricklink_price_guide.json"
+    layout = tmp_path / "official.json"
+    layout.write_text(load_official_design().to_layout().to_json(), encoding="utf-8")
+    base = ["parts", "estimate", str(layout), "--prices", str(fixture), "--as-of", "2026-12-05"]
+    for command in (base, base + ["--lines"], base + ["-o", str(tmp_path / "e.json")]):
+        result = runner.invoke(cli, command)
+        assert result.exit_code == 0, (command, result.output)
+        assert _last_line(result.output) == DISCLAIMER, command
+    as_json = runner.invoke(cli, base + ["--format", "json"])
+    assert json.loads(as_json.output)["disclaimer"] == DISCLAIMER
+    assert json.loads((tmp_path / "e.json").read_text(encoding="utf-8"))["disclaimer"] == DISCLAIMER
