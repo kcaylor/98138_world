@@ -1,4 +1,4 @@
-"""Per-cell chooser data (feature 012, FR-001, FR-004, FR-005; SC-001)."""
+"""Per-cell chooser data (feature 015, FR-001, FR-004, FR-005; SC-001)."""
 
 import numpy as np
 import pytest
@@ -153,3 +153,24 @@ class TestDataLayers:
         assert ocean["role"] == "background" and ocean["texture"] == "halo"
         assert ocean["class_labels"] == ["offshore", "coast ring"]
         assert ocean["colors"] == ["lego_bright_bluish_green", "lego_medium_azur"]
+
+
+@pytest.mark.parametrize("rid", ["living-planet", "rainfall"])
+def test_recipes_with_no_data_and_overrides(placed, rid):
+    """Feature 015 on the 012/013 recipes: cells left without a value (living-planet ``no_data``)
+    are skipped for the range, and the chooser's default colors equal the built layout."""
+    result = _build(rid)
+    cells = map_cells(result)
+    for name, layer in cells["layers"].items():
+        if layer.get("range") is not None:
+            lo, hi = layer["range"]
+            assert np.isfinite(lo) and np.isfinite(hi) and lo <= hi, name
+        if layer.get("bounds"):
+            assert all(np.isfinite(b) for b in layer["bounds"]), name
+    assert len(cells["cells"]) == 10240
+
+
+def test_log10_layer_units_say_log10(placed):
+    """living-planet's chlorophyll is classified on log10: the chooser's numbers and label agree."""
+    ocean = map_cells(_build("living-planet"))["layers"]["ocean"]
+    assert ocean["transform"] == "log10" and ocean["units"].startswith("log10")

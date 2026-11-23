@@ -326,7 +326,7 @@ def fit_projection(dataset_path, cache_dir, check, generated_on) -> None:
 @click.option("--check", is_flag=True, help="Compare with the committed kit_31203_ice.json; write nothing.")
 @click.option("--date", "generated_on", default=None, help="generated_on date, YYYY-MM-DD (default: today).")
 def ice_mask(dataset_path, cache_dir, check, generated_on) -> None:
-    """Derive the land-ice and sea-ice cells (feature 012) and write kit_31203_ice.json."""
+    """Derive the land-ice and sea-ice cells (feature 015) and write kit_31203_ice.json."""
     from lego_image_processor.datasets import get_entry, resolve, verify
     from lego_image_processor.datasets.cache import DatasetError
     from lego_image_processor.datasets.readers import read_netcdf3
@@ -348,7 +348,7 @@ def ice_mask(dataset_path, cache_dir, check, generated_on) -> None:
     click.echo(f"land ice: {int(ice.land.sum())} cells; sea ice: {int(ice.sea.sum())} cells")
     committed = json.loads(ICE_PATH.read_text(encoding="utf-8")) if ICE_PATH.exists() else None
     source = {
-        "title": "Ice-covered cells of the kit 31203 grid (palette chooser, feature 012)",
+        "title": "Ice-covered cells of the kit 31203 grid (palette chooser, feature 015)",
         "generator": "cli/tools/kit31203 ice-mask",
         "generated_on": generated_on or (committed or {}).get("source", {}).get("generated_on")
         or _dt.date.today().isoformat(),

@@ -1,6 +1,6 @@
 # web98138: the 98138.world web site
 
-Pick one of the six bundled maps and a frame combination (A, B, C), see the stud preview, and
+Pick one of the eight bundled maps and a frame combination (A, B, C), see the stud preview, and
 download everything to build it: layout JSON, parts lists (full and topped up from one 31203 kit),
 BrickLink wanted list, Rebrickable CSV and build-sheet PDFs (US Letter and A4). Feature 008; see
 `specs/008-web-app/`.
@@ -17,7 +17,7 @@ Not affiliated with or endorsed by The LEGO Group.
 - **Service** (`web98138.app`, FastAPI + Jinja2): checks the output at start-up and serves pages and
   files from it. It never imports the CLI library, builds maps or downloads data. Every page works
   without JavaScript; map pages load one hand-written first-party script, `static/palette.js`
-  (feature 012), the "Try other colors" palette chooser, which recolors the prebuilt
+  (feature 015), the "Try other colors" palette chooser, which recolors the prebuilt
   `cells.json` in the browser (preview only). No cookies, no storage, nothing loaded from other
   sites.
 

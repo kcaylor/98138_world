@@ -1,6 +1,6 @@
 # Feature Specification: Palette chooser and ice toggle on the map pages
 
-**Feature Branch**: `012-palette-chooser`
+**Feature Branch**: `015-palette-chooser`
 
 **Created**: 2026-11-22
 

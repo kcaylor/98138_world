@@ -159,7 +159,7 @@ h3 { font-size: 1rem; margin: 1.2em 0 .4em; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
-/* palette chooser (feature 012) */
+/* palette chooser (feature 015) */
 .palette h2 { margin-bottom: .4em; }
 .pc-note { margin: 0 0 .6rem; }
 .pc-status:empty { display: none; }

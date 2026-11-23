@@ -24,9 +24,14 @@ RUN pip install --no-deps ./cli \
 # Optional: record the source commit in the manifest (fly deploy --build-arg GIT_COMMIT=...).
 ARG GIT_COMMIT=""
 ENV GIT_COMMIT=${GIT_COMMIT}
-# Downloads the four pinned public datasets (~10.8 MB, SHA-256 verified), then builds
-# 6 maps x 3 combinations (~110 MB, ~45 s, peak ~400 MB RAM on the builder).
-RUN python -m web98138.prebuild --fetch --out /site
+# Downloads the pinned public datasets (~561 MB, SHA-256 or content SHA-256 verified; the
+# MOD17A3 NPP GeoTIFF comes over plain HTTP, pinned by SHA-256, feature 012; GPCP and 60 NSIDC
+# sea-ice files are netCDF-4, read with h5py, feature 013), then builds
+# 8 maps x 3 combinations (~146 MB, ~75 s plus downloads, peak ~650 MB RAM on the builder).
+# Prices (feature 011): until a complete BrickLink snapshot is committed, the site builds
+# without them. Once it is, deploy with --build-arg PREBUILD_PRICES= (or change this default).
+ARG PREBUILD_PRICES=--no-prices
+RUN python -m web98138.prebuild --fetch --out /site ${PREBUILD_PRICES}
 
 FROM ${PYTHON_IMAGE} AS runtime
 ENV PIP_NO_CACHE_DIR=1 \

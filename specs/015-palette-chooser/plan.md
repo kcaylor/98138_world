@@ -1,6 +1,6 @@
 # Implementation Plan: Palette chooser and ice toggle on the map pages
 
-**Branch**: `012-palette-chooser` | **Date**: 2026-11-22 | **Spec**: [spec.md](spec.md)
+**Branch**: `015-palette-chooser` | **Date**: 2026-11-22 | **Spec**: [spec.md](spec.md)
 
 ## Summary
 

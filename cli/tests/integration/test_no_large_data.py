@@ -29,8 +29,12 @@ def test_no_large_data_files():
 def test_fixtures_small_and_documented():
     files = [p for p in FIXTURES.iterdir() if p.suffix != ".json"]
     assert files
-    assert sum(p.stat().st_size for p in files) < 300_000
+    # Budget raised from 300 kB to 450 kB for the two feature 012 fixtures (research R6), and to
+    # 540 kB for the five feature 013 netCDF-4 fixtures (specs/013-rainfall research R7).
+    assert sum(p.stat().st_size for p in files) < 540_000
     for p in files:
         meta = json.loads((FIXTURES / f"{p.stem}.source.json").read_text(encoding="utf-8"))
-        assert meta["dataset"] and meta["license"] and len(meta["source_sha256"]) == 64
+        # a source pinned by content checksum (012) records that instead of a file SHA-256
+        source = meta["source_sha256"] or meta.get("source_content_sha256", "")
+        assert meta["dataset"] and meta["license"] and len(source) == 64
         assert meta["disclaimer"] == "Not affiliated with or endorsed by The LEGO Group."

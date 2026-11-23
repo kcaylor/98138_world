@@ -1,4 +1,4 @@
-# Run state: 012-palette-chooser
+# Run state: 015-palette-chooser
 
 Source: prompt (owner request relayed by the coordinating agent, 2026-11-22, with owner decisions on JS, scope and disclaimer)
 Phase: done
@@ -8,7 +8,7 @@ Updated: 2026-11-22
 ## Open questions (for the owner)
 1. Sea-ice rule: ERSST v5 1991–2020 warmest-month SST ≤ −1.5 °C, or no value poleward of 60° (796 cells), chosen to avoid a new dataset. The unmerged `013-rainfall` branch pins an NSIDC sea-ice climatology (759 cells); replace this rule with it when 013 merges? (recommended: yes)
 2. Cells with no source value under ice (e.g. 206 Arctic cells in `ocean-sst`) show the nearest value in "show the map's data", as the build does, and the panel states the counts. Alternative: show them White even in that mode. (recommended: keep, it matches the build)
-3. Feature number: Spec Kit chose 012, but unmerged branches `012-living-planet` and `013-rainfall` already use 012/013. Renumber this feature (e.g. to 014) before merging? (recommended: renumber at merge time)
+3. Feature number: resolved 2026-11-22, renumbered 012 → 015 at merge (012 and 013 went to living planet and rainfall, 014 to leftovers and the gray background).
 4. Ice toggle default is "show the map's data" (equal to the built preview); the brief's "stay White as now" does not match the current maps, none of which paint ice White.
 
 ## Decisions
@@ -27,5 +27,5 @@ Updated: 2026-11-22
 
 ## Deferred findings
 - No automated test runs `kit31203 ice-mask --check` (it needs the real cached ERSST file); run by hand: "no differences".
-- AGENTS.md lags CLAUDE.md for features 009 and 011 (pre-existing); only the 012 paragraph and the JS wording were added.
+- AGENTS.md lags CLAUDE.md for features 009 and 011 (pre-existing); only the 015 paragraph and the JS wording were added.
 - ENSO maps' `cells.json` not checked against real data here (their datasets are not cached on this machine); covered by fixture tests.

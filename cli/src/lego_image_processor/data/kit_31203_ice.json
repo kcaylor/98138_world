@@ -7,7 +7,7 @@
   "coordinates": "kit (combination A), row-major cell index = row * 128 + column"
  },
  "source": {
-  "title": "Ice-covered cells of the kit 31203 grid (palette chooser, feature 012)",
+  "title": "Ice-covered cells of the kit 31203 grid (palette chooser, feature 015)",
   "generator": "cli/tools/kit31203 ice-mask",
   "generated_on": "2026-11-22",
   "land_ice": {

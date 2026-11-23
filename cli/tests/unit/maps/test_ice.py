@@ -1,4 +1,4 @@
-"""Ice regions (feature 012, FR-003): rules, packaged data, arrangement roll."""
+"""Ice regions (feature 015, FR-003): rules, packaged data, arrangement roll."""
 
 import json
 

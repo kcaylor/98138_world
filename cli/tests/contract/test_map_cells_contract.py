@@ -1,4 +1,4 @@
-"""Contract tests for `map cells` (feature 012, FR-002; contracts/cli.md)."""
+"""Contract tests for `map cells` (feature 015, FR-002; contracts/cli.md)."""
 
 import json
 

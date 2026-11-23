@@ -7,6 +7,7 @@ Every rule is checked before any work, and an error names the key path and the r
 from __future__ import annotations
 
 import hashlib
+import math
 import re
 import tomllib
 from dataclasses import dataclass, field
@@ -22,7 +23,13 @@ DEFAULT_SEED = 31203
 RECIPES_DIR = Path(__file__).resolve().parent / "recipes"
 PART_FOR_CLASS = {"land": "6141", "ocean": "98138"}
 ROLES = ("data", "background")
-TRANSFORMS = ("none", "negate")
+TRANSFORMS = ("none", "negate", "log10")
+NO_DATA_RULES = ("unobserved", "share")
+SAMPLINGS = ("mean", "bilinear")  # feature 013
+_BOUND_KEYS = ("lat_min", "lat_max", "lon_min", "lon_max")
+_OVERRIDE_KEYS = {"name", "color", "exclude", "dataset", "variable", "min_value", "unobserved_lat",
+                  *_BOUND_KEYS}
+_LEGEND_KEYS = {"units", "factor"}
 METHODS = ("bins", "quantile", "rank", "rank-to-supply", "categorical")
 RANK_METHODS = ("quantile", "rank", "rank-to-supply")
 DATA_TEXTURES = ("none", "blend")
@@ -35,7 +42,10 @@ _ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{1,63}$")
 
 _TOP_KEYS = {"format", "id", "title", "description", "seed", "arrangement", "land", "ocean", "shadow"}
 _SHADOW_KEYS = {"enabled", "color", "direction"}
-_DATA_KEYS = {"role", "colors", "dataset", "local", "variable", "transform", "classification", "texture"}
+_DATA_KEYS = {"role", "colors", "dataset", "local", "variable", "transform", "classification", "texture",
+              "no_data", "sampling", "override", "legend"}
+_NO_DATA_KEYS = {"unobserved": {"color", "rule", "min_lat", "value", "sparse_lat", "min_steps"},
+                 "share": {"color", "rule", "min_lat", "value", "min_share"}}
 _BACKGROUND_KEYS = {"role", "colors", "weights", "texture"}
 _CLASS_KEYS = {"bins": {"method", "bounds"}, "quantile": {"method"}, "rank": {"method", "shares"},
                "rank-to-supply": {"method"}, "categorical": {"method", "categories"}}
@@ -89,6 +99,91 @@ class Shadow:
 
 
 @dataclass(frozen=True)
+class NoData:
+    """A data layer's no-data rule (feature 012, contracts/recipe-and-datasets.md).
+
+    ``value``: class source pixels with no value take it (None: left missing). ``rule``
+    ``"unobserved"``: cells with no valid source value poleward of ``min_lat``, plus cells poleward
+    of ``sparse_lat`` whose best source pixel has fewer than ``min_steps`` valid steps; ``"share"``:
+    cells where the share of class source pixels without a value and poleward of ``min_lat``
+    exceeds ``min_share``. Those cells take ``color``."""
+
+    color: str
+    rule: str
+    min_lat: float
+    value: Optional[float] = None
+    min_share: Optional[float] = None
+    sparse_lat: Optional[float] = None
+    min_steps: Optional[int] = None
+
+    def provenance(self, cells: int) -> Dict[str, Any]:
+        out: Dict[str, Any] = {"rule": self.rule, "color": self.color, "min_lat": self.min_lat}
+        for k in ("min_share", "sparse_lat", "min_steps", "value"):
+            v = getattr(self, k)
+            if v is not None:
+                out[k] = v
+        out["cells"] = int(cells)
+        return out
+
+
+@dataclass(frozen=True)
+class Region:
+    """Cell-centre bounds (degrees, strict); None = unbounded (feature 013)."""
+
+    lat_min: Optional[float] = None
+    lat_max: Optional[float] = None
+    lon_min: Optional[float] = None
+    lon_max: Optional[float] = None
+
+    def to_dict(self) -> Dict[str, float]:
+        return {k: getattr(self, k) for k in _BOUND_KEYS if getattr(self, k) is not None}
+
+
+@dataclass(frozen=True)
+class Override:
+    """A ``[[<layer>.override]]`` rule (feature 013, contracts/recipe-and-datasets.md): cells inside
+    ``region`` (minus ``exclude``), or cells whose value of ``dataset``/``variable`` is at least
+    ``min_value`` (plus cells with no value poleward of ``unobserved_lat``), take ``color``."""
+
+    name: str
+    color: str
+    region: Optional[Region] = None
+    exclude: Tuple[Region, ...] = ()
+    dataset: Optional[DatasetEntry] = None
+    variable: str = ""
+    min_value: Optional[float] = None
+    unobserved_lat: Optional[float] = None
+
+    @property
+    def kind(self) -> str:
+        return "dataset" if self.dataset is not None else "region"
+
+    def provenance(self, cells: int) -> Dict[str, Any]:
+        out: Dict[str, Any] = {"name": self.name, "kind": self.kind, "color": self.color}
+        if self.region is not None:
+            out["region"] = self.region.to_dict()
+            if self.exclude:
+                out["exclude"] = [r.to_dict() for r in self.exclude]
+        else:
+            out.update(dataset=self.dataset.id, variable=self.variable, min_value=self.min_value)
+            if self.unobserved_lat is not None:
+                out["unobserved_lat"] = self.unobserved_lat
+        out["cells"] = int(cells)
+        return out
+
+
+@dataclass(frozen=True)
+class Legend:
+    """Secondary legend units for a data layer's bins (feature 013): value x ``factor``."""
+
+    units: str
+    factor: float
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"units": self.units, "factor": self.factor}
+
+
+@dataclass(frozen=True)
 class Layer:
     cls: str
     role: str
@@ -99,6 +194,10 @@ class Layer:
     transform: str = "none"
     classification: Optional[Classification] = None
     texture: Texture = Texture()
+    no_data: Optional[NoData] = None  # feature 012
+    sampling: str = "mean"            # feature 013
+    overrides: Tuple[Override, ...] = ()  # feature 013
+    legend: Optional[Legend] = None   # feature 013
 
     @property
     def part_id(self) -> str:
@@ -124,10 +223,20 @@ class Recipe:
         return (self.land, self.ocean)
 
     def datasets(self) -> Tuple[DatasetEntry, ...]:
+        """Every dataset the recipe reads, including a ``land_from`` mask dataset (feature 012)."""
         out = []
         for layer in self.layers:
-            if layer.dataset is not None and layer.dataset not in out:
-                out.append(layer.dataset)
+            entries = [layer.dataset] if layer.dataset is not None else []
+            entries += [o.dataset for o in layer.overrides if o.dataset is not None]  # feature 013
+            for e in entries:
+                if e in out:
+                    continue
+                out.append(e)
+                mask = e.mask_dataset_id
+                if mask is not None:
+                    entry = load_registry().get(mask)
+                    if entry not in out:
+                        out.append(entry)
         return tuple(out)
 
 
@@ -181,7 +290,8 @@ def _colors(layer: Dict[str, Any], cls: str, method: Optional[str]) -> Tuple[str
     return tuple(raw)
 
 
-def _classification(t: Any, n: int, colors: Tuple[str, ...], cls: str) -> Classification:
+def _classification(t: Any, n: int, colors: Tuple[str, ...], cls: str,
+                    transform: str = "none") -> Classification:
     where = f"{cls}.classification"
     if not isinstance(t, dict):
         raise RecipeError(where, "is required for a data layer (a table with a method)")
@@ -198,6 +308,13 @@ def _classification(t: Any, n: int, colors: Tuple[str, ...], cls: str) -> Classi
             raise RecipeError(f"{where}.bounds", f"needs {n + 1} bounds for {n} colors, found {len(bounds)}")
         if any(b2 <= b1 for b1, b2 in zip(bounds, bounds[1:])):
             raise RecipeError(f"{where}.bounds", "must be strictly increasing")
+        if transform == "log10":
+            # bounds stay in the variable's units in the recipe and are compared on log10 (012)
+            for i, v in enumerate(bounds):
+                if v <= 0:
+                    raise RecipeError(f"{where}.bounds[{i}]", "must be > 0 with transform = \"log10\" "
+                                                              "(bounds are in the variable's units)")
+            bounds = tuple(math.log10(v) for v in bounds)
         return Classification(method=method, bounds=bounds)
     if method == "rank":
         s = t.get("shares")
@@ -319,7 +436,8 @@ def _layer(t: Any, cls: str, base_dir: Path) -> Layer:
     if role not in ROLES:
         raise RecipeError(f"{cls}.role", f"must be one of {', '.join(ROLES)}")
     if role == "background":
-        for k in ("dataset", "local", "variable", "transform", "classification"):
+        for k in ("dataset", "local", "variable", "transform", "classification", "no_data", "sampling",
+                  "override", "legend"):
             if k in t:
                 raise RecipeError(f"{cls}.{k}", "a background layer takes colors, weights and texture only")
         _check_keys(t, _BACKGROUND_KEYS, cls)
@@ -371,13 +489,185 @@ def _layer(t: Any, cls: str, base_dir: Path) -> Layer:
     if not isinstance(ctab, dict):
         raise RecipeError(f"{cls}.classification", "is required for a data layer (a table with a method)")
     colors = _colors(t, cls, method)
-    classification = _classification(ctab, len(colors), colors, cls)
+    classification = _classification(ctab, len(colors), colors, cls, transform)
     if entry.format == "kit-design" and classification.method != "categorical":
         raise RecipeError(f"{cls}.classification.method", f"dataset {entry.id} is categorical; use "
                                                           "method = \"categorical\"")
     texture = _texture(t.get("texture"), cls, role, classification.method, len(colors))
+    no_data = _no_data(t.get("no_data"), cls, entry, variable, transform)
+    sampling = t.get("sampling", "mean")
+    if sampling not in SAMPLINGS:
+        raise RecipeError(f"{cls}.sampling", f"must be one of {', '.join(SAMPLINGS)}")
+    if sampling == "bilinear" and classification.method == "categorical":
+        raise RecipeError(f"{cls}.sampling", "bilinear needs ordered (not categorical) data")
+    overrides = _overrides(t.get("override"), cls)
+    legend = _legend(t.get("legend"), cls)
     return Layer(cls=cls, role=role, colors=colors, dataset=entry, variable=variable,
-                 transform=transform, classification=classification, texture=texture)
+                 transform=transform, classification=classification, texture=texture,
+                 no_data=no_data, sampling=sampling, overrides=overrides, legend=legend)
+
+
+def _region(t: Any, where: str, required: bool = True) -> Region:
+    if not isinstance(t, dict):
+        raise RecipeError(where, "must be a table of lat_min, lat_max, lon_min, lon_max")
+    vals: Dict[str, float] = {}
+    for k in _BOUND_KEYS:
+        if k in t:
+            v = _number(t[k], f"{where}.{k}")
+            lim = 90.0 if k.startswith("lat") else 180.0
+            if not -lim <= v <= lim:
+                raise RecipeError(f"{where}.{k}", f"must be between {-lim:g} and {lim:g}")
+            vals[k] = v
+    if required and not vals:
+        raise RecipeError(where, "needs at least one of lat_min, lat_max, lon_min, lon_max")
+    for lo, hi in (("lat_min", "lat_max"), ("lon_min", "lon_max")):
+        if lo in vals and hi in vals and vals[lo] >= vals[hi]:
+            raise RecipeError(f"{where}.{lo}", f"must be below {hi}")
+    return Region(**vals)
+
+
+def _overrides(raw: Any, cls: str) -> Tuple[Override, ...]:
+    """The optional ``[[<layer>.override]]`` tables of a data layer (feature 013)."""
+    if raw is None:
+        return ()
+    where = f"{cls}.override"
+    if not isinstance(raw, list) or not raw:
+        raise RecipeError(where, "must be an array of tables ([[...override]])")
+    out = []
+    names = set()
+    part = PART_FOR_CLASS[cls]
+    for i, t in enumerate(raw):
+        w = f"{where}[{i}]"
+        if not isinstance(t, dict):
+            raise RecipeError(w, "must be a table")
+        _check_keys(t, _OVERRIDE_KEYS, w)
+        name = _string(t, "name", w)
+        if name in names:
+            raise RecipeError(f"{w}.name", f"duplicate override name {name!r}")
+        names.add(name)
+        color = t.get("color")
+        if not isinstance(color, str):
+            raise RecipeError(f"{w}.color", "is required (a color key string)")
+        if load_part_colors().get(part, color) is None:
+            raise RecipeError(f"{w}.color", f"{color!r} is not a color of the {cls} part (part {part}); "
+                                            f"see `kit part-colors --part {part}`")
+        has_bounds = any(k in t for k in _BOUND_KEYS)
+        has_data = any(k in t for k in ("dataset", "variable", "min_value", "unobserved_lat"))
+        if has_bounds == has_data:
+            raise RecipeError(w, "give either region bounds (lat_min, lat_max, lon_min, lon_max) or a "
+                                 "dataset rule (dataset, variable, min_value), not both")
+        if has_bounds:
+            region = _region(t, w)
+            ex = t.get("exclude", [])
+            if not isinstance(ex, list):
+                raise RecipeError(f"{w}.exclude", "must be a list of tables")
+            exclude = tuple(_region(e, f"{w}.exclude[{j}]") for j, e in enumerate(ex))
+            out.append(Override(name=name, color=color, region=region, exclude=exclude))
+            continue
+        if "exclude" in t:
+            raise RecipeError(f"{w}.exclude", "is for region overrides only")
+        did = _string(t, "dataset", w)
+        try:
+            entry = load_registry().get(did)
+        except KeyError:
+            ids = ", ".join(e.id for e in load_registry().entries)
+            raise RecipeError(f"{w}.dataset", f"unknown dataset {did!r} (registry: {ids})")
+        if entry.format == "kit-design":
+            raise RecipeError(f"{w}.dataset", f"dataset {did} is categorical; an override needs values")
+        variable = _string(t, "variable", w)
+        if variable not in entry.variables:
+            raise RecipeError(f"{w}.variable", f"dataset {did} has no variable {variable!r} "
+                                               f"(has: {', '.join(entry.variables)})")
+        if "min_value" not in t:
+            raise RecipeError(f"{w}.min_value", "is required for a dataset override")
+        min_value = _number(t["min_value"], f"{w}.min_value")
+        ulat = None
+        if "unobserved_lat" in t:
+            ulat = _number(t["unobserved_lat"], f"{w}.unobserved_lat")
+            if not 0 <= ulat <= 90:
+                raise RecipeError(f"{w}.unobserved_lat", "must be between 0 and 90")
+        out.append(Override(name=name, color=color, dataset=entry, variable=variable,
+                            min_value=min_value, unobserved_lat=ulat))
+    return tuple(out)
+
+
+def _legend(t: Any, cls: str) -> Optional[Legend]:
+    """The optional ``[<layer>.legend]`` table (feature 013)."""
+    if t is None:
+        return None
+    where = f"{cls}.legend"
+    if not isinstance(t, dict):
+        raise RecipeError(where, "must be a table")
+    _check_keys(t, _LEGEND_KEYS, where)
+    units = _string(t, "units", where)
+    if "factor" not in t:
+        raise RecipeError(f"{where}.factor", "is required (a number > 0)")
+    factor = _number(t["factor"], f"{where}.factor")
+    if factor <= 0:
+        raise RecipeError(f"{where}.factor", "must be > 0")
+    return Legend(units=units, factor=factor)
+
+
+def _no_data(t: Any, cls: str, entry: DatasetEntry, variable: str,
+             transform: str = "none") -> Optional[NoData]:
+    """The optional ``[<layer>.no_data]`` table of a data layer (feature 012)."""
+    if t is None:
+        return None
+    where = f"{cls}.no_data"
+    if not isinstance(t, dict):
+        raise RecipeError(where, "must be a table")
+    rule = t.get("rule")
+    if rule not in NO_DATA_RULES:
+        raise RecipeError(f"{where}.rule", f"must be one of {', '.join(NO_DATA_RULES)}")
+    _check_keys(t, _NO_DATA_KEYS[rule], where)
+    color = t.get("color")
+    if color is None:
+        raise RecipeError(f"{where}.color", "is required (the color of no-data cells)")
+    if not isinstance(color, str):
+        raise RecipeError(f"{where}.color", "must be a color key string")
+    part = PART_FOR_CLASS[cls]
+    if load_part_colors().get(part, color) is None:
+        raise RecipeError(f"{where}.color", f"{color!r} is not a color of the {cls} part (part {part}); "
+                                            f"see `kit part-colors --part {part}`")
+    if "min_lat" not in t:
+        raise RecipeError(f"{where}.min_lat", "is required (degrees of absolute latitude, 0-90)")
+    min_lat = _number(t["min_lat"], f"{where}.min_lat")
+    if not 0 <= min_lat <= 90:
+        raise RecipeError(f"{where}.min_lat", "must be between 0 and 90")
+    value = None
+    if "value" in t:
+        value = _number(t["value"], f"{where}.value")
+        if transform == "log10" and value <= 0:
+            raise RecipeError(f"{where}.value", "must be > 0 with transform = \"log10\" (it is in the "
+                                                "variable's units and goes through the transform)")
+        if entry.kind == "packaged" or not entry.splits_land:
+            raise RecipeError(f"{where}.value", f"dataset {entry.id} does not tell land from ocean pixels "
+                                                "(class_rule), so missing pixels of the layer's class are "
+                                                "unknown")
+    if rule == "share":
+        if "min_share" not in t:
+            raise RecipeError(f"{where}.min_share", "is required for rule = \"share\" (0 <= x < 1)")
+        share = _number(t["min_share"], f"{where}.min_share")
+        if not 0 <= share < 1:
+            raise RecipeError(f"{where}.min_share", "must be >= 0 and < 1")
+        return NoData(color=color, rule=rule, min_lat=min_lat, value=value, min_share=share)
+    sparse_lat = min_steps = None
+    if ("sparse_lat" in t) != ("min_steps" in t):
+        missing = "min_steps" if "sparse_lat" in t else "sparse_lat"
+        raise RecipeError(f"{where}.{missing}", "sparse_lat and min_steps go together")
+    if "sparse_lat" in t:
+        sparse_lat = _number(t["sparse_lat"], f"{where}.sparse_lat")
+        if not min_lat <= sparse_lat <= 90:
+            raise RecipeError(f"{where}.sparse_lat", "must be between min_lat and 90")
+        ms = t["min_steps"]
+        if isinstance(ms, bool) or not isinstance(ms, int) or ms < 1:
+            raise RecipeError(f"{where}.min_steps", "must be an integer >= 1")
+        if (entry.variables.get(variable) or {}).get("reduce") != "climatology-mean":
+            raise RecipeError(f"{where}.min_steps", f"needs a dataset variable with reduce = "
+                                                    f"\"climatology-mean\" ({entry.id} {variable} has none)")
+        min_steps = ms
+    return NoData(color=color, rule=rule, min_lat=min_lat, value=value, sparse_lat=sparse_lat,
+                  min_steps=min_steps)
 
 
 def parse_recipe(text: Union[str, bytes], *, path: Optional[Path] = None,

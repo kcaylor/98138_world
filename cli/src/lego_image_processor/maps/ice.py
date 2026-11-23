@@ -1,4 +1,4 @@
-"""Ice-covered regions of the kit grid (feature 012, FR-003).
+"""Ice-covered regions of the kit grid (feature 015, FR-003).
 
 Two sets of kit cells, in kit (combination A) coordinates, packaged as ``kit_31203_ice.json`` and
 rolled to the board as hung:

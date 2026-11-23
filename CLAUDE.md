@@ -52,7 +52,7 @@ the download; exit 0 and "no differences" means the committed data is reproducib
 
 Maps are built from recipes (feature 004, see `specs/004-map-recipes/`): TOML files in
 `cli/src/lego_image_processor/maps/recipes/` (`official-31203`, `official-31203-bathymetry`,
-`ocean-sst`, `land-elevation`), built with `map build <recipe> -o layout.json`. Datasets are
+`ocean-sst`, `land-elevation`, `ocean-el-nino`, `ocean-la-nina`, `living-planet`, `rainfall`), built with `map build <recipe> -o layout.json`. Datasets are
 pinned in `data/datasets.json` (URL, size, SHA-256, citation, license) and cached per user; only
 `dataset fetch` and `map build --fetch` use the network. The kit projection
 (`kit_31203_projection.json`) and the plate/tile colors beyond the kit (`part_colors.json`, from
@@ -68,10 +68,10 @@ Layout positions use columns as hung and record `metadata.arrangement` (absent =
 --arrangement` computes per-cell values in kit (A) columns and the shadow, halo and mix on the board
 as hung; `layout arrange` re-hangs any layout without recomputing.
 
-The web site (feature 008, see `specs/008-web-app/` and `docs/deploy.md`) shows the six bundled
+The web site (feature 008, see `specs/008-web-app/` and `docs/deploy.md`) shows the eight bundled
 maps in combinations A, B and C and offers every build file. `web/` (package `web98138`, FastAPI +
-Jinja2, no cookies; works without JS, one first-party script since 012) has two halves: `python -m web98138.prebuild --out DIR [--fetch]` builds
-all 18 variants with the CLI library (`build_map`, `write_preview`, `build_parts_list`, exports,
+Jinja2, no cookies; works without JS, one first-party script since 015) has two halves: `python -m web98138.prebuild --out DIR [--fetch]` builds
+all 24 variants with the CLI library (`build_map`, `write_preview`, `build_parts_list`, exports,
 `build_sheet_set`/`render_pdf`) plus `manifest.json` (sizes, SHA-256, tool and dataset versions,
 page data); the service (`web98138.app`, `WEB98138_SITE_DIR=DIR uvicorn web98138.app:app`) only
 serves that output and never imports `lego_image_processor`. The `Dockerfile` (two stages) runs the
@@ -80,7 +80,28 @@ prebuild at image build time; `fly.toml` deploys app `world-98138`.
 ENSO maps (feature 009, see `specs/009-enso-sst-maps/`): recipes `ocean-el-nino` (ERSST v5 `ssta`,
 Dec 1997) and `ocean-la-nina` (Dec 1988) share one °C `bins` legend on the kit's nine ocean colors
 and set the optional recipe key `arrangement = "B"` (an explicit `--arrangement` wins; the report
-records `arrangement_source`). The netCDF-3 reader drops size-1 leading axes and rejects netCDF-4.
+records `arrangement_source`). The netCDF-3 reader drops size-1 leading axes and rejects netCDF-4
+(read those with `format = "netcdf4"`, feature 013).
+
+Living planet (feature 012, see `specs/012-living-planet/`): recipe `living-planet`, MOD17A3 NPP
+2000–2015 (NTSG GeoTIFF, 385 MB, pinned by SHA-256 over HTTP: `http_only`) on six plate colors and
+MODIS-Aqua chlorophyll-a 2013–2024 (one ERDDAP request, 147 MB) on five tile colors, White ice on
+both, Black shadow. General additions: `datasets/geotiff.py` (strip reader, `grid.block` means, no
+full decode), netCDF-3 `latitude`/`longitude`, `reduce = "climatology-mean"` (mean of valid steps +
+`counts`), `content_sha256` (checksum of the decoded data, for files a server builds on request),
+`class_rule.land_from` (land/ocean split from another dataset), recipe `transform = "log10"` (bins
+bounds in data units) and `[<layer>.no_data]` (`value`, `color`, `rule` unobserved | share;
+`maps/nodata.py`). Contract: `specs/012-living-planet/contracts/recipe-and-datasets.md`.
+
+Rainfall (feature 013, see `specs/013-rainfall/`): recipe `rainfall`, GPCP v2.3 LTM 1991–2020
+(NOAA PSL netCDF-4, annual mean, bilinear at cell centres) on six plate and five tile colors, White
+ice sheets (region overrides: Antarctica, Greenland) and sea ice (NSIDC CDR v6, September/February
+1991–2020, 60 files, 17.8 MB; mean ≥ 0.7 or no pixel poleward of 60°), Black shadow; 99.2% of cells
+match the approved prototype 3A. General additions: `datasets/netcdf4.py` (h5py 3.16, a CLI
+dependency and in `web/requirements-build.txt` only; CF decoding, polar-stereographic x/y →
+lat/lon, points grids), registry `files` (multi-file entries, cached in the version directory),
+recipe `sampling = "bilinear"`, `[[<layer>.override]]` (region or dataset rule; `maps/overrides.py`)
+and `[<layer>.legend]` (second unit). Contract: `specs/013-rainfall/contracts/recipe-and-datasets.md`.
 
 Price estimates (feature 011, see `specs/011-price-estimates/`): `parts estimate <layout>`
 prices a layout offline, every piece and on top of one 31203 kit, from a dated, cited BrickLink
@@ -95,7 +116,7 @@ committed snapshot (`--prices FILE`, `--no-prices`, `--allow-partial-prices`) an
 `variants[].estimates.full`/`.one_kit` and a top-level `prices` block into the manifest; map pages
 show both in whole dollars computed by the library.
 
-Palette chooser (feature 012, see `specs/012-palette-chooser/`): `map cells <recipe> -o
+Palette chooser (feature 015, see `specs/015-palette-chooser/`): `map cells <recipe> -o
 cells.json [--arrangement]` (library `maps/cells.py`, `map_cells(result)`) exports per cell, as
 hung, each layer's built class and data value, default bounds (recipe `bins`, or boundaries between
 built rank classes), the shadow, the ice regions and both parts' cited colors with CIE L*. Ice
@@ -107,7 +128,7 @@ The prebuild writes `cells.json` per variant (manifest kind `cells`, served at
 `web/src/web98138/static/palette.js` (CSP `script-src 'self'; connect-src 'self'`) to recolor a
 canvas, edit classes and bounds, show ice as White, and keep the state in the URL fragment. Preview
 only: parts lists, prices, sheets and downloads never change. Pages still work without JS (008
-FR-009 as amended by 012 FR-020). Web tests run the script's pure functions under Node when it
+FR-009 as amended by 015 FR-020). Web tests run the script's pure functions under Node when it
 is installed.
 
 1. **Python CLI** (`cli/`, package `lego_image_processor`), written to be released as open source.
@@ -119,7 +140,7 @@ is installed.
 - `cli/src/lego_image_processor/`: `core/` (image I/O, quantization), `palette/` (LEGO colors,
   CIEDE2000 matching), `analysis/`, `layout/` (grid, land/sea mask, kit spec, validator, frame arrangements; feature 007), `kit/`
   (kit reference data, part colors), `datasets/` (registry, verified cache, readers), `maps/`
-  (recipes, projection, reprojection, classification, texture, suitability, build, preview, ice regions and chooser cells; feature 012),
+  (recipes, projection, reprojection, classification, texture, suitability, build, preview, ice regions and chooser cells; feature 015),
   `parts/` (parts lists, cited IDs, marketplace exports; feature 005), `sheets/` (build sheets:
   sections, page model, PDF and SVG backends, per-section counts; feature 006), `prices/` (price
   snapshots, BrickLink fetch, offline estimates; feature 011), `cli/` (Click commands), `data/` (runtime reference data, shipped with the package).

@@ -28,7 +28,7 @@ def test_every_page_has_footer_and_basics(client, path):
     assert '<html lang="en">' in html
     assert html.count("<h1") == 1
     assert "<main" in html and "<footer" in html and "<nav" in html
-    # FR-009 as amended by feature 012 (FR-020): works without JavaScript; the only script is
+    # FR-009 as amended by feature 015 (FR-020): works without JavaScript; the only script is
     # the site's own /static/palette.js, on map pages, with no inline script.
     for tag in re.findall(r"<script\b[^>]*>", html):
         assert re.fullmatch(r'<script src="/static/palette\.js\?v=[^"]+" defer>', tag), tag
@@ -126,7 +126,7 @@ def _downloads(manifest):
     for m in manifest["maps"]:
         for c, v in m["variants"].items():
             for kind, f in v["files"].items():
-                if kind not in ("preview", "thumb", "cells"):  # cells: feature 012, not a download
+                if kind not in ("preview", "thumb", "cells"):  # cells: feature 015, not a download
                     yield m["id"], c, kind, f
 
 
@@ -182,7 +182,7 @@ def test_nothing_to_buy_message(client):
 def test_downloads_listed_with_size(client, manifest):
     html = client.get("/maps/ocean-sst/A").text
     for kind, f in manifest["maps"][1]["variants"]["A"]["files"].items():
-        if kind in ("preview", "thumb", "cells"):  # cells: feature 012, not a download
+        if kind in ("preview", "thumb", "cells"):  # cells: feature 015, not a download
             continue
         assert f'href="/maps/ocean-sst/A/download/{kind}"' in html
         assert escape(f["description"]) in html

@@ -2,7 +2,7 @@
 
 Run ``python -m web98138.prebuild --out DIR [--fetch] [--prices FILE | --no-prices]
 [--allow-partial-prices]``. It calls the same library functions as the CLI commands ``map build``,
-``map cells`` (feature 012), ``parts list``, ``parts export``, ``parts estimate`` and ``sheets
+``map cells`` (feature 015), ``parts list``, ``parts export``, ``parts estimate`` and ``sheets
 build``; nothing here computes a
 map, a parts list, a price or a sheet itself (constitution VI). Only ``--fetch`` uses the network,
 to download missing pinned datasets (verified by SHA-256); prices come from a committed snapshot
@@ -46,7 +46,7 @@ KINDS: Dict[str, tuple] = {
     "rebrickable-1kit": ("rebrickable-1kit.csv", "text/csv; charset=utf-8",
                          "Rebrickable parts CSV: pieces to buy on top of one kit"),
     "layout": ("layout.json", "application/json", "Layout: all 10,240 positions (schema 2.0)"),
-    # feature 012: the palette chooser's data (served for the map page, not a download)
+    # feature 015: the palette chooser's data (served for the map page, not a download)
     "cells": ("cells.json", "application/json",
               "Per-cell classes, values, shadow and ice regions for the palette chooser"),
 }
@@ -301,8 +301,10 @@ def build_site(out, maps: Optional[Iterable[str]] = None,
             size = sum(f["bytes"] for f in v["files"].values())
             echo(f"{map_id} {c}: {len(v['files'])} files, {size / 1e6:.1f} MB, "
                  f"{time.monotonic() - t0:.1f} s")
-        datasets = [{"id": e.id, "version": e.version, "sha256": e.sha256, "url": e.url,
-                     "size": e.size} for e in recipe.datasets() if e.kind == "download"]
+        datasets = [{"id": e.id, "version": e.version, "sha256": e.sha256, "url": e.url, "size": e.size,
+                     **({"content_sha256": e.content_sha256} if e.content_sha256 else {}),
+                     **({"files": len(e.files), "files_sha256": e.files_sha256} if e.files else {})}
+                    for e in recipe.datasets() if e.kind == "download"]
         rows.append({"id": recipe.id, "title": recipe.title, "description": recipe.description,
                      "recipe": {"format": recipe.format, "sha256": recipe.sha256},
                      "default_combination": recipe.arrangement.id if recipe.arrangement else "A",

@@ -3,7 +3,7 @@
 Fixed routes only. Map IDs, combinations and download kinds are looked up in the manifest; no
 part of a URL is ever used as a file path. Nothing here imports ``lego_image_processor``: every
 file and number shown was produced by the CLI library in the build step. Map pages load one
-first-party script, ``/static/palette.js`` (feature 012), which only recolors the prebuilt
+first-party script, ``/static/palette.js`` (feature 015), which only recolors the prebuilt
 ``cells.json`` in the browser; every page works without it.
 
 Run: ``WEB98138_SITE_DIR=DIR uvicorn web98138.app:app --port 8080``.
@@ -31,7 +31,7 @@ STATIC = {"style.css": "text/css; charset=utf-8", "favicon.svg": "image/svg+xml"
 FILE_CACHE = "public, max-age=86400"
 PAGE_CACHE = "public, max-age=300"
 SECURITY_HEADERS = {
-    # feature 012 (FR-008, FR-020): the site's own palette.js and its cells.json fetch only
+    # feature 015 (FR-008, FR-020): the site's own palette.js and its cells.json fetch only
     "content-security-policy": ("default-src 'none'; img-src 'self'; style-src 'self'; "
                                 "script-src 'self'; connect-src 'self'; "
                                 "base-uri 'none'; form-action 'none'; frame-ancestors 'none'"),
@@ -170,7 +170,7 @@ def create_app(site_dir) -> FastAPI:
 
     get("/maps/{map_id}/{combination}/preview.png")(image("preview"))
     get("/maps/{map_id}/{combination}/thumb.png")(image("thumb"))
-    get("/maps/{map_id}/{combination}/cells.json")(image("cells"))  # feature 012, inline JSON
+    get("/maps/{map_id}/{combination}/cells.json")(image("cells"))  # feature 015, inline JSON
 
     @get("/maps/{map_id}/{combination}/download/{kind}")
     async def download(request: Request, map_id: str, combination: str, kind: str):

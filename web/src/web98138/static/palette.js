@@ -1,4 +1,4 @@
-/* 98138.world palette chooser (feature 012). Hand-written, no build step, first-party only:
+/* 98138.world palette chooser (feature 015). Hand-written, no build step, first-party only:
    it fetches this map's prebuilt cells.json from the site and recolors the preview in the page.
    No cookies, no storage, no other hosts; the state lives in the address fragment only.
    Preview only: parts lists, prices, build sheets and downloads keep the map's default colors.

@@ -1,4 +1,4 @@
-"""Palette chooser (feature 012): cells.json in the build, its route, the chooser markup, the
+"""Palette chooser (feature 015): cells.json in the build, its route, the chooser markup, the
 first-party script and its pure functions (FR-006-FR-021; SC-001, SC-003, SC-005)."""
 
 from __future__ import annotations

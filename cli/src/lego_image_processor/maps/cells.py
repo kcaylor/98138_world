@@ -1,4 +1,4 @@
-"""Per-cell data for the palette chooser (feature 012, FR-001; contracts/cells-json.md).
+"""Per-cell data for the palette chooser (feature 015, FR-001; contracts/cells-json.md).
 
 ``map_cells(result)`` turns a built map (``build_map``) into a JSON-ready dict for the board as
 hung: each layer's built class per cell and (data layers) value per cell, the default class
@@ -49,7 +49,9 @@ def part_palette() -> Dict[str, List[Dict[str, Any]]]:
 
 def _units(layer: Layer) -> str:
     u = str(((layer.dataset.variables or {}).get(layer.variable, {}) or {}).get("units", "") or "")
-    return _UNITS.get(u.lower(), u)
+    u = _UNITS.get(u.lower(), u)
+    # values and bounds are exported after the recipe transform (feature 012 ``log10``)
+    return f"log10 {u}".strip() if getattr(layer, "transform", None) == "log10" else u
 
 
 def _decimals(values: np.ndarray) -> int:
@@ -98,7 +100,10 @@ def _layer_block(layer: Layer, classes: np.ndarray, mask: np.ndarray, fld, ice_c
         return block
     vals = np.where(mask, fld.values, np.nan)
     d = _decimals(vals)
-    layer_vals = vals[mask]
+    # cells left without a value (a recipe ``no_data`` rule, feature 012 living planet) are
+    # skipped for the range and the derived bounds; they keep their built class
+    ok = mask & np.isfinite(vals)
+    layer_vals = vals[ok]
     flat = vals.ravel()
     block["values"] = [None if not np.isfinite(v) else _round(v, d) for v in flat]
     block["units"] = _units(layer)
@@ -109,7 +114,7 @@ def _layer_block(layer: Layer, classes: np.ndarray, mask: np.ndarray, fld, ice_c
                            for b in layer.classification.bounds]
         block["bounds_source"] = "recipe"
     elif method in RANK_METHODS:
-        block["bounds"] = _derived_bounds(layer_vals, classes[mask], n, d)
+        block["bounds"] = _derived_bounds(layer_vals, classes[ok], n, d)
         block["bounds_source"] = "built classes"
     block["editable_classes"] = method == "bins" or method in RANK_METHODS
     no_value = [int(i) for i in np.flatnonzero((fld.filled & mask).ravel())]
