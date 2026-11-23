@@ -1,0 +1,80 @@
+# Living planet: plant productivity on land and ocean chlorophyll at sea (feature 012).
+#
+# Land (1x1 round plates, part 6141): MODIS MOD17A3 annual net primary production, mean of
+# 2000-2015 (NTSG, University of Montana, Collection 5.5; Zhao et al. 2005), in g C m-2 yr-1:
+#   Brick Yellow [BrickLink Tan] below 100 | Sand Yellow [Dark Tan] 100-250 | Sand Green 250-400 |
+#   Bright Yellowish Green [Lime] 400-600 | Bright Green 600-850 | Dark Green [Green] 850 and above
+# Land with no NPP value (deserts, rock, ice, urban) counts as 0. A land cell is White (ice) when
+# more than half of its land is unvegetated and poleward of 55 degrees; Antarctica lies outside the
+# NPP file and is unvegetated by this rule. Land and ocean pixels are told apart with ETOPO 2022
+# (z > 0), which the build reads too. A light blend texture softens the class edges.
+#
+# Ocean (1x1 round tiles, part 98138): MODIS-Aqua chlorophyll-a, NASA OBPG R2022.0 via NOAA
+# CoastWatch ERDDAP, 2013-2024 climatology (mean over every valid month per pixel), classified on
+# log10; bounds below are in mg m-3:
+#   Bright Blue [Blue] below 0.08 | Dark Azur [Dark Azure] 0.08-0.15 | Medium Azur [Medium Azure]
+#   0.15-0.3 | Bright Bluish Green [Dark Turquoise] 0.3-1 | Earth Green [Dark Green] 1 and above
+# The outer bounds 0.001 and 1000 only close the list (bins needs one more bound than colors).
+# Sea ice: ocean cells never observed and poleward of 60 degrees, or poleward of 70 degrees with
+# fewer than 12 valid months (of 142) in their best-observed pixel, take White tiles; small coastal
+# gaps elsewhere take the nearest value. No ocean texture (blend made the smooth field speckled).
+# Medium Azur and Bright Bluish Green are the closest pair (dE00 about 10); accepted as approved.
+#
+# Land shadow: Black tiles one stud east of land (the kit has no Black tiles; all come extra).
+# Most colors here are beyond kit 31203: expect about 6,600 pieces beyond one kit
+# (`parts list <layout> --kits 1`). Approved by the owner from prototype round 5 (2026-11-22).
+# Not affiliated with or endorsed by The LEGO Group.
+format = "1"
+id = "living-planet"
+title = "Living planet"
+description = "A living-planet map: plant productivity (net primary production, 2000-2015) on land and ocean chlorophyll (2013-2024) at sea, with ice in white."
+seed = 31203
+
+[land]
+role = "data"
+dataset = "mod17a3-npp-mean-2000-2015"
+variable = "npp"
+colors = [   # low -> high productivity
+  "lego_brick_yellow", "lego_sand_yellow", "lego_sand_green", "lego_bright_yellowish_green",
+  "lego_bright_green", "lego_dark_green",
+]
+
+[land.classification]
+method = "bins"
+# g C m-2 yr-1; the outer 0 and 1e9 only close the list
+bounds = [0, 100, 250, 400, 600, 850, 1e9]
+
+[land.texture]
+kind = "blend"
+width = 0.25
+
+[land.no_data]
+value = 0              # land pixels without an NPP value are barren: NPP 0
+color = "lego_white"   # ice
+rule = "share"
+min_lat = 55
+min_share = 0.5
+
+[ocean]
+role = "data"
+dataset = "modis-aqua-chla-2013-2024"
+variable = "chlor_a"
+transform = "log10"
+colors = [   # oligotrophic -> productive
+  "lego_bright_blue", "lego_dark_azur", "lego_medium_azur", "lego_bright_bluish_green",
+  "lego_earth_green",
+]
+
+[ocean.classification]
+method = "bins"
+bounds = [0.001, 0.08, 0.15, 0.3, 1.0, 1000]   # mg m-3, compared on log10
+
+[ocean.no_data]
+color = "lego_white"   # sea ice
+rule = "unobserved"
+min_lat = 60
+sparse_lat = 70
+min_steps = 12
+
+[shadow]
+color = "lego_black"

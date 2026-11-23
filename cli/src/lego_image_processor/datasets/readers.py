@@ -5,6 +5,7 @@
   netCDF-4/HDF5 files rejected by signature).
 - ``npy``: a NumPy array plus a cell-registered extent (rows south to north).
 - ``kit-design``: the packaged official design grid (categorical, already on the kit grid).
+- ``geotiff`` (feature 012): a strip GeoTIFF, block-averaged while reading (``geotiff.py``).
 
 Not affiliated with or endorsed by The LEGO Group.
 """
@@ -84,54 +85,128 @@ def _check_netcdf3_signature(path) -> None:
     raise ValueError(f"{path}: not a netCDF-3 classic file")
 
 
+_LAT_NAMES = ("lat", "latitude")
+_LON_NAMES = ("lon", "longitude")
+
+
+def _coord(f, names, path, what):
+    for n in names:
+        if n in f.variables:
+            return np.array(f.variables[n][:], dtype=float)
+    raise ValueError(f"{path}: no {what} coordinate variable (looked for {', '.join(names)})")
+
+
+def _clean(raw: np.ndarray, var) -> np.ndarray:
+    """Missing values to NaN, then scale and offset (CF packing)."""
+    for name in ("missing_value", "_FillValue"):
+        mv = _attr(var, name)
+        if mv is not None:
+            mv = float(np.asarray(mv).ravel()[0])
+            if np.isfinite(mv):
+                raw = np.where(np.isclose(raw, mv, rtol=1e-6), np.nan, raw)
+    raw = np.where(raw < _MISSING_FLOOR, np.nan, raw)
+    scale, offset = _attr(var, "scale_factor"), _attr(var, "add_offset")
+    if scale is not None:
+        raw = raw * float(scale)
+    if offset is not None:
+        raw = raw + float(offset)
+    return raw
+
+
 def read_netcdf3(path, variable: str, reduce: Optional[str] = None) -> SourceGrid:
     """Read a ``(..., lat, lon)`` variable.
 
+    Coordinates may be named ``lat``/``lon`` or ``latitude``/``longitude`` (ERDDAP; feature 012).
     Leading axes of size 1 (e.g. ``time=1, lev=1`` in the ERSST per-month files) are dropped.
-    ``reduce="annual-mean"`` averages a 12-step leading axis where all months are valid; any other
-    leading axis larger than 1 is an error naming the dimensions.
+    ``reduce="annual-mean"`` averages a 12-step leading axis where all months are valid;
+    ``reduce="climatology-mean"`` (feature 012) averages every valid step of one leading axis,
+    reading one step at a time, and returns ``counts`` (valid steps per pixel) and ``steps``. Any
+    other leading axis larger than 1 is an error naming the dimensions.
     """
     from scipy.io import netcdf_file
 
     _check_netcdf3_signature(path)
-    with netcdf_file(str(path), "r", mmap=False) as f:
+    counts = steps = None
+    with netcdf_file(str(path), "r", mmap=(reduce == "climatology-mean")) as f:
         if variable not in f.variables:
             raise ValueError(f"{path}: variable {variable!r} not found ({sorted(f.variables)})")
         var = f.variables[variable]
         dims = tuple(var.dimensions)
-        raw = np.array(var[:], dtype=float)
-        for name in ("missing_value", "_FillValue"):
-            mv = _attr(var, name)
-            if mv is not None:
-                raw = np.where(np.isclose(raw, float(np.asarray(mv).ravel()[0]), rtol=1e-6), np.nan, raw)
-        raw = np.where(raw < _MISSING_FLOOR, np.nan, raw)
-        scale, offset = _attr(var, "scale_factor"), _attr(var, "add_offset")
-        if scale is not None:
-            raw = raw * float(scale)
-        if offset is not None:
-            raw = raw + float(offset)
+        shape = tuple(var.shape)
         units = _attr(var, "units") or ""
-        lat = np.array(f.variables["lat"][:], dtype=float)
-        lon = np.array(f.variables["lon"][:], dtype=float)
-    if raw.ndim < 2:
-        raise ValueError(f"{path}: {variable} must have latitude and longitude axes")
-    lead = raw.shape[:-2]
-    names = dims[:-2] if len(dims) == raw.ndim else tuple(f"dim{i}" for i in range(len(lead)))
-    keep = [i for i, n in enumerate(lead) if n != 1]
-    field = raw.reshape(tuple(lead[i] for i in keep) + raw.shape[-2:])
-    if reduce == "annual-mean":
-        steps = field.shape[0] if field.ndim == 3 else (1 if field.ndim == 2 else None)
-        if steps != 12:
-            if steps is None:
-                raise ValueError(_leading_error(path, variable, names, lead))
-            raise ValueError(f"{path}: annual-mean needs 12 months, found {steps}")
-        values = field.mean(axis=0)  # NaN wherever any month is missing
-    elif field.ndim == 2:
-        values = field
-    else:
-        raise ValueError(_leading_error(path, variable, names, lead))
+        lat = _coord(f, _LAT_NAMES, path, "latitude")
+        lon = _coord(f, _LON_NAMES, path, "longitude")
+        if len(shape) < 2:
+            raise ValueError(f"{path}: {variable} must have latitude and longitude axes")
+        lead = shape[:-2]
+        names = dims[:-2] if len(dims) == len(shape) else tuple(f"dim{i}" for i in range(len(lead)))
+        keep = [i for i, n in enumerate(lead) if n != 1]
+        try:
+            if reduce == "climatology-mean":
+                if len(keep) > 1:
+                    raise ValueError(_leading_error(path, variable, names, lead))
+                n_steps = lead[keep[0]] if keep else 1
+                total = np.zeros(shape[-2:])
+                counts = np.zeros(shape[-2:], dtype=np.int64)
+                for t in range(n_steps):
+                    idx = tuple((t if i in keep else 0) for i in range(len(lead)))
+                    step = _clean(np.array(var[idx], dtype=float), var)
+                    ok = np.isfinite(step)
+                    total += np.where(ok, step, 0.0)
+                    counts += ok
+                    del step
+                with np.errstate(invalid="ignore", divide="ignore"):
+                    values = np.where(counts > 0, total / np.maximum(counts, 1), np.nan)
+                steps = int(n_steps)
+            else:
+                raw = _clean(np.array(var[:], dtype=float), var)
+                field = raw.reshape(tuple(lead[i] for i in keep) + raw.shape[-2:])
+                if reduce == "annual-mean":
+                    n = field.shape[0] if field.ndim == 3 else (1 if field.ndim == 2 else None)
+                    if n != 12:
+                        if n is None:
+                            raise ValueError(_leading_error(path, variable, names, lead))
+                        raise ValueError(f"{path}: annual-mean needs 12 months, found {n}")
+                    values = field.mean(axis=0)  # NaN wherever any month is missing
+                elif field.ndim == 2:
+                    values = field
+                else:
+                    raise ValueError(_leading_error(path, variable, names, lead))
+        finally:
+            var = None  # no reference to mapped data may outlive the file
+    if counts is not None:
+        c, _, _ = normalise(counts.astype(float), lat, lon)
+        counts = c.astype(np.int64)
     values, lat, lon = normalise(values, lat, lon)
-    return SourceGrid(values=values, lat=lat, lon=lon, units=units)
+    return SourceGrid(values=values, lat=lat, lon=lon, units=units, counts=counts, steps=steps)
+
+
+def netcdf3_content_sha256(path, variable: str) -> str:
+    """SHA-256 over the stored data of ``variable`` and its dimension coordinates (feature 012,
+    research R2): for each, in order, ``name``, NUL, dtype, NUL, shape, NUL, then the raw stored
+    (big-endian) bytes. Attributes, including ERDDAP's per-request ``history``, are excluded."""
+    import hashlib
+
+    from scipy.io import netcdf_file
+
+    _check_netcdf3_signature(path)
+    h = hashlib.sha256()
+    with netcdf_file(str(path), "r", mmap=True) as f:
+        if variable not in f.variables:
+            raise ValueError(f"{path}: variable {variable!r} not found ({sorted(f.variables)})")
+        names = [variable] + [d for d in f.variables[variable].dimensions if d in f.variables]
+        for name in names:
+            var = f.variables[name]
+            arr = var.data
+            h.update(name.encode() + b"\0" + arr.dtype.str.encode() + b"\0" +
+                     repr(tuple(arr.shape)).encode() + b"\0")
+            if arr.ndim and arr.shape[0] > 1:
+                for i in range(arr.shape[0]):  # one step at a time (bounded memory)
+                    h.update(np.ascontiguousarray(arr[i]).tobytes())
+            else:
+                h.update(np.ascontiguousarray(arr).tobytes())
+            del arr, var
+    return h.hexdigest()
 
 
 def _leading_error(path, variable, names, lead) -> str:
@@ -172,10 +247,52 @@ def read_kit_design() -> SourceGrid:
                       categories=list(d.palette), on_kit_grid=True)
 
 
-def read_dataset(entry: DatasetEntry, path, variable: str, transform: str = "none") -> SourceGrid:
+def _land_from_mask(g: SourceGrid, rule: Dict[str, Any], cache_dir=None) -> SourceGrid:
+    """Land where the nearest cell of another dataset's variable is above ``split_at``
+    (``class_rule.land_from``, feature 012, research R4). The grid is first extended to the mask's
+    latitude range, so land outside the file's own coverage is land with no value."""
+    from .cache import resolve
+    from .grid import extend_latitudes
+    from .registry import get_entry
+
+    entry = get_entry(rule["dataset"])
+    mask_grid = read_dataset(entry, resolve(entry, cache_dir), rule["variable"])
+    if mask_grid.on_kit_grid:
+        raise ValueError(f"land_from dataset {entry.id} is not a gridded field")
+    g = extend_latitudes(g, float(mask_grid.lat[0]), float(mask_grid.lat[-1]))
+    ri = _nearest_index(mask_grid.lat, g.lat)
+    ci = _nearest_index(mask_grid.lon, g.lon, period=360.0)
+    mv = mask_grid.values[np.ix_(ri, ci)]
+    g.land = np.where(np.isfinite(mv), mv > float(rule["split_at"]), False)
+    return g
+
+
+def _nearest_index(axis: np.ndarray, x: np.ndarray, period: Optional[float] = None) -> np.ndarray:
+    """Index of the nearest ``axis`` value (ascending) for each ``x``; wraps when ``period``."""
+    axis = np.asarray(axis, dtype=float)
+    i = np.clip(np.searchsorted(axis, x), 1, len(axis) - 1)
+    left, right = axis[i - 1], axis[i]
+    idx = np.where(np.abs(x - left) <= np.abs(right - x), i - 1, i)
+    if period is not None and len(axis) > 1:
+        # beyond either end the first or last cell may be nearer across the date line
+        d_first = np.abs(((x - axis[0]) + period / 2) % period - period / 2)
+        d_last = np.abs(((x - axis[-1]) + period / 2) % period - period / 2)
+        d_idx = np.abs(x - axis[idx])
+        idx = np.where(d_first < d_idx, 0, idx)
+        idx = np.where((d_last < d_idx) & (d_last < d_first), len(axis) - 1, idx)
+    return idx
+
+
+TRANSFORMS = ("none", "negate", "log10")
+
+
+def read_dataset(entry: DatasetEntry, path, variable: str, transform: str = "none",
+                 cache_dir=None) -> SourceGrid:
     """Read ``variable`` of ``entry`` from ``path`` and apply the entry's land/ocean rule.
 
-    The class rule is applied to the raw values, before ``transform`` (e.g. depth = -elevation).
+    The class rule is applied to the raw values, before ``transform`` (e.g. depth = -elevation;
+    ``log10``, feature 012: values <= 0 become missing). ``cache_dir`` locates a ``land_from``
+    mask dataset.
     """
     spec = entry.variables.get(variable, {}) if entry.variables else {}
     if entry.format == "kit-design":
@@ -186,6 +303,12 @@ def read_dataset(entry: DatasetEntry, path, variable: str, transform: str = "non
         g = read_netcdf3(path, variable, reduce=spec.get("reduce"))
     elif entry.format == "npy":
         g = read_npy(path, entry.grid)
+    elif entry.format == "geotiff":
+        from .geotiff import read_geotiff
+
+        g = read_geotiff(path, block=int(entry.grid.get("block", 1)),
+                         **{k: spec[k] for k in ("scale_factor", "add_offset", "valid_min", "valid_max",
+                                                 "fill") if k in spec})
     else:  # pragma: no cover - registry validation rejects other formats
         raise ValueError(f"unsupported format {entry.format}")
     rule = entry.class_rule or {}
@@ -193,8 +316,15 @@ def read_dataset(entry: DatasetEntry, path, variable: str, transform: str = "non
         g.land = np.where(np.isfinite(g.values), g.values > float(rule["split_at"]), False)
     elif rule.get("missing_is_land"):
         g.land = ~np.isfinite(g.values)
+    elif "land_from" in rule:
+        g = _land_from_mask(g, rule["land_from"], cache_dir)
     if transform == "negate":
         g.values = -g.values
+    elif transform == "log10":
+        with np.errstate(invalid="ignore", divide="ignore"):
+            g.values = np.where(g.values > 0, np.log10(np.where(g.values > 0, g.values, 1.0)), np.nan)
+    elif transform != "none":
+        raise ValueError(f"unknown transform {transform!r}")
     if spec.get("units") and not g.units:
         g.units = spec["units"]
     return g

@@ -81,7 +81,8 @@ def fetch_cmd(ids, recipe, cache_dir):
         except DatasetError as exc:
             raise CommandError(str(exc), exc.exit_code)
         if downloaded:
-            click.echo(f"Fetched {e.id} ({e.size:,} bytes, SHA-256 verified): {path}")
+            what = "content SHA-256" if e.content_sha256 and not e.sha256 else "SHA-256"
+            click.echo(f"Fetched {e.id} ({e.size:,} bytes, {what} verified): {path}")
         else:
             click.echo(f"{e.id}: already cached and verified: {path}")
         click.echo(f"  Citation: {e.citation}" + (f" https://doi.org/{e.doi}" if e.doi else ""))
@@ -103,7 +104,8 @@ def info(dataset_id, cache_dir):
         raise CommandError(f"Unknown dataset {dataset_id!r} (registry: {', '.join(x.id for x in reg.entries)})", 1)
     fields = [("id", e.id), ("title", e.title), ("publisher", e.publisher), ("version", e.version),
               ("kind", e.kind), ("url", e.url), ("size", _size(e) + " bytes" if e.size else ""),
-              ("sha256", e.sha256), ("format", e.format),
+              ("sha256", e.sha256), ("content sha256", e.content_sha256),
+              ("http only", e.http_only), ("format", e.format),
               ("variables", "; ".join(f"{k} [{v.get('units', '')}] {v.get('description', '')}".strip()
                                       for k, v in e.variables.items())),
               ("grid", json.dumps(e.grid) if e.grid else ""), ("land/ocean rule", json.dumps(e.class_rule)),

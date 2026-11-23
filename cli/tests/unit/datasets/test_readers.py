@@ -255,3 +255,124 @@ class TestEnsoFixtures:
         assert int(g.land.sum()) == 5032
         assert int(np.isnan(g.values).sum()) == 5032
         assert np.nanmax(np.abs(g.values)) <= 5.0
+
+
+# --- Feature 012: ERDDAP names, climatology mean, content checksum, log10, land_from ----------
+
+def _write_erddap(path, data, *, history="2026-11-22T22:00:00Z request", lat=None, lon=None):
+    """chlor_a(time, latitude, longitude) float32 with NaN fill, as ERDDAP writes it."""
+    t, h, w = data.shape
+    f = netcdf_file(str(path), "w")
+    f.history = history
+    for name, n in (("time", t), ("latitude", h), ("longitude", w)):
+        f.createDimension(name, n)
+    vt = f.createVariable("time", "f8", ("time",))
+    vt[:] = np.arange(t) * 86400.0 * 30
+    vla = f.createVariable("latitude", "f8", ("latitude",))
+    vla[:] = np.linspace(80, -80, h) if lat is None else lat  # north to south, like ERDDAP
+    vlo = f.createVariable("longitude", "f8", ("longitude",))
+    vlo[:] = np.linspace(-170, 170, w) if lon is None else lon
+    v = f.createVariable("chlor_a", "f4", ("time", "latitude", "longitude"))
+    v._FillValue = np.float32(np.nan)
+    v.units = "mg m-3"
+    v[:] = data.astype(np.float32)
+    f.close()
+    return path
+
+
+class TestClimatologyMean:
+    def _data(self):
+        d = np.full((4, 3, 2), np.nan)
+        d[:, 0, 0] = [1, 2, 3, 6]          # all valid: mean 3
+        d[:2, 0, 1] = [0.5, 1.5]           # two valid: mean 1
+        d[3, 1, 0] = 0.2                    # one valid
+        return d                            # (1, 1) and the last row never valid
+
+    def test_mean_counts_steps(self, tmp_path):
+        p = _write_erddap(tmp_path / "c.nc", self._data())
+        g = read_netcdf3(p, "chlor_a", reduce="climatology-mean")
+        assert g.steps == 4
+        # rows are south to north after normalise: the file's first (northern) row is last
+        assert g.values[2, 0] == pytest.approx(3.0) and g.values[2, 1] == pytest.approx(1.0)
+        assert g.values[1, 0] == pytest.approx(0.2) and np.isnan(g.values[1, 1])
+        assert g.counts.tolist() == [[0, 0], [1, 0], [4, 2]]
+        assert np.allclose(g.lat, [-80, 0, 80])
+
+    def test_latitude_longitude_names_without_reduce(self, tmp_path):
+        p = _write_erddap(tmp_path / "one.nc", self._data()[:1])
+        g = read_netcdf3(p, "chlor_a")
+        assert g.values.shape == (3, 2) and g.counts is None
+
+    def test_several_long_axes_rejected(self, tmp_path):
+        p = tmp_path / "two.nc"
+        _write_nd(p, [("time", 2), ("lev", 2), ("lat", 3), ("lon", 4)], np.ones((2, 2, 3, 4)))
+        with pytest.raises(ValueError, match="time=2, lev=2"):
+            read_netcdf3(p, "ssta", reduce="climatology-mean")
+
+    def test_registry_entry_and_log10(self, tmp_path):
+        p = _write_erddap(tmp_path / "c.nc", self._data())
+        e = _entry("netcdf3", variables={"chlor_a": {"reduce": "climatology-mean", "units": "mg m-3"}})
+        g = read_dataset(e, p, "chlor_a", transform="log10")
+        assert g.values[2, 0] == pytest.approx(np.log10(3.0))
+        assert g.counts is not None and g.units == "mg m-3"
+
+    def test_log10_non_positive_is_missing(self, tmp_path):
+        d = np.array([[[0.0, -1.0], [10.0, 100.0]]])
+        p = _write_erddap(tmp_path / "z.nc", d, lat=np.array([10.0, 0.0]), lon=np.array([0.0, 1.0]))
+        g = read_dataset(_entry("netcdf3"), p, "chlor_a", transform="log10")
+        assert np.isnan(g.values[1]).all() and np.allclose(g.values[0], [1.0, 2.0])
+
+
+class TestContentChecksum:
+    def test_ignores_attributes_detects_data(self, tmp_path):
+        from lego_image_processor.datasets.readers import netcdf3_content_sha256
+
+        d = TestClimatologyMean()._data()
+        a = _write_erddap(tmp_path / "a.nc", d, history="request at 10:00")
+        b = _write_erddap(tmp_path / "b.nc", d, history="request at 10:05, a little longer")
+        assert a.read_bytes() != b.read_bytes()
+        assert netcdf3_content_sha256(a, "chlor_a") == netcdf3_content_sha256(b, "chlor_a")
+        d2 = d.copy()
+        d2[0, 0, 0] = 1.25
+        c = _write_erddap(tmp_path / "c.nc", d2)
+        assert netcdf3_content_sha256(c, "chlor_a") != netcdf3_content_sha256(a, "chlor_a")
+        lat = np.linspace(80, -80, 3) + 0.5
+        e = _write_erddap(tmp_path / "e.nc", d, lat=lat)
+        assert netcdf3_content_sha256(e, "chlor_a") != netcdf3_content_sha256(a, "chlor_a")
+        with pytest.raises(ValueError, match="not found"):
+            netcdf3_content_sha256(a, "nope")
+
+
+class TestLandFrom:
+    def test_mask_from_another_dataset_and_latitude_extension(self, fixture_registry):
+        from lego_image_processor.datasets import get_entry
+
+        fixture_registry.place_all()
+        e = get_entry("mod17a3-npp-mean-2000-2015")
+        g = read_dataset(e, fixture_registry.place(e.id), "npp", cache_dir=fixture_registry.cache_dir)
+        # the 2-degree fixture covers 60S-80N; extended with missing rows to the mask's range
+        assert g.lat[0] < -85 and g.lat[-1] > 85
+        assert g.land is not None and g.land.shape == g.values.shape
+        south = g.lat < -70
+        assert g.land[south].mean() > 0.8 and np.isnan(g.values[south]).all()  # Antarctica: land, no value
+        assert not g.land[np.abs(g.lat - (-50)) < 2].all()
+
+    def test_nearest_index(self):
+        from lego_image_processor.datasets.readers import _nearest_index
+
+        axis = np.array([-179.0, -1.0, 0.0, 1.0, 179.0])
+        assert _nearest_index(axis, np.array([-0.6, -0.4, 0.4, 0.6])).tolist() == [1, 2, 2, 3]
+        assert _nearest_index(axis, np.array([179.9, -179.9]), period=360.0).tolist() == [4, 0]
+        assert _nearest_index(np.array([-170.0, 0.0, 178.0]), np.array([-179.0]), period=360.0).tolist() == [2]
+
+
+def test_extend_latitudes():
+    from lego_image_processor.datasets.grid import SourceGrid, extend_latitudes
+
+    g = SourceGrid(values=np.ones((2, 3)), lat=np.array([0.5, 1.5]), lon=np.array([0.5, 1.5, 2.5]),
+                   counts=np.ones((2, 3), dtype=int))
+    x = extend_latitudes(g, -2.0, 3.0)
+    assert np.allclose(x.lat, [-1.5, -0.5, 0.5, 1.5, 2.5])
+    assert np.isnan(x.values[:2]).all() and (x.values[2:4] == 1).all() and np.isnan(x.values[4]).all()
+    assert x.counts[:2].sum() == 0 and x.counts.shape == (5, 3)
+    assert extend_latitudes(g, 0.0, 2.0) is g

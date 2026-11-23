@@ -7,6 +7,7 @@ Every rule is checked before any work, and an error names the key path and the r
 from __future__ import annotations
 
 import hashlib
+import math
 import re
 import tomllib
 from dataclasses import dataclass, field
@@ -22,7 +23,8 @@ DEFAULT_SEED = 31203
 RECIPES_DIR = Path(__file__).resolve().parent / "recipes"
 PART_FOR_CLASS = {"land": "6141", "ocean": "98138"}
 ROLES = ("data", "background")
-TRANSFORMS = ("none", "negate")
+TRANSFORMS = ("none", "negate", "log10")
+NO_DATA_RULES = ("unobserved", "share")
 METHODS = ("bins", "quantile", "rank", "rank-to-supply", "categorical")
 RANK_METHODS = ("quantile", "rank", "rank-to-supply")
 DATA_TEXTURES = ("none", "blend")
@@ -35,7 +37,10 @@ _ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{1,63}$")
 
 _TOP_KEYS = {"format", "id", "title", "description", "seed", "arrangement", "land", "ocean", "shadow"}
 _SHADOW_KEYS = {"enabled", "color", "direction"}
-_DATA_KEYS = {"role", "colors", "dataset", "local", "variable", "transform", "classification", "texture"}
+_DATA_KEYS = {"role", "colors", "dataset", "local", "variable", "transform", "classification", "texture",
+              "no_data"}
+_NO_DATA_KEYS = {"unobserved": {"color", "rule", "min_lat", "value", "sparse_lat", "min_steps"},
+                 "share": {"color", "rule", "min_lat", "value", "min_share"}}
 _BACKGROUND_KEYS = {"role", "colors", "weights", "texture"}
 _CLASS_KEYS = {"bins": {"method", "bounds"}, "quantile": {"method"}, "rank": {"method", "shares"},
                "rank-to-supply": {"method"}, "categorical": {"method", "categories"}}
@@ -89,6 +94,34 @@ class Shadow:
 
 
 @dataclass(frozen=True)
+class NoData:
+    """A data layer's no-data rule (feature 012, contracts/recipe-and-datasets.md).
+
+    ``value``: class source pixels with no value take it (None: left missing). ``rule``
+    ``"unobserved"``: cells with no valid source value poleward of ``min_lat``, plus cells poleward
+    of ``sparse_lat`` whose best source pixel has fewer than ``min_steps`` valid steps; ``"share"``:
+    cells where the share of class source pixels without a value and poleward of ``min_lat``
+    exceeds ``min_share``. Those cells take ``color``."""
+
+    color: str
+    rule: str
+    min_lat: float
+    value: Optional[float] = None
+    min_share: Optional[float] = None
+    sparse_lat: Optional[float] = None
+    min_steps: Optional[int] = None
+
+    def provenance(self, cells: int) -> Dict[str, Any]:
+        out: Dict[str, Any] = {"rule": self.rule, "color": self.color, "min_lat": self.min_lat}
+        for k in ("min_share", "sparse_lat", "min_steps", "value"):
+            v = getattr(self, k)
+            if v is not None:
+                out[k] = v
+        out["cells"] = int(cells)
+        return out
+
+
+@dataclass(frozen=True)
 class Layer:
     cls: str
     role: str
@@ -99,6 +132,7 @@ class Layer:
     transform: str = "none"
     classification: Optional[Classification] = None
     texture: Texture = Texture()
+    no_data: Optional[NoData] = None  # feature 012
 
     @property
     def part_id(self) -> str:
@@ -124,10 +158,16 @@ class Recipe:
         return (self.land, self.ocean)
 
     def datasets(self) -> Tuple[DatasetEntry, ...]:
+        """Every dataset the recipe reads, including a ``land_from`` mask dataset (feature 012)."""
         out = []
         for layer in self.layers:
             if layer.dataset is not None and layer.dataset not in out:
                 out.append(layer.dataset)
+                mask = layer.dataset.mask_dataset_id
+                if mask is not None:
+                    entry = load_registry().get(mask)
+                    if entry not in out:
+                        out.append(entry)
         return tuple(out)
 
 
@@ -181,7 +221,8 @@ def _colors(layer: Dict[str, Any], cls: str, method: Optional[str]) -> Tuple[str
     return tuple(raw)
 
 
-def _classification(t: Any, n: int, colors: Tuple[str, ...], cls: str) -> Classification:
+def _classification(t: Any, n: int, colors: Tuple[str, ...], cls: str,
+                    transform: str = "none") -> Classification:
     where = f"{cls}.classification"
     if not isinstance(t, dict):
         raise RecipeError(where, "is required for a data layer (a table with a method)")
@@ -198,6 +239,13 @@ def _classification(t: Any, n: int, colors: Tuple[str, ...], cls: str) -> Classi
             raise RecipeError(f"{where}.bounds", f"needs {n + 1} bounds for {n} colors, found {len(bounds)}")
         if any(b2 <= b1 for b1, b2 in zip(bounds, bounds[1:])):
             raise RecipeError(f"{where}.bounds", "must be strictly increasing")
+        if transform == "log10":
+            # bounds stay in the variable's units in the recipe and are compared on log10 (012)
+            for i, v in enumerate(bounds):
+                if v <= 0:
+                    raise RecipeError(f"{where}.bounds[{i}]", "must be > 0 with transform = \"log10\" "
+                                                              "(bounds are in the variable's units)")
+            bounds = tuple(math.log10(v) for v in bounds)
         return Classification(method=method, bounds=bounds)
     if method == "rank":
         s = t.get("shares")
@@ -319,7 +367,7 @@ def _layer(t: Any, cls: str, base_dir: Path) -> Layer:
     if role not in ROLES:
         raise RecipeError(f"{cls}.role", f"must be one of {', '.join(ROLES)}")
     if role == "background":
-        for k in ("dataset", "local", "variable", "transform", "classification"):
+        for k in ("dataset", "local", "variable", "transform", "classification", "no_data"):
             if k in t:
                 raise RecipeError(f"{cls}.{k}", "a background layer takes colors, weights and texture only")
         _check_keys(t, _BACKGROUND_KEYS, cls)
@@ -371,13 +419,77 @@ def _layer(t: Any, cls: str, base_dir: Path) -> Layer:
     if not isinstance(ctab, dict):
         raise RecipeError(f"{cls}.classification", "is required for a data layer (a table with a method)")
     colors = _colors(t, cls, method)
-    classification = _classification(ctab, len(colors), colors, cls)
+    classification = _classification(ctab, len(colors), colors, cls, transform)
     if entry.format == "kit-design" and classification.method != "categorical":
         raise RecipeError(f"{cls}.classification.method", f"dataset {entry.id} is categorical; use "
                                                           "method = \"categorical\"")
     texture = _texture(t.get("texture"), cls, role, classification.method, len(colors))
+    no_data = _no_data(t.get("no_data"), cls, entry, variable, transform)
     return Layer(cls=cls, role=role, colors=colors, dataset=entry, variable=variable,
-                 transform=transform, classification=classification, texture=texture)
+                 transform=transform, classification=classification, texture=texture,
+                 no_data=no_data)
+
+
+def _no_data(t: Any, cls: str, entry: DatasetEntry, variable: str,
+             transform: str = "none") -> Optional[NoData]:
+    """The optional ``[<layer>.no_data]`` table of a data layer (feature 012)."""
+    if t is None:
+        return None
+    where = f"{cls}.no_data"
+    if not isinstance(t, dict):
+        raise RecipeError(where, "must be a table")
+    rule = t.get("rule")
+    if rule not in NO_DATA_RULES:
+        raise RecipeError(f"{where}.rule", f"must be one of {', '.join(NO_DATA_RULES)}")
+    _check_keys(t, _NO_DATA_KEYS[rule], where)
+    color = t.get("color")
+    if color is None:
+        raise RecipeError(f"{where}.color", "is required (the color of no-data cells)")
+    if not isinstance(color, str):
+        raise RecipeError(f"{where}.color", "must be a color key string")
+    part = PART_FOR_CLASS[cls]
+    if load_part_colors().get(part, color) is None:
+        raise RecipeError(f"{where}.color", f"{color!r} is not a color of the {cls} part (part {part}); "
+                                            f"see `kit part-colors --part {part}`")
+    if "min_lat" not in t:
+        raise RecipeError(f"{where}.min_lat", "is required (degrees of absolute latitude, 0-90)")
+    min_lat = _number(t["min_lat"], f"{where}.min_lat")
+    if not 0 <= min_lat <= 90:
+        raise RecipeError(f"{where}.min_lat", "must be between 0 and 90")
+    value = None
+    if "value" in t:
+        value = _number(t["value"], f"{where}.value")
+        if transform == "log10" and value <= 0:
+            raise RecipeError(f"{where}.value", "must be > 0 with transform = \"log10\" (it is in the "
+                                                "variable's units and goes through the transform)")
+        if entry.kind == "packaged" or not entry.splits_land:
+            raise RecipeError(f"{where}.value", f"dataset {entry.id} does not tell land from ocean pixels "
+                                                "(class_rule), so missing pixels of the layer's class are "
+                                                "unknown")
+    if rule == "share":
+        if "min_share" not in t:
+            raise RecipeError(f"{where}.min_share", "is required for rule = \"share\" (0 <= x < 1)")
+        share = _number(t["min_share"], f"{where}.min_share")
+        if not 0 <= share < 1:
+            raise RecipeError(f"{where}.min_share", "must be >= 0 and < 1")
+        return NoData(color=color, rule=rule, min_lat=min_lat, value=value, min_share=share)
+    sparse_lat = min_steps = None
+    if ("sparse_lat" in t) != ("min_steps" in t):
+        missing = "min_steps" if "sparse_lat" in t else "sparse_lat"
+        raise RecipeError(f"{where}.{missing}", "sparse_lat and min_steps go together")
+    if "sparse_lat" in t:
+        sparse_lat = _number(t["sparse_lat"], f"{where}.sparse_lat")
+        if not min_lat <= sparse_lat <= 90:
+            raise RecipeError(f"{where}.sparse_lat", "must be between min_lat and 90")
+        ms = t["min_steps"]
+        if isinstance(ms, bool) or not isinstance(ms, int) or ms < 1:
+            raise RecipeError(f"{where}.min_steps", "must be an integer >= 1")
+        if (entry.variables.get(variable) or {}).get("reduce") != "climatology-mean":
+            raise RecipeError(f"{where}.min_steps", f"needs a dataset variable with reduce = "
+                                                    f"\"climatology-mean\" ({entry.id} {variable} has none)")
+        min_steps = ms
+    return NoData(color=color, rule=rule, min_lat=min_lat, value=value, sparse_lat=sparse_lat,
+                  min_steps=min_steps)
 
 
 def parse_recipe(text: Union[str, bytes], *, path: Optional[Path] = None,

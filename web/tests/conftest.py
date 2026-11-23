@@ -41,6 +41,18 @@ def fixture_datasets(tmp_path_factory):
             f = CLI_FIXTURES / "ersst_v5_199712_ssta.nc"
             row.update(filename=f.name, size=f.stat().st_size, sha256=_sha(f))
             files[row["id"]] = f
+        elif row["id"] == "mod17a3-npp-mean-2000-2015":  # feature 012: 1-degree fixture, 2x2 blocks
+            f = CLI_FIXTURES / "mod17a3_npp_1deg.tif"
+            row.update(filename=f.name, size=f.stat().st_size, sha256=_sha(f),
+                       grid={**row.get("grid", {}), "block": 2})
+            files[row["id"]] = f
+        elif row["id"] == "modis-aqua-chla-2013-2024":  # feature 012: content checksum of the fixture
+            from lego_image_processor.datasets.readers import netcdf3_content_sha256
+
+            f = CLI_FIXTURES / "modis_chla_4deg_6mo.nc"
+            row.update(filename=f.name, size=f.stat().st_size,
+                       content_sha256=netcdf3_content_sha256(f, "chlor_a"))
+            files[row["id"]] = f
         elif row["id"] == "etopo2022-surface-10m":
             f = CLI_FIXTURES / "etopo2022_1deg.npy"
             row.update(format="npy", filename=f.name, size=f.stat().st_size, sha256=_sha(f),
@@ -80,4 +92,24 @@ def client(site_dir):
     from web98138.app import create_app
 
     with TestClient(create_app(site_dir), base_url="https://98138.world") as c:
+        yield c
+
+
+@pytest.fixture(scope="session")
+def living_site(tmp_path_factory, fixture_datasets) -> Path:
+    """Feature 012: the living-planet map alone (three datasets, A, B and C) from the fixtures."""
+    from web98138.prebuild import build_site
+
+    out = tmp_path_factory.mktemp("living")
+    build_site(out, maps=("living-planet",), cache_dir=fixture_datasets, echo=lambda *a: None)
+    return out
+
+
+@pytest.fixture()
+def living_client(living_site):
+    from fastapi.testclient import TestClient
+
+    from web98138.app import create_app
+
+    with TestClient(create_app(living_site), base_url="https://98138.world") as c:
         yield c
