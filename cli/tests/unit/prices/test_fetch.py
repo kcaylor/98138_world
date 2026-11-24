@@ -388,7 +388,7 @@ def test_recipe_lot_set_records_recipe_hashes():
     from lego_image_processor.maps.recipe import bundled_recipes
 
     ls = make_lot_set("recipes", recipe_lots())
-    assert ls["kind"] == "recipes" and ls["count"] == 25
+    assert ls["kind"] == "recipes" and ls["count"] == 26  # 25 + the margin Black (feature 016)
     assert [r["id"] for r in ls["recipes"]] == sorted(bundled_recipes())
     for r in ls["recipes"]:
         assert r["sha256"] == hashlib.sha256(bundled_recipes()[r["id"]].read_bytes()).hexdigest()

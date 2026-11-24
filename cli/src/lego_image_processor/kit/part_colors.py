@@ -1,7 +1,10 @@
-"""Colors in which the kit's two map parts are made, with cited IDs (FR-016; ``part_colors.json``).
+"""Colors in which the map parts are made, with cited IDs (FR-016; ``part_colors.json``).
 
-Part 6141 (1x1 round plate, land) and 98138 (1x1 round tile, ocean). Since feature 005 the table
-holds every opaque color of both parts that passes the five join rules (``tools/partcolors``), and
+Part 6141 (1x1 round plate, land) and 98138 (1x1 round tile, ocean), the kit's two map parts, and
+since feature 016 part 3070b (1x1 square tile, the margin of a non-kit template), which is not in
+the kit: every 3070b row has ``in_kit: false`` and the kit-color rules apply to the kit's parts
+only. Since feature 005 the table
+holds every opaque color of each part that passes the five join rules (``tools/partcolors``), and
 ``source.terms`` records Rebrickable's terms: free for personal and commercial use with
 acknowledgement of Rebrickable as the data source. Kit colors must equal
 ``kit_colors.json``, which stays the authority for them. Rows with a missing ID or a note that
@@ -21,8 +24,10 @@ from .colors import CATALOGS, CITATION_FIELDS, DATA_DIR, CatalogColor, load_kit_
 from .source import DISCLAIMER, Citation
 
 PART_COLORS_PATH = DATA_DIR / "part_colors.json"
-PARTS = ("6141", "98138")
+PARTS = ("6141", "98138", "3070b")
+KIT_PARTS = ("6141", "98138")  # the kit's map parts; 3070b is not in kit 31203 (016)
 KIT_ROLE_FOR_PART = {"6141": "land", "98138": "ocean"}
+ROLE_FOR_PART = {**KIT_ROLE_FOR_PART, "3070b": "margin"}
 _FORBIDDEN_WORDS = ("estimate", "placeholder", "unverified")
 
 
@@ -136,6 +141,8 @@ def parse_part_colors(data: Dict[str, Any]) -> PartColorTable:
             if any(w in notes.lower() for w in _FORBIDDEN_WORDS):
                 raise _fail(f"{where}: entry marked as estimate/placeholder")
             in_kit = bool(row.get("in_kit"))
+            if in_kit and part_id not in KIT_PARTS:
+                raise _fail(f"{where}: part {part_id} is not in kit 31203; in_kit must be false")
             pc = PartColor(key=key, part_id=part_id, element_id=element_id, lego=cats["lego"],
                            bricklink=cats["bricklink"], rebrickable=cats["rebrickable"],
                            rgb=tuple(rgb), in_kit=in_kit, citations=resolved,
@@ -146,14 +153,14 @@ def parse_part_colors(data: Dict[str, Any]) -> PartColorTable:
                         (k.element_id, k.lego, k.bricklink, k.rebrickable, tuple(k.rgb)) != \
                         (pc.element_id, pc.lego, pc.bricklink, pc.rebrickable, pc.rgb):
                     raise _fail(f"{where}: kit row must equal kit_colors.json")
-            elif key in kit and kit[key].role == KIT_ROLE_FOR_PART[part_id]:
+            elif key in kit and kit[key].role == ROLE_FOR_PART[part_id]:
                 raise _fail(f"{where}: {key} is a kit color of this part; mark it in_kit")
             out.append(pc)
         keys = [c.key for c in out]
         if len(set(keys)) != len(keys):
             raise _fail(f"parts.{part_id}: color keys must be unique")
-        missing = [k for k, c in kit.items() if c.role == KIT_ROLE_FOR_PART[part_id] and k not in keys]
-        if missing:
+        missing = [k for k, c in kit.items() if c.role == ROLE_FOR_PART[part_id] and k not in keys]
+        if part_id in KIT_PARTS and missing:
             raise _fail(f"parts.{part_id}: kit colors missing: {missing}")
         parts[part_id] = tuple(out)
     return PartColorTable(source=dict(source), citations=tuple(cits), parts=parts)
@@ -171,5 +178,5 @@ def load_part_colors(path: Optional[Path] = None) -> PartColorTable:
 
 
 def colors_for_part(part_id: str) -> List[PartColor]:
-    """Colors in which ``part_id`` (6141 or 98138) is listed; ``KeyError`` for other parts."""
+    """Colors in which ``part_id`` (6141, 98138 or 3070b) is listed; ``KeyError`` for other parts."""
     return list(load_part_colors().for_part(part_id))

@@ -188,7 +188,8 @@ console.log(JSON.stringify(out));
 
 
 @pytest.mark.skipif(NODE is None, reason="Node.js is not installed")
-@pytest.mark.parametrize("map_id,c", [("ocean-sst", "A"), ("official-31203", "C"), ("ocean-el-nino", "B")])
+@pytest.mark.parametrize("map_id,c", [("ocean-sst", "A"), ("official-31203", "C"), ("ocean-el-nino", "B"),
+                                      ("ocean-sst", "winkel-tripel")])   # feature 016: margin cells
 def test_script_functions_with_node(site_dir, tmp_path, map_id, c):
     h = tmp_path / "harness.js"
     h.write_text(HARNESS, encoding="utf-8")
@@ -207,3 +208,133 @@ def test_script_functions_with_node(site_dir, tmp_path, map_id, c):
     assert out["recolor"] is True
     assert out.get("custom", True) is True
     assert out["roundTrip"] is True and out["badColor"] is True and out["otherMap"] is True
+
+
+
+# --- feature 016: template variants (US3-4; FR-012, FR-020a; contracts/recipe-and-outputs.md) --
+
+TEMPLATE_HARNESS = r"""
+const P = require(process.argv[2]);
+const fs = require('fs');
+const data = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
+const out = {};
+const M = [];
+for (let i = 0; i < data.cells.length; i++) if (data.cells[i] === 'M') M.push(i);
+out.margins = M.length;
+const margin = data.margin.color;
+const other = data.palette['3070b'].map(r => r.key).find(k => k !== margin);
+// default, recolored and ice White: margin cells keep the margin color
+const st = P.defaultState(data);
+out.defaultMargin = M.every(i => P.cellColors(data, st)[i] === margin);
+const rc = P.defaultState(data);
+rc.layers.land.colors = rc.layers.land.colors.map(() => 'lego_black');
+rc.layers.ocean.colors = rc.layers.ocean.colors.map(() => 'lego_white');
+const rk = P.cellColors(data, rc);
+out.recolorOthers = rk.every((k, i) => data.cells[i] === 'M' || data.cells[i] === 'S' ||
+                             k === (data.cells[i] === 'L' ? 'lego_black' : 'lego_white'));
+rc.ice = 'white';
+const wk = P.cellColors(data, rc);
+out.recolorMargin = M.every(i => rk[i] === margin && wk[i] === margin);
+out.iceWhite = data.ice.land.concat(data.ice.sea).every(i => data.cells[i] === 'S' || wk[i] === data.ice.color);
+// ice flags leave margin cells out, even when an ice list names one
+const iced = JSON.parse(JSON.stringify(data));
+iced.ice.sea = iced.ice.sea.concat([M[0]]); iced.ice.land = iced.ice.land.concat([M[1]]);
+const ik = P.cellColors(iced, Object.assign(P.defaultState(iced), {ice: 'white'}));
+out.iceSkipsMargin = ik[M[0]] === margin && ik[M[1]] === margin;
+// shares count land and ocean data studs only
+const land = P.classShares(data, st, 'land').reduce((a, b) => a + b.cells, 0);
+const ocean = P.classShares(data, st, 'ocean').reduce((a, b) => a + b.cells, 0);
+out.landShare = land; out.oceanShare = ocean;
+out.L = data.cells.split('').filter(k => k === 'L').length;
+out.O = data.cells.split('').filter(k => k === 'O').length;
+// the outline ring: ring cells in the ring color, the rest of the margin in the margin color
+const ringed = JSON.parse(JSON.stringify(data));
+ringed.margin.ring = {color: other, cells: M.slice(0, 7)};
+const gk = P.cellColors(ringed, P.defaultState(ringed));
+out.ring = M.every((i, j) => gk[i] === (j < 7 ? other : margin));
+// drawing: rounds for land, ocean and shadow, squares for the margin, on black
+const calls = [];
+const ctx = {fillStyle: '', fillRect(x, y, w, h) { calls.push(['rect', x, y, w, h, this.fillStyle]); },
+             beginPath() {}, arc(x, y, r) { calls.push(['arc', x, y, r, this.fillStyle]); }, fill() {}};
+const rgb = (part, key) => data.palette[part].find(r => r.key === key).rgb;
+P.drawStuds(ctx, data, P.cellColors(data, st), rgb, 10, 0.9);
+out.background = calls[0];
+const rects = calls.slice(1).filter(c => c[0] === 'rect'), arcs = calls.filter(c => c[0] === 'arc');
+out.rects = rects.length; out.arcs = arcs.length;
+const W = data.width, mrgb = 'rgb(' + rgb('3070b', margin).join(',') + ')';
+out.squaresAtMargin = rects.every((c, j) => c[1] === (M[j] % W) * 10 && c[2] === Math.floor(M[j] / W) * 10 &&
+                                  c[3] === 10 && c[4] === 10 && c[5] === mrgb);
+out.radius = arcs.length ? arcs[0][3] : null;
+out.marginColor = margin;
+// owner 2026-11-24: Black margin studs are the black background (no square drawn); other margin
+// colors and the ring keep their cited colors
+const draw = (d) => {
+  const c = [];
+  const cx = {fillStyle: '', fillRect(x, y, w, h) { c.push([x / 10 + (y / 10) * W, this.fillStyle]); },
+              beginPath() {}, arc() {}, fill() {}};
+  P.drawStuds(cx, d, P.cellColors(d, P.defaultState(d)), rgb, 10, 0.9);
+  return c.slice(1);
+};
+const css = (key) => 'rgb(' + rgb('3070b', key).join(',') + ')';
+const yellow = data.palette['3070b'].map(r => r.key).find(k => k !== 'lego_black' && k !== 'lego_white');
+const blackRing = JSON.parse(JSON.stringify(data));
+blackRing.margin.color = 'lego_black'; blackRing.margin.ring = {color: yellow, cells: M.slice(0, 7)};
+const br = draw(blackRing);
+out.blackMarginRing = br.length === 7 && br.every((c, j) => c[0] === M[j] && c[1] === css(yellow));
+const whiteBlack = JSON.parse(JSON.stringify(data));
+whiteBlack.margin.color = 'lego_white'; whiteBlack.margin.ring = {color: 'lego_black', cells: M.slice(0, 7)};
+const wb = draw(whiteBlack);
+out.blackRingCited = wb.length === M.length &&
+  wb.every((c, j) => c[0] === M[j] && c[1] === css(j < 7 ? 'lego_black' : 'lego_white'));
+console.log(JSON.stringify(out));
+"""
+
+
+def _node(tmp_path, harness, cells):
+    h = tmp_path / "harness.js"
+    h.write_text(harness, encoding="utf-8")
+    r = subprocess.run([NODE, str(h), str(SCRIPT), str(cells)], capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    return json.loads(r.stdout)
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is not installed")
+def test_template_cells_with_node(site_dir, tmp_path):
+    out = _node(tmp_path, TEMPLATE_HARNESS, site_dir / "maps" / "ocean-sst" / "winkel-tripel" / "cells.json")
+    assert out["margins"] > 0
+    assert out["defaultMargin"] and out["recolorMargin"] and out["recolorOthers"]
+    assert out["iceSkipsMargin"] is True and out["iceWhite"] is True
+    assert out["landShare"] == out["L"] and out["oceanShare"] == out["O"]
+    assert out["ring"] is True
+    assert out["background"] == ["rect", 0, 0, 1280, 800, "#000"]
+    # the default margin is Black: its studs are the black background, no square drawn (owner,
+    # 2026-11-24); land, ocean and shadow are rounds
+    assert out["marginColor"] == "lego_black"
+    assert out["rects"] == 0 and out["arcs"] == 10240 - out["margins"]
+    assert out["squaresAtMargin"] is True and out["radius"] == 4.5
+    assert out["blackMarginRing"] is True       # Black margin, colored ring: only the ring drawn
+    assert out["blackRingCited"] is True        # White margin, Black ring: the ring in cited Black
+
+
+KIT_DRAW = r"""
+const P = require(process.argv[2]);
+const data = JSON.parse(require('fs').readFileSync(process.argv[3], 'utf8'));
+const calls = [];
+const ctx = {fillStyle: '', fillRect() { calls.push('rect'); }, beginPath() {}, arc() { calls.push('arc'); }, fill() {}};
+P.drawStuds(ctx, data, P.cellColors(data, P.defaultState(data)),
+            (part, key) => data.palette[part].find(r => r.key === key).rgb, 10, 0.9);
+console.log(JSON.stringify({rects: calls.filter(c => c === 'rect').length, arcs: calls.filter(c => c === 'arc').length}));
+"""
+
+
+@pytest.mark.skipif(NODE is None, reason="Node.js is not installed")
+def test_kit_cells_draw_only_rounds_with_node(site_dir, tmp_path):
+    out = _node(tmp_path, KIT_DRAW, site_dir / "maps" / "ocean-sst" / "B" / "cells.json")
+    assert out == {"rects": 1, "arcs": 10240}      # the black background, then one round per stud
+
+
+def test_template_page_chooser_markup(client):
+    html = client.get("/maps/ocean-sst/winkel-tripel").text
+    assert 'data-cells="/maps/ocean-sst/winkel-tripel/cells.json"' in html
+    assert re.search(r'<script src="/static/palette\.js\?v=[^"]+" defer></script>', html)
+    assert NOTE in html and 'src="/maps/ocean-sst/winkel-tripel/preview.png"' in html

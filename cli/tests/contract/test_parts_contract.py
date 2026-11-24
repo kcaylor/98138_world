@@ -242,3 +242,139 @@ def test_list_leftovers_json(runner, layouts):
     assert len(d["leftovers"]) == 10 and d["totals"]["leftover"] == 11130 - 30 - 20
     coral = next(x for x in d["leftovers"] if x["color_key"] == "lego_vibrant_coral")
     assert (coral["kit_supply"], coral["used"], coral["leftover"]) == (601, 0, 601)
+
+
+# --- layouts on the Winkel tripel template (feature 016 T072; contracts/cli.md "Other commands") --
+
+PRICES = __import__("pathlib").Path(__file__).resolve().parents[1] / "fixtures" / "prices"
+
+
+@pytest.fixture
+def winkel_file(confirmed_winkel, tmp_path):
+    from ..winkel_layouts import winkel_grid
+    p = tmp_path / "winkel.json"
+    p.write_text(winkel_grid(confirmed_winkel).to_json(), encoding="utf-8")
+    return p
+
+
+def _item():
+    from lego_image_processor.kit.part_numbers import load_part_numbers
+    return load_part_numbers().get("3070b").bricklink_item_no
+
+
+def test_list_winkel_table(runner, winkel_file, confirmed_winkel):
+    r = runner.invoke(cli, ["parts", "list", str(winkel_file), "--kits", "1"])
+    assert r.exit_code == 0, r.output
+    n = confirmed_winkel.counts["margin"]
+    assert (f"Template: winkel-tripel ({confirmed_winkel.title}); margin in 1x1 square tiles "
+            "(part 3070b), which kit 31203 does not have") in r.output
+    rows = [l for l in r.output.splitlines() if l.startswith("square tile")]
+    assert len(rows) == 1
+    assert "Black (26)" in rows[0] and f"{_item()} / Black (11)" in rows[0]
+    assert rows[0].split()[-3:] == [f"{n:,}", "0", f"{n:,}"]           # needed, owned, to buy
+    box = r.output.split("Left over in the box (1 kit of 31203):")[1]
+    assert "square" not in box
+    assert "Totals: 4 lots, 10,240 pieces needed" in r.output
+    assert _last(r.output) == DISCLAIMER
+
+
+def test_list_winkel_json(runner, winkel_file, confirmed_winkel):
+    r = runner.invoke(cli, ["parts", "list", str(winkel_file), "--format", "json"])
+    assert r.exit_code == 0, r.output
+    d = json.loads(r.output)
+    assert d["layout"]["template"] == {"id": "winkel-tripel", "title": confirmed_winkel.title}
+    sq = [l for l in d["lots"] if l["part_type"] == "square_tile"]
+    assert len(sq) == 1 and sq[0]["part_id"] == "3070b" and sq[0]["bricklink"]["item_no"] == _item()
+    assert sq[0]["rebrickable"]["part_num"] == "3070b"
+    assert list(d)[-1] == "disclaimer"
+
+
+def test_export_winkel(runner, winkel_file, confirmed_winkel, tmp_path):
+    xml, csv = tmp_path / "w.xml", tmp_path / "w.csv"
+    r = runner.invoke(cli, ["parts", "export", str(winkel_file), "--bricklink", str(xml),
+                            "--rebrickable", str(csv), "--kits", "1"])
+    assert r.exit_code == 0, r.output
+    n = confirmed_winkel.counts["margin"]
+    items = [(i.findtext("ITEMID"), i.findtext("MINQTY")) for i in ET.fromstring(xml.read_text()).findall("ITEM")]
+    assert (_item(), str(n)) in items
+    assert f"3070b,0,{n}" in csv.read_text().splitlines()
+    assert _last(r.output) == DISCLAIMER
+
+
+def test_estimate_winkel(runner, winkel_file, confirmed_winkel):
+    base = ["parts", "estimate", str(winkel_file), "--as-of", "2026-12-05", "--prices"]
+    r = runner.invoke(cli, base + [str(PRICES / "bricklink_price_guide.json")])
+    assert r.exit_code == 0, r.output
+    n = confirmed_winkel.counts["margin"]
+    assert f"Template: winkel-tripel ({confirmed_winkel.title})" in r.output
+    assert f"  square tile 3070b Black (LEGO 26): not in the price snapshot; {n:,} pieces" in r.output
+    assert _last(r.output) == DISCLAIMER
+    r = runner.invoke(cli, base + [str(PRICES / "bricklink_price_guide_3070b.json"), "--format", "json"])
+    assert r.exit_code == 0, r.output
+    d = json.loads(r.output)
+    assert d["layout"]["template"]["id"] == "winkel-tripel"
+    assert d["estimates"]["full"]["complete"] and d["estimates"]["one_kit"]["complete"]
+    assert list(d)[-1] == "disclaimer"
+
+
+def _square_csv(tmp_path, name, text):
+    p = tmp_path / name
+    p.write_text("Part,Color,Quantity\n" + text, encoding="utf-8")
+    return p
+
+
+def test_kit_owned_square_tile_rows_ignored(runner, layouts, tmp_path):
+    """A kit layout has no square tiles: 3070b rows and its other numbers are ignored and counted,
+    as on main (feature 016 T110; SC-001)."""
+    owned = _square_csv(tmp_path, "owned.csv", "6141,15,10\n3070b,0,40\n3070,0,3\n112412,0,1\n")
+    missing = _square_csv(tmp_path, "missing.csv", "3070b,0,2\n30039,0,1\n")
+    args = ["parts", "list", str(layouts["official"]), "--kits", "1", "--owned", str(owned),
+            "--missing", str(missing)]
+    r = runner.invoke(cli, args)
+    assert r.exit_code == 0, r.output
+    assert "5 row(s) for other parts ignored" in r.output
+    assert not any(line.startswith(("square tile", "Template:")) for line in r.output.splitlines())
+    r = runner.invoke(cli, args + ["--format", "json"])
+    d = json.loads(r.output)
+    assert d["owned"]["ignored_rows"] == 5 and "3070b" not in {l["part_id"] for l in d["lots"]}
+    xml = tmp_path / "k.xml"
+    r = runner.invoke(cli, ["parts", "export", str(layouts["official"]), "--bricklink", str(xml),
+                            "--owned", str(owned)])
+    assert r.exit_code == 0, r.output
+    assert "3070" not in {i.findtext("ITEMID") for i in ET.fromstring(xml.read_text()).findall("ITEM")}
+
+
+def test_winkel_owned_square_tiles_counted(runner, winkel_file, confirmed_winkel, tmp_path):
+    """On a template layout loose square tiles count as owned 3070b (feature 016 T110, FR-014)."""
+    owned = _square_csv(tmp_path, "owned.csv", "3070b,0,40\n3001,15,4\n")
+    r = runner.invoke(cli, ["parts", "list", str(winkel_file), "--owned", str(owned), "--format", "json"])
+    assert r.exit_code == 0, r.output
+    d = json.loads(r.output)
+    n = confirmed_winkel.counts["margin"]
+    sq = next(l for l in d["lots"] if l["part_id"] == "3070b")
+    assert (sq["color_key"], sq["needed"], sq["owned"], sq["to_buy"]) == ("lego_black", n, 40, n - 40)
+    assert d["owned"]["ignored_rows"] == 1
+    r = runner.invoke(cli, ["parts", "list", str(winkel_file), "--owned", str(owned)])
+    assert "1 row(s) for other parts ignored" in r.output
+    csv = tmp_path / "w.csv"
+    r = runner.invoke(cli, ["parts", "export", str(winkel_file), "--rebrickable", str(csv), "--owned", str(owned)])
+    assert r.exit_code == 0, r.output
+    assert f"3070b,0,{n - 40}" in csv.read_text().splitlines()
+
+
+@pytest.mark.parametrize("command", ["list", "export"])
+def test_winkel_owned_other_number_of_3070b_is_an_error(runner, winkel_file, tmp_path, command):
+    bad = _square_csv(tmp_path, "bad.csv", "3070,0,3\n")
+    extra = ["--rebrickable", str(tmp_path / "w.csv")] if command == "export" else []
+    r = runner.invoke(cli, ["parts", command, str(winkel_file), "--owned", str(bad)] + extra)
+    assert r.exit_code == 1
+    assert ("part 3070 is another catalog's number for map part 3070b; this file must use "
+            "Rebrickable part numbers (3070b, 6141, 98138)") in r.output
+    assert not (tmp_path / "w.csv").exists()
+    assert _last(r.output) == DISCLAIMER
+
+
+def test_kit_list_has_no_template_wording(runner, layouts):
+    r = runner.invoke(cli, ["parts", "list", str(layouts["official"]), "--kits", "1"])
+    assert r.exit_code == 0
+    assert "Template" not in r.output and "square" not in r.output

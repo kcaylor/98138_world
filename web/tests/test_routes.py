@@ -14,7 +14,8 @@ from markupsafe import escape
 
 DISCLAIMER = "Not affiliated with or endorsed by The LEGO Group."
 REPO = "https://github.com/kcaylor/98138_world"
-PAGES = ["/", "/about", "/maps/official-31203/A", "/maps/ocean-sst/B", "/maps/ocean-sst/C"]
+PAGES = ["/", "/about", "/maps/official-31203/A", "/maps/ocean-sst/B", "/maps/ocean-sst/C",
+         "/maps/ocean-sst/winkel-tripel"]   # feature 016
 
 
 @pytest.mark.parametrize("path", PAGES)
@@ -332,7 +333,7 @@ def test_no_price_panel_without_prices(site_dir, tmp_path):
     def strip(m):
         m.pop("prices")
         for mp in m["maps"]:
-            for v in mp["variants"].values():
+            for v in list(mp["variants"].values()) + list(mp.get("template_variants", {}).values()):
                 v.pop("estimates")
     with _client_for(site_dir, tmp_path, strip) as c:
         html = c.get("/maps/ocean-sst/A").text
@@ -343,3 +344,180 @@ def test_no_price_panel_without_prices(site_dir, tmp_path):
 def test_home_page_has_no_prices(client):
     html = client.get("/").text
     assert "Estimated cost" not in html and "$" not in html
+
+
+# --- feature 016: Winkel versions (US3-2, US3-3; FR-020, FR-022; contracts/web.md) ----------
+
+TID = "winkel-tripel"
+WINKEL = f"/maps/ocean-sst/{TID}"
+CAPTION = "Round studs for land and ocean, square tiles in the margin"
+REHANG = "The frames of a curved map cannot be re-hung"
+
+
+def _tv(manifest, map_id="ocean-sst"):
+    return next(m for m in manifest["maps"] if m["id"] == map_id)["template_variants"][TID]
+
+
+def test_winkel_page(client, manifest):
+    r = client.get(WINKEL)
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/html")
+    html, text = r.text, _text(r.text)
+    v = _tv(manifest)
+    t = manifest["templates"][0]
+    # the nav: A, B, C and the Winkel version, which is the current page
+    for c in ("A", "B", "C"):
+        assert re.search(rf'<a href="/maps/ocean-sst/{c}"><span class="combo-id">{c}</span>', html)
+    assert re.search(rf'<a href="{WINKEL}" aria-current="page"><span class="combo-id">Winkel tripel</span>', html)
+    assert "aria-current=\"page\"><span class=\"combo-id\">A" not in html
+    # preview, caption, the cannot-be-re-hung note and the parts note
+    assert f'src="{WINKEL}/preview.png"' in html
+    assert re.search(r'<img id="preview-img"[^>]*alt="[^"]*Winkel tripel[^"]*"', html)
+    assert CAPTION in html and "8 × 5 modules, 128 × 80 studs" in html
+    assert f"{t['counts']['margin']:,} margin" in text
+    assert REHANG in html
+    assert "Square tiles (part 3070b) fill the margin; one 31203 kit supplies none" in html
+    assert "Every arrangement uses the same pieces" not in html
+    assert "<title>Ocean temperature · Winkel tripel · 98138.world</title>" in html
+    # parts, lots (with the square tile) and the incomplete estimate
+    s = v["summary"]
+    assert f"{s['pieces']:,}" in html and f"{s['to_buy_with_kit']:,}" in html
+    assert "tile 1x1 square <span class=\"id\">3070b</span>" in html
+    assert re.search(r"Margin: 1,996 square tiles \(part 3070b\) in Black", text.replace(f"{t['counts']['margin']:,}", "1,996"))
+    assert f"Incomplete: {v['estimates']['full']['unpriced']['pieces']:,} pieces in 1 color could not be priced." in text
+    assert "Downloads for the Winkel tripel version" in text
+    # the palette chooser reads this variant's cells
+    assert f'data-cells="{WINKEL}/cells.json"' in html
+    assert DISCLAIMER in html
+
+
+def test_winkel_page_cites_the_template_dataset(client, manifest):
+    html = client.get(WINKEL).text
+    kit = client.get("/maps/ocean-sst/A").text
+    etopo = next(c for c in _tv(manifest)["citations"] if c["id"] == "etopo2022-surface-10m")
+    assert escape(etopo["title"]) in html and escape(etopo["title"]) not in kit
+    assert escape(etopo["license"]) in html and "https://doi.org/" + etopo["doi"] in html
+    t = manifest["templates"][0]
+    assert t["source"]["sha256"][:16] in html
+    assert f"confirmed by the project owner on {t['source']['confirmation']['date']}" in html
+
+
+def test_winkel_files(client, manifest):
+    v = _tv(manifest)
+    for kind in ("preview", "thumb", "cells"):
+        r = client.get(f"{WINKEL}/{v['files'][kind]['path'].rsplit('/', 1)[1]}")
+        assert r.status_code == 200, kind
+        assert "attachment" not in r.headers.get("content-disposition", "")
+        assert hashlib.sha256(r.content).hexdigest() == v["files"][kind]["sha256"]
+    n = 0
+    html = client.get(WINKEL).text
+    for kind, f in v["files"].items():
+        if kind in ("preview", "thumb", "cells"):
+            continue
+        assert f'href="{WINKEL}/download/{kind}"' in html          # works without JavaScript
+        r = client.get(f"{WINKEL}/download/{kind}")
+        assert r.status_code == 200, kind
+        assert r.headers["content-disposition"] == f'attachment; filename="{f["filename"]}"'
+        assert hashlib.sha256(r.content).hexdigest() == f["sha256"]
+        n += 1
+    assert n == 9   # every download kind: one kit has no square tiles, so there is a top-up
+    layout = client.get(f"{WINKEL}/download/layout").json()
+    assert layout["metadata"]["template"]["id"] == TID
+    from pypdf import PdfReader
+    assert len(PdfReader(io.BytesIO(client.get(f"{WINKEL}/download/sheets-letter").content)).pages) >= 42
+
+
+@pytest.mark.parametrize("path", [
+    "/maps/ocean-sst/mercator", "/maps/official-31203/winkel-tripel", "/maps/ocean-el-nino/winkel-tripel",
+    "/maps/official-31203/winkel-tripel/preview.png", "/maps/ocean-el-nino/winkel-tripel/cells.json",
+    f"{WINKEL}/download/nope", f"{WINKEL}/download/cells", f"{WINKEL}/nope.png", "/maps/ocean-sst/WINKEL-TRIPEL",
+    "/maps/nope/winkel-tripel", f"{WINKEL}/download/preview"])
+def test_winkel_unknown_is_404(client, path):
+    r = client.get(path, follow_redirects=False)
+    assert r.status_code == 404, path
+    assert DISCLAIMER in r.text
+
+
+def test_map_root_still_redirects_to_a_kit_combination(client):
+    r = client.get("/maps/ocean-sst", follow_redirects=False)
+    assert r.headers["location"] == "/maps/ocean-sst/A"
+
+
+def test_winkel_page_without_javascript(client):
+    """US3-3: the built preview and plain links; the only script is the site's own chooser."""
+    html = client.get(WINKEL).text
+    for tag in re.findall(r"<script\b[^>]*>", html):
+        assert re.fullmatch(r'<script src="/static/palette\.js\?v=[^"]+" defer>', tag), tag
+    assert "<noscript>" in html
+    assert re.search(r'<img id="preview-img" src="/maps/ocean-sst/winkel-tripel/preview\.png"', html)
+    assert html.count("/download/") == 9
+
+
+def test_winkel_page_headers_and_footer(client):
+    r = client.get(WINKEL)
+    kit = client.get("/maps/ocean-sst/A")
+    assert r.status_code == 200
+    assert r.headers["content-security-policy"] == kit.headers["content-security-policy"]
+    assert "script-src 'self'; connect-src 'self'" in r.headers["content-security-policy"]
+    assert "set-cookie" not in r.headers
+    footer = r.text[r.text.index("<footer"):]
+    assert DISCLAIMER in footer
+
+
+def test_about_templates_paragraph(client, manifest):
+    html = client.get("/about").text
+    t = manifest["templates"][0]
+    assert "Winkel tripel" in html and "square tiles" in html and "part 3070b" in html
+    assert f"{t['counts']['margin']:,}" in html
+    assert "cannot be re-hung" in html
+    assert 'href="/maps/ocean-sst/winkel-tripel"' in html
+
+
+def test_about_without_templates_has_no_paragraph(site_dir, tmp_path):
+    def strip(m):
+        m.pop("templates")
+        for mp in m["maps"]:
+            mp.pop("template_variants", None)
+    with _client_for(site_dir, tmp_path, strip) as c:
+        about = c.get("/about").text
+        assert "Winkel" not in about and "3070b" not in about
+        page = c.get("/maps/ocean-sst/A").text
+        assert "combo-template" not in page and "Winkel" not in page
+        assert c.get(WINKEL).status_code == 404
+
+
+@pytest.fixture(scope="module")
+def golden_sites(site_dir, living_site, rainfall_site):
+    return {"small": site_dir, "living-planet": living_site, "rainfall": rainfall_site}
+
+
+def test_kit_pages_change_only_by_the_winkel_link(golden_sites):
+    """Kit map pages of the eligible maps equal the T009 golden after removing the "Winkel tripel"
+    nav item (asset tokens normalised); kit pages of official-31203 and ocean-el-nino equal it
+    exactly (kit_golden.py; the golden file was written from an unmodified main)."""
+    from fastapi.testclient import TestClient
+
+    import kit_golden
+    from web98138.app import create_app
+
+    doc = json.loads(kit_golden.GOLDEN_PATH.read_text(encoding="utf-8"))
+    golden = {(s["site"], v["map"], v["combination"]): v["digests"] for s in doc["sites"] for v in s["variants"]}
+    seen = {}
+    for name, d in golden_sites.items():
+        with TestClient(create_app(d), base_url="https://98138.world") as c:
+            for m in json.loads((d / "manifest.json").read_text(encoding="utf-8"))["maps"]:
+                eligible = TID in m.get("template_variants", {})
+                seen[m["id"]] = eligible
+                for comb in ("A", "B", "C"):
+                    path = f"/maps/{m['id']}/{comb}"
+                    html = c.get(path).text
+                    want = golden[(name, m["id"], comb)][f"page {path}"]
+                    links = kit_golden.template_nav_item(m["id"], TID).findall(html)
+                    assert len(links) == (1 if eligible else 0), path
+                    if eligible:
+                        assert kit_golden.page_digest(html) != want      # the link is there ...
+                        stripped = kit_golden.strip_template_nav(html, m["id"], [TID])
+                        assert kit_golden.page_digest(stripped) == want, path   # ... and nothing else
+                    else:
+                        assert kit_golden.page_digest(html) == want, path
+    assert seen == {"official-31203": False, "ocean-sst": True, "ocean-el-nino": False,
+                    "living-planet": True, "rainfall": True}

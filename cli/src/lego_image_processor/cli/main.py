@@ -25,6 +25,7 @@ from .dataset import dataset
 from .parts import parts
 from . import prices as _prices  # noqa: F401,E402  registers `parts estimate` (feature 011)
 from .sheets import sheets
+from .template import template_group
 
 cli.add_command(quantize)
 cli.add_command(stats)
@@ -35,6 +36,7 @@ cli.add_command(map_group)
 cli.add_command(dataset)
 cli.add_command(parts)
 cli.add_command(sheets)
+cli.add_command(template_group)
 
 
 def main() -> None:

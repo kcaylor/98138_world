@@ -7,11 +7,15 @@ from typing import Dict, Any
 
 # Land: 1x1 round plate, LEGO design 6141 (Rebrickable 6141, BrickLink 4073), element 614101.
 # Ocean: 1x1 round tile, BrickLink/Rebrickable 98138 (LEGO design 35381).
+# Margin (feature 016, non-kit templates only): 1x1 square tile, Rebrickable 3070b (BrickLink 3070).
 LAND_PART_TYPE = "plate"
 LAND_PART_ID = "6141"
 OCEAN_PART_TYPE = "tile"
 OCEAN_PART_ID = "98138"
-PART_ID_FOR_TYPE = {LAND_PART_TYPE: LAND_PART_ID, OCEAN_PART_TYPE: OCEAN_PART_ID}
+MARGIN_PART_TYPE = "square_tile"
+MARGIN_PART_ID = "3070b"
+PART_ID_FOR_TYPE = {LAND_PART_TYPE: LAND_PART_ID, OCEAN_PART_TYPE: OCEAN_PART_ID,
+                    MARGIN_PART_TYPE: MARGIN_PART_ID}
 
 
 @dataclass(frozen=True)
@@ -20,6 +24,7 @@ class PositionPlacement:
 
     Land positions use 1x1 round plates (part 6141) that stand taller.
     Ocean positions use 1x1 round tiles (part 98138) that sit flush with the base.
+    Margin positions of a non-kit template (feature 016) use 1x1 square tiles (part 3070b).
 
     Attributes:
         x: X coordinate (0-based, increases rightward, range: 0-127)
@@ -27,8 +32,8 @@ class PositionPlacement:
         color_id: LEGO color identifier (e.g., "lego_blue_medium")
         color_name: Human-readable color name (e.g., "Medium Blue")
         lego_color_code: Official LEGO color code (e.g., "102")
-        part_type: Part type - "plate" for land, "tile" for ocean
-        lego_part_id: Part number - "6141" for plates, "98138" for tiles
+        part_type: Part type - "plate" for land, "tile" for ocean, "square_tile" for the margin
+        lego_part_id: Part number - "6141" for plates, "98138" for tiles, "3070b" for square tiles
     """
 
     x: int
@@ -49,11 +54,11 @@ class PositionPlacement:
 
         # Validate part_type
         if self.part_type not in PART_ID_FOR_TYPE:
-            raise ValueError(f"part_type must be 'plate' or 'tile', got '{self.part_type}'")
+            raise ValueError(f"part_type must be 'plate', 'tile' or 'square_tile', got '{self.part_type}'")
 
         # Validate lego_part_id
         if self.lego_part_id not in PART_ID_FOR_TYPE.values():
-            raise ValueError(f"lego_part_id must be '6141' or '98138', got '{self.lego_part_id}'")
+            raise ValueError(f"lego_part_id must be '6141', '98138' or '3070b', got '{self.lego_part_id}'")
 
         # Validate invariant: part_type and lego_part_id must match
         expected = PART_ID_FOR_TYPE[self.part_type]

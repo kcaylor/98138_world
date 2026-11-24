@@ -4,6 +4,8 @@ A lot is one part in one color. For each lot: needed (positions in the layout), 
 from the cited inventory, minus missing pieces, plus loose parts), shortfall, spares (only on
 request), to buy and surplus. Map pieces only (Q6): the frame, section bases and other kit parts
 are not listed. The list carries no prices; feature 011's ``parts estimate`` prices it offline.
+A layout on a non-kit template (feature 016) also has the margin's 1x1 square tiles (part 3070b),
+which no kit supplies; their lots follow the plates and round tiles.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -19,7 +21,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from ..kit.colors import load_kit_color_table
 from ..kit.inventory import load_kit_inventory
 from ..kit.part_colors import load_part_colors
-from ..kit.part_numbers import load_part_numbers
+from ..kit.part_numbers import KIT_PARTS, load_part_numbers
 from ..kit.source import DISCLAIMER
 from ..layout.grid import CURRENT_SCHEMA_VERSION, LayoutSchemaError, PositionPlacementGrid
 from .owned import OwnedInputs, percent_text
@@ -27,8 +29,10 @@ from .resolve import ResolvedColor, Unresolved, resolve_color
 
 FORMAT_VERSION = "1"
 GRID_WIDTH, GRID_HEIGHT = 128, 80
-PART_ORDER = {"6141": 0, "98138": 1}
-PART_TYPE = {"6141": "plate", "98138": "tile"}
+PART_ORDER = {"6141": 0, "98138": 1, "3070b": 2}
+PART_TYPE = {"6141": "plate", "98138": "tile", "3070b": "square_tile"}
+# How tables and sheets write a part type (JSON keeps PART_TYPE); the kit's two read as before.
+PART_TYPE_TEXT = {"plate": "plate", "tile": "tile", "square_tile": "square tile"}
 ACKNOWLEDGEMENT = ("Catalog data: Rebrickable (rebrickable.com), BrickLink, LDraw, Brickset; kit "
                    "inventory from the LEGO 31203 building instructions.")
 # The parts list carries no prices (its format is unchanged); feature 011 estimates them offline
@@ -246,6 +250,23 @@ class PartsList:
         return json.dumps(self.to_dict(), indent=2, ensure_ascii=False) + "\n"
 
 
+def owned_parts(grid: PositionPlacementGrid) -> Tuple[str, ...]:
+    """The map parts an owned or missing CSV is read for (``parse_owned_csv(parts=)``, feature 016
+    T110): the kit's two, plus the square tile 3070b when the layout has square tiles. A kit
+    layout's CSVs are read as before feature 016, so a 3070b row there is ignored and counted."""
+    used = {pos.lego_part_id for pos in grid.positions}
+    return tuple(p for p in PART_ORDER if p in KIT_PARTS or p in used)
+
+
+def template_block(grid: PositionPlacementGrid) -> Optional[Dict[str, Any]]:
+    """``{id, title}`` of a non-kit layout's template (``metadata.template``, feature 016); None for
+    the kit template (data-model.md PartsList.layout.template)."""
+    rec = getattr(grid, "template", None)
+    if not rec:
+        return None
+    return {"id": rec.get("id"), "title": rec.get("title")}
+
+
 def _arrangement_block(grid: PositionPlacementGrid) -> Dict[str, Any]:
     """How the layout's frames are hung (feature 007); the pieces are the same in every one."""
     from ..layout.arrangement import SAME_PIECES_NOTE, arrangement_of
@@ -369,5 +390,8 @@ def build_parts_list(layout: Union[LayoutInput, PositionPlacementGrid],
         "map": _map_provenance(grid.map_metadata),
         "arrangement": _arrangement_block(grid),
     }
+    template = template_block(grid)
+    if template is not None:  # feature 016: non-kit layouts only, so kit lists keep their bytes
+        layout_block["template"] = template
     return PartsList(layout=layout_block, owned=owned, lots=lots_t, citations=_citations(lots_t),
                      kit_id=kit_id, leftovers=_leftovers(inv, owned, used))

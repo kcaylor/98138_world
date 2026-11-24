@@ -80,8 +80,13 @@ def colors(kit_id: str, output_format: str) -> None:
     click.echo(DISCLAIMER)
 
 
+PART_HEADINGS = {"6141": "1x1 round plate, land", "98138": "1x1 round tile, ocean",
+                 "3070b": "1x1 square tile, margin"}  # 3070b: feature 016, not in the kit
+
+
 @kit.command("part-colors")
-@click.option("--part", type=click.Choice(["6141", "98138"]), help="Only this part (6141 plate, 98138 tile)")
+@click.option("--part", type=click.Choice(["6141", "98138", "3070b"]),
+              help="Only this part (6141 plate, 98138 tile, 3070b tile 1x1 square)")
 @click.option("--format", "output_format", type=click.Choice(["table", "json"]), default="table",
               show_default=True)
 def part_colors(part: str, output_format: str) -> None:
@@ -108,7 +113,7 @@ def part_colors(part: str, output_format: str) -> None:
         rows = [(c.key, f"{c.lego.name} ({c.lego.id})", f"{c.bricklink.name} ({c.bricklink.id})",
                  f"{c.rebrickable.name} ({c.rebrickable.id})", c.element_id, "yes" if c.in_kit else "no")
                 for c in table.for_part(p)]
-        click.echo(f"Part {p} ({'1x1 round plate, land' if p == '6141' else '1x1 round tile, ocean'}):")
+        click.echo(f"Part {p} ({PART_HEADINGS[p]}):")
         for line in _table(["key", "LEGO (id)", "BrickLink (id)", "Rebrickable (id)", "element", "in kit"], rows):
             click.echo(line)
         click.echo()
@@ -125,7 +130,7 @@ def part_colors(part: str, output_format: str) -> None:
 @click.option("--format", "output_format", type=click.Choice(["table", "json"]), default="table",
               show_default=True)
 def part_numbers(kit_id: str, output_format: str) -> None:
-    """Show each marketplace's number for the two map parts, with cited sources (feature 005)."""
+    """Show each marketplace's number for the map parts, with cited sources (feature 005; 3070b: 016)."""
     from ..kit.part_numbers import PART_NUMBERS_PATH, load_part_numbers
 
     _check_kit(kit_id)
@@ -145,6 +150,11 @@ def part_numbers(kit_id: str, output_format: str) -> None:
                f"{table.get('6141').bricklink_item_no} for the plate (6141 is an alternate there), "
                f"Rebrickable part {table.get('6141').rebrickable_part_num}; "
                f"the tile is {table.get('98138').bricklink_item_no} on both.")
+    if "3070b" in table.parts:  # feature 016: the square tile of template margins (not in the kit)
+        sq = table.get("3070b")
+        click.echo(f"For template margins, the square tile is BrickLink item {sq.bricklink_item_no} "
+                   f"(3070b is an alternate there), Rebrickable part {sq.rebrickable_part_num}; "
+                   "it is not in kit 31203.")
     click.echo("Sources:")
     for page in table.pages:
         click.echo(f"  {page.title} <{page.url}> SHA-256 {page.sha256}, accessed {page.accessed}")

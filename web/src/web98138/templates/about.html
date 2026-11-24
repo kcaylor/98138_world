@@ -28,6 +28,14 @@
 {% endfor %}
 </div>
 <p class="note">Source: {{ manifest.arrangement_source.title }}, pp. 7–8.</p>
+{% for t in manifest.templates or () %}
+
+<h2>A curved map on the same board: {{ t.projection }}</h2>
+<p>Maps that can be built on it also come in a <strong>{{ t.projection }}</strong> version: the world as a curved {{ t.projection }} map fitted inside the kit's {{ t.board.modules | join(" × ") }} modules ({{ t.board.width }} × {{ t.board.height }} studs). It has {{ t.counts.land | n }} land and {{ t.counts.ocean | n }} ocean studs, round as on the kit, and a margin of {{ t.counts.margin | n }} 1×1 square tiles (part 3070b) where the board is off the globe, black unless a recipe says otherwise. Its land and ocean come from a cited dataset (named on each map page), and the template was confirmed by the {{ t.source.confirmation.role }} on {{ t.source.confirmation.date }}. The frames of a curved map cannot be re-hung, so it has one combination, and a 31203 kit supplies none of the square tiles. The official design (LEGO's own, on the kit grid) and the Pacific-centred maps stay on the kit grid only.</p>
+<ul>
+{% for m in maps if t.id in m.template_ids %}<li><a href="/maps/{{ m.id }}/{{ t.id }}">{{ m.title }}, {{ t.projection }}</a></li>{% endfor %}
+</ul>
+{% endfor %}
 
 <h2>What you can download</h2>
 <p>For every map and combination: the layout (every stud's position and color), a parts list with LEGO, BrickLink and Rebrickable IDs (in full, and topped up from one 31203 kit you already own), a BrickLink wanted list, a Rebrickable parts CSV, and printable build sheets: an overview, a color legend and 40 section pages at true scale with numbered studs.</p>

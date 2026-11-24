@@ -268,3 +268,112 @@ def test_studs_have_grey_outline(few_set):
     studs = items(section_page(few_set, "A1"), Circle, "stud")
     assert all(c.stroke is not None and c.stroke not in ((255, 255, 255), (0, 0, 0)) and
                c.stroke_w >= 0.2 for c in studs)
+
+
+# --- a template layout (feature 016 T066; US1-7, FR-015, SC-004; research R16) ------------------
+
+@pytest.fixture
+def winkel(confirmed_winkel):
+    from ...winkel_layouts import winkel_grid
+    grid = winkel_grid(confirmed_winkel)
+    return grid, build_sheet_set(grid, layout_path="winkel.json", layout_sha256="e" * 64)
+
+
+def test_template_set_uses_the_kit_sections_with_the_disclaimer(winkel):
+    grid, s = winkel
+    kinds = [p.kind for p in s.pages]
+    assert kinds == ["overview"] + ["legend"] * kinds.count("legend") + ["section"] * 40
+    labels = [p.label for p in s.pages if p.kind == "section"]
+    assert labels[0] == "A1" and labels[-1] == "H5" and len(set(labels)) == 40
+    assert all(DISCLAIMER in texts(p) for p in s.pages)
+    assert all(t.isascii() or t.encode("latin-1") for p in s.pages for t in texts(p))
+
+
+def test_margin_studs_are_squares_with_lot_numbers(winkel, confirmed_winkel):
+    grid, s = winkel
+    sq = next(e for e in s.legend if e.lot.part_id == "3070b")
+    total = 0
+    for page in (p for p in s.pages if p.kind == "section"):
+        squares = items(page, Rect, "stud")
+        rounds = items(page, Circle, "stud")
+        assert len(squares) + len(rounds) == 256
+        numbers = {(int(data(t)["x"]), int(data(t)["y"])): t.text for t in items(page, Text, "stud-number")}
+        assert len(numbers) == 256
+        for r in squares:
+            x, y = int(data(r)["x"]), int(data(r)["y"])
+            assert confirmed_winkel.class_at(y, x) == "margin"
+            assert int(data(r)["lot"]) == sq.number and r.fill == sq.rgb and numbers[(x, y)] == str(sq.number)
+            assert abs(r.w - 7.0) < 1e-9 and abs(r.h - 7.0) < 1e-9 and r.stroke is not None
+        for c in rounds:
+            assert confirmed_winkel.class_at(int(data(c)["y"]), int(data(c)["x"])) != "margin"
+        assert not [c for c in items(page, Circle, "ring")
+                    if confirmed_winkel.class_at(int(data(c)["y"]), int(data(c)["x"])) != "land"]
+        total += len(squares)
+        if squares:
+            discs = [r for r in items(page, Rect, "count-disc") if int(data(r)["lot"]) == sq.number]
+            assert len(discs) == 1
+            assert any(t.text.startswith("Black (square tile)") for t in items(page, Text, "count-name"))
+    assert total == confirmed_winkel.counts["margin"]
+
+
+def test_overview_draws_margin_studs_as_small_squares(winkel, confirmed_winkel):
+    _, s = winkel
+    page = s.pages[0]
+    c = confirmed_winkel.counts
+    squares = items(page, Rect, "map-stud")
+    assert len(squares) == c["margin"] and len(items(page, Circle, "map-stud")) == c["land"] + c["ocean"]
+    assert all(abs(r.w - 1.2) < 1e-9 and abs(r.h - 1.2) < 1e-9 for r in squares)
+    assert len(items(page, Circle, "map-ring")) == c["land"]
+
+
+def test_legend_has_a_square_swatch_for_the_square_tile(winkel):
+    _, s = winkel
+    pages = [p for p in s.pages if p.kind == "legend"]
+    squares = [r for p in pages for r in items(p, Rect, "swatch")]
+    sq = next(e for e in s.legend if e.lot.part_id == "3070b")
+    assert [int(data(r)["lot"]) for r in squares] == [sq.number]
+    assert len([c for p in pages for c in items(p, Circle, "swatch")]) == len(s.legend) - 1
+    text = " ".join(" ".join(texts(p)) for p in pages)
+    assert "tile 1x1 square" in text
+    notes = [t.text for p in pages for t in items(p, Text, "legend-note")]
+    assert notes and all("square" in n and not n.endswith("...") for n in notes)
+
+
+def test_overview_text_names_the_template_and_square_tiles(winkel, confirmed_winkel):
+    _, s = winkel
+    page = s.pages[0]
+    c = confirmed_winkel.counts
+    totals = " ".join(t.text for t in items(page, Text, "totals"))
+    assert (f"10,240 pieces: {c['land']:,} plates 1x1 round (land, part 6141), {c['ocean']:,} tiles 1x1 "
+            f"round (ocean, part 98138), {c['margin']:,} tiles 1x1 square (margin, part 3070b);") in totals
+    subtitle = items(page, Text, "subtitle")[0].text
+    assert "winkel-tripel" in subtitle and "cannot be re-hung" in subtitle and not subtitle.endswith("...")
+    arrangement = " ".join(t.text for t in items(page, Text, "arrangement"))
+    assert "winkel-tripel" in arrangement and "the frames of a curved map cannot be re-hung" in arrangement
+    assert "Every combination uses the same pieces" not in arrangement
+    howto = " ".join(t.text for t in items(page, Text, "howto"))
+    assert "square tiles (margin)" in howto
+
+
+def test_provenance_names_the_template_and_its_dataset(winkel):
+    grid, s = winkel
+    prov = " ".join(t.text for t in items(s.pages[0], Text, "provenance"))
+    rec = grid.template
+    assert f"Template: {rec['id']} ({rec['title']})" in prov
+    assert rec["projection"]["proj"] in prov and rec["source"]["sha256"] in prov
+    conf = rec["source"]["confirmation"]
+    assert f"confirmed by the {conf['role']} on {conf['date']}" in prov
+    ds = rec["dataset"]
+    for k in ("id", "version", "title", "license", "citation"):
+        assert ds[k] in prov, k
+    assert "(more in the parts list JSON)" not in texts(s.pages[0])
+
+
+def test_kit_sheets_keep_their_text(official_set):
+    page = official_set.pages[0]
+    prov = [t.text for t in items(page, Text, "provenance")]
+    assert not any(t.startswith("Template") for t in prov)
+    assert items(page, Text, "subtitle")[0].text == "LEGO World Map 31203 template: 128 x 80 studs, 40 sections"
+    assert "Every combination uses the same pieces." in " ".join(t.text for t in items(page, Text, "arrangement"))
+    assert "square" not in " ".join(texts(page))
+    assert not [r for p in official_set.pages for r in items(p, Rect, "stud")]

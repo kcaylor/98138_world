@@ -4,7 +4,9 @@ Fixed routes only. Map IDs, combinations and download kinds are looked up in the
 part of a URL is ever used as a file path. Nothing here imports ``lego_image_processor``: every
 file and number shown was produced by the CLI library in the build step. Map pages load one
 first-party script, ``/static/palette.js`` (feature 015), which only recolors the prebuilt
-``cells.json`` in the browser; every page works without it.
+``cells.json`` in the browser; every page works without it. Feature 016: a map's template variants
+(``/maps/<map>/<template-id>``, e.g. ``winkel-tripel``) are served like its combinations A, B, C;
+kit pages gain only a nav link to them.
 
 Run: ``WEB98138_SITE_DIR=DIR uvicorn web98138.app:app --port 8080``.
 Not affiliated with or endorsed by The LEGO Group.
@@ -152,13 +154,18 @@ def create_app(site_dir) -> FastAPI:
         entry = catalog.map(map_id)
         if entry is None:
             return not_found(request)
+        template = None
         if combination not in COMBINATIONS:
-            if combination.upper() in COMBINATIONS:
+            if combination in entry.template_ids:   # feature 016: a template variant
+                template = catalog.template(combination)
+            elif combination.upper() in COMBINATIONS:
                 return RedirectResponse(f"/maps/{map_id}/{combination.upper()}", status_code=301)
-            return not_found(request)
+            else:
+                return not_found(request)
         variant = entry.variant(combination)
         return page(request, "map.html", map=entry, data=entry.data, variant=variant,
-                    combination=combination, arrangement=catalog.arrangement(combination))
+                    combination=combination, arrangement=catalog.arrangement(combination),
+                    template=template, map_templates=[catalog.template(t) for t in entry.template_ids])
 
     def image(kind: str):
         async def handler(request: Request, map_id: str, combination: str):

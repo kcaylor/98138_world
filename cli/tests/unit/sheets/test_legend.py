@@ -59,3 +59,19 @@ def test_unknown_uncited_color_is_mid_grey():
     odd = next(e for e in legend if e.lot.color_key == "lego_uncited_0")
     assert odd.rgb == (128, 128, 128)
     assert all(line.encode("latin-1") for e in legend for line in e.label_lines)
+
+
+# --- the square tile (feature 016 T066; data-model.md LegendRow) ---------------------------------
+
+def test_square_tile_legend_row(confirmed_winkel):
+    from lego_image_processor.kit.part_numbers import load_part_numbers
+    from lego_image_processor.sheets.legend import PART_LABEL
+    from ...winkel_layouts import winkel_grid
+    legend = build_legend(build_parts_list(winkel_grid(confirmed_winkel)))
+    sq = legend[-1]
+    assert (sq.lot.part_type, sq.part_label) == ("square_tile", "tile 1x1 square") == \
+        ("square_tile", PART_LABEL["square_tile"])
+    first, second = sq.label_lines
+    assert "Black (26) · tile 1x1 square · element 307026" == first
+    item = load_part_numbers().get("3070b").bricklink_item_no
+    assert f"BrickLink {item} / Black (11)" in second and "Rebrickable 3070b / Black (0)" in second

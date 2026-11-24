@@ -78,3 +78,21 @@ def test_xml_round_trip_quantities():
     pl = _pl()
     items = ET.fromstring(to_bricklink_xml(pl)).findall("ITEM")
     assert sum(int(i.findtext("MINQTY")) for i in items) == pl.totals()["to_buy"]
+
+
+# --- square tiles (feature 016 T061; FR-014) ---------------------------------------------------
+
+def test_square_tiles_in_both_exports(confirmed_winkel):
+    from lego_image_processor.kit.part_colors import load_part_colors
+    from lego_image_processor.kit.part_numbers import load_part_numbers
+    from ...winkel_layouts import winkel_grid
+    pl = build_parts_list(winkel_grid(confirmed_winkel), owned=OwnedInputs(kits=1))
+    n = confirmed_winkel.counts["margin"]
+    pn, row = load_part_numbers().get("3070b"), load_part_colors().get("3070b", "lego_black")
+    items = ET.fromstring(to_bricklink_xml(pl)).findall("ITEM")
+    last = items[-1]
+    # the BrickLink item number comes from part_numbers.json (BrickLink lists the tile as 3070)
+    assert (last.findtext("ITEMTYPE"), last.findtext("ITEMID"), int(last.findtext("COLOR")),
+            int(last.findtext("MINQTY"))) == ("P", pn.bricklink_item_no, row.bricklink.id, n)
+    rows = to_rebrickable_csv(pl).splitlines()
+    assert rows[-1] == f"3070b,{row.rebrickable.id},{n}"

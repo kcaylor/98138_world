@@ -329,3 +329,83 @@ class TestValidatorAgainstRealKit:
         report = validator.validate(layout, layout_file="t.json")
         assert report.to_dict()["disclaimer"] == DISCLAIMER
         assert report.buildable
+
+
+class TestValidatorOnTemplates:
+    """Feature 016 T068 (FR-016, research R17): a non-kit layout is checked against its own
+    template's classes; square tiles are beyond the kit (part 3070b, no suggestion)."""
+
+    @pytest.fixture
+    def validator(self):
+        return LayoutValidator(kit_spec=load_kit_specification("31203"), palette=LegoPalette.load_default())
+
+    @staticmethod
+    def _winkel(template, **kw):
+        from ..winkel_layouts import winkel_grid
+        return winkel_grid(template, **kw)
+
+    @staticmethod
+    def _swap(grid, changes):
+        """``grid`` with the positions at (x, y) given new part types (first color of that part)."""
+        from lego_image_processor.layout.position import PART_ID_FOR_TYPE
+        colors = {"plate": ("lego_white", "White", "1"), "tile": ("lego_medium_azur", "Medium Azur", "322"),
+                  "square_tile": ("lego_black", "Black", "26")}
+        out = []
+        for p in grid.positions:
+            t = changes.get((p.x, p.y))
+            if t is None:
+                out.append(p)
+                continue
+            key, name, code = colors[t]
+            out.append(PositionPlacement(x=p.x, y=p.y, color_id=key, color_name=name, lego_color_code=code,
+                                         part_type=t, lego_part_id=PART_ID_FOR_TYPE[t]))
+        return PositionPlacementGrid(width=grid.width, height=grid.height, positions=out,
+                                     source_image=grid.source_image, generated_at=grid.generated_at,
+                                     template=grid.template)
+
+    def test_square_tiles_are_unavailable_in_the_kit_without_a_suggestion(self, validator, confirmed_winkel):
+        r = validator.validate(self._winkel(confirmed_winkel), layout_file="w.json")
+        squares = [v for v in r.violations if getattr(v, "part_type", None) == "square_tile"]
+        assert len(squares) == 1
+        v = squares[0]
+        assert (v.type, v.part_id, v.color_id, v.color_name) == ("color_unavailable", "3070b", "lego_black", "Black")
+        assert v.positions_required == confirmed_winkel.counts["margin"] and v.suggested_alternative is None
+        assert "suggested_alternative" not in v.to_dict()
+        assert not r.buildable
+        assert not [x for x in r.violations if x.type == "mask_mismatch"]
+        d = r.to_dict()
+        assert d["template"] == {"id": "winkel-tripel", "title": confirmed_winkel.title}
+        assert list(d)[-1] == "disclaimer"
+
+    def test_ring_color_is_a_second_unavailable_square_tile(self, validator, confirmed_winkel):
+        from ..winkel_layouts import BRIGHT_YELLOW
+        r = validator.validate(self._winkel(confirmed_winkel, ring=BRIGHT_YELLOW), layout_file="w.json")
+        got = {v.color_id: v.positions_required for v in r.violations if getattr(v, "part_type", None) == "square_tile"}
+        c = confirmed_winkel.counts
+        assert got == {"lego_bright_yellow": c["ring"], "lego_black": c["margin"] - c["ring"]}
+
+    def test_mask_check_uses_the_template_classes(self, validator, confirmed_winkel):
+        t = confirmed_winkel
+        land = next((x, y) for y in range(80) for x in range(128) if t.class_at(y, x) == "land")
+        margin = next((x, y) for y in range(80) for x in range(128) if t.class_at(y, x) == "margin")
+        ocean = next((x, y) for y in range(80) for x in range(128) if t.class_at(y, x) == "ocean")
+        grid = self._swap(self._winkel(t), {land: "tile", margin: "plate", ocean: "square_tile"})
+        r = validator.validate(grid, layout_file="w.json")
+        (mm,) = [v for v in r.violations if v.type == "mask_mismatch"]
+        d = mm.to_dict()
+        assert (d["arrangement"], d["template"], d["positions_required"]) == ("A", "winkel-tripel", 3)
+        assert {(e["x"], e["y"]): (e["part_type"], e["expected"]) for e in d["examples"]} == {
+            land: ("tile", "plate"), margin: ("plate", "square_tile"), ocean: ("square_tile", "tile")}
+
+    def test_kit_layouts_validate_as_before(self, validator):
+        from lego_image_processor.kit import load_official_design
+        r = validator.validate(load_official_design().to_layout(), layout_file="o.json")
+        assert r.buildable and "template" not in r.to_dict()
+
+    def test_unknown_template_is_an_error(self, validator, confirmed_winkel):
+        grid = self._winkel(confirmed_winkel)
+        rec = dict(grid.template, id="no-such-template")
+        bad = PositionPlacementGrid(width=128, height=80, positions=grid.positions, source_image="x",
+                                    template=rec)
+        with pytest.raises(ValueError, match="no-such-template"):
+            validator.validate(bad, layout_file="w.json")

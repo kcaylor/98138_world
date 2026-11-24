@@ -1,5 +1,6 @@
-"""Part-color maintainer tool (004 T049/Q4; 005 T008/T034): joins only fully cited rows, from
-synthetic snapshots."""
+"""Part-color maintainer tool (004 T049/Q4; 005 T008/T034; 016 T013): joins only fully cited rows,
+from synthetic snapshots. Feature 016 adds the 1x1 square tile 3070b (not in the kit; BrickLink item
+3070 lists it as an alternate): the same five join rules, every row ``in_kit: false``."""
 
 import gzip
 import hashlib
@@ -9,7 +10,7 @@ import pytest
 
 from lego_image_processor.kit.colors import KIT_COLORS_PATH
 from lego_image_processor.kit.part_colors import PART_COLORS_PATH, parse_part_colors
-from partcolors.build import (REVIEWED_004, TERMS_TEXT, SnapshotError, build, color_key,
+from partcolors.build import (REVIEWED_004, SNAPSHOTS, TERMS_TEXT, SnapshotError, build, color_key,
                               differences, parse_bricklink, parse_ldconfig, read_snapshots)
 
 KIT = json.loads(KIT_COLORS_PATH.read_text(encoding="utf-8"))
@@ -18,14 +19,18 @@ ELEMENTS = "element_id,part_num,color_id,design_id\n" + "\n".join(
     [f"{c['element_id']},{'6141' if c['role'] == 'land' else '98138'},{c['rebrickable']['id']},"
      f"{'6141' if c['role'] == 'land' else '35381'}" for c in KIT["colors"]]
     + ["614128,6141,2,6141", "4218588,6141,2,6141", "9000001,6141,2,", "6258990,6141,326,6141",
-       "4211525,6141,71,6141", "7000000,6141,41,6141", "3005741,6141,36,30057"])
+       "4211525,6141,71,6141", "7000000,6141,41,6141", "3005741,6141,36,30057",
+       "307026,3070b,0,3070", "6146000,3070b,0,3070", "307028,3070b,2,3070"])
 COLORS = "id,name,rgb,is_trans,num_parts,num_sets,y1,y2\n" + "\n".join(
     [f"{c['rebrickable']['id']},{c['rebrickable']['name']},{''.join(f'{v:02X}' for v in c['rgb'])},False,1,1,2000,2020"
      for c in KIT["colors"]]
-    + ["2,Green,237841,False,1,1,1960,2027", "326,Olive Green,9B9A5A,False,1,1,2015,2027",
+    + ["0,Black,05131D,False,1,1,1957,2027",
+       "2,Green,237841,False,1,1,1960,2027", "326,Olive Green,9B9A5A,False,1,1,2015,2027",
        "71,Light Bluish Gray,A0A5A9,False,1,1,2003,2027", "41,Trans-Red,C91A09,True,1,1,1960,2027",
        "36,Trans-Green,84B68D,True,1,1,1960,2027"])
-LDCONFIG = """0 // LEGOID  28 - Dark Green
+LDCONFIG = """0 // LEGOID  26 - Black
+0 !COLOUR Black CODE 0 VALUE #1B2A34 EDGE #808080
+0 // LEGOID  28 - Dark Green
 0 !COLOUR Green CODE 2 VALUE #237841 EDGE #333333
 0 // LEGOID 326 - Spring Yellowish Green
 0 !COLOUR Yellowish_Green CODE 326 VALUE #DFEEA5 EDGE #333333
@@ -35,7 +40,7 @@ LDCONFIG = """0 // LEGOID  28 - Dark Green
 BL_ROW = ('<TR><TD  ALIGN="RIGHT"><FONT FACE="Tahoma,Arial" SIZE="2">{id}&nbsp;</TD><TD BGCOLOR="000000">'
           '<A HREF="x"></A></TD><TD></TD><TD width="180px"><FONT FACE="Tahoma,Arial" SIZE="2">{name}&nbsp;</TD></TR>')
 BRICKLINK = "".join(BL_ROW.format(id=i, name=n) for i, n in ((6, "Green"), (86, "Light Bluish Gray"),
-                                                           (155, "Olive Green")))
+                                                           (155, "Olive Green"), (11, "Black")))
 
 
 def _part_page(colors):
@@ -49,20 +54,22 @@ def _part_page(colors):
 KIT_BL = {"land": [(c["bricklink"]["id"], c["bricklink"]["name"]) for c in KIT["colors"] if c["role"] == "land"],
           "ocean": [(c["bricklink"]["id"], c["bricklink"]["name"]) for c in KIT["colors"] if c["role"] == "ocean"]}
 PLATE_PAGE = KIT_BL["land"] + [(6, "Green"), (86, "Light Bluish Gray"), (155, "Olive Green")]
+SQUARE_PAGE = [(11, "Black"), (6, "Green")]  # BrickLink item 3070 (3070b is an alternate there)
 
 
-def _snap(plate_page=PLATE_PAGE):
+def _snap(plate_page=PLATE_PAGE, square_page=SQUARE_PAGE):
     return {"rebrickable-elements": ELEMENTS.encode(), "rebrickable-colors": COLORS.encode(),
             "ldraw": LDCONFIG.encode(), "bricklink": BRICKLINK.encode("latin-1"),
             "bricklink-4073": _part_page(plate_page).replace(b"Part X", b"Part 4073").replace(b">X<", b">4073<"),
             "bricklink-98138": _part_page(KIT_BL["ocean"]).replace(b"Part X", b"Part 98138").replace(b">X<", b">98138<"),
+            "bricklink-3070": _part_page(square_page).replace(b"Part X", b"Part 3070").replace(b">X<", b">3070<"),
             "rebrickable-terms": f"<p>The catalog ... below.  {TERMS_TEXT}</p>".encode()}
 
 
 def test_parsers():
     ld = parse_ldconfig(LDCONFIG)
     assert ld[2] == {"name": "Green", "lego": (28, "Dark Green")}
-    assert parse_bricklink(BRICKLINK) == {"Green": 6, "Light Bluish Gray": 86, "Olive Green": 155}
+    assert parse_bricklink(BRICKLINK) == {"Green": 6, "Light Bluish Gray": 86, "Olive Green": 155, "Black": 11}
     assert color_key("Medium Stone Grey") == "lego_medium_stone_grey"
 
 
@@ -125,9 +132,11 @@ def test_snapshot_checksums(tmp_path):
 def test_committed_table_lists_part_number_finding():
     data = json.loads(PART_COLORS_PATH.read_text(encoding="utf-8"))
     assert "4073" in data["source"]["part_numbers"]["6141"]
+    assert "3070" in data["source"]["part_numbers"]["3070b"]
+    # 016: the BrickLink page for the square tile is appended; the earlier snapshots keep their order
     assert [s["id"] for s in data["source"]["snapshots"]] == [
         "rebrickable-elements", "rebrickable-colors", "ldraw", "bricklink",
-        "bricklink-4073", "bricklink-98138", "rebrickable-terms"]
+        "bricklink-4073", "bricklink-98138", "rebrickable-terms", "bricklink-3070"]
     assert all(len(s["sha256"]) == 64 for s in data["source"]["snapshots"])
 
 
@@ -172,5 +181,56 @@ def test_all_colors_mode_keeps_reviewed_rows_identical():
 def test_committed_table_is_the_all_colors_build():
     data = json.loads(PART_COLORS_PATH.read_text(encoding="utf-8"))
     counts = {p: len(rows) for p, rows in data["parts"].items()}
-    assert counts == {"6141": 44, "98138": 40}
+    assert list(counts) == ["6141", "98138", "3070b"]
+    assert (counts["6141"], counts["98138"]) == (44, 40)   # unchanged by 016
+    assert counts["3070b"] >= 1
+    square = {r["key"]: r for r in data["parts"]["3070b"]}
+    assert "lego_black" in square and not any(r["in_kit"] for r in square.values())
     assert REVIEWED_004["6141"]  # the 004 list is kept for reference
+
+
+class TestSquareTile:
+    """016 T013: 3070b through the five join rules (rule 5 on the pinned BrickLink 3070 page)."""
+
+    def test_rows_cited_and_not_in_kit(self):
+        r = build(_snap(), KIT, "2026-11-23")
+        rows = {row["key"]: row for row in r.data["parts"]["3070b"]}
+        assert set(rows) == {"lego_black", "lego_dark_green"}
+        b = rows["lego_black"]
+        assert b["lego"] == {"name": "Black", "id": 26} and b["bricklink"] == {"name": "Black", "id": 11}
+        assert b["rebrickable"] == {"name": "Black", "id": 0} and b["rgb"] == [5, 19, 29]
+        # no element's design_id is "3070b" (the design is 3070): the lowest listed element
+        assert b["element_id"] == "307026" and b["element_ids"] == ["307026", "6146000"]
+        assert all(row["in_kit"] is False for row in rows.values())
+        assert b["citations"] == {"lego": "ldraw", "bricklink": "bricklink",
+                                  "rebrickable": "rebrickable-colors-snapshot", "element": "rebrickable-elements"}
+        parse_part_colors(r.data)
+
+    def test_rule5_uses_the_bricklink_3070_page(self):
+        r = build(_snap(), KIT, "2026-11-23")
+        assert not [e for e in r.excluded if e["part"] == "3070b"]
+        r = build(_snap(square_page=[(11, "Black")]), KIT, "2026-11-23")
+        assert {row["key"] for row in r.data["parts"]["3070b"]} == {"lego_black"}
+        reason = {(e["part"], e["rebrickable_id"]): e["reason"] for e in r.excluded}[("3070b", 2)]
+        assert "catalog page for part 3070b" in reason
+
+    def test_kit_colors_rule_applies_to_kit_parts_only(self):
+        # no kit color is a 3070b color, and none is required
+        r = build(_snap(), KIT, "2026-11-23")
+        assert not any("3070b" in n for n in r.kit_notes)
+        parse_part_colors(r.data)
+
+    def test_kit_blocks_unchanged_and_new_entries_appended(self):
+        r = build(_snap(), KIT, "2026-11-23")
+        kit_only = build({k: v for k, v in _snap().items() if k != "bricklink-3070"}, KIT, "2026-11-23",
+                         snapshots=[x for x in SNAPSHOTS if x["id"] != "bricklink-3070"],
+                         parts=("6141", "98138"))
+        for part in ("6141", "98138"):
+            assert r.data["parts"][part] == kit_only.data["parts"][part]
+        src, old = r.data["source"], kit_only.data["source"]
+        assert src["citations"][:len(old["citations"])] == old["citations"]
+        assert [c["id"] for c in src["citations"][len(old["citations"]):]] == ["bricklink-3070"]
+        assert [e for e in src["excluded"] if e["part"] != "3070b"] == old["excluded"]
+        assert src["join_rules"][:len(old["join_rules"])] == old["join_rules"]
+        assert any("3070b" in rule for rule in src["join_rules"])
+        assert list(r.data["parts"]) == ["6141", "98138", "3070b"]

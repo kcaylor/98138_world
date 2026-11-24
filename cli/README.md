@@ -37,6 +37,11 @@ A CLI tool that converts images to LEGO-compatible color palettes and generates 
 - **Rainfall** (feature 013): annual mean precipitation 1991-2020 (GPCP v2.3) on land and sea,
   with White ice sheets, NSIDC sea ice and a Black land shadow (recipe `rainfall`; netCDF-4 reader
   with h5py, multi-file datasets, bilinear sampling, `override` rules, two-unit legends)
+- **Map templates** (feature 016): the kit grid is the reference template; Winkel tripel on the
+  kit's 8 × 5 board is the first other one, a curved world map with a margin of 1×1 square tiles
+  (part 3070b) in one color and an optional outline ring (`template` commands, `map build
+  --template`, recipe keys `template` and `[margin]`); maps build on it once the project owner
+  confirms its layout
 
 ## Installation
 
@@ -94,6 +99,11 @@ Layouts built from a recipe (`map build`) add a `metadata.map` block with the re
 and SHA-256, each layer's role, dataset, citation and license, the texture seed and the
 disclaimer; `source_image` is `recipe:<id>`. The schema version stays 2.0 and older readers ignore
 the block.
+
+Layouts built on a non-kit template (feature 016, see "Map templates") add `metadata.template` and
+`metadata.margin_positions`, margin positions with `part_type: "square_tile"` and
+`lego_part_id: "3070b"`, and `statistics.margin_tile_count`. The schema version stays 2.0; a
+layout without `metadata.template` is on the kit.
 
 Layout files written with an earlier schema version (1.0) are rejected, not upgraded. Regenerate
 them with `lego-image-processor layout <image> -o <layout.json>`.
@@ -176,8 +186,9 @@ The part-color snapshots live in `<cache>/sources/partcolors/` (`elements.csv.gz
 
 ### Maps from recipes
 
-A map is a land layer plus an ocean layer on the fixed kit 31203 template (128×80 grid, the kit's
-land/sea mask). Each layer is **data** (a gridded field classified onto an ordered color scale) or
+A map is a land layer plus an ocean layer on a template: by default the kit 31203 grid (128×80,
+the kit's land/sea mask), or a confirmed template such as Winkel tripel (see "Map templates"
+below). Each layer is **data** (a gridded field classified onto an ordered color scale) or
 **background** (fixed colors: mixed by weight, or a coastal halo). Every map also gets a one-stud
 **land shadow**: the ocean cells just east of land, in Earth Blue, as on the official design (391
 of its 392 Earth Blue tiles sit there). The shadow is drawn first, uses 392 of the kit's 393 Earth
@@ -397,8 +408,8 @@ format is in `specs/004-map-recipes/contracts/recipe-format.md`.
 
 The kit grid's projection (`data/kit_31203_projection.json`) is equirectangular with its left edge
 at 168.9° W, 2.8125° per column, the equator at row 42.2 and 26.3 rows per radian, fitted to the
-kit mask (94.2% agreement; Miller 90.9%, Mercator 87.0%). The kit mask always decides land and
-ocean.
+kit mask (94.2% agreement; Miller 90.9%, Mercator 87.0%). On the kit template the kit mask always
+decides land and ocean; on another template its own layout does.
 
 ### Datasets
 
@@ -441,6 +452,7 @@ or write error.
 ```bash
 lego-image-processor kit part-colors --part 6141      # 44 plate colors (White is the kit's)
 lego-image-processor kit part-colors --part 98138     # 40 tile colors (9 are the kit's)
+lego-image-processor kit part-colors --part 3070b     # 48 square tile colors for template margins (none in the kit)
 lego-image-processor kit part-colors --format json
 ```
 
@@ -448,7 +460,7 @@ lego-image-processor kit part-colors --format json
 join rules, with LEGO, BrickLink and Rebrickable names and IDs, element IDs and citations. It is
 built by a maintainer tool from checksum-pinned snapshots of Rebrickable `elements.csv`/`colors.csv`,
 LDraw `LDConfig.ldr`, the archived BrickLink color guide and the archived BrickLink catalog pages
-of the two parts; a row is kept only when every ID resolves and BrickLink lists the color for the
+of the three parts; a row is kept only when every ID resolves and BrickLink lists the color for the
 part (rules in the file's `source.join_rules`; excluded colors and reasons in `source.excluded`).
 Kit colors are copied from `kit_colors.json`. Rebrickable's catalog is "free for personal and
 commercial use, provided you acknowledge Rebrickable as your data source" (archived downloads page,
@@ -464,6 +476,7 @@ number (`kit part-numbers`; values from pinned archived catalog pages in `data/p
 |---|---|---|---|
 | 1×1 round plate (land) | 6141 (element 614101 in White) | **4073** (6141 is an alternate number) | **6141** |
 | 1×1 round tile (ocean) | 98138, 35381 (the kit's elements) | **98138** | **98138** |
+| 1×1 square tile (template margin) | 3070 (not in the kit) | **3070** (3070b is an alternate number) | **3070b** |
 
 Colors also differ (for example LEGO Brick Yellow = BrickLink Tan 2 = Rebrickable Tan 19); every
 lot is matched to a cited row of `part_colors.json` by its color key and LEGO color ID. A lot that
@@ -483,6 +496,9 @@ lego-image-processor parts export elev.json --kits 1 --condition used \
 - `--owned FILE` (loose parts) and `--missing FILE` (pieces missing from secondhand kits) use
   Rebrickable's import CSV: `Part,Color,Quantity` with Rebrickable numbers, or `Element,Quantity`.
   Rows for other parts are ignored and counted, so a full Rebrickable set inventory can be passed.
+  On a template layout, which has square tiles, `3070b` rows count as loose square tiles (and
+  3070b's other catalog numbers, such as 3070, are an error); on a kit layout they are rows for
+  other parts.
 - `--spares PCT` adds `ceil(shortfall × PCT/100)` to each lot with a shortfall; off by default
   (no LEGO spare rate is assumed).
 - Map pieces only: the frame, the 40 section bases and other kit parts are not listed.
@@ -536,11 +552,11 @@ until the owner verifies them against the live documentation).
 lego-image-processor parts prices fetch -o /tmp/smoke.json --lot 98138:140      # one-lot smoke check
 lego-image-processor parts prices fetch -o src/lego_image_processor/data/bricklink_price_guide.json
 lego-image-processor parts prices fetch -o PATH --resume                         # after a stop
-lego-image-processor parts prices fetch -o PATH --all-colors                     # all 84 cited lots
+lego-image-processor parts prices fetch -o PATH --all-colors                     # all 132 cited lots
 ```
 
-The default lot set is every lot the bundled recipes can use (19); `--all-colors` takes every cited
-plate and tile color, `--lot PART:LEGO_COLOR_ID` (repeatable) only the named ones. Progress is
+The default lot set is every lot the bundled recipes can use (26, with the template margin's Black
+square tile); `--all-colors` takes every cited plate, tile and square tile color, `--lot PART:LEGO_COLOR_ID` (repeatable) only the named ones. Progress is
 saved per lot to `<output stem>.progress.json` (git- and docker-ignored); on a stop the output is
 untouched unless `--write-partial`, and `--resume` fetches only the rest. Exit codes: 1 input or
 missing variable, 5 network/API failure after retries or the daily limit, 7 credentials rejected
@@ -615,6 +631,92 @@ lego-image-processor sheets build elev-B.json -o elev-B.pdf
   frames and the combination; each section page names its physical frame and its kit section
   (the label in the instructions). Parts lists are the same in every arrangement.
 
+### Map templates
+
+A template fixes the canvas: a projection, a board of whole 16 × 16 modules, a layout that makes
+each stud land, ocean or margin (off the globe), one part per class and a frame. Two ship:
+
+| Template | Projection | Studs: land / ocean / margin | Arrangements | Status |
+|---|---|---|---|---|
+| `kit-31203` (default) | the kit grid (equirectangular, above) | 3,062 / 7,178 / 0 | A, B, C | reference |
+| `winkel-tripel` | Winkel tripel, standard parallel 50.4598°, central meridian 11.1° E, fitted inside the kit's 8 × 5 modules | 2,553 / 5,691 / 1,996 (outline ring 288) | A | confirmed (project owner, 2026-11-24) |
+
+The kit template never changes: maps built on it are byte for byte what they were before
+templates existed. Maps are built only on the kit and on templates the project owner has
+confirmed. The project owner confirmed `winkel-tripel` as generated, with no corrections, on
+2026-11-24; a build on a template that is not confirmed stops with "not confirmed by the project
+owner" (exit 1).
+
+```bash
+lego-image-processor template list                              # id, title, status, counts, arrangements
+lego-image-processor template show winkel-tripel                # projection, board, parts, counts, source, confirmation
+lego-image-processor template locate winkel-tripel 48.86 2.35   # the stud that holds a location (row 18, column 61, D2)
+lego-image-processor template locate winkel-tripel --stud 0 0   # a stud's location and class (margin)
+lego-image-processor map build ocean-sst --template winkel-tripel -o w.json --preview w.png
+lego-image-processor map build ocean-sst --template winkel-tripel --ring-color lego_white -o w.json
+lego-image-processor map check land-elevation --template winkel-tripel
+lego-image-processor map cells rainfall --template winkel-tripel -o cells.json
+```
+
+Recipe keys (optional; `--template`, `--margin-color` and `--ring-color` win over them):
+
+```toml
+template = "winkel-tripel"        # absent = kit-31203
+
+[margin]                          # used only on non-kit templates
+color = "lego_black"              # a square tile (3070b) color; default lego_black
+ring = "lego_bright_yellow"       # optional: the outline ring, margin studs touching the globe
+```
+
+- Data are sampled at each stud's location on the globe; margin studs take no data. The land
+  shadow, halo, mix, `no_data` and `override` rules work on the template's studs.
+- Margin studs are 1×1 square tiles, part 3070b (`part_type: "square_tile"`; BrickLink item 3070,
+  Rebrickable 3070b), in the margin color, and the ring color on the ring if one is set. The ring
+  must differ from the margin color; `--ring-color none` turns a recipe's ring off. A 31203 kit
+  supplies no square tiles, so every one is bought beyond the kit.
+- The build prints a `Template:` and a `Margin:` line. The layout's `metadata.template` records the
+  template (id, projection, board, parts, counts, the template file's SHA-256 and confirmation)
+  and the dataset that decided its land and ocean (ETOPO 2022), which the report, the build sheets
+  and `cells.json` (cells `M` for the margin) cite as well.
+- Previews draw land and ocean as round studs and the margin as squares; margin studs in LEGO
+  Black are drawn in the preview's background color (pure black by default), so a Black margin
+  blends into it, while other margin colors and the ring keep their cited colors. Build sheets draw
+  the margin as 7 mm squares. Parts lists, exports, estimates and `sheets counts` include the square
+  tiles; leftovers list kit elements only. `validate` checks the layout against the template's
+  land/ocean layout and reports the square tiles as unavailable in the kit (`ocean-sst` on Winkel:
+  80.5% buildable from the kit).
+- The frames of a curved map cannot be re-hung: on `winkel-tripel` an arrangement other than A
+  (from `--arrangement` or the recipe, as for the ENSO maps) is an error, and so is `layout
+  arrange` on its layouts. `official-31203` copies LEGO's design cell for cell from the kit grid,
+  so it cannot be built on another template; build `official-31203-bathymetry` for the official
+  look from data. `--compare-official` works on the kit only.
+
+Example (`ocean-sst` on a confirmed copy of `winkel-tripel`, real data): 10,240 pieces in 11 lots,
+2,553 White plates, 5,691 tiles and 1,996 Black square tiles. One kit covers everything but the
+square tiles and leaves 2,886 of its map pieces over.
+
+**Making a template (maintainer).** `tools/maptemplates` (not packaged) builds each template from
+the pinned ETOPO 2022 file (land where the elevation is above 0 m) and the published projection.
+`generate`, `write` and `build` need pyproj `>=3.7,<3.8` (`poetry install --with maintainer`; the
+package itself never imports it). From `cli/`:
+
+```bash
+PYTHONPATH=tools poetry run python -m maptemplates generate winkel-tripel      # candidate, review sheet, flags in <cache>/templates/
+PYTHONPATH=tools poetry run python -m maptemplates review winkel-tripel        # review sheet of the committed file (no pyproj)
+PYTHONPATH=tools poetry run python -m maptemplates write winkel-tripel --corrections FILE --confirmed-on YYYY-MM-DD
+PYTHONPATH=tools poetry run python -m maptemplates build winkel-tripel --check # "no differences": the committed file is reproducible
+PYTHONPATH=tools poetry run python -m maptemplates ice-mask winkel-tripel --check   # ice studs (ERSST v5) for map cells
+PYTHONPATH=tools poetry run python -m maptemplates kit-golden --out kit.json   # digests of every kit output, A, B and C
+```
+
+The review sheet shows every stud's class, the ring, the modules and sections, and flags studs
+with a land share of 40-60% and water not connected to the ocean. The project owner reviews it.
+Hand corrections (a JSON list of `{row, col, class, reason}`) are recorded in the template file,
+and `write --confirmed-on` records the confirmation as the role "project owner" and the date,
+with no name. A rewrite keeps the confirmation only while the layout stays the same. Files:
+`data/templates/<id>.json` and its ice studs `<id>-ice.json`, whose `template_layout_sha256`
+must equal the template's layout digest. Formats: `specs/016-map-templates/contracts/`.
+
 ### Python library
 
 ```python
@@ -643,11 +745,19 @@ from lego_image_processor.sheets import build_sheet_set, render_pdf, render_svg,
 sheet_set = build_sheet_set(read_layout("elev.json"), paper="letter", sections="B2,C2")
 pdf_bytes = render_pdf(sheet_set); svg_pages = render_svg(sheet_set)   # [(name, text), ...]
 section_counts(read_layout("elev.json")).to_json()
+
+from lego_image_processor.templates import load_template, list_templates, confirmed_templates
+
+t = load_template("winkel-tripel")    # t.status, t.counts, t.class_at(row, col)
+t.stud_at(48.86, 2.35)                 # (18, 61): the stud that holds a location, or None
+t.location(0, 0)                       # None: a margin stud is off the globe
+build_map(load_recipe("ocean-sst"), template="winkel-tripel")   # confirmed templates only
 ```
 
 Maintainer tools (from `cli/`, need the pinned sources in the cache; `--check` must report
-"no differences"): `PYTHONPATH=tools python -m partnumbers build --check` and
-`PYTHONPATH=tools python -m partcolors build --check`.
+"no differences"): `PYTHONPATH=tools python -m partnumbers build --check`,
+`PYTHONPATH=tools python -m partcolors build --check` and
+`PYTHONPATH=tools python -m maptemplates build winkel-tripel --check`.
 
 ## Development
 

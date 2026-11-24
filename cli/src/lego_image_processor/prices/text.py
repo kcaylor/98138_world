@@ -10,6 +10,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Callable, List, Sequence
 
+from ..parts.partslist import PART_TYPE_TEXT
 from .estimate import KINDS, Estimate, EstimateLine, EstimateReport
 from .wording import (ALL_COLORS_HINT, ATTRIBUTION, DISCLAIMER, ESTIMATE_NOTE, NOTHING_TO_BUY_TEXT,
                       REASON_NOT_IN_SNAPSHOT, SHORT_LABELS, STATISTIC_TEXT)
@@ -77,8 +78,9 @@ def _summary_table(report: EstimateReport) -> List[str]:
 def _lot_name(l: EstimateLine) -> str:
     lot = l.lot
     if lot.ids is None:
-        return f"{lot.part_type} {lot.part_id} {lot.layout_color_name} (code {lot.layout_color_code})"
-    return f"{lot.part_type} {lot.part_id} {lot.ids.lego_name} (LEGO {lot.ids.lego_id})"
+        return (f"{PART_TYPE_TEXT[lot.part_type]} {lot.part_id} {lot.layout_color_name} "
+                f"(code {lot.layout_color_code})")
+    return f"{PART_TYPE_TEXT[lot.part_type]} {lot.part_id} {lot.ids.lego_name} (LEGO {lot.ids.lego_id})"
 
 
 def _lot_rows(e: Estimate) -> List[List[str]]:
@@ -93,7 +95,8 @@ def _lot_rows(e: Estimate) -> List[List[str]]:
             bl = f"{r.bricklink_item_no} / {r.bricklink_color_name} ({r.bricklink_color_id})"
         unit = [unit_usd(x) for x in l.unit] if l.unit else ["-"] * 3
         line = [usd(x) for x in l.line] if l.line else ["-"] * 3
-        rows.append([lot.part_type, color, bl, f"{l.quantity:,}", l.basis, *unit, *line, l.reason or ""])
+        rows.append([PART_TYPE_TEXT[lot.part_type], color, bl, f"{l.quantity:,}", l.basis, *unit, *line,
+                     l.reason or ""])
     return rows
 
 
@@ -110,6 +113,10 @@ def echo_estimate(report: EstimateReport, lines: bool = False, echo: Echo = None
     arr = lay.get("arrangement") or {}
     if arr.get("id", "A") != "A":
         echo(f"Arrangement: {arr['id']} ({arr['name']}). {arr['note']}")
+    t = lay.get("template")  # feature 016: non-kit layouts only
+    if t:
+        echo(f"Template: {t['id']} ({t['title']}); margin in 1x1 square tiles (part 3070b), which kit "
+             "31203 does not have")
     s = report.snapshot
     snap = report._snapshot_obj
     sha = f"SHA-256 {s['sha256'][:8]}…" if s.get("sha256") else "SHA-256 unknown"
@@ -186,7 +193,7 @@ def _guide_count(figures, what: str) -> str:
 def progress_line(index: int, total: int, entry) -> str:
     """``[ 3/19] tile 98138 Earth Blue (BrickLink 98138 / Dark Blue, color 63): sold 812 sales, stock 140 lots``."""
     lot = entry.lot
-    head = (f"[{index:>{len(str(total))}}/{total}] {lot.part_type} {lot.part_id} {lot.lego_color_name} "
+    head = (f"[{index:>{len(str(total))}}/{total}] {PART_TYPE_TEXT[lot.part_type]} {lot.part_id} {lot.lego_color_name} "
             f"(BrickLink {lot.bricklink_item_no} / {lot.bricklink_color_name}, color {lot.bricklink_color_id})")
     if entry.error:
         return f"{head}: {entry.error} on BrickLink (unpriced)"
@@ -217,7 +224,7 @@ def fetch_summary(path, snapshot, previous=None) -> List[str]:
         else:
             out.append(f"Largest changes in unit average since {previous.retrieved_on}:")
             for lot, old, new, pct in changes:
-                out.append(f"  {lot.part_type} {lot.part_id} {lot.lego_color_name} ({lot.lego_color_id}): "
+                out.append(f"  {PART_TYPE_TEXT[lot.part_type]} {lot.part_id} {lot.lego_color_name} ({lot.lego_color_id}): "
                            f"{unit_usd(old)} -> {unit_usd(new)} ({_pct(pct)})")
     out += [REVIEW_TEXT, ATTRIBUTION, DISCLAIMER]
     return out

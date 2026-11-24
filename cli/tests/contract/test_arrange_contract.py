@@ -122,6 +122,17 @@ class TestLayoutArrange:
         assert r.exit_code == 1
         assert "unknown arrangement 'Q'" in r.output
 
+    def test_template_layout_exit_1(self, runner, confirmed_winkel, tmp_path):
+        # feature 016 (FR-011, contracts/cli.md): a curved map's frames cannot be re-hung
+        from ..winkel_layouts import winkel_grid
+        src = tmp_path / "winkel.json"
+        src.write_text(winkel_grid(confirmed_winkel).to_json(), encoding="utf-8")
+        out = tmp_path / "x.json"
+        r = runner.invoke(cli, ["layout", "arrange", str(src), "-a", "B", "-o", str(out)])
+        assert r.exit_code == 1
+        assert f"Error: {src}: the frames of a curved map cannot be re-hung (template winkel-tripel)" in r.output
+        assert _last(r.output) == DISCLAIMER and not out.exists()
+
     def test_image_layout_unchanged(self, runner, tmp_path):
         out = tmp_path / "img.json"
         r = runner.invoke(cli, ["layout", str(IMAGES / "test_128x80_quantized.png"), "-o", str(out), "-q"])

@@ -268,9 +268,32 @@ def test_fetch_all_colors(runner, api, tmp_path):
     out = tmp_path / "s.json"
     r = _fetch(runner, "-o", out, "--all-colors", "-q")
     assert r.exit_code == 0, r.output
-    assert len(api.opener.requests) == 168
+    # every cited color of the plate, the round tile and (feature 016) the square tile 3070b,
+    # which BrickLink files as item 3070 (part_numbers.json)
+    from lego_image_processor.kit.part_colors import load_part_colors
+    from lego_image_processor.kit.part_numbers import load_part_numbers
+    n = 84 + len(load_part_colors().for_part("3070b"))
+    assert len(api.opener.requests) == 2 * n
     snap = json.loads(out.read_text())
-    assert snap["lot_set"]["kind"] == "all-cited" and len(snap["lots"]) == 84
+    assert snap["lot_set"]["kind"] == "all-cited" and len(snap["lots"]) == n
+    square = [l for l in snap["lots"] if l["part_id"] == "3070b"]
+    assert square and {l["bricklink"]["item_no"] for l in square} == {load_part_numbers().get("3070b").bricklink_item_no}
+    assert [l["part_id"] for l in snap["lots"]][-len(square):] == ["3070b"] * len(square)
+
+
+def test_fetch_square_tile_lot(runner, api, tmp_path):
+    # feature 016 (contracts/cli.md): `--lot 3070b:26` is accepted; the request asks BrickLink for
+    # item 3070 (part_numbers.json). The fake API only; nothing here reaches BrickLink.
+    from lego_image_processor.kit.part_numbers import load_part_numbers
+    out = tmp_path / "s.json"
+    r = _fetch(runner, "-o", out, "--lot", "3070b:26", "-q")
+    assert r.exit_code == 0, r.output
+    item = load_part_numbers().get("3070b").bricklink_item_no
+    assert {q["path"].split("/items/PART/")[1].split("/")[0] for q in api.opener.requests} == {item}
+    snap = json.loads(out.read_text())
+    assert [(l["part_id"], l["lego_color_id"], l["bricklink"]["item_no"]) for l in snap["lots"]] == \
+        [("3070b", 26, item)]
+    assert _last(r.output) == DISCLAIMER
 
 
 def test_fetch_5xx_exhaustion(runner, api, tmp_path):
