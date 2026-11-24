@@ -29,8 +29,8 @@ FORMAT_VERSION = "1"
 
 # kind -> (file name, media type, description). The order is the order shown on the page.
 KINDS: Dict[str, tuple] = {
-    "preview": ("preview.png", "image/png", "Preview, 10 px per stud"),
-    "thumb": ("thumb.png", "image/png", "Thumbnail, 3 px per stud"),
+    "preview": ("preview.png", "image/png", "Preview, round studs on black, 10 px per stud"),
+    "thumb": ("thumb.png", "image/png", "Thumbnail, square studs, 3 px per stud"),
     "sheets-letter": ("sheets-letter.pdf", "application/pdf",
                       "Build sheets, US Letter: overview, legend and 40 section pages at true scale"),
     "sheets-a4": ("sheets-a4.pdf", "application/pdf",
@@ -184,7 +184,7 @@ def build_variant(recipe, combination: str, out: Path, rel: str, *, cache_dir=No
     files["layout"] = layout_text.encode("utf-8")
     (d / KINDS["layout"][0]).write_bytes(files["layout"])
     write_preview(layout, d / KINDS["preview"][0], scale=PREVIEW_SCALE)
-    write_preview(layout, d / KINDS["thumb"][0], scale=THUMB_SCALE)
+    write_preview(layout, d / KINDS["thumb"][0], scale=THUMB_SCALE, style="square")
 
     layout_path = d / KINDS["layout"][0]
     sha = _sha256(files["layout"])

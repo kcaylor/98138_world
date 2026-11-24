@@ -1,4 +1,7 @@
-"""Preview PNG of a layout: one square of cited RGB per stud (FR-024; not a build sheet).
+"""Preview PNG of a layout: one stud of cited RGB per position (FR-024; not a build sheet).
+
+The default style draws each stud as a round 1×1 piece on a black background, as the map looks
+built; ``style="square"`` fills each cell edge to edge.
 
 Not affiliated with or endorsed by The LEGO Group.
 """
@@ -13,6 +16,13 @@ from PIL import Image
 
 from ..kit.part_colors import load_part_colors
 
+STYLES = ("round", "square")
+DEFAULT_STYLE = "round"
+DEFAULT_BACKGROUND = (0, 0, 0)
+# Stud diameter as a share of the 8 mm pitch, leaving a visible gap between round pieces.
+STUD_DIAMETER = 0.9
+_SUPERSAMPLE = 8
+
 
 def color_rgb() -> Dict[Tuple[str, str], Tuple[int, int, int]]:
     """(part, key) -> cited RGB from the part-color table (kit colors equal kit_colors.json)."""
@@ -20,7 +30,18 @@ def color_rgb() -> Dict[Tuple[str, str], Tuple[int, int, int]]:
     return {(p, c.key): tuple(c.rgb) for p, rows in t.parts.items() for c in rows}
 
 
-def write_preview(layout, path, scale: int = 8) -> Path:
+def stud_coverage(scale: int, diameter: float = STUD_DIAMETER) -> np.ndarray:
+    """Anti-aliased coverage (0..1) of one round stud in a ``scale`` × ``scale`` cell."""
+    n = scale * _SUPERSAMPLE
+    c = (np.arange(n) + 0.5) / n - 0.5
+    inside = (c[None, :] ** 2 + c[:, None] ** 2) <= (diameter / 2) ** 2
+    return inside.reshape(scale, _SUPERSAMPLE, scale, _SUPERSAMPLE).mean(axis=(1, 3))
+
+
+def write_preview(layout, path, scale: int = 8, style: str = DEFAULT_STYLE,
+                  background: Tuple[int, int, int] = DEFAULT_BACKGROUND) -> Path:
+    if style not in STYLES:
+        raise ValueError(f"unknown preview style {style!r} (expected one of {', '.join(STYLES)})")
     rgb = color_rgb()
     img = np.zeros((layout.height, layout.width, 3), dtype=np.uint8)
     for pos in layout.positions:
@@ -30,6 +51,10 @@ def write_preview(layout, path, scale: int = 8) -> Path:
         img[pos.y, pos.x] = rgb[key]
     if scale > 1:
         img = np.repeat(np.repeat(img, scale, axis=0), scale, axis=1)
+    if style == "round":
+        a = np.tile(stud_coverage(scale), (layout.height, layout.width))[..., None]
+        bg = np.asarray(background, dtype=np.float64)
+        img = np.rint(img * a + bg * (1.0 - a)).astype(np.uint8)
     path = Path(path)
     Image.fromarray(img, "RGB").save(path, format="PNG")
     return path

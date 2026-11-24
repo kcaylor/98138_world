@@ -169,7 +169,8 @@
   var data, state, base, info = {}, swatchCache = {};
   var status = section.querySelector('.pc-status');
   var img = doc.getElementById('preview-img');
-  var canvas = el('canvas', { width: '128', height: '80', className: 'stud-img', role: 'img', hidden: '' });
+  var STUD_PX = 10, STUD_DIAMETER = 0.9;   // as the built preview.png: round studs on black
+  var canvas = el('canvas', { width: '1280', height: '800', className: 'stud-img', role: 'img', hidden: '' });
 
   function say(msg) { status.textContent = msg; }
 
@@ -325,12 +326,16 @@
 
   function draw() {
     var keys = cellColors(data, state), ctx = canvas.getContext('2d');
-    var im = ctx.createImageData(data.width, data.height);
+    var r = STUD_PX * STUD_DIAMETER / 2;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     for (var i = 0; i < keys.length; i++) {
-      var rgb = rgbOf(data.cells.charAt(i) === 'L' ? '6141' : '98138', keys[i]);
-      im.data[4 * i] = rgb[0]; im.data[4 * i + 1] = rgb[1]; im.data[4 * i + 2] = rgb[2]; im.data[4 * i + 3] = 255;
+      var x = i % data.width, y = (i - x) / data.width;
+      ctx.fillStyle = 'rgb(' + rgbOf(data.cells.charAt(i) === 'L' ? '6141' : '98138', keys[i]).join(',') + ')';
+      ctx.beginPath();
+      ctx.arc((x + 0.5) * STUD_PX, (y + 0.5) * STUD_PX, r, 0, 2 * Math.PI);
+      ctx.fill();
     }
-    ctx.putImageData(im, 0, 0);
   }
 
   function markUsed() {

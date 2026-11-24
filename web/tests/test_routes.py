@@ -80,7 +80,7 @@ def test_map_page_leftovers(client, manifest):
 
 def test_gray_background_and_stud_mat(client):
     css = client.get("/static/style.css").text
-    assert "--bg: #e9e9e9;" in css and "--stud-mat: #e9e9e9;" in css
+    assert "--bg: #e9e9e9;" in css and "--stud-mat: #e9e9e9;" in css and "--stud-round-mat: #000000;" in css
     assert ".stud-img" in css and "background: var(--stud-mat)" in css
 
 

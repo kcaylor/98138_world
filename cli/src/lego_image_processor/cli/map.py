@@ -218,6 +218,8 @@ def map_group() -> None:
 @click.argument("recipe")
 @click.option("--output", "-o", required=True, type=click.Path(dir_okay=False), help="Layout JSON to write")
 @click.option("--preview", type=click.Path(dir_okay=False), help="Also write a PNG preview (8x8 px per stud)")
+@click.option("--preview-style", type=click.Choice(["round", "square"]), default="round", show_default=True,
+              help="Preview studs: round pieces on black, as built, or square cells")
 @click.option("--report", "report_path", type=click.Path(dir_okay=False), help="Write the suitability report (JSON)")
 @click.option("--cache-dir", type=click.Path(file_okay=False), help="Dataset cache root (default: per-user cache)")
 @click.option("--fetch", "do_fetch", is_flag=True,
@@ -226,7 +228,7 @@ def map_group() -> None:
               help="Print cell agreement with the official design (always on for official-31203*)")
 @arrangement_option(default=None)
 @click.option("--quiet", "-q", is_flag=True, help="Suppress output")
-def build(recipe, output, preview, report_path, cache_dir, do_fetch, compare_official, arrangement, quiet):
+def build(recipe, output, preview, preview_style, report_path, cache_dir, do_fetch, compare_official, arrangement, quiet):
     """Build RECIPE (a recipe file or a bundled recipe id) into a schema 2.0 layout.
 
     \b
@@ -263,7 +265,7 @@ def build(recipe, output, preview, report_path, cache_dir, do_fetch, compare_off
         Path(output).write_text(result.layout.to_json(), encoding="utf-8")
         if preview:
             from ..maps.preview import write_preview
-            write_preview(result.layout, preview)
+            write_preview(result.layout, preview, style=preview_style)
         if report_path:
             _write_json(report_path, result.report)
     except OSError as exc:

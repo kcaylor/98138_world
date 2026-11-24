@@ -284,3 +284,12 @@ def test_prices_open_no_socket(tmp_path, fixture_datasets, monkeypatch):
     monkeypatch.setattr(socket, "create_connection", refuse)
     m = _small_build(tmp_path, fixture_datasets)
     assert m["prices"]["snapshot"]["complete"] is True
+
+
+def test_preview_round_thumb_square(site_dir, manifest):
+    """Owner, 2026-11-23: map preview round studs on black; thumbnails square."""
+    v = manifest["maps"][0]["variants"]["A"]
+    big = Image.open(site_dir / v["files"]["preview"]["path"]).convert("RGB")
+    thumb = Image.open(site_dir / v["files"]["thumb"]["path"]).convert("RGB")
+    assert big.getpixel((0, 0)) == (0, 0, 0) and big.getpixel((5, 5)) != (0, 0, 0)
+    assert thumb.getpixel((0, 0)) == thumb.getpixel((1, 1)) == thumb.getpixel((2, 2))

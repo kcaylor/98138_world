@@ -1,7 +1,8 @@
 /* 98138.world. Hand-written, no build step. Not affiliated with or endorsed by The LEGO Group. */
 :root {
   --bg: #e9e9e9;          /* neutral light gray so White studs show (feature 014) */
-  --stud-mat: #e9e9e9;    /* surround of every stud preview, light and dark mode */
+  --stud-mat: #e9e9e9;    /* surround of every square-stud thumbnail, light and dark mode */
+  --stud-round-mat: #000000; /* surround of the round-stud map preview (studs on black) */
   --surface: #ffffff;
   --ink: #1b2430;
   --muted: #5a6573;
@@ -96,6 +97,7 @@ h3 { font-size: 1rem; margin: 1.2em 0 .4em; }
 .combos a[aria-current="page"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .combo-id { font-weight: 700; }
 .preview { margin: 0; }
+.preview .stud-img { background: var(--stud-round-mat); image-rendering: auto; }  /* round studs, as built */
 .preview img { border-radius: 8px; box-shadow: var(--shadow); max-width: 1280px; }
 .preview figcaption { color: var(--muted); font-size: .9rem; margin-top: .5rem; }
 .columns { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
