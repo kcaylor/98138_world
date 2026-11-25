@@ -10,17 +10,19 @@ the recorded recipe checksum when a bundled recipe gains its table. These helper
   built in A, with the recipe SHA-256 and the layout file's SHA-256 replaced by placeholders, so
   the outputs of two recipe texts that differ only in their sticker table compare equal.
 - ``guard_digests(cache_dir)``: G3's digests of every kit output of the eight bundled recipes in
-  A, B and C, each built from ``prefix_bytes`` so the digests keep the af3ce57 recipe checksums;
-  plus the sheets PDF (Letter) bytes and each sheets SVG page of ``ocean-sst`` and
-  ``land-elevation`` in A. ``compare`` names the recipe, combination and output that differ.
+  A, B, C, D and E, each built from ``prefix_bytes`` so the digests keep main's recipe checksums
+  (commit 6f300dc since the merge of feature 010; af3ce57 before); plus the sheets PDF (Letter)
+  bytes and each sheets SVG page of ``ocean-sst`` and ``land-elevation`` in A. ``compare`` names
+  the recipe, combination and output that differ.
 - ``map_part_blocks()``: G4's canonical-JSON digests of the 6141 and 98138 blocks of
   ``part_colors.json`` and ``part_numbers.json`` and of the citation entries those blocks use
   (feature 016's method, so rows appended for other parts do not touch them).
 
 Outputs are made with the library functions the CLI commands call (``map build``, ``map
 cells``, ``parts list``, ``parts export``, ``parts estimate``, ``sheets counts``, ``sheets
-build``), written the way those commands write them. Only functions present at commits af3ce57
-and 6038d9c are used, so this module also runs against an export of either. The layout path
+build``), written the way those commands write them. Only functions present at commits af3ce57,
+6038d9c and 6f300dc are used, so this module also runs against an export of any of them
+(combinations D and E need 6f300dc, feature 010). The layout path
 recorded in parts lists, estimates, counts and sheets is ``<recipe>/<combination>/layout.json``
 (feature 016's kit golden uses the same relative path), so no temporary path reaches an output.
 
@@ -49,7 +51,7 @@ GENERATOR = ("cli/tests/integration/test_stickers_outputs_unchanged.py::test_gua
              "with STICKERS_017_GUARD_WRITE=1")
 FIXED_GENERATED_AT = "2026-01-01T00:00:00Z"
 AS_OF = date(2026, 12, 5)  # 4 days after the synthetic snapshot, as in the price tests
-COMBINATIONS: Tuple[str, ...] = ("A", "B", "C")
+COMBINATIONS: Tuple[str, ...] = ("A", "B", "C", "D", "E")   # D and E: feature 010 (main 6f300dc)
 SHEET_RECIPES: Tuple[str, ...] = ("land-elevation", "ocean-sst")
 SHEET_COMBINATION = "A"
 KIT_PARTS: Tuple[str, ...] = ("6141", "98138")
@@ -262,7 +264,7 @@ def _dataset_rows(recipes: Iterable[Any]) -> List[Dict[str, Any]]:
 
 def guard_digests(cache_dir, prices=PRICES_FIXTURE,
                   recipes: Optional[Iterable[str]] = None) -> Dict[str, Any]:
-    """G3: digests of every kit output of the bundled recipes (default all eight) in A, B and C,
+    """G3: digests of every kit output of the bundled recipes (default all eight) in A-E,
     each built from ``prefix_bytes`` of its file, plus the sheets PDF (Letter) bytes and SVG
     pages of ``SHEET_RECIPES`` in A."""
     from lego_image_processor.maps.recipe import parse_recipe

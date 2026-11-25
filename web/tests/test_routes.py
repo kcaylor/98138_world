@@ -15,7 +15,8 @@ from markupsafe import escape
 DISCLAIMER = "Not affiliated with or endorsed by The LEGO Group."
 REPO = "https://github.com/kcaylor/98138_world"
 PAGES = ["/", "/about", "/maps/official-31203/A", "/maps/ocean-sst/B", "/maps/ocean-sst/C",
-         "/maps/ocean-sst/winkel-tripel"]   # feature 016
+         "/maps/ocean-el-nino/D", "/maps/official-31203/E",
+         "/maps/ocean-sst/winkel-tripel"]   # features 010, 016
 
 
 @pytest.mark.parametrize("path", PAGES)
@@ -118,12 +119,12 @@ def test_map_root_redirects_to_a(client):
 def test_map_root_redirects_to_recipe_arrangement(client):
     # feature 009: a recipe's `arrangement` key is the map's default combination on the site
     r = client.get("/maps/ocean-el-nino", follow_redirects=False)
-    assert r.status_code in (302, 307) and r.headers["location"] == "/maps/ocean-el-nino/B"
+    assert r.status_code in (302, 307) and r.headers["location"] == "/maps/ocean-el-nino/D"  # feature 010
 
 
 def test_home_links_default_combination(client):
     html = client.get("/").text
-    assert 'href="/maps/ocean-el-nino/B"' in html and 'href="/maps/ocean-sst/A"' in html
+    assert 'href="/maps/ocean-el-nino/D"' in html and 'href="/maps/ocean-sst/A"' in html
 
 
 def test_lowercase_combination_redirects(client):
@@ -131,7 +132,7 @@ def test_lowercase_combination_redirects(client):
     assert r.status_code == 301 and r.headers["location"] == "/maps/ocean-sst/B"
 
 
-@pytest.mark.parametrize("path", ["/maps/ocean-sst/D", "/maps/nope/A", "/maps/nope",
+@pytest.mark.parametrize("path", ["/maps/ocean-sst/F", "/maps/nope/A", "/maps/nope",
                                   "/maps/ocean-sst/AB", "/maps/land-elevation/A"])
 def test_unknown_is_404(client, path):
     r = client.get(path)

@@ -230,12 +230,13 @@ class TestOutput:
         assert (f"Recipe: ocean-sst - {recipe.title} (format {recipe.format}, SHA-256 "
                 f"{recipe.sha256})") in r.output
         assert ("Legend values from the build hung as A (default); the stickers are the same "
-                "for A, B and C.") in r.output
+                "for A, B, C, D and E.") in r.output
 
     def test_legend_source_from_the_recipe(self, runner, cached, out_dir):
         r = stickers(runner, "ocean-el-nino", "-o", out_dir / "n.pdf")
         assert r.exit_code == 0, r.output
-        assert "hung as B (from the recipe); the stickers are the same for A, B and C." in r.output
+        # the ENSO recipes hang as D since feature 010 (B before)
+        assert "hung as D (from the recipe); the stickers are the same for A, B, C, D and E." in r.output
 
     def test_title_and_line_with_sources(self, run):
         r, _, s = run
@@ -504,7 +505,7 @@ class TestTemplate:
         assert (out_dir / "a.pdf").read_bytes() == (out_dir / "b.pdf").read_bytes()
         assert plain.output.replace("a.pdf", "b.pdf") == kit.output
         assert "Template:" not in kit.output and "Margin:" not in kit.output
-        assert ("the stickers are the same for A, B and C." in kit.output)
+        assert ("the stickers are the same for A, B, C, D and E." in kit.output)
 
     def test_unknown_template_exit_2(self, runner, cached, confirmed_winkel, out_dir):
         r = stickers(runner, "ocean-sst", "--template", "mercator", "-o", out_dir / "x.pdf")

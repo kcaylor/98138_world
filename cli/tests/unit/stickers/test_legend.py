@@ -264,16 +264,16 @@ class TestSwatches:
 
 
 class TestCombinations:
-    """FR-006, SC-003: one legend per map, the same for A, B and C."""
+    """FR-006, SC-003: one legend per map, the same for A, B, C, D and E (D, E: feature 010)."""
 
     @pytest.mark.parametrize("recipe_id", ["ocean-sst", "official-31203-bathymetry"])
-    def test_rank_maps_identical_in_a_b_c(self, build, recipe_id):
-        a, b, c = (map_legend(build(recipe_id, x)) for x in ("A", "B", "C"))
-        assert a.to_list() == b.to_list() == c.to_list()
-        assert a == b == c
+    def test_rank_maps_identical_in_every_combination(self, build, recipe_id):
+        a, b, c, d, e = (map_legend(build(recipe_id, x)) for x in "ABCDE")
+        assert a.to_list() == b.to_list() == c.to_list() == d.to_list() == e.to_list()
+        assert a == b == c == d == e
 
     @pytest.mark.parametrize("recipe_id", sorted(bundled_recipes()))
-    def test_every_bundled_map_identical_in_a_b_c(self, build, recipe_id):
+    def test_every_bundled_map_identical_in_every_combination(self, build, recipe_id):
         r = sticker_recipe(recipe_id)
-        lists = [map_legend(build(r, x)).to_list() for x in ("A", "B", "C")]
-        assert lists[0] == lists[1] == lists[2]
+        lists = [map_legend(build(r, x)).to_list() for x in "ABCDE"]
+        assert all(x == lists[0] for x in lists), recipe_id

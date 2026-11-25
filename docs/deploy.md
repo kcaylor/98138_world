@@ -5,8 +5,8 @@ installs the CLI library, downloads the pinned public datasets (~561 MB: ~10.8 M
 first six maps, plus 385 MB of MOD17A3 NPP and 147 MB of MODIS-Aqua chlorophyll for `living-planet`,
 feature 012, plus 0.7 MB of GPCP and 17.8 MB of NSIDC sea ice in 60 files for `rainfall`, feature
 013; each checked by SHA-256 or, for the ERDDAP file, a content SHA-256), and prebuilds every
-map in every frame combination (8 × 3 = 24 variants, ~146 MB) plus a Winkel tripel version of five
-maps (feature 016; 29 variants, about 28 MB more) into `/site`. The builder needs about
+map in every frame combination (8 × 5 = 40 variants, combinations A–E, about 6 MB each) plus a Winkel tripel version of five
+maps (feature 016; 45 variants in all, about 28 MB more) into `/site`. The builder needs about
 650 MB of RAM at peak (the NPP GeoTIFF is read strip by strip, never decoded whole) and a little
 over 1 GB of disk for the dataset cache.
 The running container only serves those files: it never downloads data or builds maps, and it
@@ -24,8 +24,8 @@ Map templates (feature 016): the prebuild also builds a Winkel tripel version of
 every template the project owner has confirmed (its default `--templates`). The template file
 ships with the CLI as package data, so the `Dockerfile` is unchanged and the build needs no new
 dependency (pyproj is for the maintainer tool only). The committed `winkel-tripel` was confirmed
-by the project owner on 2026-11-24, so the image builds 29 variants, 24 kit and 5 Winkel
-(`/healthz` reports `"variants":29`), about a fifth more output and build time than the kit only
+by the project owner on 2026-11-24, so the image builds 45 variants, 40 kit (A–E) and 5 Winkel
+(`/healthz` reports `"variants":45`); with A–C only it was 29, about a fifth more than the kit only
 (measured locally: 151 MB in 51 s for the kit only, 180 MB in 61-63 s with Winkel). A template
 that is not confirmed gives no variants, and the build log says "not confirmed by the project
 owner". Deploying is the owner's step, as for every deploy.
@@ -68,7 +68,7 @@ dedicated IPv6 address. Check:
 ```bash
 fly status
 fly ips list
-curl -fsS https://world-98138.fly.dev/healthz     # {"status":"ok","variants":29,...}
+curl -fsS https://world-98138.fly.dev/healthz     # {"status":"ok","variants":45,...}
 open https://world-98138.fly.dev/
 ```
 
@@ -162,7 +162,7 @@ snapshot, and the pages then say it is partial). Neither option is used by the `
 docker build --platform linux/amd64 -t world-98138 --build-arg GIT_COMMIT=$(git rev-parse HEAD) .
 docker run --rm world-98138 id                         # uid=10001(app)
 docker run --rm -d --name w98 -p 8080:8080 --memory 256m world-98138
-curl -fsS http://localhost:8080/healthz                 # {"status":"ok","variants":29,...}
+curl -fsS http://localhost:8080/healthz                 # {"status":"ok","variants":45,...}
 curl -s -o /dev/null -w "%{http_code} %{content_type}\n" \
   http://localhost:8080/maps/ocean-sst/B/download/sheets-letter   # 200 application/pdf
 docker stats --no-stream w98                            # memory well under 256 MiB

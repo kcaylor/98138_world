@@ -63,7 +63,7 @@ def test_cells_route(client, manifest):
     assert "max-age" in r.headers["cache-control"]
 
 
-@pytest.mark.parametrize("path", ["/maps/nope/A/cells.json", "/maps/ocean-sst/D/cells.json",
+@pytest.mark.parametrize("path", ["/maps/nope/A/cells.json", "/maps/ocean-sst/F/cells.json",
                                   "/maps/ocean-sst/A/download/cells"])
 def test_cells_route_not_found(client, path):
     assert client.get(path).status_code == 404

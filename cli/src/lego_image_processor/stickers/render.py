@@ -12,8 +12,8 @@ contracts/sticker-files.md; data-model.md "Sticker files").
   sheets' serialiser (``sheets.render_svg.item_svg``); every text carries ``textLength`` (its
   Helvetica width) so a substitute font keeps the measured width. ``<metadata>`` holds the
   recipe, a non-kit template's line (016), every dataset's full citation and license and the
-  tool version, nothing that depends on the arrangement, so the SVGs of A, B and C builds are
-  byte-identical.
+  tool version, nothing that depends on the arrangement, so the SVGs of A, B, C, D and E builds
+  are byte-identical.
 - ``render_sticker_json(set)``: the JSON summary (``StickerSet.to_dict()``), UTF-8, indent 2.
 
 Same input, same bytes: no timestamps, fixed attribute order, two-decimal numbers, ``\\n``.

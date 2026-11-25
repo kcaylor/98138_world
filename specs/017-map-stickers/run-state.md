@@ -2,16 +2,18 @@
 
 Source: prompt (owner, 2026-11-23: stickers instead of brick labels; four scoping answers)
 Phase: done (converge round 1: T092 appended and implemented; every task done but the owner's T091)
-Status: done; owner steps open: T091 price refresh, commit of the work since merge 0150441, push/PR, deploy
+Status: done; main 6f300dc (feature 010) merged in, uncommitted (the coordinator commits); owner steps open: T091 price refresh, push/PR, deploy
 Updated: 2026-11-25
 
 Worktree: ../98138_world-017 (branch 017-map-stickers, from main af3ce57,
 fast-forwarded to main 6038d9c on 2026-11-23: round studs on black for all map previews); 017 committed
 on its branch (e4142bb guard golden, 3257c9d feature); the local branch 016-map-templates (f33b464)
 merged into it on 2026-11-24 (T053, T054), merge commit 0150441 by the coordinator, which also holds
-016's kit goldens as T054 regenerated them; nothing pushed. Everything since the merge, Phase 5
-(T055-T082), Phase 6 (T083-T090) and converge round 1 (T092, docs/runbook.md), is uncommitted in the worktree (76 tracked files modified, 9
-new files), waiting for the owner's go-ahead to commit (run policy "commit: no").
+016's kit goldens as T054 regenerated them; nothing pushed. Phase 5 (T055-T082), Phase 6
+(T083-T090) and converge round 1 (T092) were committed as 0838e80 (owner's approval, 2026-11-25).
+Then main moved (016 merged as PR #18, 309c17d; feature 010, Pacific-centred arrangements D and E,
+as PR #19, 6f300dc) and the owner approved merging main into 017 (2026-11-25): the merge of
+origin/main 6f300dc is resolved in the worktree, not committed (see "Merge of main 6f300dc").
 Scope of this run (owner): draft the spec; stop after clarify for review.
 Owner said "plan for 017" (2026-11-23): run plan, tasks and analyze; stop before implement.
 
@@ -20,8 +22,9 @@ Owner said "plan for 017" (2026-11-23): run plan, tasks and analyze; stop before
   owner's credentials; tasks.md has the command); best together with 016's T109. Until then no
   snapshot is packaged, so `parts estimate` needs `--prices FILE` and the web prebuild
   `--no-prices` (or `--prices`).
-- Commit the uncommitted Phase 5 and Phase 6 work on the branch, then push and open the pull
-  request (it must say that 017, merging second, regenerated 016's kit goldens: T054, research R13).
+- Commit the merge of main 6f300dc (the coordinator, after the report), then push and open the pull
+  request (it must say that 017 regenerated the kit goldens on each merge of main, T054's proof,
+  and re-based its guard on main 6f300dc with the owner's approval of 2026-11-25).
 - Deploy (`fly`), after the merge to main: the owner's step, not planned here.
 - T042 and T081 are done (texts approved 2026-11-24; plaque offset confirmed 2026-11-25).
 
@@ -29,6 +32,13 @@ Owner said "plan for 017" (2026-11-23): run plan, tasks and analyze; stop before
 - none
 
 ## Decisions
+- merge of main 6f300dc (feature 010) into 017 (agent, 2026-11-25; owner approved the merge and the
+  guard re-baseline, 2026-11-25): see "Merge of main 6f300dc" below. Agent choices: the CLI line
+  now reads "the stickers are the same for A, B, C, D and E." (contracts/cli.md amended with a dated
+  note; sticker-files.md and web.md notes too); web `TEMPLATES` stays 017's tuple (ids only,
+  `Template.projection_title` names the projection) beside 010's five `COMBINATIONS`; 016's
+  `kit_outputs.source.json` `code.commit` and its test now name 6f300dc (main's own source file was
+  left at 6038d9c by 010's merge)
 - converge round 1 (agent, 2026-11-25): every FR (001-026), SC (001-010), the 23 acceptance
   scenarios, the edge cases and the six contracts assessed against the code with targeted runs on
   cached real data (session scratchpad 017/converge/): sticker sets of all eight maps identical for
@@ -627,6 +637,63 @@ what 017's tasks assumed (T055-T082 amended in tasks.md, "Amended at T053"):
   (`MapEntry.variant`, `template_ids`); `build_variant` gains `template=`; the manifest gains
   `templates` and `maps[].template_variants`, and `total_bytes` sums both kinds of variant (017
   adds the sticker files).
+
+## Merge of main 6f300dc (feature 010; 2026-11-25)
+
+The coordinator committed 017 (0838e80) and ran `git merge --no-ff --no-commit origin/main` (6f300dc:
+016 as PR #18, 010 as PR #19). Read on the merged tree: specs/010-pacific-arrangements/ (spec,
+contracts/cli.md, data-model.md, run-state.md). 010 adds combinations D (`pacific`, shift 64,
+2b·3·1·2a) and E (`asia-pacific`, shift 80), an assembly page as the last page of every sheet set,
+ENSO recipes defaulting to D, and 40 kit variants on the site (45 with 016's 5 Winkel).
+
+- Conflicts (5): sheets/compose.py (010's assembly page and docstring kept with 017's plaque mark on
+  the overview and its section page); web98138/__init__.py (010's `COMBINATIONS` A-E, 017's
+  `TEMPLATES` tuple); web/tests/test_catalog.py (017's sticker catalog tests kept; the kit-only
+  site has 15 variants, 010); both golden JSON files taken from main (`--theirs`), then
+  regenerated (below). Auto-merged files both features touched checked: the eight recipes are
+  main's bytes followed by 017's `# Map stickers (feature 017): ...` line and `[sticker]` table,
+  nothing else (the ENSO tables need no change: their `line` names no combination); cli options,
+  sheets CLI, validator, prebuild (010's `_arrangements` beside 017's sticker step; the kit set is
+  built in the recipe's default combination, D for ENSO), app/catalog (every kit page A-E gets the
+  kit set), map.html and about.html (panel and paragraph say "every combination"), docs.
+- D and E: every 017 place that listed A, B and C now covers A-E: the CLI line and `map stickers`
+  help, library docstrings (stickers compose, legend, render), web prebuild docstring, tests
+  (test_stickers_bundled.py `ARRANGEMENTS`, test_legend.py, test_compose.py, test_render.py,
+  test_map_stickers_contract.py; web test_stickers_page.py all `COMBINATIONS`, test_stickers.py
+  ENSO default D), docs (CLAUDE.md/AGENTS.md 017 paragraph, cli/README.md, web/README.md,
+  docs/runbook.md) and dated contract notes. Results: on the dataset fixtures (tests) and on
+  cached real data (session scratchpad 017/merge010/de_identity_real.txt) the sticker sets of all
+  eight maps are identical in A-E (`to_dict()` without `arrangement`, both SVG files); no rounding
+  change was needed; ENSO sets record D; `map stickers ocean-el-nino` prints "hung as D (from the
+  recipe); the stickers are the same for A, B, C, D and E.".
+- Guard re-baseline (owner approved, 2026-11-25; reason: 010 changed main's own kit outputs, the
+  assembly page, and two recipe files, so G1 and G3 could not hold against 6038d9c/af3ce57): G1
+  pins main 6f300dc's recipe SHA-256 (`MAIN_RECIPE_SHA256`; ocean-el-nino 995eedd6..., ocean-la-nina
+  ee60d638..., the other six unchanged since af3ce57) and is now `test_recipe_prefix_is_main`; the
+  guard covers A-E (`stickers_guard.COMBINATIONS`). The golden was written from an unmodified
+  `git archive 6f300dc` (session scratchpad 017/main-6f300dc/, every file under cli/src, web/src,
+  cli/tools, cli/tests/fixtures and the conftest equal to its 6f300dc blob; own uv venv, same
+  library versions) with only the guard helper and test copied in, `STICKERS_017_GUARD_WRITE=1`,
+  twice with identical bytes (SHA-256 fc53ead0..., 40 variants; was d1a136fe..., 24). Against the
+  6038d9c golden, A-C differ only in the sheets PDF and SVG pages of land-elevation and ocean-sst
+  (assembly page) and, for the ENSO recipes, in the outputs recording the recipe checksum. Its
+  .source.json names 6f300dc and how it was made. G1-G4 pass in the worktree (22 tests).
+- Kit goldens (T054's procedure on 6f300dc; scripts in session scratchpad 017/merge010/scripts/):
+  (1) the kit-golden harness on the merged tree with the eight recipes replaced by their
+  `prefix_bytes` (main 6f300dc's bytes) reproduced main's committed kit_outputs.json byte for byte
+  (24 variants, 0 differences); (2) main 6f300dc's session sites (the unmodified export) reproduced
+  main's web golden exactly; the merged tree's sites, dumped for all 25 kit pages A-E, differ from
+  them, with recipe and derived checksums as placeholders, only by one Stickers panel per kit page
+  (25), the about paragraph (3), each map row's `stickers` block (5) and `total_bytes` (3);
+  previews, thumbnails and exports identical (web_proof.txt). (3) Regenerated: kit_outputs.json
+  with `maptemplates kit-golden --fixtures` (248 of 568 digests, the recipe-checksum outputs as at
+  0150441; SHA-256 36b21ee2..., main's was 234f9812...) and its .source.json; the web golden with
+  kit_golden.py's writer on kit-only sites (`templates=[]`; SHA-256 59292b5d...). Test docstrings
+  updated.
+- Tests: CLI 3282 passed, 1 skipped (on the bare merge: 8 failed, 3258 passed); web 305 passed (bare
+  merge: 3 failed). Real data: full prebuild `--no-prices` (scratchpad 017/merge010/site/): 45
+  variants (40 kit, 5 Winkel), 13 sticker sets (8 kit, 5 Winkel; 345,359 bytes), ENSO default D,
+  every kit page A-E of a map has the same panel, every sticker download 200.
 
 ## Blocked tasks
 - none

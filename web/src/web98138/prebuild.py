@@ -137,21 +137,27 @@ def _parse_list(value: Optional[str], allowed: Sequence[str], what: str, upper: 
 
 
 def _arrangements() -> Dict[str, Any]:
-    from lego_image_processor.layout.arrangement import load_arrangements
+    """Every combination with the text the pages show (feature 010: D and E, their citation and
+    assembly steps, from the library), so the service needs no CLI import."""
+    from lego_image_processor.layout.arrangement import assembly_note, assembly_steps, load_arrangements
 
     data = load_arrangements()
-    names = {f.number: f.name for f in data.frames}
     rows = []
     for a in data.arrangements:
-        order = "·".join(str(n) for n in a.frame_order)
+        frames = [g.frame.name if g.label == str(g.frame.number) else f"{g.frame.name} ({g.label})"
+                  for g in a.group_spans()]
         rows.append({"id": a.id, "name": a.name, "centre": a.centre,
                      "frame_order": list(a.frame_order), "column_shift": a.column_shift,
-                     "frames": [names[n] for n in a.frame_order],
-                     "description": f"frames {order}, {a.centre} in the centre"})
-    src = data.source
+                     "frames": frames,
+                     "description": f"frames {a.order_text}, {a.centre} in the centre",
+                     "strips": a.strips, "groups": list(a.groups),
+                     "in_instructions": a.in_instructions, "citation": a.source["citation"],
+                     "note": assembly_note(a), "assembly": assembly_steps(a)})
+    src, js = data.source, data.joints_source
     return {"arrangements": rows,
             "frames": [{"number": f.number, "name": f.name} for f in data.frames],
-            "arrangement_source": {k: src[k] for k in ("title", "url", "pages", "citation")}}
+            "arrangement_source": {k: src[k] for k in ("title", "url", "pages", "citation")},
+            "joints_source": {k: js[k] for k in ("title", "url", "pages", "citation")}}
 
 
 def _part_labels(rows: Sequence[Dict[str, Any]]) -> Dict[str, str]:
@@ -358,7 +364,8 @@ def build_map_stickers(recipe, result, out: Path, *, cache_dir=None,
 
     Kit (``template`` None): ``result`` is the ``MapResult`` of the recipe's default combination
     when that combination is being built, else None, and the map is built once more in it. The
-    set's legend values come from that build; the stickers are the same in A, B and C (SC-003).
+    set's legend values come from that build; the stickers are the same in A-E (SC-003; D and E:
+    feature 010).
     Files go to ``maps/<map>/stickers/kit-31203/``: the print sheet on Letter and A4 and both SVGs,
     downloaded as ``98138-world_<map>_<kind>.<ext>``.
 
@@ -596,7 +603,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                                 epilog=DISCLAIMER)
     p.add_argument("--out", required=True, help="output directory")
     p.add_argument("--maps", help=f"comma-separated map ids (default: {','.join(MAP_IDS)})")
-    p.add_argument("--combinations", help="comma-separated combinations (default: A,B,C)")
+    p.add_argument("--combinations", help=f"comma-separated combinations (default: {','.join(COMBINATIONS)})")
     p.add_argument("--cache-dir", help="dataset cache root (default: the per-user cache)")
     p.add_argument("--fetch", action="store_true",
                    help="download missing pinned datasets (verified) before building")

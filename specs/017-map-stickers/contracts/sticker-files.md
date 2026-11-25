@@ -82,6 +82,8 @@ the arrangement, so the SVG files of A, B and C builds are byte-identical.
 
 ## Same set for A, B and C (SC-003)
 
+*Note (2026-11-25, merge of main 6f300dc, feature 010):* the kit has five combinations, A-E (D and E are Pacific-centred and not in the building instructions); every "A, B and C" rule below holds for all five, and the ENSO recipes' own combination is now D.
+
 The stickers are the same for A, B and C: `to_dict()` without `arrangement` and both SVG files
 are identical. `arrangement` in the JSON summary and the print sheet's provenance line "legend
 values from the build hung as <C>" record the build the legend values came from, so the JSON and
@@ -97,7 +99,7 @@ indent 2, keys in this order.
 | `format_version` | `"1"` | |
 | `recipe` | `{id, title, sha256}` | |
 | `template` | `{id}` (kit: `"kit-31203"`); after 016 `{id, title, projection, dataset}` | |
-| `arrangement` | `"A"｜"B"｜"C"` | the build the legend values come from; the only field that differs between A, B and C sets |
+| `arrangement` | `"A"｜"B"｜"C"` (since 010 also `"D"｜"E"`) | the build the legend values come from; the only field that differs between A, B and C (A-E) sets |
 | `text` | `{title, title_source, line, line_source}` | sources: `sticker table`, `recipe title`, `recipe description` |
 | `stickers.small`, `stickers.large` | `{plaque, tile_mm, cut_mm, bleed_mm, safe_mm, blocks: [{field, lines, size_pt}]}` | |
 | `legend` | `[{layer, part_id, color, lego_name, rgb, meanings: [{kind, label, range?, units?, source?, step?}]}]` | data-model.md Swatch, Meaning |

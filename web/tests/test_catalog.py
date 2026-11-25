@@ -27,11 +27,11 @@ def _edit(site, fn):
 def test_load_ok(site_dir):
     cat = Catalog.load(site_dir)
     assert [m.id for m in cat.maps] == ["official-31203", "ocean-sst", "ocean-el-nino"]
-    assert cat.variant_count == 10   # feature 016: and ocean-sst on Winkel tripel (conftest)
+    assert cat.variant_count == 16  # 3 maps x 5 combinations (010) + ocean-sst on Winkel tripel (016)
     assert cat.map("ocean-sst").title == "Ocean temperature"
     assert cat.map("nope") is None
     assert cat.file("ocean-sst", "B", "bricklink").name == "bricklink.xml"
-    assert cat.file("ocean-sst", "D", "bricklink") is None
+    assert cat.file("ocean-sst", "F", "bricklink") is None
     assert cat.file("ocean-sst", "B", "../../manifest") is None
     assert cat.arrangement("C")["centre"] == "Asia and Australia"
 
@@ -142,7 +142,7 @@ def _tv(m, map_i=1):
 
 def test_template_variants_load(site_dir):
     cat = Catalog.load(site_dir)
-    assert cat.variant_count == 10                       # 9 kit variants and ocean-sst on Winkel
+    assert cat.variant_count == 16                       # 15 kit variants (A-E, 010) and ocean-sst on Winkel
     sst = cat.map("ocean-sst")
     assert sst.template_ids == (TID,) and cat.map("official-31203").template_ids == ()
     assert sst.variant(TID)["template"] == TID
@@ -246,7 +246,7 @@ def test_kit_only_output_loads(copy):
             mp.get("stickers", {}).pop(TID, None)   # feature 017: and their sticker sets
     _edit(copy, strip)
     cat = Catalog.load(copy)
-    assert cat.variant_count == 9 and cat.templates == [] and cat.map("ocean-sst").template_ids == ()
+    assert cat.variant_count == 15 and cat.templates == [] and cat.map("ocean-sst").template_ids == ()
 
 
 # --- feature 017: map stickers (contracts/web.md "Catalog check") ----------------------------

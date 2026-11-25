@@ -29,7 +29,8 @@ directory outside the repository.
 recipes from unchanged code (016's `kit_outputs` approach), and pins the af3ce57 recipe checksums
 and the map parts' blocks of the part data (research R13 G1–G4). Every later checkpoint
 reruns `tests/integration/test_stickers_outputs_unchanged.py`. A changed guard digest is a bug in
-the new code; the guard golden is never regenerated in this feature.
+the new code; the guard golden is never regenerated in this feature. (Re-based once, from an
+unmodified main 6f300dc, with the owner's approval of 2026-11-25: see the note at the end.)
 
 **Owner stops**: tasks marked **OWNER** are not done by the agent: T009 (another pinned BrickLink
 source, only if T008 finds an unusable copy), T042 (approve or edit the eight sticker texts,
@@ -476,3 +477,22 @@ Not affiliated with or endorsed by The LEGO Group.
 ## Phase 8: Convergence
 
 - [x] T092 Add a map stickers and in-margin plaque step to docs/runbook.md ("try everything locally"; it has no `map stickers`, `[sticker]` or `--plaque`): `map stickers` as PDF (Letter, A4), SVG and JSON, what to look for on the sheet and in the output (plaque parts, "printed, not a LEGO part", the same for A, B and C), Winkel stickers with `--template winkel-tripel`, `--plaque bottom-left` through `parts list` and `sheets build`, the "Stickers for a plaque" panel in the local web section, and a print-and-cut check under "Checks that need you"; every command run on cached data, per plan: phase 10 docs (T083-T086) (partial)
+
+---
+
+## Note: merge of main 6f300dc (feature 010), 2026-11-25
+
+Main gained feature 010 (Pacific-centred combinations D and E, an assembly page in every sheet
+set, ENSO recipes hung D by default) after these tasks were written. Their text is kept as it was;
+on the merged tree it reads as follows (run-state.md, "Merge of main 6f300dc"):
+
+- Wherever a task says "A, B and C" for stickers (T002, T004, T039, T044, T054, T059, the guard
+  rule, SC-003), it now means A, B, C, D and E: the sticker sets, the guard digests
+  (`stickers_guard.COMBINATIONS`) and the site's kit pages cover all five. The ENSO maps' own
+  combination is D (was B).
+- Guard: G1 (T003) pins main 6f300dc's recipe SHA-256 instead of af3ce57's (010 changed the two
+  ENSO recipes); the guard golden (T005) was re-written once, with the owner's approval, from an
+  unmodified export of 6f300dc with only the guard helper and test copied in, never from 017 code.
+- T054's proof and regeneration of the kit goldens was repeated against main 6f300dc.
+
+Not affiliated with or endorsed by The LEGO Group.

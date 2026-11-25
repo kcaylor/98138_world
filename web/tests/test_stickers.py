@@ -215,7 +215,7 @@ def test_template_variant_files_have_no_plaque(site):
 
 def test_el_nino_set_from_its_own_combination(manifest):
     nino = next(m for m in manifest["maps"] if m["id"] == "ocean-el-nino")
-    assert nino["default_combination"] == "B" and KIT in nino["stickers"]
+    assert nino["default_combination"] == "D" and KIT in nino["stickers"]   # D since feature 010
 
 
 def test_total_bytes_counts_the_stickers(site):

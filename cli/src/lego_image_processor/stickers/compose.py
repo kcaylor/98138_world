@@ -17,7 +17,7 @@ build sheets' ``furniture()``. Every block must fit its area; one that does not 
 ``StickerError`` naming the block and the paper (the citations must appear, constitution IV).
 
 Same input, same set: nothing depends on the time or the machine. Sets made from builds in
-combinations A, B and C are equal but for ``arrangement`` (SC-003); the print sheet's line
+combinations A, B, C, D and E are equal but for ``arrangement`` (SC-003); the print sheet's line
 "legend values from the build hung as <C>" is the only text that depends on it.
 
 On a confirmed non-kit template (feature 016; FR-001, FR-025; research R14) both stickers' line
@@ -526,7 +526,7 @@ def plaque_to_dict(plaque: Plaque) -> Dict[str, Any]:
 class StickerSet:
     """The small and the large sticker of one map (data-model.md StickerSet). No timestamps:
     the same built map gives an equal set; ``arrangement`` records the build the legend values
-    come from and is the only field that differs between sets made in A, B and C."""
+    come from and is the only field that differs between sets made in A, B, C, D and E."""
 
     recipe: RecipeRef
     template: TemplateRef

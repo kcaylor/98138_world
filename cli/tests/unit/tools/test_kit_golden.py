@@ -179,7 +179,7 @@ class TestShortRun:
         assert set(a) == expected
         assert set(b) == expected - {"sheets-letter-pdf.txt", "sheets-letter.pdf"}   # PDF: A only
         assert set(a["preview.png"]) == {"bytes", "sha256", "pixels", "size", "mode"}
-        assert a["sheets-letter.svg"]["pages"] == 42
+        assert a["sheets-letter.svg"]["pages"] == 43  # 40 sections + overview, legend, assembly (010)
         # one kit covers the official design: the top-up exports write nothing
         assert a["bricklink-1kit.xml"] is None and a["rebrickable-1kit.csv"] is None
         assert a["layout.json"] != b["layout.json"]

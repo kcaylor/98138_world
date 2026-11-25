@@ -29,6 +29,11 @@ panel on kit map pages, the about paragraph, the manifest's ``stickers`` blocks 
 template variant adds its own sticker set there, which ``kit_golden.kit_stickers`` removes (and
 requires) before the digest, so the kit set is compared exactly and the golden file is not
 rewritten for it.
+
+Feature 010 rewrote it on main (6f300dc, kit-only sites). Feature 017 rewrote it once more, by the
+same procedure, when main 6f300dc was merged into it (2026-11-25): main's sites (an unmodified
+export of 6f300dc) reproduced main's file exactly, and the merged tree's sites differed from them,
+on every kit page of A-E, only by the items listed above; then this writer on kit-only sites.
 """
 
 from __future__ import annotations

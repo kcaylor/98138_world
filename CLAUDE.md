@@ -67,14 +67,20 @@ checksum-pinned Rebrickable, LDraw and BrickLink snapshots) are regenerated with
 The kit's three frames can be hung three ways (feature 007, see `specs/007-map-arrangements/`;
 LEGO 31203 building instructions, pp. 7–8; `data/kit_31203_arrangements.json`): A 1·2·3 (default),
 B 3·1·2 (America centre), C 2·3·1 (Asia and Australia centre), each a cyclic shift of whole frames.
+Feature 010 (`specs/010-pacific-arrangements/`) adds D `pacific` (date line centre) and E
+`asia-pacific` (146° E), both 2b·3·1·2a with frame 2 split between two strips: not among the
+instructions' combinations, possible because strip and frame joints both take 15 connector pegs
+(pp. 134–139) and the border goes round the finished board (p. 140). The data file (format 2)
+lists each combination's strip order and groups; every build-sheet set ends with an assembly page;
+the ENSO recipes default to D.
 Layout positions use columns as hung and record `metadata.arrangement` (absent = A). `map build
 --arrangement` computes per-cell values in kit (A) columns and the shadow, halo and mix on the board
 as hung; `layout arrange` re-hangs any layout without recomputing.
 
 The web site (feature 008, see `specs/008-web-app/` and `docs/deploy.md`) shows the eight bundled
-maps in combinations A, B and C and offers every build file. `web/` (package `web98138`, FastAPI +
+maps in combinations A–E (D and E from feature 010) and offers every build file. `web/` (package `web98138`, FastAPI +
 Jinja2, no cookies; works without JS, one first-party script since 015) has two halves: `python -m web98138.prebuild --out DIR [--fetch]` builds
-all 24 kit variants (and, since 016, 5 Winkel tripel versions) with the CLI library (`build_map`, `write_preview`, `build_parts_list`, exports,
+all 40 kit variants (8 maps × 5 combinations) (and, since 016, 5 Winkel tripel versions) with the CLI library (`build_map`, `write_preview`, `build_parts_list`, exports,
 `build_sheet_set`/`render_pdf`) plus `manifest.json` (sizes, SHA-256, tool and dataset versions,
 page data); the service (`web98138.app`, `WEB98138_SITE_DIR=DIR uvicorn web98138.app:app`) only
 serves that output and never imports `lego_image_processor`. The `Dockerfile` (two stages) runs the
@@ -176,7 +182,8 @@ unchanged. Contracts: `specs/016-map-templates/contracts/`.
 
 Map stickers (feature 017, see `specs/017-map-stickers/`): `map stickers <recipe> -o OUT
 [--format pdf|svg|json] [--paper letter|a4] [--template ID]` makes two white-on-black stickers from
-the built map (never downloads; no `--arrangement`, one set serves A, B and C): a small one for a
+the built map (never downloads; no `--arrangement`, one set serves A–E, its legend values from the
+recipe's own combination, D for the ENSO maps): a small one for a
 Black 6×6 tile with the title, a line and the disclaimer, and a large one for a Black 8×16 tile that
 adds "98138.world", the color legend and the data credit; as the print sheet (one page at true
 size: bleed, cut marks, plaque parts, citations, provenance), `sticker-small.svg` and
@@ -199,12 +206,14 @@ reports the tile as not in the kit. The web prebuild writes each map's kit set t
 `maps/<map>/stickers/kit-31203/` and one per template variant to `maps/<map>/stickers/<template-id>/`
 (manifest `maps[].stickers.<template-id>`: `files`, `title`, `line`, `alt`, `legend`, `credit`,
 `plaques`, `notes`), served at `/maps/<map>/stickers/<template>/sticker-small.svg|sticker-large.svg`
-and `.../download/<kind>`; map pages show a "Stickers for a plaque" panel; no site variant has a
-plaque. Kit outputs differ only in the recipe checksum, held by
-`cli/tests/integration/test_stickers_outputs_unchanged.py` (golden
-`cli/tests/fixtures/golden/stickers_017_guard.json`, never regenerated); 016's kit goldens were
-regenerated once for this merge (017 T054; the proof is in their tests' docstrings). Contracts:
-`specs/017-map-stickers/contracts/`.
+and `.../download/<kind>`; every kit map page (A–E) shows the same "Stickers for a plaque" panel;
+no site variant has a plaque. Kit outputs differ only in the recipe checksum, held by
+`cli/tests/integration/test_stickers_outputs_unchanged.py` (G1 pins main 6f300dc's recipe
+checksums; golden `cli/tests/fixtures/golden/stickers_017_guard.json`, A–E, written from an
+unmodified export of main 6f300dc, re-based once from 6038d9c with the project owner's approval of
+2026-11-25, never from 017 code); the kit goldens (`kit_outputs.json`, `kit_variants_golden.json`)
+were regenerated on each merge of main into 017 (T054's proof, in their tests' docstrings).
+Contracts: `specs/017-map-stickers/contracts/`.
 
 1. **Python CLI** (`cli/`, package `lego_image_processor`), written to be released as open source.
 2. **Web application** (`web/`) on Fly.io at 98138.world. It calls the CLI library at build time and

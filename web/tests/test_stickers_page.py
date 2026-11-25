@@ -16,6 +16,8 @@ import shutil
 import pytest
 from markupsafe import escape
 
+from web98138 import COMBINATIONS
+
 KIT = "kit-31203"
 TID = "winkel-tripel"
 DISCLAIMER = "Not affiliated with or endorsed by The LEGO Group."
@@ -119,11 +121,13 @@ def test_unknown_is_404(client, path):
 
 # --- the panel ------------------------------------------------------------------------------
 
-def test_panel_same_for_a_b_c(client, manifest):
-    """US2-2: the same panel in every combination."""
+def test_panel_same_in_every_combination(client, manifest):
+    """US2-2: the same panel in every combination, A-E (D and E: feature 010)."""
+    assert COMBINATIONS == ("A", "B", "C", "D", "E")
     for m in manifest["maps"]:
-        panels = {c: _panel(client.get(f"/maps/{m['id']}/{c}").text) for c in ("A", "B", "C")}
-        assert panels["A"] == panels["B"] == panels["C"], m["id"]
+        panels = {c: _panel(client.get(f"/maps/{m['id']}/{c}").text) for c in COMBINATIONS}
+        assert all(panels[c] == panels["A"] for c in COMBINATIONS), m["id"]
+        assert panels["A"] and f"/stickers/{KIT}/" in panels["A"], m["id"]
 
 
 def _pages(manifest):
@@ -270,7 +274,7 @@ def test_template_page_shows_the_template_set(client, manifest):
         assert f'download="98138-world_ocean-sst_{TID}_{kind}.' in panel
     note = _text(re.search(r'<p class="note">.*?</p>', panel, re.S).group(0))
     assert "Winkel tripel" in note and "every combination" not in note
-    for c in ("A", "B", "C"):
+    for c in COMBINATIONS:
         kit = _panel(client.get(f"/maps/ocean-sst/{c}").text)
         assert f"/stickers/{TID}/" not in kit and f"/stickers/{KIT}/" in kit
         assert "The stickers are the same for every combination." in kit

@@ -13,7 +13,7 @@ REPO_URL = "https://github.com/kcaylor/98138_world"
 SITE_HOST = "98138.world"
 MAP_IDS = ("official-31203", "official-31203-bathymetry", "ocean-sst", "land-elevation", "ocean-el-nino",
            "ocean-la-nina", "living-planet", "rainfall")
-COMBINATIONS = ("A", "B", "C")
+COMBINATIONS = ("A", "B", "C", "D", "E")  # D and E (feature 010) are not in the building instructions
 # feature 016: the map templates the site offers beside the kit. Only confirmed templates get
 # variants (constitution Principle I); the prebuild asks the library, which also names each
 # template's projection (``Template.projection_title``, "Winkel tripel"; feature 017).

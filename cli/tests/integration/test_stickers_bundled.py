@@ -8,10 +8,10 @@ approved sticker tables (T042 - T043; ``tests.stickers_support.sticker_recipe``)
   area, on Letter and A4.
 - Cut lines (SC-001): within 0.1 mm of their sizes in the page model, both SVGs and the PDF.
 - No image, the disclaimer in each file (SC-004); no "Official" in a sticker title (FR-004).
-- A, B and C (SC-003, FR-006): ``to_dict()`` without ``arrangement`` and both SVG files are
-  identical; the print sheets differ only in the line "legend values from the build hung as
-  <C>", so PDF bytes are compared within one arrangement; a set made twice gives the same PDF,
-  SVG and JSON bytes (FR-012).
+- A, B, C, D and E (SC-003, FR-006; D and E since feature 010 merged): ``to_dict()`` without
+  ``arrangement`` and both SVG files are identical; the print sheets differ only in the line
+  "legend values from the build hung as <C>", so PDF bytes are compared within one arrangement;
+  a set made twice gives the same PDF, SVG and JSON bytes (FR-012).
 - Acceptance content of ocean-sst, land-elevation, rainfall, official-31203 and living-planet.
 
 Not affiliated with or endorsed by The LEGO Group.
@@ -41,7 +41,7 @@ from tests.stickers_support import sticker_recipe
 
 RECIPES = sorted(bundled_recipes())
 PAPER_IDS = ("letter", "a4")
-ARRANGEMENTS = ("A", "B", "C")
+ARRANGEMENTS = ("A", "B", "C", "D", "E")   # D and E: feature 010
 MM = 72 / 25.4
 SVG = "{http://www.w3.org/2000/svg}"
 EPS = 1e-6
@@ -320,23 +320,23 @@ SMALL_TITLE_LINES = {
 }
 
 
-# --- identical for A, B and C; same bytes twice (SC-003, FR-006, FR-012) ------------------------
+# --- identical for A-E; same bytes twice (SC-003, FR-006, FR-012) --------------------------------
 
 class TestArrangements:
     @pytest.mark.parametrize("recipe_id", RECIPES)
-    def test_sets_identical_in_a_b_c(self, make, recipe_id):
+    def test_sets_identical_in_every_combination(self, make, recipe_id):
         docs = {}
         for c in ARRANGEMENTS:
             s = make(recipe_id, c)
             d = s.to_dict()
             assert s.arrangement == d.pop("arrangement") == c
             docs[c] = d
-        assert docs["A"] == docs["B"] == docs["C"]
+        assert all(docs[c] == docs["A"] for c in ARRANGEMENTS), recipe_id
 
     @pytest.mark.parametrize("recipe_id", RECIPES)
-    def test_svg_files_byte_identical_in_a_b_c(self, make, recipe_id):
+    def test_svg_files_byte_identical_in_every_combination(self, make, recipe_id):
         files = {c: render_sticker_svgs(make(recipe_id, c)) for c in ARRANGEMENTS}
-        assert files["A"] == files["B"] == files["C"]
+        assert all(files[c] == files["A"] for c in ARRANGEMENTS), recipe_id
         assert [n for n, _ in files["A"]] == list(SVG_NAMES)
 
     @pytest.mark.parametrize("recipe_id", RECIPES)
@@ -344,7 +344,7 @@ class TestArrangements:
     def test_print_sheets_differ_only_in_the_arrangement_line(self, make, recipe_id, paper):
         pages = {c: print_sheet(make(recipe_id, c), paper).page for c in ARRANGEMENTS}
         a = pages["A"]
-        for c in ("B", "C"):
+        for c in ARRANGEMENTS[1:]:
             other = pages[c]
             assert len(other.items) == len(a.items)
             differ = [(x, y) for x, y in zip(a.items, other.items) if x != y]
@@ -366,9 +366,10 @@ class TestArrangements:
 
     @pytest.mark.parametrize("recipe_id", ["ocean-el-nino", "ocean-la-nina"])
     def test_own_arrangement_recorded(self, make, recipe_id):
-        # the ENSO recipes hang as B; their sets record it and equal the A set otherwise
+        # the ENSO recipes hang as D (feature 010; B before it); their sets record it and equal
+        # the A set otherwise
         own, a = make(recipe_id), make(recipe_id, "A")
-        assert own.arrangement == "B"
+        assert own.arrangement == "D"
         d_own, d_a = own.to_dict(), a.to_dict()
         d_own.pop("arrangement"), d_a.pop("arrangement")
         assert d_own == d_a

@@ -10,6 +10,13 @@
 centric ... use as much as possible the parts list from the original set, some additional ocean
 tiles allowed". Scoping answers and data findings are in `run-state.md`.
 
+> **Note (feature 010, 2026-11-22)**: at the owner's request both ENSO recipes now default to
+> `arrangement = "D"` (`pacific`, the date line centred; not among the building instructions'
+> combinations; see `specs/010-pacific-arrangements/`). This supersedes FR-013's value B; B is still
+> available with `--arrangement B`. Measured with the real ERSST files: in D the land shadow takes
+> 387 Earth Blue tiles (390 in B) and the tiles beyond one kit are 1,114 (El Niño, as in B) and
+> 1,152 (La Niña; 1,155 in B); in E 1,112 and 1,158.
+
 ## Context
 
 Two new bundled map recipes show the sea surface temperature (SST) anomaly of a strong El Niño

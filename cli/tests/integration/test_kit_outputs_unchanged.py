@@ -7,7 +7,9 @@ the previews), and compares every digest. A difference is a bug in the new code:
 never regenerated from feature 016 code. Feature 017 (map stickers) regenerated it once, on the
 merge of 016 into 017 (017 task T054): its approved sticker tables change the bundled recipes'
 checksums, and only after the harness on the recipes' af3ce57 bytes reproduced the file exactly
-(kit_outputs.source.json ``regenerated``). On failure the rebuilt outputs stay in the
+(kit_outputs.source.json ``regenerated``). Feature 010 rewrote it on main (6f300dc: an assembly
+page in every sheet set, D as the ENSO recipes' default), and 017 regenerated it again, by the same
+proof, when main 6f300dc was merged into it (2026-11-25). On failure the rebuilt outputs stay in the
 test's temporary directory (named in the message) for diffing against a ``main`` checkout.
 """
 
@@ -28,7 +30,7 @@ def test_golden_file_is_the_fixture_digest_set():
     assert len(doc["variants"]) == 24
     assert doc["disclaimer"] == "Not affiliated with or endorsed by The LEGO Group."
     meta = json.loads(GOLDEN.with_name("kit_outputs.source.json").read_text(encoding="utf-8"))
-    assert meta["code"]["commit"] == "6038d9c"   # re-based from af3ce57 on 2026-11-23 (previews only)
+    assert meta["code"]["commit"] == "6f300dc"   # main with 010 (2026-11-25); 6038d9c and af3ce57 before
     assert meta["disclaimer"] == doc["disclaimer"]
 
 

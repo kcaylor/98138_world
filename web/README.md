@@ -1,6 +1,7 @@
 # web98138: the 98138.world web site
 
-Pick one of the eight bundled maps and a frame combination (A, B, C), see the stud preview, and
+Pick one of the eight bundled maps and a frame combination (A–E; D and E are not in the building
+instructions, feature 010), see the stud preview, and
 download everything to build it: layout JSON, parts lists (full and topped up from one 31203 kit),
 BrickLink wanted list, Rebrickable CSV and build-sheet PDFs (US Letter and A4). Feature 008; see
 `specs/008-web-app/`. Five maps also come in a Winkel tripel version, a curved map on the same
@@ -28,7 +29,7 @@ Not affiliated with or endorsed by The LEGO Group.
   owner on 2026-11-24, so the site builds 29 variants: the 24 kit variants and 5 Winkel versions.
   Kit variants and their files do not change.
 - **Stickers** (feature 017): per map, one sticker set from the build in the recipe's own
-  combination (the same for A, B and C), in `maps/<map>/stickers/kit-31203/`, and one per template
+  combination (the same for A–E; D for the ENSO maps), in `maps/<map>/stickers/kit-31203/`, and one per template
   variant in `maps/<map>/stickers/<template-id>/`: `stickers-letter.pdf` and `stickers-a4.pdf` (the
   print sheet), `sticker-small.svg` and `sticker-large.svg`. The manifest lists them in
   `maps[].stickers.<template-id>`: `files` (path, size, SHA-256, media type, description, download

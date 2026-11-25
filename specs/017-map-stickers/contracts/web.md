@@ -63,7 +63,9 @@ CSP unchanged (`img-src 'self'` covers the SVGs; they contain no script).
 ## Map page
 
 A "Stickers" panel (heading "Stickers for a plaque"), the same for A, B and C (and, after 016,
-the template's own set on a template page):
+the template's own set on a template page; since the merge of feature 010 on 2026-11-25, the same
+on all five kit combinations A-E, from the build in the recipe's own combination, D for the ENSO
+maps):
 
 - both stickers as `<img src=".../sticker-large.svg" alt="<alt.large>">` and the small one, in
   `<figure>`s with captions (size, tile part, "printed, not a LEGO part");

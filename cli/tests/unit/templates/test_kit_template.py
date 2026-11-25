@@ -56,8 +56,8 @@ def test_projection_and_frame(kit):
     assert isinstance(kit.grid_projection, KitProjection)
     assert kit.grid_projection is load_kit_projection()
     assert kit.projection["name"] == "kit-31203-equirectangular"
-    assert kit.arrangements == ARRANGEMENT_IDS == ("A", "B", "C")
-    assert kit.frame == {"kit": "31203", "arrangements": ["A", "B", "C"], "source": "kit_31203_arrangements.json"}
+    assert kit.arrangements == ARRANGEMENT_IDS == ("A", "B", "C", "D", "E")
+    assert kit.frame == {"kit": "31203", "arrangements": ["A", "B", "C", "D", "E"], "source": "kit_31203_arrangements.json"}
 
 
 def test_parts(kit):

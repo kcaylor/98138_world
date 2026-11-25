@@ -185,7 +185,7 @@ def image_layout(input_image: str, output: str, output_format: str, quiet: bool)
 @click.option("--output", "-o", required=True, type=click.Path(dir_okay=False), help="Layout JSON to write")
 @click.option("--quiet", "-q", is_flag=True, help="Suppress output")
 def arrange(layout_file: str, arrangement, output: str, quiet: bool) -> None:
-    """Re-hang LAYOUT in another arrangement of the kit's three frames.
+    """Re-hang LAYOUT in another arrangement of the kit's frames (A-E; D and E split frame 2).
 
     A pure frame move, as when moving the physical frames: every position moves by whole frames
     (32 or 64 columns, cyclically); colors and parts never change, and arranging back to A
@@ -225,6 +225,6 @@ def arrange(layout_file: str, arrangement, output: str, quiet: bool) -> None:
         click.echo(f"Arranged {layout_file} from {current.id} to {arrangement.id} "
                    f"(column shift +{delta}): {output} ({len(out.positions):,} positions)")
         click.echo(f"  {arrangement.describe()}; frames left to right: "
-                   + ", ".join(f.label for f, _, _ in arrangement.frame_spans()))
+                   + ", ".join(f"{g.label} {g.frame.name}" for g in arrangement.group_spans()))
         click.echo("  Colors and parts unchanged; every arrangement uses the same pieces.")
         click.echo(DISCLAIMER)

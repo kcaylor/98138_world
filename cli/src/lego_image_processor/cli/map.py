@@ -485,7 +485,7 @@ def stickers(recipe, output, fmt, paper, cache_dir, template_id):
     for a Black 8 x 16 tile, white on black, with the map's color legend and data credit.
 
     The map is built in the recipe's own arrangement (as `map cells` does); the stickers are the
-    same for A, B and C. On a template (--template, or the recipe's `template`) the sticker line
+    same for A, B, C, D and E. On a template (--template, or the recipe's `template`) the sticker line
     names its projection and the large sticker credits the dataset that decided land and ocean.
     Writes nothing but OUTPUT, and nothing at all on an error. Never downloads (build first with
     `map build --fetch`). Print the PDF at 100% on white sticker paper and cut along the marks.
@@ -538,7 +538,7 @@ def stickers(recipe, output, fmt, paper, cache_dir, template_id):
     lines = template_lines(result)   # feature 016: Template and Margin lines, none on the kit
     for line in lines:
         click.echo(line)
-    same = (f"{REHANG_RULE}." if lines else "the stickers are the same for A, B and C.")
+    same = (f"{REHANG_RULE}." if lines else "the stickers are the same for A, B, C, D and E.")
     click.echo(f"Legend values from the build hung as {s.arrangement} ({source}); {same}")
     click.echo(f"Sticker title: {s.text.title} ({s.text.title_source})")
     click.echo(f"Sticker line: {s.text.line} ({s.text.line_source})")

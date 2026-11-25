@@ -68,7 +68,7 @@ def test_healthz(client):
     r = client.get("/healthz")
     assert r.status_code == 200
     j = r.json()
-    assert j["status"] == "ok" and j["variants"] == 10 and j["generated_at"]   # 9 kit + 1 Winkel (016)
+    assert j["status"] == "ok" and j["variants"] == 16 and j["generated_at"]   # 15 kit (A-E) + 1 Winkel (016)
 
 
 def test_manifest_public(client, site_dir):

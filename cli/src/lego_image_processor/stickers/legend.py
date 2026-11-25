@@ -11,7 +11,7 @@ listed, even with no studs; no-data, override and shadow entries only when they 
 Labels: bins classes by the recipe bounds with open end classes (the outer bounds never
 printed), ``log10`` layers back in data units, a ``[<layer>.legend]`` layer in its second unit
 only; rank classes by the boundaries ``maps.cells.derived_bounds`` gives (outer bounds
-included), rounded to the display step at which combinations A, B and C agree (research R8);
+included), rounded to the display step at which combinations A-E agree (research R8);
 categorical colors by their cited LEGO names; background colors by role (``maps.cells``);
 no-data by the ``[sticker] no_data`` label or "no data"; overrides by name; the shadow as "land
 shadow". Swatch colors are the parts' cited sRGB (``part_colors.json``).

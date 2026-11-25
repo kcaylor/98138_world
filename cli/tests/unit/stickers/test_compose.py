@@ -404,7 +404,7 @@ class TestSet:
         assert joined(s.small.block("line")) == r.description
 
     def test_arrangement_of_the_build(self, build):
-        assert sticker_set(build("ocean-el-nino")).arrangement == "B"     # the recipe's own
+        assert sticker_set(build("ocean-el-nino")).arrangement == "D"     # the recipe's own (010)
         assert sticker_set(build("ocean-sst", "C")).arrangement == "C"
 
     def test_same_result_twice_gives_equal_sets(self, build):
@@ -422,13 +422,12 @@ class TestSet:
         for word in ("generated", "timestamp", "created", "date", "time"):
             assert word not in text.lower()
 
-    def test_a_b_c_identical_but_for_arrangement(self, build):
-        sets = {c: sticker_set(build("ocean-sst", c)) for c in "ABC"}
+    def test_every_combination_identical_but_for_arrangement(self, build):
+        sets = {c: sticker_set(build("ocean-sst", c)) for c in "ABCDE"}   # D, E: feature 010
         dicts = {c: s.to_dict() for c, s in sets.items()}
-        assert [d.pop("arrangement") for d in dicts.values()] == ["A", "B", "C"]
-        assert dicts["A"] == dicts["B"] == dicts["C"]
-        assert sets["A"].small == sets["B"].small == sets["C"].small
-        assert sets["A"].large == sets["B"].large == sets["C"].large
+        assert [d.pop("arrangement") for d in dicts.values()] == ["A", "B", "C", "D", "E"]
+        assert all(dicts[c] == dicts["A"] for c in "BCDE")
+        assert all(sets[c].small == sets["A"].small and sets[c].large == sets["A"].large for c in "BCDE")
 
     def test_to_dict_layout(self, build):
         d = sticker_set(build("living-planet")).to_dict()

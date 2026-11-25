@@ -27,7 +27,7 @@ ENV GIT_COMMIT=${GIT_COMMIT}
 # Downloads the pinned public datasets (~561 MB, SHA-256 or content SHA-256 verified; the
 # MOD17A3 NPP GeoTIFF comes over plain HTTP, pinned by SHA-256, feature 012; GPCP and 60 NSIDC
 # sea-ice files are netCDF-4, read with h5py, feature 013), then builds
-# 8 maps x 3 combinations (~146 MB, ~75 s plus downloads, peak ~650 MB RAM on the builder).
+# 8 maps x 5 combinations A-E plus 5 Winkel tripel variants (~270 MB, ~75 s plus downloads, peak ~650 MB RAM on the builder).
 # Prices (feature 011): until a complete BrickLink snapshot is committed, the site builds
 # without them. Once it is, deploy with --build-arg PREBUILD_PRICES= (or change this default).
 ARG PREBUILD_PRICES=--no-prices

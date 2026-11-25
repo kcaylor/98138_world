@@ -330,9 +330,9 @@ class TestSvg:
         assert render_sticker_svgs(sst) == files
         assert render_sticker_svgs(sticker_set(build("ocean-sst"))) == files
 
-    def test_a_b_c_builds_give_the_same_files(self, build):
-        files = {c: render_sticker_svgs(sticker_set(build("ocean-sst", c))) for c in "ABC"}
-        assert files["A"] == files["B"] == files["C"]
+    def test_every_combination_gives_the_same_files(self, build):
+        files = {c: render_sticker_svgs(sticker_set(build("ocean-sst", c))) for c in "ABCDE"}
+        assert all(files[c] == files["A"] for c in "BCDE")
 
     def test_numbers_with_two_decimals(self, sst):
         for _, text in render_sticker_svgs(sst):

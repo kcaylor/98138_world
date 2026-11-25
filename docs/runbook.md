@@ -108,24 +108,59 @@ lego-image-processor sheets build sst.json -o sst-svg --format svg
 lego-image-processor sheets counts official.json
 ```
 
-The PDF has an overview page, a legend with every color's IDs, and one true-scale page per
-16×16 section (A1–H5), with numbered studs and per-section counts.
+The PDF has an overview page, a legend with every color's IDs, one true-scale page per
+16×16 section (A1–H5), with numbered studs and per-section counts, and a last page showing how to
+hang the frames (assembly).
 
-### 7. Arrangements: hang the map three ways
+### 7. Arrangements: hang the map five ways
 
 ```bash
 lego-image-processor map build land-elevation --arrangement B -o elev-B.json --preview elev-B.png
 lego-image-processor map build land-elevation --arrangement C -o elev-C.json --preview elev-C.png
+lego-image-processor map build land-elevation --arrangement pacific -o elev-D.json --preview elev-D.png
 lego-image-processor layout arrange official.json --arrangement B -o official-B.json
+lego-image-processor layout arrange official.json --arrangement E -o official-E.json
 lego-image-processor validate official-B.json
 lego-image-processor sheets build elev-B.json -o elev-B-sheets.pdf
+lego-image-processor sheets build elev-D.json -o elev-D-sheets.pdf
 ```
 
 The kit's three frames (1 America, 2 Europe & Africa, 3 Asia & Australia) can be hung as A
 (1·2·3, the default), B (3·1·2, America in the centre) or C (2·3·1, Asia and Australia in the
-centre). Look at `elev-B.png`: the Pacific is now whole, and the shadow and halo follow the coasts
-across the old edge. `layout arrange` just moves frames, so any layout can be re-hung. The B sheets
-draw the frame lines after columns 32 and 64 and name each frame.
+centre), the three combinations in the building instructions (pp. 7–8). Look at `elev-B.png`: the
+Pacific is now whole, and the shadow and halo follow the coasts across the old edge. `layout
+arrange` just moves strips, so any layout can be re-hung. The B sheets draw the frame lines after
+columns 32 and 64 and name each frame.
+
+Two more combinations are **not** in the building instructions (feature 010):
+
+- D (`pacific`, 2b·3·1·2a, strips E F G H A B C D): the date line 11° left of centre, the whole
+  Pacific in the middle; the board's edges cut Europe and Africa at 11° E.
+- E (`asia-pacific`, 2b·3·1·2a, strips D E F G H A B C): 146° E in the centre, the usual
+  Asia-Pacific world map; the edges fall in the mid-Atlantic.
+
+They are possible because the board is 8 strips of five section bases (A–H, the kit's section
+columns), and a joint between two strips inside a frame uses the same 15 connector pegs as a joint
+between frames (building instructions, pp. 134–139); the white border is built once round the
+finished board (p. 140). So the 8 strips can be hung in any rotation with one kit's parts: 7 strip
+joints × 15 + 8 strips × 4 × 3 = 201 of the 205 connector pegs, for every combination. Every
+sheet set ends with an assembly page for its combination (A–C too); for D and E it reads:
+
+1. Build the 40 section bases, peg them into 8 strips of five, then the strips into the three
+   frames, as in the building instructions (pp. 134–138): frame 1 = strips A–B, frame 2 = C–F,
+   frame 3 = G–H.
+2. Unpeg frame 2 between strips D and E (for E: between C and D): take out that joint's 15
+   connector pegs and keep them. Frame 2 is now part 2a (strips C–D; for E, strip C) and part 2b
+   (strips E–F; for E, D–F).
+3. Lay the groups face up, left to right: 2b · 3 · 1 · 2a.
+4. Peg the groups together at F|G, H|A and B|C, 15 connector pegs per joint, as for the frame
+   joints on p. 139.
+5. Build the white border round the whole board as in pp. 140–153; it is the same for every
+   combination.
+
+`--arrangement` and the recipe key `arrangement` accept `A`–`E` or the names `europe-africa`,
+`americas`, `asia-australia`, `pacific`, `asia-pacific`. A D or E layout records
+`"in_instructions": false`, its strip order and groups, and cites pp. 134–140.
 
 ### 8. ENSO maps: El Niño and La Niña
 
@@ -141,20 +176,23 @@ lego-image-processor parts list la-nina.json --kits 1
 
 What to look for:
 
-- each build prints `Arrangement: B (americas, frames 3·1·2, America in the centre) - from the
-  recipe`: the recipes set `arrangement = "B"` so the Pacific is whole;
+- each build prints `Arrangement: D (pacific, frames 2b·3·1·2a, the Pacific (date line) in the
+  centre; not in the building instructions) - from the recipe`: the recipes set `arrangement =
+  "D"` (feature 010; it was B in feature 009) so the date line is in the centre; the land shadow
+  takes 387 Earth Blue tiles;
 - a `Legend (°C):` block with nine lines from `below -1.5` (Earth Blue) to `+1 and above`
   (Vibrant Coral), the same in both maps; in `el-nino.png` the eastern equatorial Pacific is
   orange and coral, in `la-nina.png` it is blue-green;
-- `Tiles beyond one kit: 1,114` (El Niño) and `1,155` (La Niña) under the ocean table, with an
+- `Tiles beyond one kit: 1,114` (El Niño) and `1,152` (La Niña) under the ocean table (in B:
+  1,114 and 1,155; in E: 1,112 and 1,158), with an
   `over_supply` warning naming the colors;
 - the ERSST v5 citation (doi 10.1175/JCLI-D-16-0836.1 and dataset doi 10.7289/V5T72FNM) and the
   license;
-- `parts list --kits 1` lists only ocean tiles to buy, totalling the same 1,114 and 1,155; no
+- `parts list --kits 1` lists only ocean tiles to buy, totalling the same 1,114 and 1,152; no
   land plates. `parts export el-nino.json --kits 1 --bricklink wanted.xml` writes them as a
   BrickLink wanted list.
 
-To hang either map another way, pass `--arrangement A` (or C): the flag wins over the recipe and
+To hang either map another way, pass `--arrangement B` (or A, C, E): the flag wins over the recipe and
 the output says `- from --arrangement`; `layout arrange el-nino.json --arrangement A -o
 el-nino-A.json` re-hangs a built layout without rebuilding.
 
@@ -238,7 +276,7 @@ What to look for:
   the disclaimer; the small one only the title, the line and the disclaimer.
 - The output lists each plaque's tile and, to stand it alone, a Black plate of the same size (3958
   for 6×6, 92438 for 8×16), with LEGO element, BrickLink and Rebrickable IDs, and says the sticker
-  is printed, not a LEGO part. The stickers are the same for A, B and C, and making them writes
+  is printed, not a LEGO part. The stickers are the same for A, B, C, D and E, and making them writes
   nothing but the file you name.
 - `rain-stickers-svg/` holds `sticker-small.svg` and `sticker-large.svg` in millimetres, each with
   its cut line as `<g id="cut-line">` for a cutting machine. `rainfall`'s legend is in mm/yr, with
@@ -308,7 +346,7 @@ frames), the parts summary (official, bathymetry and ocean temperature say one k
 piece; land elevation needs about 6,300 more), the lots table with BrickLink and Rebrickable IDs,
 the downloads list (top-up files only appear when one kit is not enough), and the citations. The
 "Stickers for a plaque" panel shows both stickers, what the large one says, the plaque parts with
-their IDs and four downloads (print sheet Letter and A4, both SVGs), the same for A, B and C and
+their IDs and four downloads (print sheet Letter and A4, both SVGs), the same for A–E and
 without JavaScript; a Winkel tripel page shows its own set. Try it at phone width. `.venv/bin/pytest` runs the web tests offline. Deploying: `docs/deploy.md`.
 
 ## Checks that need you

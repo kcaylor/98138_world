@@ -39,7 +39,8 @@ lego-image-processor dataset list   # ERSST v5 LTM, ETOPO 2022, GPCP, NSIDC cach
    `build_map` and compare `sticker_set(result).to_dict()` without its `arrangement` field and
    the two SVG files: identical (SC-003). The print sheet names the arrangement ("legend values
    from the build hung as <C>"), so compare PDF bytes only within one arrangement: run
-   `map stickers ocean-sst -o x.pdf` twice, identical bytes (FR-012).
+   `map stickers ocean-sst -o x.pdf` twice, identical bytes (FR-012). Since main gained feature
+   010 (merged 2026-11-25), build in A, B, C, D and E: all five are identical.
 
 5. **Other maps.** `land-elevation`: ten land swatches "below 150 m" … "3,000 m and above",
    "offshore", "coast ring", "land shadow" (US1-5). `rainfall`: mm/yr classes with open ends, one

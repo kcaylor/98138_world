@@ -32,11 +32,12 @@ Writes:
 
 Everything is composed in memory first; on any error nothing is written.
 
-Output (exit 0):
+Output (exit 0; since the merge of feature 010 on 2026-11-25 the second line names A, B, C, D and E,
+which were A, B and C before):
 
 ```
 Recipe: ocean-sst - Ocean temperature (format 1, SHA-256 <hex>)
-Legend values from the build hung as A (default); the stickers are the same for A, B and C.
+Legend values from the build hung as A (default); the stickers are the same for A, B, C, D and E.
 Sticker title: Ocean temperature (recipe title)
 Sticker line: Annual mean sea surface temperature, ... (sticker table)
 Large sticker: 125.8 x 61.8 mm for a Black tile 8 x 16; 10 swatches (land 1, ocean 9); text 5.5-14 pt
