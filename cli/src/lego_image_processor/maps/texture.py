@@ -12,7 +12,12 @@
   take it on an even Poisson-disk subset (no two closer than ``spacing``), so the ring fades
   evenly into the base offshore.
 - ``shadow_mask``: the one-stud land shadow cast east, ocean cells whose western neighbour is
-  land (no wrap at the map edge). The build assigns these before the ocean layer.
+  land (no wrap at the map edge). The build assigns these before the ocean layer. On a non-kit
+  template (feature 016, research R7) ``ocean`` is the template's ocean, so a land stud whose
+  eastern neighbour is margin casts none; on the kit ``ocean = ~land`` and nothing changes.
+
+Halo, ``mix`` and ``blend`` act only on the cells of their layer's mask, so they never color a
+margin stud of a template (feature 016).
 
 Randomness comes from ``numpy.random.default_rng(seed)``, drawn in row-major order.
 Not affiliated with or endorsed by The LEGO Group.
@@ -83,13 +88,16 @@ def fill_background(mask: np.ndarray, weights: Sequence[float], *, cluster: floa
     return classes
 
 
-def shadow_mask(land: np.ndarray, direction: str = "east") -> np.ndarray:
-    """Ocean cells that take the land shadow: those whose western neighbour is land."""
+def shadow_mask(land: np.ndarray, direction: str = "east", ocean=None) -> np.ndarray:
+    """Ocean cells that take the land shadow: those whose western neighbour is land. ``ocean``
+    (feature 016): the ocean cells of a non-kit template; None means every cell that is not land."""
     land = np.asarray(land, dtype=bool)
     if direction != "east":  # pragma: no cover - recipe validation allows east only
         raise ValueError(f"unknown shadow direction {direction!r}")
     out = np.zeros_like(land)
     out[:, 1:] = land[:, :-1]
+    if ocean is not None:
+        return out & ~land & np.asarray(ocean, dtype=bool)
     return out & ~land
 
 

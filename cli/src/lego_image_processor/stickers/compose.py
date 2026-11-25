@@ -38,6 +38,7 @@ from ..sheets.compose import CONTENT_BOTTOM, MARGIN, RING_RATIO, cap_offset, fur
 from ..sheets.legend import text_color
 from ..sheets.model import (PT_MM, RGB, WHITE, Circle, Item, Line, Page, PageSize, Rect, Text,
                             paper_size)
+from ..templates import KIT_TEMPLATE_ID  # feature 016's kit template id (re-exported here)
 from . import StickerError
 from .credits import Credit, credit_lines, credits_for
 from .geometry import StickerGeometry, geometry_for
@@ -45,7 +46,6 @@ from .legend import Legend, Swatch, map_legend
 from .text import (CAP_HEIGHT, MIN_PT, STEP_PT, ResolvedText, TextBlock, TextSpec,
                    fit_block, fit_stack, line_pitch, resolve_text, wrap_words)
 
-KIT_TEMPLATE_ID = "kit-31203"     # feature 016's kit template id (its constant once 016 merges)
 FORMAT_VERSION = "1"
 TOOL = "lego-image-processor"
 SITE = "98138.world"
@@ -537,6 +537,10 @@ def sticker_set(result: MapResult) -> StickerSet:
     has no sticker line or a text does not fit at 5 pt (naming the sticker, the field and the
     space needed and available)."""
     recipe = result.recipe
+    tpl = getattr(result, "template", None)
+    if tpl is not None and not tpl.is_kit:   # feature 016 merge (T053); T056 makes template sets
+        raise StickerError(f"sticker sets are made on the kit template {KIT_TEMPLATE_ID} only; "
+                           f"{recipe.id} is built on {tpl.id}")
     text = resolve_text(recipe)
     legend = map_legend(result)
     credits = credits_for(recipe)

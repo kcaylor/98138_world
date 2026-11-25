@@ -135,7 +135,8 @@ def test_el_nino_set_from_its_own_combination(manifest):
 def test_total_bytes_counts_the_stickers(site):
     """total_bytes is the site's size, sticker files included; each set is small (SC-008)."""
     _, manifest = site
-    variants = sum(f["bytes"] for m in manifest["maps"] for v in m["variants"].values()
+    variants = sum(f["bytes"] for m in manifest["maps"]     # kit and template variants (016)
+                   for v in list(m["variants"].values()) + list(m.get("template_variants", {}).values())
                    for f in v["files"].values())
     stickers = sum(f["bytes"] for m in manifest["maps"] for f in m["stickers"][KIT]["files"].values())
     assert manifest["total_bytes"] == variants + stickers
@@ -231,10 +232,15 @@ def test_echo_names_the_sticker_set(tmp_path, fixture_datasets):
 
 
 def test_kit_template_id_matches_the_library():
+    """The service spells the kit template's id (it never imports the library): it must be 016's
+    ``templates.KIT_TEMPLATE_ID``, which the stickers package and the prebuild use."""
+    from lego_image_processor import templates
     from lego_image_processor.stickers import KIT_TEMPLATE_ID
 
+    from web98138 import catalog
     from web98138 import prebuild
     from web98138.catalog import STICKER_KINDS, STICKER_TEMPLATES
 
-    assert KIT_TEMPLATE_ID == KIT == prebuild.STICKER_TEMPLATE and STICKER_TEMPLATES == (KIT,)
+    assert templates.KIT_TEMPLATE_ID == KIT_TEMPLATE_ID == catalog.KIT_TEMPLATE_ID == KIT
+    assert STICKER_TEMPLATES == (KIT,)
     assert tuple(prebuild.STICKER_KINDS) == STICKER_KINDS == tuple(STICKER_FILES)

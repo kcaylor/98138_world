@@ -124,3 +124,54 @@ class TestKitPartColors:
 
     def test_bad_part_is_usage_error(self, runner):
         assert runner.invoke(cli, ["kit", "part-colors", "--part", "3001"]).exit_code == 2
+
+
+class TestSquareTileListings:
+    """016 T018: the 1x1 square tile 3070b in `kit part-colors` and `kit part-numbers` (additive)."""
+
+    def test_part_colors_table(self, runner):
+        result = runner.invoke(cli, ["kit", "part-colors", "--part", "3070b"])
+        assert result.exit_code == 0, result.output
+        lines = _lines(result.output)
+        assert lines[0] == "Part 3070b (1x1 square tile, margin):"
+        assert lines[-1] == DISCLAIMER
+        black = next(l for l in lines if l.startswith("lego_black "))
+        assert "Black (26)" in black and "Black (11)" in black and black.rstrip().endswith("no")
+        assert "Part 6141" not in result.output and "Part 98138" not in result.output
+
+    def test_part_colors_json(self, runner):
+        result = runner.invoke(cli, ["kit", "part-colors", "--part", "3070b", "--format", "json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["disclaimer"] == DISCLAIMER
+        assert data["colors"] and {c["part_id"] for c in data["colors"]} == {"3070b"}
+        assert not any(c["in_kit"] for c in data["colors"])
+        black = next(c for c in data["colors"] if c["key"] == "lego_black")
+        assert black["lego"] == {"name": "Black", "id": 26} and black["bricklink"]["id"] == 11
+
+    def test_unfiltered_listing_gains_the_square_tile(self, runner):
+        table = runner.invoke(cli, ["kit", "part-colors"])
+        assert table.exit_code == 0
+        heads = [l for l in _lines(table.output) if l.startswith("Part ")]
+        assert heads == ["Part 6141 (1x1 round plate, land):", "Part 98138 (1x1 round tile, ocean):",
+                         "Part 3070b (1x1 square tile, margin):"]
+        data = json.loads(runner.invoke(cli, ["kit", "part-colors", "--format", "json"]).output)
+        counts = {p: sum(c["part_id"] == p for c in data["colors"]) for p in ("6141", "98138", "3070b")}
+        assert (counts["6141"], counts["98138"]) == (44, 40) and counts["3070b"] >= 1
+        assert [c["part_id"] for c in data["colors"]] == sorted(
+            (c["part_id"] for c in data["colors"]), key=["6141", "98138", "3070b"].index)
+
+    def test_help_names_the_square_tile(self, runner):
+        result = runner.invoke(cli, ["kit", "part-colors", "--help"])
+        assert "3070b tile 1x1 square" in " ".join(result.output.split())
+
+    def test_part_numbers_list_the_square_tile(self, runner):
+        result = runner.invoke(cli, ["kit", "part-numbers"])
+        assert result.exit_code == 0, result.output
+        row = next(l for l in _lines(result.output) if l.startswith("3070b "))
+        assert "Tile 1 x 1" in row and "P 3070" in row and "3070b" in row
+        assert "the square tile is BrickLink item 3070 (3070b is an alternate there), Rebrickable part 3070b" \
+            in result.output
+        assert _lines(result.output)[-1] == DISCLAIMER
+        data = json.loads(runner.invoke(cli, ["kit", "part-numbers", "--format", "json"]).output)
+        assert list(data["parts"]) == ["6141", "98138", "3070b"]

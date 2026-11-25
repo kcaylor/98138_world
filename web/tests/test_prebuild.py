@@ -29,6 +29,34 @@ def test_manifest_top_level(manifest):
     assert [m["id"] for m in manifest["maps"]] == list(SMALL_MAPS)
 
 
+def test_part_labels_are_the_parts_the_variants_use(manifest):
+    # feature 016 (T061, T085): the CLI knows a third part type (square tile 3070b). The kit
+    # variants use exactly the kit's two parts, and a kit-only site lists only them
+    # (test_templates.py, --templates none; web golden); the session site's Winkel variant adds
+    # the square tile (data-model.md Manifest.part_labels).
+    from lego_image_processor.parts.partslist import PART_TYPE
+
+    from web98138.prebuild import _part_labels
+
+    assert "3070b" in PART_TYPE
+    kit = {r["part_id"] for m in manifest["maps"] for v in m["variants"].values()
+           for r in v["lots"] + v["leftovers"]}
+    assert kit == {"6141", "98138"}
+    assert manifest["part_labels"] == _part_labels(manifest["maps"])
+    assert list(manifest["part_labels"]) == ["6141", "98138", "3070b"]
+
+
+def test_part_labels_add_the_square_tile_only_when_a_variant_uses_it():
+    from web98138.prebuild import _part_labels
+
+    def row(*parts):
+        return {"variants": {"A": {"lots": [{"part_id": p} for p in parts],
+                                   "leftovers": [{"part_id": "6141"}, {"part_id": "98138"}]}}}
+    assert _part_labels([row("6141", "98138")]) == {"6141": "plate 1x1 round", "98138": "tile 1x1 round"}
+    assert _part_labels([row("98138", "6141"), row("3070b", "98138", "6141")]) == {
+        "6141": "plate 1x1 round", "98138": "tile 1x1 round", "3070b": "tile 1x1 square"}
+
+
 def test_every_variant_has_files_matching_checksums(site_dir, manifest):
     for m in manifest["maps"]:
         assert set(m["variants"]) == {"A", "B", "C"}
@@ -110,10 +138,12 @@ def test_map_page_data(manifest):
     assert cit["license"] and cit["citation"]
     assert isinstance(sst["variants"]["A"]["warnings"], list)
     assert sst["recipe"]["sha256"]
-    # feature 017: one sticker block per map, after the variants (additive)
+    # feature 017: one sticker block per map, after the variants and 016's template variants
+    # (additive)
     for m in manifest["maps"]:
-        assert list(m) == ["id", "title", "description", "recipe", "default_combination", "layers",
-                           "datasets", "citations", "variants", "stickers"], m["id"]
+        keys = ["id", "title", "description", "recipe", "default_combination", "layers", "datasets",
+                "citations", "variants"] + (["template_variants"] if "template_variants" in m else [])
+        assert list(m) == keys + ["stickers"], m["id"]
 
 
 def test_missing_dataset_without_fetch_is_an_error(tmp_path, fixture_datasets):

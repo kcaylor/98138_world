@@ -1,9 +1,9 @@
 {
   "format_version": "1",
   "source": {
-    "title": "Marketplace part numbers for the kit's map parts",
+    "title": "Marketplace part numbers for the map parts (the kit's plate and tile; the square tile of template margins)",
     "generator": "tools/partnumbers build",
-    "generated_on": "2026-11-22",
+    "generated_on": "2026-11-23",
     "pages": [
       {
         "id": "bricklink-4073",
@@ -32,6 +32,20 @@
         "url": "http://web.archive.org/web/20250303234033id_/https://rebrickable.com/parts/98138/",
         "sha256": "4195c1bd0c0b0b5b01384f397e45be2737739a4b34d13dc942eeb9f1475a2fac",
         "accessed": "2026-11-22"
+      },
+      {
+        "id": "bricklink-3070",
+        "title": "BrickLink catalog item 3070, Tile 1 x 1 (Internet Archive copy of 2026-01-01)",
+        "url": "http://web.archive.org/web/20260101103331id_/https://www.bricklink.com/v2/catalog/catalogitem.page?P=3070",
+        "sha256": "946c7d105215f2123a79fe8d23f2c0f4ce8de846fdfebad725c9177f936b7c2d",
+        "accessed": "2026-11-23"
+      },
+      {
+        "id": "rebrickable-3070b",
+        "title": "Rebrickable part 3070b, Tile 1 x 1 with Groove (Internet Archive copy of 2026-03-04)",
+        "url": "http://web.archive.org/web/20260304062629id_/https://rebrickable.com/parts/3070b/",
+        "sha256": "8d954b6f7e30f072137354039eed32ccc0a31a8f6283030bfdd17baf68cbee5a",
+        "accessed": "2026-11-23"
       }
     ],
     "rules": [
@@ -40,9 +54,10 @@
       "Rebrickable's BrickLink cross-reference lists the BrickLink item number.",
       "The BrickLink item number is one of the kit inventory's part_ids for the part.",
       "LEGO design IDs are the project part ID plus the kit inventory's design IDs for the part, each listed by Rebrickable under LEGO.",
-      "BrickLink colors are the color names of the catalog page's All tab."
+      "BrickLink colors are the color names of the catalog page's All tab.",
+      "For a part that is not in the kit (3070b), the two kit-inventory rules are replaced: the project part ID is the BrickLink item number or one of its alternates, and the LEGO design IDs are those Rebrickable lists under LEGO."
     ],
-    "notes": "SHA-256 of the decoded HTML of the Internet Archive raw copy. Archived copies are used because BrickLink's site redirected to a maintenance page on 2026-11-22 and Rebrickable's terms forbid scraping its live pages.",
+    "notes": "SHA-256 of the decoded HTML of the Internet Archive raw copy. Archived copies are used because BrickLink's site redirected to a maintenance page on 2026-11-22 and Rebrickable's terms forbid scraping its live pages. BrickLink files 3070b as an alternate of item 3070 (its own catalog URL has led to a not-found page since 2024), so item 3070's page is pinned for it.",
     "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
   },
   "parts": {
@@ -291,6 +306,127 @@
         "part_num": "98138",
         "name": "Tile Round 1 x 1",
         "citation": "rebrickable-98138"
+      }
+    },
+    "3070b": {
+      "name": "Tile 1 x 1",
+      "lego_design_ids": [
+        "3070",
+        "112412",
+        "30039",
+        "35403",
+        "39727",
+        "53836"
+      ],
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "3070",
+        "alternates": [
+          "3070b",
+          "30039",
+          "35403",
+          "39727",
+          "53836",
+          "112412"
+        ],
+        "colors": [
+          "Black",
+          "Blue",
+          "Bright Green",
+          "Bright Light Blue",
+          "Bright Light Orange",
+          "Bright Light Yellow",
+          "Bright Pink",
+          "Brown",
+          "Clikits Lavender",
+          "Coral",
+          "Dark Azure",
+          "Dark Blue",
+          "Dark Blue-Violet",
+          "Dark Bluish Gray",
+          "Dark Brown",
+          "Dark Gray",
+          "Dark Green",
+          "Dark Nougat",
+          "Dark Orange",
+          "Dark Pink",
+          "Dark Purple",
+          "Dark Red",
+          "Dark Tan",
+          "Dark Turquoise",
+          "Dark Yellow",
+          "Green",
+          "Lavender",
+          "Light Aqua",
+          "Light Blue",
+          "Light Bluish Gray",
+          "Light Brown",
+          "Light Gray",
+          "Light Green",
+          "Light Lime",
+          "Light Nougat",
+          "Light Orange",
+          "Light Turquoise",
+          "Light Yellow",
+          "Lime",
+          "Maersk Blue",
+          "Magenta",
+          "Medium Azure",
+          "Medium Blue",
+          "Medium Dark Pink",
+          "Medium Lavender",
+          "Medium Nougat",
+          "Medium Orange",
+          "Neon Yellow",
+          "Nougat",
+          "Olive Green",
+          "Orange",
+          "Pink",
+          "Purple",
+          "Red",
+          "Reddish Brown",
+          "Reddish Orange",
+          "Rose Pink",
+          "Rust",
+          "Salmon",
+          "Sand Blue",
+          "Sand Green",
+          "Tan",
+          "Very Light Gray",
+          "Very Light Orange",
+          "Warm Yellowish Orange",
+          "White",
+          "Yellow",
+          "Yellowish Green",
+          "Trans-Black",
+          "Trans-Bright Green",
+          "Trans-Brown",
+          "Trans-Clear",
+          "Trans-Dark Blue",
+          "Trans-Green",
+          "Trans-Light Blue",
+          "Trans-Light Orange",
+          "Trans-Medium Blue",
+          "Trans-Neon Green",
+          "Trans-Neon Orange",
+          "Trans-Neon Yellow",
+          "Trans-Orange",
+          "Trans-Purple",
+          "Trans-Red",
+          "Trans-Yellow",
+          "Chrome Gold",
+          "Chrome Silver",
+          "Pearl Gold",
+          "Pearl Light Gray",
+          "Metallic Gold",
+          "Metallic Silver"
+        ],
+        "citation": "bricklink-3070"
+      },
+      "rebrickable": {
+        "part_num": "3070b",
+        "name": "Tile 1 x 1 with Groove",
+        "citation": "rebrickable-3070b"
       }
     }
   }

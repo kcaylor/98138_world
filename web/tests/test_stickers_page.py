@@ -226,3 +226,15 @@ def test_older_manifest_has_no_panel(site_dir, tmp_path):
         assert r.status_code == 200 and 'id="stickers"' not in r.text and DISCLAIMER in r.text
         assert c.get(f"/maps/ocean-sst/stickers/{KIT}/sticker-large.svg").status_code == 404
         assert c.get(f"/maps/ocean-sst/stickers/{KIT}/download/stickers-a4").status_code == 404
+
+
+def test_template_page_shows_no_kit_set(client, manifest):
+    """After the 016 merge (T053) and until T060 builds template sets: a template page looks up its
+    own template's set (none yet), so it shows no Stickers panel rather than the kit's set; the kit
+    pages keep theirs. T059/T060 replace this with "the Winkel page shows the Winkel set"."""
+    sst = next(m for m in manifest["maps"] if m["id"] == "ocean-sst")
+    assert list(sst["stickers"]) == [KIT] and "winkel-tripel" in sst["template_variants"]
+    html = client.get("/maps/ocean-sst/winkel-tripel").text
+    assert 'id="stickers"' not in html and f"/stickers/{KIT}/" not in html and DISCLAIMER in html
+    assert 'id="stickers"' in client.get("/maps/ocean-sst/A").text
+    assert client.get("/maps/ocean-sst/stickers/winkel-tripel/sticker-large.svg").status_code == 404

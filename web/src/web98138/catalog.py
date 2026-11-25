@@ -1,8 +1,10 @@
 """The built output as the service sees it: manifest load, start-up check, lookups (FR-018).
 
 This module does not import ``lego_image_processor``: the running service only reads what the
-build step wrote. A map's ``stickers`` block (feature 017) is optional, so an older manifest still
-serves. Not affiliated with or endorsed by The LEGO Group.
+build step wrote. Feature 016: a map may also have ``template_variants`` (one per map template,
+keyed by the template's id, which is listed in the manifest's ``templates`` and is never A, B or C);
+they are checked like kit variants. A map's ``stickers`` block (feature 017) is optional, so an
+older manifest still serves. Not affiliated with or endorsed by The LEGO Group.
 """
 
 from __future__ import annotations
@@ -22,9 +24,12 @@ IMAGE_KINDS = ("preview", "thumb")
 DATA_KINDS = ("cells",)   # feature 015: palette chooser data, served inline, never a download
 KINDS = DOWNLOAD_KINDS + IMAGE_KINDS + DATA_KINDS
 ESTIMATE_KINDS = ("full", "one_kit")
-# feature 017: one sticker set per map and template (contracts/web.md "Catalog check"); the kit's
-# template id until feature 016 lists its templates
-STICKER_TEMPLATES = ("kit-31203",)
+TEMPLATE_KEYS = ("id", "title", "projection", "board", "counts", "rehang", "description", "source")
+# feature 017: one sticker set per map and template (contracts/web.md "Catalog check"). The kit
+# template's id is lego_image_processor.templates.KIT_TEMPLATE_ID (feature 016); the service never
+# imports the library, so it is spelled here and a web test checks that the two agree.
+KIT_TEMPLATE_ID = "kit-31203"
+STICKER_TEMPLATES = (KIT_TEMPLATE_ID,)
 STICKER_KINDS = ("stickers-letter", "stickers-a4", "sticker-small", "sticker-large")
 STICKER_IMAGES = ("sticker-small", "sticker-large")     # served inline for <img>, and downloads
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -61,6 +66,12 @@ def _is_bool(v: Any) -> bool:
 
 def _is_text(v: Any) -> bool:
     return isinstance(v, str) and bool(v.strip())
+
+
+def all_variants(m: Dict[str, Any]):
+    """(key, entry) of a manifest map row's kit variants, then its template variants (016)."""
+    yield from m["variants"].items()
+    yield from (m.get("template_variants") or {}).items()
 
 
 def _check_file(root: Path, f: Any, where: str) -> None:
@@ -113,7 +124,7 @@ def check_prices(manifest: Dict[str, Any]) -> None:
     prices = manifest.get("prices")
     if prices is None:
         for m in manifest["maps"]:
-            for c, v in m["variants"].items():
+            for c, v in all_variants(m):
                 if "estimates" in v:
                     raise CatalogError(f"{m['id']} {c}: estimates present but the manifest has no "
                                        "prices block")
@@ -126,7 +137,7 @@ def check_prices(manifest: Dict[str, Any]) -> None:
     for path in ("prices.source.url", "prices.estimate_note", "prices.attribution"):
         _check(manifest, path, _is_text, "", "text")
     for m in manifest["maps"]:
-        for c, v in m["variants"].items():
+        for c, v in all_variants(m):
             where = f"{m['id']} {c}: "
             for kind in ESTIMATE_KINDS:
                 base = f"estimates.{kind}"
@@ -137,6 +148,45 @@ def check_prices(manifest: Dict[str, Any]) -> None:
                     _check(v, f"{base}.{flag}", _is_bool, where, "true or false")
                 for n in ("pieces", "lots"):
                     _check(v, f"{base}.unpriced.{n}", _is_int, where, "an integer")
+
+
+def check_templates(manifest: Dict[str, Any]) -> List[str]:
+    """The manifest's ``templates`` list (feature 016; absent = none); returns the ids."""
+    templates = manifest.get("templates", [])
+    if not isinstance(templates, list):
+        raise CatalogError(f"templates: must be a list, found {templates!r}")
+    ids: List[str] = []
+    for i, t in enumerate(templates):
+        where = f"templates[{i}]."
+        if not isinstance(t, dict):
+            raise CatalogError(f"templates[{i}]: must be an object")
+        for key in TEMPLATE_KEYS:
+            if key not in t:
+                raise CatalogError(f"{where}{key}: missing")
+        for key in ("id", "title", "projection"):
+            _check(t, key, _is_text, where, "text")
+        _check(t, "rehang", _is_bool, where, "true or false")
+        if t["id"] in COMBINATIONS:
+            raise CatalogError(f"{where}id: a template id must not be A, B or C")
+        if t["id"] in ids:
+            raise CatalogError(f"{where}id: template {t['id']!r} listed twice")
+        ids.append(t["id"])
+    return ids
+
+
+def _check_files(root: Path, where: str, files: Dict[str, Any]) -> None:
+    """Every file of a variant: a known kind, inside the root, present, of the manifest's size."""
+    for kind, f in files.items():
+        if kind not in KINDS:
+            raise CatalogError(f"{where}: unknown file kind {kind!r}")
+        target = (root / f["path"]).resolve()
+        if root not in target.parents:
+            raise CatalogError(f"{where} {kind}: path {f['path']!r} is outside {root}")
+        if not target.is_file():
+            raise CatalogError(f"{where} {kind}: missing file {target}")
+        if target.stat().st_size != f["bytes"]:
+            raise CatalogError(f"{where} {kind}: {target} has size {target.stat().st_size}, "
+                               f"manifest says {f['bytes']}")
 
 
 @dataclass(frozen=True)
@@ -151,8 +201,17 @@ class MapEntry:
         """The combination the recipe hangs by default (its ``arrangement`` key; feature 009)."""
         return self.data.get("default_combination") or "A"
 
-    def variant(self, combination: str) -> Optional[Dict[str, Any]]:
-        return self.data["variants"].get(combination)
+    @property
+    def template_ids(self) -> tuple:
+        """The templates this map has a variant on (feature 016), in the manifest's order."""
+        return tuple(self.data.get("template_variants") or ())
+
+    def variant(self, key: str) -> Optional[Dict[str, Any]]:
+        """A kit variant (``A``, ``B``, ``C``) or a template variant (a template id)."""
+        v = self.data["variants"].get(key)
+        if v is None:
+            v = (self.data.get("template_variants") or {}).get(key)
+        return v
 
 
 class Catalog:
@@ -164,10 +223,12 @@ class Catalog:
                                      for m in manifest["maps"]]
         self._maps = {m.id: m for m in self.maps}
         self._arr = {a["id"]: a for a in manifest["arrangements"]}
+        self.templates: List[Dict[str, Any]] = list(manifest.get("templates") or [])
+        self._templates = {t["id"]: t for t in self.templates}
         self._files: Dict[tuple, Path] = {}
         self._stickers: Dict[tuple, Path] = {}
         for m in self.maps:
-            for c, v in m.data["variants"].items():
+            for c, v in all_variants(m.data):
                 for kind, f in v["files"].items():
                     self._files[(m.id, c, kind)] = root / f["path"]
             for template_id, st in m.data.get("stickers", {}).items():
@@ -176,7 +237,11 @@ class Catalog:
 
     @property
     def variant_count(self) -> int:
-        return sum(len(m.data["variants"]) for m in self.maps)
+        """Kit and template variants."""
+        return sum(len(m.data["variants"]) + len(m.template_ids) for m in self.maps)
+
+    def template(self, template_id: str) -> Optional[Dict[str, Any]]:
+        return self._templates.get(template_id)
 
     def map(self, map_id: str) -> Optional[MapEntry]:
         return self._maps.get(map_id)
@@ -188,6 +253,7 @@ class Catalog:
         return self._files.get((map_id, combination, kind))
 
     def file_entry(self, map_id: str, combination: str, kind: str) -> Optional[Dict[str, Any]]:
+        """The manifest entry of a kit (``A``-``C``) or template variant's file."""
         m = self.map(map_id)
         v = m.variant(combination) if m else None
         return v["files"].get(kind) if v else None
@@ -224,23 +290,23 @@ class Catalog:
             raise CatalogError(f"{p}: no maps")
         if sorted(a["id"] for a in manifest.get("arrangements", [])) != list(COMBINATIONS):
             raise CatalogError(f"{p}: arrangements must be {', '.join(COMBINATIONS)}")
+        template_ids = check_templates(manifest)
         for m in manifest["maps"]:
             if sorted(m.get("variants", {})) != list(COMBINATIONS):
                 raise CatalogError(f"{m.get('id')}: combinations {sorted(m.get('variants', {}))}, "
                                    f"expected {', '.join(COMBINATIONS)}")
-            for c, v in m["variants"].items():
-                for kind, f in v["files"].items():
-                    if kind not in KINDS:
-                        raise CatalogError(f"{m['id']} {c}: unknown file kind {kind!r}")
-                    target = (root / f["path"]).resolve()
-                    if root not in target.parents:
-                        raise CatalogError(f"{m['id']} {c} {kind}: path {f['path']!r} is outside "
-                                           f"{root}")
-                    if not target.is_file():
-                        raise CatalogError(f"{m['id']} {c} {kind}: missing file {target}")
-                    if target.stat().st_size != f["bytes"]:
-                        raise CatalogError(f"{m['id']} {c} {kind}: {target} has size "
-                                           f"{target.stat().st_size}, manifest says {f['bytes']}")
+            tv = m.get("template_variants", {})
+            if not isinstance(tv, dict):
+                raise CatalogError(f"{m['id']}: template_variants must be an object")
+            for t, v in tv.items():
+                if t in COMBINATIONS:
+                    raise CatalogError(f"{m['id']} {t}: a template variant key must not be A, B or C")
+                if t not in template_ids:
+                    raise CatalogError(f"{m['id']} {t}: template not listed in templates")
+                if v.get("template") != t:
+                    raise CatalogError(f"{m['id']} {t}: template must be {t!r}, found {v.get('template')!r}")
+            for c, v in all_variants(m):
+                _check_files(root, f"{m['id']} {c}", v["files"])
             check_stickers(root, m)
         check_prices(manifest)
         return cls(root, manifest, raw)

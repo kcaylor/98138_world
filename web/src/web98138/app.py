@@ -4,9 +4,11 @@ Fixed routes only. Map IDs, combinations and download kinds are looked up in the
 part of a URL is ever used as a file path. Nothing here imports ``lego_image_processor``: every
 file and number shown was produced by the CLI library in the build step. Map pages load one
 first-party script, ``/static/palette.js`` (feature 015), which only recolors the prebuilt
-``cells.json`` in the browser; every page works without it. Each map's sticker set (feature 017)
-is served under ``/maps/<map>/stickers/<template>/``: both SVGs inline for the page's ``<img>``
-and all four files as downloads.
+``cells.json`` in the browser; every page works without it. Feature 016: a map's template variants
+(``/maps/<map>/<template-id>``, e.g. ``winkel-tripel``) are served like its combinations A, B, C;
+kit pages gain only a nav link to them. Each map's sticker set (feature 017) is served under
+``/maps/<map>/stickers/<template>/``: both SVGs inline for the page's ``<img>`` and all four files
+as downloads. Kit pages show the kit template's set, a template page its template's set.
 
 Run: ``WEB98138_SITE_DIR=DIR uvicorn web98138.app:app --port 8080``.
 Not affiliated with or endorsed by The LEGO Group.
@@ -25,7 +27,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import COMBINATIONS, DISCLAIMER, REPO_URL, SITE_HOST, __version__
-from .catalog import DOWNLOAD_KINDS, STICKER_IMAGES, STICKER_KINDS, STICKER_TEMPLATES, Catalog
+from .catalog import DOWNLOAD_KINDS, KIT_TEMPLATE_ID, STICKER_IMAGES, STICKER_KINDS, Catalog
 
 PKG = Path(__file__).resolve().parent
 STATIC = {"style.css": "text/css; charset=utf-8", "favicon.svg": "image/svg+xml",
@@ -173,15 +175,21 @@ def create_app(site_dir) -> FastAPI:
         entry = catalog.map(map_id)
         if entry is None:
             return not_found(request)
+        template = None
         if combination not in COMBINATIONS:
-            if combination.upper() in COMBINATIONS:
+            if combination in entry.template_ids:   # feature 016: a template variant
+                template = catalog.template(combination)
+            elif combination.upper() in COMBINATIONS:
                 return RedirectResponse(f"/maps/{map_id}/{combination.upper()}", status_code=301)
-            return not_found(request)
+            else:
+                return not_found(request)
         variant = entry.variant(combination)
-        template_id = STICKER_TEMPLATES[0]
+        # feature 017: the kit's sticker set on kit pages, the template's own set on a template page
+        sticker_template = combination if template is not None else KIT_TEMPLATE_ID
         return page(request, "map.html", map=entry, data=entry.data, variant=variant,
                     combination=combination, arrangement=catalog.arrangement(combination),
-                    stickers=catalog.stickers(map_id, template_id), sticker_template=template_id)
+                    template=template, map_templates=[catalog.template(t) for t in entry.template_ids],
+                    stickers=catalog.stickers(map_id, sticker_template), sticker_template=sticker_template)
 
     def image(kind: str):
         async def handler(request: Request, map_id: str, combination: str):

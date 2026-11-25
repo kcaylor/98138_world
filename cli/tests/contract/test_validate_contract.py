@@ -287,3 +287,53 @@ class TestValidateRealKitContract:
         result = runner.invoke(cli, ["validate", str(path)])
         assert result.exit_code == 0
         assert result.output.rstrip("\n").splitlines()[-1] == DISCLAIMER
+
+
+# --- a layout on a non-kit template (feature 016 T068; contracts/cli.md `validate`) --------------
+
+DISCLAIMER = "Not affiliated with or endorsed by The LEGO Group."
+
+
+@pytest.fixture
+def winkel_file(confirmed_winkel, tmp_path):
+    from ..winkel_layouts import winkel_grid
+    p = tmp_path / "winkel.json"
+    p.write_text(winkel_grid(confirmed_winkel).to_json(), encoding="utf-8")
+    return p
+
+
+def test_validate_winkel_layout(winkel_file, confirmed_winkel, tmp_path):
+    out = tmp_path / "report.json"
+    r = CliRunner().invoke(cli, ["validate", str(winkel_file), "-o", str(out)])
+    assert r.exit_code == 0, r.output
+    c = confirmed_winkel.counts
+    assert f"  Margin square tiles: {c['margin']:,}" in r.output
+    assert f"  Template: winkel-tripel ({confirmed_winkel.title}); arrangement A only" in r.output
+    assert "Checking template classes (winkel-tripel)..." in r.output
+    assert "✓ Plates on land, tiles on ocean and square tiles on the margin" in r.output
+    assert "1 square tile colors unavailable in kit (no kit has part 3070b)" in r.output
+    assert "Part type: square_tile (3070b)" in r.output
+    assert r.output.rstrip("\n").splitlines()[-1] == DISCLAIMER
+    report = json.loads(out.read_text())
+    assert report["template"] == {"id": "winkel-tripel", "title": confirmed_winkel.title}
+    sq = [v for v in report["violations"] if v["part_type"] == "square_tile"]
+    assert [(v["type"], v["part_id"], v["positions_required"]) for v in sq] == \
+        [("color_unavailable", "3070b", c["margin"])]
+    assert "suggested_alternative" not in sq[0]
+
+
+def test_validate_unknown_template_exit_1(winkel_file, tmp_path):
+    d = json.loads(winkel_file.read_text())
+    d["metadata"]["template"]["id"] = "no-such-template"
+    bad = tmp_path / "bad.json"
+    bad.write_text(json.dumps(d), encoding="utf-8")
+    r = CliRunner().invoke(cli, ["validate", str(bad)])
+    assert r.exit_code == 1 and "no-such-template" in r.output
+
+
+def test_validate_kit_layout_has_no_template_lines():
+    layout = Path(__file__).parent.parent / "fixtures" / "layouts" / "expected_test_128x80.json"
+    r = CliRunner().invoke(cli, ["validate", str(layout)])
+    assert r.exit_code == 0, r.output
+    assert "Template" not in r.output and "square" not in r.output and "Margin" not in r.output
+    assert "Checking land/sea mask (arrangement A)..." in r.output

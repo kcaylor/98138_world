@@ -33,11 +33,14 @@ Paired Claude/Codex runs: `speckit-pair` (opt-in).
 
 ## Project: 98138.world
 
-98138.world uses the LEGO World Map kit (31203) as a fixed template (a 128×80 grid of 10,240
+98138.world uses the LEGO World Map kit (31203) as its reference template (a 128×80 grid of 10,240
 positions and the kit's land/sea mask) and builds a general way to turn any suitable gridded map
-into a buildable mosaic. A map is a land layer plus an ocean layer, each either data-driven or a
-shaded background, described by a recipe file. Read `docs/vision.md` before planning a feature; the
-rules are in `.specify/memory/constitution.md`.
+into a buildable mosaic. Since constitution 3.0.0 other templates (a projection on a rectangular
+board of 16×16 modules, with margin studs off the globe) are allowed once the owner confirms their
+layout; the kit template never changes. The first, Winkel tripel on the kit's board, was
+confirmed by the project owner on 2026-11-24 (feature 016, below). A map is a land layer plus an ocean layer, each either
+data-driven or a shaded background, described by a recipe file. Read `docs/vision.md` before
+planning a feature; the rules are in `.specify/memory/constitution.md`.
 
 The kit reference data in `cli/src/lego_image_processor/data/` is cited (feature 003, see
 `specs/003-kit-reference-data/` and each data file's `source` block). Land is the white 1×1 round
@@ -71,7 +74,7 @@ as hung; `layout arrange` re-hangs any layout without recomputing.
 The web site (feature 008, see `specs/008-web-app/` and `docs/deploy.md`) shows the eight bundled
 maps in combinations A, B and C and offers every build file. `web/` (package `web98138`, FastAPI +
 Jinja2, no cookies; works without JS, one first-party script since 015) has two halves: `python -m web98138.prebuild --out DIR [--fetch]` builds
-all 24 variants with the CLI library (`build_map`, `write_preview`, `build_parts_list`, exports,
+all 24 kit variants (and, since 016, 5 Winkel tripel versions) with the CLI library (`build_map`, `write_preview`, `build_parts_list`, exports,
 `build_sheet_set`/`render_pdf`) plus `manifest.json` (sizes, SHA-256, tool and dataset versions,
 page data); the service (`web98138.app`, `WEB98138_SITE_DIR=DIR uvicorn web98138.app:app`) only
 serves that output and never imports `lego_image_processor`. The `Dockerfile` (two stages) runs the
@@ -127,6 +130,37 @@ unchanged. The web prebuild writes `variants[].leftovers` and `summary.left_over
 kit) and the map page shows them. Site background `--bg: #e9e9e9`; every stud preview sits on a
 `--stud-mat` of the same gray, so White studs show.
 
+Map templates (feature 016, see `specs/016-map-templates/`): a template is a projection, a board of
+whole 16×16 modules, a layout of land (L), ocean (O) and margin (M, off the globe) studs, one part
+per class and a frame. Code: `templates/` (`load_template`, `list_templates`, `confirmed_templates`,
+`compatibility`). The kit, `kit-31203`, is defined in code and is the default; its outputs stay
+byte-for-byte the same, checked by the kit golden (`cli/tests/fixtures/golden/kit_outputs.json`,
+`web/tests/fixtures/kit_variants_golden.json`; rewrite them only from an unmodified `main`). Other
+templates are package data, `data/templates/<id>.json` (projection, fit, classes, stud locations,
+source dataset, corrections, confirmation) with `<id>-ice.json` (ice studs for `map cells`).
+`winkel-tripel`: Winkel tripel (φ1 50.4598°, λ0 11.1° E) fitted in the kit's 8 × 5 modules, land
+and ocean from ETOPO 2022: 2,553 land, 5,691 ocean, 1,996 margin studs (outline ring 288),
+arrangement A only. The project owner confirmed it as generated, with no corrections, on
+2026-11-24; the confirmation is recorded as the role "project owner" and the date, never a name.
+Commands: `template list|show|locate`; `map build|check|cells --template ID --margin-color KEY
+--ring-color KEY|none`; recipe keys `template` and `[margin]` (`color`, default `lego_black`;
+optional `ring`). Margin studs are the 1×1 square tile 3070b (`part_type` `square_tile`; BrickLink
+item 3070, Rebrickable 3070b; 48 cited colors in `part_colors.json`), drawn square in previews (Black
+margin studs take the preview's pure-black background, in `preview.png` and the palette chooser) and
+sheets and counted in parts lists, exports and estimates (one kit supplies none; leftovers list kit
+elements only). Layouts record `metadata.template` (absent = kit). `layout arrange`, arrangements B
+and C, and `official-31203` (the kit design) are errors on a non-kit template. Maintainer tool,
+from `cli/` (pyproj `>=3.7,<3.8`, maintainer group only): `PYTHONPATH=tools python -m
+maptemplates` with `generate ID` (candidate, review sheet and flags in `<cache>/templates/`),
+`review ID`, `write ID [--corrections FILE] [--confirmed-on DATE]`, `build ID --check`, `ice-mask
+ID [--check]`, `kit-golden [--fixtures] --out FILE`. Tests build on `confirmed_winkel` (the package file), test
+the refusal on `unconfirmed_winkel` (a copy without the confirmation) and use the synthetic fixture
+`cli/tests/fixtures/templates/`. The web prebuild's
+`--templates LIST|none` (default: every confirmed template) adds a Winkel version of five maps
+(`official-31203-bathymetry`, `ocean-sst`, `land-elevation`, `living-planet`, `rainfall`) at
+`/maps/<map>/winkel-tripel` (manifest `templates`, `maps[].template_variants`); kit variants are
+unchanged. Contracts: `specs/016-map-templates/contracts/`.
+
 1. **Python CLI** (`cli/`, package `lego_image_processor`), written to be released as open source.
 2. **Web application** (`web/`) on Fly.io at 98138.world. It calls the CLI library at build time and
    never duplicates its logic; the runtime image has no CLI dependencies.
@@ -138,8 +172,9 @@ kit) and the map page shows them. Site background `--bg: #e9e9e9`; every stud pr
   (kit reference data, part colors), `datasets/` (registry, verified cache, readers), `maps/`
   (recipes, projection, reprojection, classification, texture, suitability, build, preview, ice regions and chooser cells; feature 015),
   `parts/` (parts lists, cited IDs, marketplace exports; feature 005), `sheets/` (build sheets:
-  sections, page model, PDF and SVG backends, per-section counts; feature 006), `cli/` (Click commands), `data/` (runtime reference data, shipped with the package).
-- `cli/tools/`: maintainer-only tools (`kit31203` incl. `ice-mask`, `partcolors`, `fixtures004`), not packaged.
+  sections, page model, PDF and SVG backends, per-section counts; feature 006), `templates/` (map templates: the kit
+  grid, Winkel tripel, boards, stud locations; feature 016), `cli/` (Click commands), `data/` (runtime reference data, shipped with the package).
+- `cli/tools/`: maintainer-only tools (`kit31203` incl. `ice-mask`, `partcolors`, `fixtures004`, `fixtures011`, `maptemplates`, `projection_study`), not packaged.
 - `cli/tests/`: `unit/`, `integration/`, `contract/` (CLI I/O), `fixtures/`.
 - `web/`: `src/web98138/` (`prebuild.py`, `catalog.py`, `app.py`, `templates/`, `static/`, incl. `palette.js`),
   `scripts/prebuild.py`, `tests/` (offline; a session fixture prebuilds `official-31203` and

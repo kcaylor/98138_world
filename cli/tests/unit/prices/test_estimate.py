@@ -207,3 +207,48 @@ def test_parts_does_not_import_prices():
                 assert "prices" not in (node.module or ""), py.name
             elif isinstance(node, ast.Import):
                 assert not any("prices" in a.name for a in node.names), py.name
+
+
+# --- square tiles (feature 016 T064; spec Edge Cases, research R15) -----------------------------
+
+FIXTURE_3070B = FIXTURE_SNAPSHOT.parent / "bricklink_price_guide_3070b.json"
+
+
+def test_winkel_estimate_is_incomplete_without_square_tile_prices(confirmed_winkel):
+    from ...winkel_layouts import winkel_grid
+    grid = winkel_grid(confirmed_winkel)
+    r = _report(grid, load_snapshot(FIXTURE_SNAPSHOT))
+    n = confirmed_winkel.counts["margin"]
+    for kind in ("full", "one_kit"):
+        e = r.estimates[kind]
+        assert not e.complete
+        un = e.unpriced_lines
+        assert [(l.lot.part_id, l.lot.part_type, l.lot.color_key, l.quantity, l.reason) for l in un] == \
+            [("3070b", "square_tile", "lego_black", n, REASON_NOT_IN_SNAPSHOT)]
+        d = e.to_dict()
+        assert d["complete"] is False and d["unpriced"][0]["part_id"] == "3070b"
+        line = d["lines"][-1]
+        assert (line["part_type"], line["basis"], line["reason"]) == ("square_tile", "unpriced",
+                                                                     REASON_NOT_IN_SNAPSHOT)
+    assert r.to_dict()["layout"]["template"]["id"] == "winkel-tripel"
+    assert any("could not be priced" in note for note in r.notes)
+
+
+def test_winkel_estimate_is_complete_with_the_3070b_fixture(confirmed_winkel):
+    from ...winkel_layouts import winkel_grid
+    snap = load_snapshot(FIXTURE_3070B)
+    r = _report(winkel_grid(confirmed_winkel), snap)
+    full = r.estimates["full"]
+    assert full.complete and r.estimates["one_kit"].complete and full.pieces == 10240
+    sq = [l for l in full.lines if l.lot.part_id == "3070b"]
+    assert len(sq) == 1 and sq[0].basis == "sold"
+    unit = snap.lot_for("3070b", 26).figures.qty_avg_price
+    assert sq[0].line[0] == unit * confirmed_winkel.counts["margin"]
+
+
+def test_kit_estimates_unchanged_by_the_square_tile_fixture():
+    grid = load_official_design().to_layout()
+    a = _report(grid, load_snapshot(FIXTURE_SNAPSHOT)).to_dict()
+    b = _report(grid, load_snapshot(FIXTURE_3070B)).to_dict()
+    assert a["estimates"] == b["estimates"] and a["notes"] == b["notes"] and a["layout"] == b["layout"]
+    assert "template" not in a["layout"]

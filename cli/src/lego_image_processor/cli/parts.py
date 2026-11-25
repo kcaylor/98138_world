@@ -16,9 +16,10 @@ from ..kit.inventory import UnsupportedKitError, check_kit_id
 from ..kit.source import DISCLAIMER
 from ..parts import (ACKNOWLEDGEMENT, BRICKLINK_UPLOAD_NOTE, PRICE_NOTE, LayoutInputError,
                      OwnedFileError, OwnedInputs, PartsList, UnverifiedLotsError, blocking_lots,
-                     build_parts_list, parse_owned_csv, parse_percent, read_layout,
+                     build_parts_list, owned_parts, parse_owned_csv, parse_percent, read_layout,
                      to_bricklink_xml, to_rebrickable_csv)
 from ..parts.owned import percent_text
+from ..parts.partslist import PART_TYPE_TEXT
 from .map import CommandError, _table
 
 NOTHING_TO_BUY = "Nothing to buy: the owned parts cover this layout."
@@ -62,9 +63,11 @@ def _load(layout_path: Path, kit_id: str, kits: int, owned_files: Sequence[Path]
     try:
         check_kit_id(kit_id)
         layout = read_layout(layout_path)
+        # the layout's map parts: a kit layout's CSVs ignore square-tile rows, as before 016 (T110)
+        parts = owned_parts(layout.grid)
         owned = OwnedInputs(kits=kits,
-                            owned_files=tuple(parse_owned_csv(p) for p in owned_files),
-                            missing_files=tuple(parse_owned_csv(p) for p in missing_files),
+                            owned_files=tuple(parse_owned_csv(p, parts=parts) for p in owned_files),
+                            missing_files=tuple(parse_owned_csv(p, parts=parts) for p in missing_files),
                             spares_percent=spares)
         return build_parts_list(layout, owned=owned, kit_id=kit_id)
     except (LayoutInputError, OwnedFileError, UnsupportedKitError) as exc:
@@ -89,6 +92,15 @@ def _describe_inputs(pl: PartsList, echo) -> None:
     arr = lay.get("arrangement") or {}
     if arr.get("id", "A") != "A":
         echo(f"Arrangement: {arr['id']} ({arr['name']}). {arr['note']}")
+    echo_template(lay, echo)
+
+
+def echo_template(layout_block, echo) -> None:
+    """The template line of a non-kit layout (feature 016); nothing for the kit template."""
+    t = layout_block.get("template")
+    if t:
+        echo(f"Template: {t['id']} ({t['title']}); margin in 1x1 square tiles (part 3070b), which kit "
+             "31203 does not have")
 
 
 def _lot_rows(pl: PartsList, all_columns: bool) -> List[List[str]]:
@@ -104,7 +116,7 @@ def _lot_rows(pl: PartsList, all_columns: bool) -> List[List[str]]:
             bl = rb = "unverified"
             lego = f"{l.layout_color_name} ({l.layout_color_code})"
             element = "-"
-        row = [l.part_type, lego, bl, f"{l.needed:,}", f"{l.owned:,}", f"{l.to_buy:,}"]
+        row = [PART_TYPE_TEXT[l.part_type], lego, bl, f"{l.needed:,}", f"{l.owned:,}", f"{l.to_buy:,}"]
         if all_columns:
             row += [element, rb, f"{l.kit_supply:,}", f"{l.loose:,}", f"{l.spares:,}", f"{l.surplus:,}"]
         rows.append(row)
@@ -138,7 +150,7 @@ def echo_parts_list(pl: PartsList, all_columns: bool = False, echo=click.echo) -
         echo(f"Warning: {len(pl.unverified_lots)} unverified lot(s) have no cited marketplace IDs "
              "and cannot be exported without --allow-partial:")
         for l in pl.unverified_lots:
-            echo(f"  {l.part_type} {l.part_id} {l.layout_color_name} (code {l.layout_color_code}, "
+            echo(f"  {PART_TYPE_TEXT[l.part_type]} {l.part_id} {l.layout_color_name} (code {l.layout_color_code}, "
                  f"key {l.color_key}): {l.reason}; {l.needed:,} needed")
     echo(PRICE_NOTE)
     echo("Sources:")
@@ -232,7 +244,8 @@ def export_cmd(layout_path, bricklink_path, rebrickable_path, condition, allow_p
     if omitted:
         echo(f"Omitted {len(omitted)} unverified lot(s) (no cited marketplace IDs):")
         for l in omitted:
-            echo(f"  {l.part_type} {l.layout_color_name} ({l.color_key}): {l.reason}; {l.to_buy:,} to buy")
+            echo(f"  {PART_TYPE_TEXT[l.part_type]} {l.layout_color_name} ({l.color_key}): {l.reason}; "
+                 f"{l.to_buy:,} to buy")
     echo(PRICE_NOTE)
     echo(ACKNOWLEDGEMENT)
     echo(DISCLAIMER)

@@ -1,5 +1,7 @@
 """Per-cell chooser data (feature 015, FR-001, FR-004, FR-005; SC-001)."""
 
+import json
+
 import numpy as np
 import pytest
 
@@ -18,12 +20,17 @@ def _build(rid, arrangement=None):
 
 
 def _default_colors(cells):
-    """The default chooser rendering: each cell's color key (the script does the same)."""
+    """The default chooser rendering: each cell's color key (the script does the same). Feature 016:
+    a margin cell (``M``) takes the ring color on the ring, the margin color elsewhere."""
     out = []
     kinds = cells["cells"]
     layers = cells["layers"]
+    margin = cells.get("margin") or {}
+    ring = set((margin.get("ring") or {}).get("cells", ()))
     for i, k in enumerate(kinds):
-        if k == "S":
+        if k == "M":
+            out.append(margin["ring"]["color"] if i in ring else margin["color"])
+        elif k == "S":
             out.append(cells["shadow"]["color"])
         else:
             layer = layers["land" if k == "L" else "ocean"]
@@ -101,10 +108,17 @@ class TestDefaultEqualsBuild:
             assert _default_colors(map_cells(r)) == _layout_colors(r)
 
     def test_does_not_change_layout(self, placed):
+        def stable(layout):  # generated_at has one-second resolution; two builds may differ
+            d = json.loads(layout.to_json())
+            d.get("metadata", {}).pop("generated_at", None)
+            d.pop("generated_at", None)
+            return d
+
         r = _build("ocean-sst")
         before = r.layout.to_json()
         map_cells(r)
-        assert r.layout.to_json() == before == _build("ocean-sst").layout.to_json()
+        assert r.layout.to_json() == before
+        assert stable(r.layout) == stable(_build("ocean-sst").layout)
 
 
 class TestDataLayers:
@@ -174,3 +188,121 @@ def test_log10_layer_units_say_log10(placed):
     """living-planet's chlorophyll is classified on log10: the chooser's numbers and label agree."""
     ocean = map_cells(_build("living-planet"))["layers"]["ocean"]
     assert ocean["transform"] == "log10" and ocean["units"].startswith("log10")
+
+
+class TestPaletteParts:
+    """016 T014: the palette lists the template's parts; kit cells.json keeps 6141 and 98138 only."""
+
+    def test_default_is_the_kit_parts(self):
+        from lego_image_processor.maps.cells import part_palette
+        assert list(part_palette()) == ["6141", "98138"]
+        assert list(part_palette(("6141", "98138", "3070b"))) == ["6141", "98138", "3070b"]
+        assert any(r["key"] == "lego_black" for r in part_palette(("3070b",))["3070b"])
+
+    def test_kit_cells_have_no_square_tile(self):
+        c = map_cells(_build("official-31203"))
+        assert list(c["palette"]) == ["6141", "98138"]
+
+
+# --- Feature 016 (T079): map cells on a template (FR-020a; contracts/recipe-and-outputs.md) -----
+
+class TestTemplateCells:
+    """``map_cells`` on ``confirmed_winkel`` with the dataset fixtures: ``M`` cells, the ``template``
+    and ``margin`` blocks, the 3070b palette and the template's own ice regions."""
+
+    def _build(self, rid, template, **kw):
+        return build_map(load_recipe(rid), compare_official=False, template=template, **kw)
+
+    def test_cells_classes_and_counts(self, placed, confirmed_winkel):
+        t = confirmed_winkel
+        r = self._build("ocean-sst", t)
+        c = map_cells(r)
+        kinds = np.array(list(c["cells"])).reshape(80, 128)
+        assert (kinds == "M").sum() == t.counts["margin"]
+        assert ((kinds == "M") == t.margin).all()
+        assert ((kinds == "L") == t.land).all()
+        assert (np.isin(kinds, ["O", "S"]) == t.ocean).all()
+        assert c["shadow"]["cells"] == int((kinds == "S").sum()) > 0
+        assert c["arrangement"] == "A" and c["width"] == 128 and c["height"] == 80
+        for name, layer in c["layers"].items():
+            cls = np.array(layer["classes"]).reshape(80, 128)
+            assert (cls[t.margin] == -1).all(), name
+            if layer.get("values") is not None:
+                assert all(layer["values"][i] is None for i in np.flatnonzero(t.margin.ravel())), name
+        assert c["layers"]["land"]["cells"] == t.counts["land"]
+        assert c["layers"]["ocean"]["cells"] == t.counts["ocean"] - c["shadow"]["cells"]
+
+    def test_template_block_cites_etopo(self, placed, confirmed_winkel):
+        from lego_image_processor.datasets.registry import load_registry
+        from lego_image_processor.templates import PACKAGED_REGISTRY
+
+        c = map_cells(self._build("ocean-sst", confirmed_winkel))
+        e = load_registry(PACKAGED_REGISTRY).get("etopo2022-surface-10m")
+        assert c["template"] == {"id": "winkel-tripel", "title": confirmed_winkel.title,
+                                 "dataset": {"id": e.id, "version": e.version, "citation": e.citation,
+                                             "license": e.license}}
+        assert list(c).index("template") == list(c).index("arrangement") + 1
+
+    def test_margin_block(self, placed, confirmed_winkel):
+        from lego_image_processor.maps.margin import MarginTreatment
+
+        c = map_cells(self._build("ocean-sst", confirmed_winkel))
+        assert c["margin"] == {"part_id": "3070b", "color": "lego_black", "ring": None}
+        assert list(c).index("margin") == list(c).index("shadow") + 1
+        r = self._build("ocean-sst", confirmed_winkel,
+                        margin=MarginTreatment(color="lego_white", ring="lego_bright_yellow"))
+        c = map_cells(r)
+        ring = [int(i) for i in np.flatnonzero(confirmed_winkel.ring.ravel())]
+        assert c["margin"] == {"part_id": "3070b", "color": "lego_white",
+                               "ring": {"color": "lego_bright_yellow", "cells": ring}}
+        assert len(ring) == confirmed_winkel.counts["ring"]
+
+    def test_palette_adds_the_square_tile(self, placed, confirmed_winkel):
+        from lego_image_processor.kit.part_colors import load_part_colors
+
+        c = map_cells(self._build("ocean-sst", confirmed_winkel))
+        assert list(c["palette"]) == ["6141", "98138", "3070b"]
+        rows = c["palette"]["3070b"]
+        assert len(rows) == len(load_part_colors().for_part("3070b"))
+        ls = [x["lightness"] for x in rows]
+        assert ls == sorted(ls, reverse=True)
+        black = next(x for x in rows if x["key"] == "lego_black")
+        assert black["in_kit"] is False and black["lightness"] < 20
+
+    def test_ice_from_the_template_file(self, placed, confirmed_winkel):
+        from lego_image_processor.maps.ice import load_template_ice
+
+        c = map_cells(self._build("ocean-sst", confirmed_winkel))
+        ice = load_template_ice(confirmed_winkel)
+        assert c["ice"]["land"] == [int(i) for i in np.flatnonzero(ice.land.ravel())]
+        assert c["ice"]["sea"] == [int(i) for i in np.flatnonzero(ice.sea.ravel())]
+        assert c["ice"]["color"] == "lego_white"
+        assert c["ice"]["source"]["sea_ice"]["dataset"]["id"] == "ersst-v5-ltm-1991-2020"
+        kinds = c["cells"]
+        assert all(kinds[i] == "L" for i in c["ice"]["land"])
+        assert all(kinds[i] in "OS" for i in c["ice"]["sea"])
+
+    @pytest.mark.parametrize("rid", ["ocean-sst", "land-elevation", "official-31203-bathymetry"])
+    def test_default_rendering_equals_layout(self, placed, confirmed_winkel, rid):
+        r = self._build(rid, confirmed_winkel)
+        assert _default_colors(map_cells(r)) == _layout_colors(r)
+
+    def test_default_rendering_with_a_ring(self, placed, confirmed_winkel):
+        from lego_image_processor.maps.margin import MarginTreatment
+
+        r = self._build("ocean-sst", confirmed_winkel, margin=MarginTreatment(ring="lego_white"))
+        assert _default_colors(map_cells(r)) == _layout_colors(r)
+
+    @pytest.mark.parametrize("rid", ["living-planet", "rainfall"])
+    def test_recipes_with_no_data_and_overrides(self, placed, confirmed_winkel, rid):
+        c = map_cells(self._build(rid, confirmed_winkel))
+        assert len(c["cells"]) == 10240 and c["cells"].count("M") == confirmed_winkel.counts["margin"]
+        for name, layer in c["layers"].items():
+            if layer.get("range") is not None:
+                lo, hi = layer["range"]
+                assert np.isfinite(lo) and np.isfinite(hi) and lo <= hi, name
+
+    def test_kit_cells_have_no_template_keys(self, placed):
+        c = map_cells(_build("ocean-sst"))
+        assert "template" not in c and "margin" not in c
+        assert "M" not in c["cells"] and list(c["palette"]) == ["6141", "98138"]

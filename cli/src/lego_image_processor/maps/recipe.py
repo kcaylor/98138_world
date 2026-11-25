@@ -17,6 +17,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 from ..datasets.registry import DatasetEntry, load_registry
 from ..kit.part_colors import load_part_colors
 from ..layout.arrangement import Arrangement, ArrangementError, parse_arrangement, valid_values
+from .margin import DEFAULT_MARGIN_COLOR, MarginTreatment, color_rule, ring_rule
 
 FORMAT = "1"
 DEFAULT_SEED = 31203
@@ -43,7 +44,9 @@ LOCAL_FORMATS = ("netcdf3", "npy", "dods")
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{1,63}$")
 
 _TOP_KEYS = {"format", "id", "title", "description", "seed", "arrangement", "land", "ocean", "shadow",
-             "sticker"}
+             "template", "margin",  # feature 016: template, margin
+             "sticker"}  # feature 017: the [sticker] table
+_MARGIN_KEYS = {"color", "ring"}  # feature 016 (labels are feature 017)
 _SHADOW_KEYS = {"enabled", "color", "direction"}
 _DATA_KEYS = {"role", "colors", "dataset", "local", "variable", "transform", "classification", "texture",
               "no_data", "sampling", "override", "legend"}
@@ -235,6 +238,8 @@ class Recipe:
     path: Optional[Path] = None
     shadow: Shadow = Shadow()
     arrangement: Optional[Arrangement] = None  # feature 009: the recipe's default; None = key absent
+    template: Optional[str] = None  # feature 016: a known template id; None = key absent (the kit)
+    margin: Optional[MarginTreatment] = None  # feature 016: the [margin] table; None = table absent
     sticker: Optional[StickerText] = None      # feature 017: the [sticker] table; None = absent
 
     @property
@@ -724,10 +729,48 @@ def _parse(data: Dict[str, Any], raw: bytes, path: Optional[Path], base_dir: Pat
     ocean = _layer(data["ocean"], "ocean", base_dir)
     shadow = _shadow(data.get("shadow"))
     arrangement = _arrangement(data.get("arrangement"))
+    template = _template(data.get("template"))
+    margin = _margin(data.get("margin"))
     sticker = _sticker(data.get("sticker"), (land, ocean))
     return Recipe(format=fmt, id=rid, title=title, description=description, seed=seed, land=land,
                   ocean=ocean, sha256=hashlib.sha256(raw).hexdigest(), path=path, shadow=shadow,
-                  arrangement=arrangement, sticker=sticker)
+                  arrangement=arrangement, template=template, margin=margin, sticker=sticker)
+
+
+def _template(v: Any) -> Optional[str]:
+    """The optional top-level ``template`` (feature 016, FR-006): a known template id. A template
+    the owner has not confirmed parses but does not build (FR-004)."""
+    if v is None:
+        return None
+    from ..templates import confirmed_text, template_ids
+
+    if not isinstance(v, str) or not v:
+        raise RecipeError("template", f"must be a template id string; confirmed templates: {confirmed_text()}")
+    if v not in template_ids():
+        raise RecipeError("template", f"unknown template {v!r}; confirmed templates: {confirmed_text()}")
+    return v
+
+
+def _margin(t: Any) -> Optional[MarginTreatment]:
+    """The optional ``[margin]`` table (feature 016, research R12): ``color`` (a 3070b color, default
+    Black) and an optional ``ring`` color that must differ from it. Used only on non-kit templates."""
+    if t is None:
+        return None
+    if not isinstance(t, dict):
+        raise RecipeError("margin", "must be a table with color and ring (1x1 square tile colors, part 3070b)")
+    _check_keys(t, _MARGIN_KEYS, "margin")
+    color = t.get("color", DEFAULT_MARGIN_COLOR)
+    rule = color_rule(color)
+    if rule is not None:
+        raise RecipeError("margin.color", rule)
+    ring = t.get("ring")
+    if ring is not None:
+        rule = color_rule(ring)
+        if rule is not None:
+            raise RecipeError("margin.ring", rule)
+        if ring == color:
+            raise RecipeError("margin.ring", ring_rule(ring, color))
+    return MarginTreatment(color=color, ring=ring)
 
 
 def _arrangement(v: Any) -> Optional[Arrangement]:

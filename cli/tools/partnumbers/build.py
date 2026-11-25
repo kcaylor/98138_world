@@ -1,6 +1,7 @@
 """Build ``data/part_numbers.json`` from pinned archived BrickLink and Rebrickable part pages.
 
-For each of the kit's two map parts (project IDs 6141 plate, 98138 tile) the tool reads:
+For each map part (project IDs 6141 plate and 98138 tile, the kit's two map parts; since feature
+016 also 3070b, the 1x1 square tile of template margins, which is not in the kit) the tool reads:
 
 - the BrickLink catalog page (Internet Archive raw copy): catalog name, item number, alternate item
   numbers and the color list of the page's "All" color tab (BrickLink color IDs and names);
@@ -15,6 +16,13 @@ Consistency rules (any failure stops the build):
 4. The BrickLink item number is one of the kit inventory's ``part_ids`` for the part (003 data).
 5. LEGO design IDs = the project part ID plus the kit inventory's design IDs for the part, each
    listed by Rebrickable under "LEGO".
+
+Rules 4 and 5 are kit rules. For a part that is not in the kit (3070b; feature 016 research R10)
+they are replaced by: rule 2 (the BrickLink item number is the project ID or lists it as an
+alternate) and LEGO design IDs = the IDs Rebrickable lists under "LEGO" (3070b is LEGO design 3070,
+so the design IDs need not include the project ID). BrickLink files 3070b as an alternate of item
+3070; the catalog URL for 3070b itself has redirected to a not-found page since 2024, so the
+pinned BrickLink page is item 3070's.
 
 Pages are pinned by URL and SHA-256 of the decoded HTML; they live in the maintainer cache
 (``<cache>/sources/partnumbers/``), never in the repository. Rebrickable's terms forbid scraping
@@ -53,8 +61,18 @@ PAGES: Tuple[Dict[str, str], ...] = (
      "title": "Rebrickable part 98138, Tile Round 1 x 1 (Internet Archive copy of 2025-03-03)",
      "url": "http://web.archive.org/web/20250303234033id_/https://rebrickable.com/parts/98138/",
      "sha256": "4195c1bd0c0b0b5b01384f397e45be2737739a4b34d13dc942eeb9f1475a2fac", "accessed": ACCESSED},
+    # Feature 016: the 1x1 square tile 3070b (template margins; not in the kit), accessed 2026-11-23.
+    {"id": "bricklink-3070", "kind": "bricklink", "part": "3070b", "file": "bricklink-3070.html",
+     "title": "BrickLink catalog item 3070, Tile 1 x 1 (Internet Archive copy of 2026-01-01)",
+     "url": "http://web.archive.org/web/20260101103331id_/https://www.bricklink.com/v2/catalog/catalogitem.page?P=3070",
+     "sha256": "946c7d105215f2123a79fe8d23f2c0f4ce8de846fdfebad725c9177f936b7c2d", "accessed": "2026-11-23"},
+    {"id": "rebrickable-3070b", "kind": "rebrickable", "part": "3070b", "file": "rebrickable-3070b.html",
+     "title": "Rebrickable part 3070b, Tile 1 x 1 with Groove (Internet Archive copy of 2026-03-04)",
+     "url": "http://web.archive.org/web/20260304062629id_/https://rebrickable.com/parts/3070b/",
+     "sha256": "8d954b6f7e30f072137354039eed32ccc0a31a8f6283030bfdd17baf68cbee5a", "accessed": "2026-11-23"},
 )
-PARTS = ("6141", "98138")
+PARTS = ("6141", "98138", "3070b")
+KIT_PARTS = ("6141", "98138")   # the two kit-inventory rules apply to these only
 ROLE_FOR_PART = {"6141": "land", "98138": "ocean"}
 USER_AGENT = "lego-image-processor maintainer tool (archived page fetch)"
 
@@ -242,7 +260,7 @@ def build(texts: Mapping[str, str], inventory: Mapping[str, Any], generated_on: 
     for p in pages:
         by_part.setdefault(p["part"], {})[p["kind"]] = p
     parts: Dict[str, Any] = {}
-    for part in PARTS:
+    for part in (p for p in PARTS if p in by_part):
         blp, rbp = by_part[part]["bricklink"], by_part[part]["rebrickable"]
         bl = parse_bricklink_part(texts[blp["id"]])
         rb = parse_rebrickable_part(texts[rbp["id"]])
@@ -254,17 +272,22 @@ def build(texts: Mapping[str, str], inventory: Mapping[str, Any], generated_on: 
         if bl["item_no"] not in rb["external"].get("BrickLink", []):
             raise BuildError(f"{rbp['id']}: Rebrickable's BrickLink cross-reference "
                              f"{rb['external'].get('BrickLink')} does not list {bl['item_no']}")
-        kit = _kit_elements(inventory, part)
-        if not kit or any(bl["item_no"] not in e["part_ids"] for e in kit):
-            raise BuildError(f"kit inventory part_ids for {part} do not list BrickLink {bl['item_no']}")
-        design_ids: List[str] = [part]
-        for e in kit:
-            if e.get("design_id") and e["design_id"] not in design_ids:
-                design_ids.append(e["design_id"])
         lego = rb["external"].get("LEGO", [])
-        for d in design_ids:
-            if d not in lego:
-                raise BuildError(f"{rbp['id']}: LEGO design {d} is not in Rebrickable's LEGO list {lego}")
+        if part in KIT_PARTS:
+            kit = _kit_elements(inventory, part)
+            if not kit or any(bl["item_no"] not in e["part_ids"] for e in kit):
+                raise BuildError(f"kit inventory part_ids for {part} do not list BrickLink {bl['item_no']}")
+            design_ids: List[str] = [part]
+            for e in kit:
+                if e.get("design_id") and e["design_id"] not in design_ids:
+                    design_ids.append(e["design_id"])
+            for d in design_ids:
+                if d not in lego:
+                    raise BuildError(f"{rbp['id']}: LEGO design {d} is not in Rebrickable's LEGO list {lego}")
+        else:  # not in the kit (016 R10): the LEGO design IDs Rebrickable lists
+            design_ids = list(dict.fromkeys(lego))
+            if not design_ids:
+                raise BuildError(f"{rbp['id']}: Rebrickable lists no LEGO design ID for {part}")
         parts[part] = {
             "name": bl["name"],
             "lego_design_ids": design_ids,
@@ -275,7 +298,8 @@ def build(texts: Mapping[str, str], inventory: Mapping[str, Any], generated_on: 
     return {
         "format_version": "1",
         "source": {
-            "title": "Marketplace part numbers for the kit's map parts",
+            "title": "Marketplace part numbers for the map parts (the kit's plate and tile; the "
+                     "square tile of template margins)",
             "generator": "tools/partnumbers build",
             "generated_on": generated_on,
             "pages": [{k: p[k] for k in ("id", "title", "url", "sha256", "accessed")} for p in pages],
@@ -287,10 +311,15 @@ def build(texts: Mapping[str, str], inventory: Mapping[str, Any], generated_on: 
                 "LEGO design IDs are the project part ID plus the kit inventory's design IDs for the "
                 "part, each listed by Rebrickable under LEGO.",
                 "BrickLink colors are the color names of the catalog page's All tab.",
+                "For a part that is not in the kit (3070b), the two kit-inventory rules are replaced: "
+                "the project part ID is the BrickLink item number or one of its alternates, and the "
+                "LEGO design IDs are those Rebrickable lists under LEGO.",
             ],
             "notes": "SHA-256 of the decoded HTML of the Internet Archive raw copy. Archived copies "
                      "are used because BrickLink's site redirected to a maintenance page on "
-                     "2026-11-22 and Rebrickable's terms forbid scraping its live pages.",
+                     "2026-11-22 and Rebrickable's terms forbid scraping its live pages. BrickLink "
+                     "files 3070b as an alternate of item 3070 (its own catalog URL has led to a "
+                     "not-found page since 2024), so item 3070's page is pinned for it.",
             "disclaimer": DISCLAIMER,
         },
         "parts": parts,

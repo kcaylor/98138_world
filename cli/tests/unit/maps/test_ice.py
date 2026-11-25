@@ -131,3 +131,123 @@ class TestPackaged:
         ice = derive_ice_regions(grid, land=land, projection=proj)
         assert (ice.land == land_ice_mask(land, proj)).all()
         assert not ice.sea[1:].any()     # row 0 (beyond 89° N) has no source value
+
+
+# --- Feature 016 (T077): a template's ice regions, data/templates/<id>-ice.json -------------
+
+class TestTemplateIce:
+    """``load_template_ice(template)`` (FR-020a/b; contracts/template-file.md "Ice file")."""
+
+    def _paths(self, template):
+        return template.path, template.path.with_name(f"{template.id}-ice.json")
+
+    def test_reads_the_template_ice_file(self, synthetic_template):
+        from lego_image_processor.maps.ice import load_template_ice
+
+        t = synthetic_template
+        _, ice_path = self._paths(t)
+        data = json.loads(ice_path.read_text(encoding="utf-8"))
+        ice = load_template_ice(t)
+        assert isinstance(ice, IceRegions)
+        assert ice.land.shape == ice.sea.shape == (t.height, t.width)
+        assert np.flatnonzero(ice.land.ravel()).tolist() == data["land_ice"]["cells"]
+        assert np.flatnonzero(ice.sea.ravel()).tolist() == data["sea_ice"]["cells"]
+        assert not (ice.land & ~t.land).any() and not (ice.sea & ~t.ocean).any()
+        assert ice.source["template_layout_sha256"] == t.layout_sha256
+        assert ice.rolled(parse_arrangement("A")).land.tolist() == ice.land.tolist()
+
+    def test_kit_gets_the_kit_file(self):
+        from lego_image_processor.maps.ice import load_template_ice
+        from lego_image_processor.templates import kit_template
+
+        assert load_template_ice(kit_template()) is load_ice_regions()
+
+    def test_refuses_another_layout(self, synthetic_template):
+        from lego_image_processor.maps.ice import TemplateIceError, load_template_ice
+
+        _, ice_path = self._paths(synthetic_template)
+        data = json.loads(ice_path.read_text(encoding="utf-8"))
+        data["source"]["template_layout_sha256"] = "f" * 64
+        ice_path.write_text(json.dumps(data), encoding="utf-8")
+        with pytest.raises(TemplateIceError, match="template_layout_sha256") as e:
+            load_template_ice(synthetic_template)
+        assert "ice-mask winkel-tripel" in str(e.value)
+        assert isinstance(e.value, ValueError)
+
+    def test_a_copy_that_differs_only_in_confirmation(self, synthetic_template, tmp_path):
+        from lego_image_processor.maps.ice import load_template_ice
+        from lego_image_processor.templates import load_template_file
+        from maptemplates.testing import confirmed_copy
+
+        src = synthetic_template.path.parent
+        copy = confirmed_copy(src, tmp_path / "other", "2027-01-31")
+        other = load_template_file(copy)
+        assert other.file_sha256 != synthetic_template.file_sha256
+        assert other.layout_sha256 == synthetic_template.layout_sha256
+        a, b = load_template_ice(synthetic_template), load_template_ice(other)
+        assert (a.land == b.land).all() and (a.sea == b.sea).all()
+
+    def test_missing_file(self, synthetic_template):
+        from lego_image_processor.maps.ice import TemplateIceError, load_template_ice
+
+        _, ice_path = self._paths(synthetic_template)
+        ice_path.unlink()
+        with pytest.raises(TemplateIceError, match="winkel-tripel-ice.json") as e:
+            load_template_ice(synthetic_template)
+        assert "ice-mask winkel-tripel" in str(e.value)
+
+    @pytest.mark.parametrize("change, rule", [
+        ("template_id", "template_id"),
+        ("land_on_ocean", "land_ice"),
+        ("sea_on_margin", "sea_ice"),
+        ("count", "count"),
+        ("disclaimer", "disclaimer"),
+        ("format", "format_version"),
+    ])
+    def test_refuses_a_broken_file(self, synthetic_template, change, rule):
+        from lego_image_processor.maps.ice import TemplateIceError, load_template_ice
+
+        t = synthetic_template
+        _, ice_path = self._paths(t)
+        data = json.loads(ice_path.read_text(encoding="utf-8"))
+        if change == "template_id":
+            data["template_id"] = "mollweide"
+        elif change == "land_on_ocean":
+            cell = int(np.flatnonzero(np.asarray(t.ocean).ravel())[0])
+            data["land_ice"]["cells"] = sorted(data["land_ice"]["cells"] + [cell])
+            data["land_ice"]["count"] += 1
+        elif change == "sea_on_margin":
+            cell = int(np.flatnonzero(np.asarray(t.margin).ravel())[0])
+            data["sea_ice"]["cells"] = sorted(data["sea_ice"]["cells"] + [cell])
+            data["sea_ice"]["count"] += 1
+        elif change == "count":
+            data["land_ice"]["count"] += 1
+        elif change == "disclaimer":
+            data["source"]["disclaimer"] = ""
+        else:
+            data["format_version"] = "2"
+        ice_path.write_text(json.dumps(data), encoding="utf-8")
+        with pytest.raises(TemplateIceError, match=rule):
+            load_template_ice(t)
+
+    def test_reloads_after_the_file_changes(self, synthetic_template):
+        from lego_image_processor.maps.ice import load_template_ice
+
+        t = synthetic_template
+        _, ice_path = self._paths(t)
+        first = load_template_ice(t)
+        data = json.loads(ice_path.read_text(encoding="utf-8"))
+        data["sea_ice"]["cells"] = data["sea_ice"]["cells"][1:]
+        data["sea_ice"]["count"] -= 1
+        ice_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        assert load_template_ice(t).sea.sum() == first.sea.sum() - 1
+
+    def test_confirmed_winkel_has_its_ice_file(self, confirmed_winkel):
+        """The test confirmation leaves the layout digest unchanged, so the copied ice file loads."""
+        from lego_image_processor.maps.ice import load_template_ice, template_ice_path
+
+        t = confirmed_winkel
+        assert t.status == "confirmed" and template_ice_path(t).is_file()
+        ice = load_template_ice(t)
+        assert ice.source["template_layout_sha256"] == t.layout_sha256
+        assert ice.land.any() and ice.sea.any()

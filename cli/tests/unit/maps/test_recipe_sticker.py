@@ -33,7 +33,8 @@ BASE = HEAD + LAND + OCEAN
 LINE = 'line = "Ocean depth on three tile colors."\n'
 ALLOWED = "credit, line, no_data, title"
 OLD_FIELDS = ["format", "id", "title", "land", "ocean", "sha256", "description", "seed", "path",
-              "shadow", "arrangement"]
+              "shadow", "arrangement",
+              "template", "margin"]   # feature 016 (merged before 017's field, T053)
 
 
 def _parse(text):

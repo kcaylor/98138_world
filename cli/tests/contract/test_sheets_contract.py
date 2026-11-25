@@ -226,3 +226,53 @@ def test_svg_rebuild_removes_stale_pages_only(runner, layouts, tmp_path):
     pages = sorted(p.name for p in out.glob("page-*.svg") if p.name != "page-cover.svg")
     assert len(pages) < 42 and pages == [f"page-{i:02d}.svg" for i in range(1, len(pages) + 1)]
     assert (out / "notes.txt").exists() and (out / "page-cover.svg").exists()
+
+
+# --- layouts on the Winkel tripel template (feature 016 T072; contracts/cli.md "Other commands") --
+
+@pytest.fixture
+def winkel_file(confirmed_winkel, tmp_path):
+    from ..winkel_layouts import winkel_grid
+    p = tmp_path / "winkel.json"
+    p.write_text(winkel_grid(confirmed_winkel).to_json(), encoding="utf-8")
+    return p
+
+
+def test_build_winkel_pdf(runner, winkel_file, confirmed_winkel, tmp_path):
+    out = tmp_path / "w.pdf"
+    r = runner.invoke(cli, ["sheets", "build", str(winkel_file), "-o", str(out)])
+    assert r.exit_code == 0, r.output
+    assert (f"Template: winkel-tripel ({confirmed_winkel.title}); arrangement A only (the frames of a "
+            "curved map cannot be re-hung)") in r.output
+    assert "Arrangement:" not in r.output
+    n = confirmed_winkel.counts["margin"]
+    assert f"10,240 pieces, {n:,} of them square tiles (part 3070b)" in r.output
+    assert _last(r.output) == DISCLAIMER
+    reader = PdfReader(io.BytesIO(out.read_bytes()))
+    assert len(reader.pages) == 42  # overview, one legend page (4 lots), 40 sections
+    text = reader.pages[0].extract_text()
+    assert "winkel-tripel" in text and "tiles 1x1 square" in text
+
+
+def test_counts_winkel(runner, winkel_file, confirmed_winkel):
+    r = runner.invoke(cli, ["sheets", "counts", str(winkel_file), "--format", "json"])
+    assert r.exit_code == 0, r.output
+    d = json.loads(r.output)
+    assert d["template"] == {"id": "winkel-tripel", "title": confirmed_winkel.title}
+    assert any(e["part_type"] == "square_tile" for e in d["legend"]) and list(d)[-1] == "disclaimer"
+    r = runner.invoke(cli, ["sheets", "counts", str(winkel_file)])
+    assert r.exit_code == 0, r.output
+    n = confirmed_winkel.counts["margin"]
+    assert f"Template winkel-tripel ({confirmed_winkel.title}): margin square tiles counted per section" in r.output
+    assert any(l.startswith("#") and "tile 1x1 square  Black (lego_black)" in l and l.endswith(f"{n:,}")
+               for l in r.output.splitlines())
+    assert _last(r.output) == DISCLAIMER
+
+
+def test_kit_sheets_output_has_no_template_wording(runner, layouts, tmp_path):
+    r = runner.invoke(cli, ["sheets", "build", str(layouts["official"]), "-o", str(tmp_path / "o.pdf")])
+    assert r.exit_code == 0
+    assert "Template" not in r.output and "square" not in r.output
+    assert "Arrangement: A (" in r.output
+    r = runner.invoke(cli, ["sheets", "counts", str(layouts["official"])])
+    assert "Template" not in r.output and "square" not in r.output

@@ -1,13 +1,17 @@
-"""Part-number maintainer tool (005 T003): parsers and build on trimmed synthetic page snippets.
+"""Part-number maintainer tool (005 T003; 016 T012): parsers and build on trimmed synthetic page
+snippets.
 
 The snippets imitate the structure of the archived BrickLink and Rebrickable part pages; they are
-not copies of them (FR-019).
+not copies of them (FR-019). Feature 016 adds the 1x1 square tile 3070b, which is not in the kit:
+BrickLink files it as item 3070 with 3070b as an alternate, and its LEGO design IDs are the ones
+Rebrickable lists (research R10).
 """
 
 import hashlib
 import json
 
 import pytest
+from click.testing import CliRunner
 
 from lego_image_processor.kit.inventory import INVENTORY_PATH
 from partnumbers.build import (PAGES, BuildError, SourceError, build, differences,
@@ -45,11 +49,16 @@ RB_PLATE = _rb("LEGO PART 6141 Plate Round 1 x 1 with Solid Stud",
                [("LEGO", ["30057", "6141"]), ("BrickLink", ["4073"]), ("LDraw", ["6141", "4073"])])
 RB_TILE = _rb("LEGO PART 98138 Tile Round 1 x 1",
               [("LEGO", ["98138", "35380", "35381"]), ("BrickLink", ["98138"])])
+BL_SQUARE = _bl("Tile 1 x 1 : Part 3070", "3070", "3070b, 30039, 35403",
+                [(0, "(Not Applicable)"), (11, "Black"), (1, "White")])
+RB_SQUARE = _rb("LEGO PART 3070b Tile 1 x 1 with Groove",
+                [("LEGO", ["3070", "30039", "35403"]), ("BrickLink", ["3070"]), ("LDraw", ["3070b"])])
 
 
 def _texts(**override):
     t = {"bricklink-4073": BL_PLATE, "bricklink-98138": BL_TILE,
-         "rebrickable-6141": RB_PLATE, "rebrickable-98138": RB_TILE}
+         "rebrickable-6141": RB_PLATE, "rebrickable-98138": RB_TILE,
+         "bricklink-3070": BL_SQUARE, "rebrickable-3070b": RB_SQUARE}
     t.update(override)
     return t
 
@@ -81,6 +90,53 @@ def test_build_part_numbers():
     assert tile["bricklink"]["item_no"] == "98138" and tile["rebrickable"]["part_num"] == "98138"
     assert [p["id"] for p in data["source"]["pages"]] == [p["id"] for p in PAGES]
     assert data["source"]["disclaimer"] == "Not affiliated with or endorsed by The LEGO Group."
+
+
+def test_square_tile_not_in_kit():
+    """016 R10: 3070b keeps rules 1-3; the kit-inventory rules are replaced for a non-kit part."""
+    data = build(_texts(), INVENTORY, "2026-11-23")
+    assert list(data["parts"]) == ["6141", "98138", "3070b"]
+    sq = data["parts"]["3070b"]
+    assert sq["name"] == "Tile 1 x 1"
+    assert sq["bricklink"] == {"item_type": "P", "item_no": "3070", "alternates": ["3070b", "30039", "35403"],
+                               "colors": ["Black", "White"], "citation": "bricklink-3070"}
+    assert sq["rebrickable"] == {"part_num": "3070b", "name": "Tile 1 x 1 with Groove",
+                                 "citation": "rebrickable-3070b"}
+    # LEGO design IDs are the ones Rebrickable lists (3070b is LEGO design 3070)
+    assert sq["lego_design_ids"] == ["3070", "30039", "35403"]
+    # the kit parts are built exactly as without the square tile
+    kit_only = build(_texts(), INVENTORY, "2026-11-23", pages=[p for p in PAGES if p["part"] != "3070b"])
+    assert {k: data["parts"][k] for k in ("6141", "98138")} == kit_only["parts"]
+    assert [p["id"] for p in data["source"]["pages"]][-2:] == ["bricklink-3070", "rebrickable-3070b"]
+    assert any("3070b" in r for r in data["source"]["rules"])
+
+
+def test_square_tile_rules():
+    # the project ID must be the BrickLink item number or one of its alternates
+    bad_bl = _bl("Tile 1 x 1 : Part 3070", "3070", "30039", [(11, "Black")])
+    with pytest.raises(BuildError, match="alternate"):
+        build(_texts(**{"bricklink-3070": bad_bl}), INVENTORY, "2026-11-23")
+    # Rebrickable's BrickLink cross-reference must name the BrickLink item number
+    bad_rb = _rb("LEGO PART 3070b Tile 1 x 1 with Groove", [("LEGO", ["3070"]), ("BrickLink", ["3070b"])])
+    with pytest.raises(BuildError, match="BrickLink"):
+        build(_texts(**{"rebrickable-3070b": bad_rb}), INVENTORY, "2026-11-23")
+    # Rebrickable must list at least one LEGO design ID
+    no_lego = _rb("LEGO PART 3070b Tile 1 x 1 with Groove", [("BrickLink", ["3070"])])
+    with pytest.raises(BuildError, match="LEGO"):
+        build(_texts(**{"rebrickable-3070b": no_lego}), INVENTORY, "2026-11-23")
+    # Rebrickable's part number must be the project ID
+    other = _rb("LEGO PART 3070a Tile 1 x 1 without Groove", [("LEGO", ["3070"]), ("BrickLink", ["3070"])])
+    with pytest.raises(BuildError, match="3070a"):
+        build(_texts(**{"rebrickable-3070b": other}), INVENTORY, "2026-11-23")
+
+
+def test_pinned_square_tile_pages():
+    by_id = {p["id"]: p for p in PAGES}
+    for pid, url in (("bricklink-3070", "https://www.bricklink.com/v2/catalog/catalogitem.page?P=3070"),
+                     ("rebrickable-3070b", "https://rebrickable.com/parts/3070b/")):
+        p = by_id[pid]
+        assert p["part"] == "3070b" and len(p["sha256"]) == 64
+        assert p["url"].startswith("http://web.archive.org/web/") and p["url"].endswith("id_/" + url)
 
 
 def test_build_rejects_inconsistent_pages():
@@ -116,3 +172,24 @@ def test_read_pages_checks_sha256(tmp_path):
         read_pages(tmp_path, spec)
     with pytest.raises(SourceError, match="missing"):
         read_pages(tmp_path / "nope", spec)
+
+
+def test_check_exit_codes(tmp_path, monkeypatch):
+    """--check: 0 "no differences", 1 differences, 4 page missing (unchanged by 016)."""
+    from partnumbers import __main__ as cli_mod
+    from partnumbers.build import to_text
+
+    out = tmp_path / "part_numbers.json"
+    out.write_text(to_text(build(_texts(), INVENTORY, "2026-11-23")), encoding="utf-8")
+    monkeypatch.setattr(cli_mod, "read_pages", lambda source_dir: _texts())
+    args = ["build", "--check", "--no-download", "--source-dir", str(tmp_path), "--output", str(out)]
+    ok = CliRunner().invoke(cli_mod.main, args)
+    assert ok.exit_code == 0, ok.output
+    assert "no differences" in ok.output and "part 3070b: BrickLink P 3070" in ok.output
+    changed = json.loads(out.read_text(encoding="utf-8"))
+    changed["parts"]["3070b"]["bricklink"]["item_no"] = "3070b"
+    out.write_text(to_text(changed), encoding="utf-8")
+    assert CliRunner().invoke(cli_mod.main, args).exit_code == 1
+    monkeypatch.undo()
+    missing = CliRunner().invoke(cli_mod.main, args)
+    assert missing.exit_code == 4 and "missing" in missing.output

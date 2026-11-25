@@ -185,10 +185,18 @@ def arrangement_of(grid) -> Arrangement:
 def arrange_grid(grid, target: Arrangement):
     """``grid`` re-hung as ``target``: every position moves by whole frames (x shifts by the
     difference of the two column shifts, mod 128); colors, parts and other metadata are kept.
-    Positions are written in row-major order of the new columns."""
+    Positions are written in row-major order of the new columns.
+
+    A layout on a non-kit template (``metadata.template``, feature 016) is a curved map whose
+    frames cannot be re-hung: ``ArrangementError`` for every target (FR-011)."""
     from .grid import PositionPlacementGrid
     from .position import PositionPlacement
 
+    rec = getattr(grid, "template", None)
+    if rec:
+        from ..templates import REHANG_RULE
+        tid = rec.get("id") if isinstance(rec, dict) else None
+        raise ArrangementError(f"{REHANG_RULE} (template {tid})")
     current = arrangement_of(grid)
     if grid.width != target.width:
         raise ArrangementError(f"layout width is {grid.width}; arrangements need the {target.width}-column kit grid")

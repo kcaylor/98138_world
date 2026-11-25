@@ -1,9 +1,9 @@
 {
   "format_version": "1",
   "source": {
-    "title": "Colors in which the kit's map parts (6141 plate, 98138 tile) are made",
+    "title": "Colors in which the map parts are made (the kit's 6141 plate and 98138 tile; the 3070b square tile of template margins)",
     "generator": "tools/partcolors build",
-    "generated_on": "2026-11-22",
+    "generated_on": "2026-11-23",
     "snapshots": [
       {
         "id": "rebrickable-elements",
@@ -53,6 +53,13 @@
         "url": "http://web.archive.org/web/20261029125803id_/https://rebrickable.com/downloads/",
         "sha256": "1c514a79f8cb70a0faacccf7174ee4329a307a6d91221b8c318b6982a7b91b75",
         "accessed": "2026-11-22"
+      },
+      {
+        "id": "bricklink-3070",
+        "title": "BrickLink catalog item 3070, Tile 1 x 1 (Internet Archive copy of 2026-01-01)",
+        "url": "http://web.archive.org/web/20260101103331id_/https://www.bricklink.com/v2/catalog/catalogitem.page?P=3070",
+        "sha256": "946c7d105215f2123a79fe8d23f2c0f4ce8de846fdfebad725c9177f936b7c2d",
+        "accessed": "2026-11-23"
       }
     ],
     "citations": [
@@ -103,6 +110,12 @@
         "title": "BrickLink catalog item 98138, Tile, Round 1 x 1 (Internet Archive copy of 2026-09-01)",
         "url": "http://web.archive.org/web/20260901170641id_/https://www.bricklink.com/v2/catalog/catalogitem.page?P=98138",
         "accessed": "2026-11-22"
+      },
+      {
+        "id": "bricklink-3070",
+        "title": "BrickLink catalog item 3070, Tile 1 x 1 (Internet Archive copy of 2026-01-01)",
+        "url": "http://web.archive.org/web/20260101103331id_/https://www.bricklink.com/v2/catalog/catalogitem.page?P=3070",
+        "accessed": "2026-11-23"
       }
     ],
     "join_rules": [
@@ -111,11 +124,13 @@
       "LDraw LDConfig.ldr gives the LEGO name and id: the LDraw CODE equals the Rebrickable id, the names agree (case-insensitive, '_' as space, grey as gray) and a LEGOID comment precedes it.",
       "The BrickLink color guide lists a color with exactly the Rebrickable name; its id is used.",
       "BrickLink's pinned catalog page for the part (4073 plate, 98138 tile) lists the color with the same BrickLink id.",
-      "Kit colors are copied from kit_colors.json, the authority for them."
+      "Kit colors are copied from kit_colors.json, the authority for them.",
+      "The 3070b square tile is not in the kit: rule 5 uses BrickLink's pinned page for item 3070 (3070b is an alternate there), every row is in_kit false and no kit color is required."
     ],
     "part_numbers": {
       "6141": "Rebrickable elements.csv files element 614101 (and every other 1x1 round plate element) under part_num 6141 with design_id 6141; it lists no elements under 4073. BrickLink files the part as item 4073 with 6141 as an alternate number (pinned BrickLink catalog page bricklink-4073). Marketplace numbers: part_numbers.json.",
-      "98138": "Rebrickable elements.csv files the 1x1 round tile under part_num 98138 (design_id 35381 for newer elements); BrickLink item 98138 (pinned page bricklink-98138). Marketplace numbers: part_numbers.json."
+      "98138": "Rebrickable elements.csv files the 1x1 round tile under part_num 98138 (design_id 35381 for newer elements); BrickLink item 98138 (pinned page bricklink-98138). Marketplace numbers: part_numbers.json.",
+      "3070b": "Rebrickable elements.csv files the 1x1 square tile with groove under part_num 3070b (design_id 3070); BrickLink files it as item 3070 with 3070b as an alternate number (pinned BrickLink catalog page bricklink-3070). Not in kit 31203. Marketplace numbers: part_numbers.json."
     },
     "terms": {
       "text": "Free for personal and commercial use, provided you acknowledge Rebrickable as your data source.",
@@ -454,6 +469,144 @@
         "rebrickable_id": 1136,
         "name": "Reddish Orange",
         "reason": "LDraw code 1136 is 'absent', not 'Reddish Orange': no verified LEGO id"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 33,
+        "name": "Trans-Dark Blue",
+        "reason": "transparent"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 34,
+        "name": "Trans-Green",
+        "reason": "transparent"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 36,
+        "name": "Trans-Red",
+        "reason": "transparent"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 40,
+        "name": "Trans-Brown",
+        "reason": "transparent"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 41,
+        "name": "Trans-Light Blue",
+        "reason": "transparent"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 42,
+        "name": "Trans-Neon Green",
+        "reason": "transparent"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 46,
+        "name": "Trans-Yellow",
+        "reason": "transparent"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 47,
+        "name": "Trans-Clear",
+        "reason": "transparent"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 57,
+        "name": "Trans-Neon Orange",
+        "reason": "transparent"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 85,
+        "name": "Dark Purple",
+        "reason": "LDraw code 85 is 'Medium Lilac', not 'Dark Purple': no verified LEGO id"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 125,
+        "name": "Light Orange",
+        "reason": "LDraw code 125 is 'Spud Orange', not 'Light Orange': no verified LEGO id"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 143,
+        "name": "Trans-Medium Blue",
+        "reason": "transparent"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 158,
+        "name": "Yellowish Green",
+        "reason": "LDraw code 158 is 'Trans Neon Red', not 'Yellowish Green': no verified LEGO id"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 182,
+        "name": "Trans-Orange",
+        "reason": "transparent"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 326,
+        "name": "Olive Green",
+        "reason": "LDraw code 326 is 'Yellowish Green', not 'Olive Green': no verified LEGO id"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 1050,
+        "name": "Coral",
+        "reason": "LDraw code 1050 is 'absent', not 'Coral': no verified LEGO id"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 1051,
+        "name": "Pastel Blue",
+        "reason": "LDraw code 1051 is 'absent', not 'Pastel Blue': no verified LEGO id"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 1062,
+        "name": "Vibrant Yellow",
+        "reason": "LDraw code 1062 is 'absent', not 'Vibrant Yellow': no verified LEGO id"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 1089,
+        "name": "Warm Tan",
+        "reason": "LDraw code 1089 is 'absent', not 'Warm Tan': no verified LEGO id"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 1091,
+        "name": "Warm Yellowish Orange",
+        "reason": "LDraw code 1091 is 'absent', not 'Warm Yellowish Orange': no verified LEGO id"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 1136,
+        "name": "Reddish Orange",
+        "reason": "LDraw code 1136 is 'absent', not 'Reddish Orange': no verified LEGO id"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 1146,
+        "name": "Warm Pink",
+        "reason": "LDraw code 1146 is 'absent', not 'Warm Pink': no verified LEGO id"
+      },
+      {
+        "part": "3070b",
+        "rebrickable_id": 1147,
+        "name": "Blue Violet",
+        "reason": "LDraw code 1147 is 'absent', not 'Blue Violet': no verified LEGO id"
       }
     ],
     "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
@@ -3192,6 +3345,1568 @@
         },
         "element_ids": [
           "6322840"
+        ],
+        "in_kit": false,
+        "notes": ""
+      }
+    ],
+    "3070b": [
+      {
+        "key": "lego_black",
+        "element_id": "307026",
+        "lego": {
+          "name": "Black",
+          "id": 26
+        },
+        "bricklink": {
+          "name": "Black",
+          "id": 11
+        },
+        "rebrickable": {
+          "name": "Black",
+          "id": 0
+        },
+        "rgb": [
+          5,
+          19,
+          29
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "307026"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_bright_blue",
+        "element_id": "307023",
+        "lego": {
+          "name": "Bright Blue",
+          "id": 23
+        },
+        "bricklink": {
+          "name": "Blue",
+          "id": 7
+        },
+        "rebrickable": {
+          "name": "Blue",
+          "id": 1
+        },
+        "rgb": [
+          0,
+          85,
+          191
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "307023",
+          "307073",
+          "4206330"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_dark_green",
+        "element_id": "307028",
+        "lego": {
+          "name": "Dark Green",
+          "id": 28
+        },
+        "bricklink": {
+          "name": "Green",
+          "id": 6
+        },
+        "rebrickable": {
+          "name": "Green",
+          "id": 2
+        },
+        "rgb": [
+          35,
+          120,
+          65
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "307028",
+          "4140299",
+          "4157128",
+          "4238528",
+          "4558593"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_bright_bluish_green",
+        "element_id": "6213782",
+        "lego": {
+          "name": "Bright Bluish Green",
+          "id": 107
+        },
+        "bricklink": {
+          "name": "Dark Turquoise",
+          "id": 39
+        },
+        "rebrickable": {
+          "name": "Dark Turquoise",
+          "id": 3
+        },
+        "rgb": [
+          0,
+          143,
+          155
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6213782"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_bright_red",
+        "element_id": "307021",
+        "lego": {
+          "name": "Bright Red",
+          "id": 21
+        },
+        "bricklink": {
+          "name": "Red",
+          "id": 5
+        },
+        "rebrickable": {
+          "name": "Red",
+          "id": 4
+        },
+        "rgb": [
+          201,
+          26,
+          9
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "307021"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_bright_purple",
+        "element_id": "6133726",
+        "lego": {
+          "name": "Bright Purple",
+          "id": 221
+        },
+        "bricklink": {
+          "name": "Dark Pink",
+          "id": 47
+        },
+        "rebrickable": {
+          "name": "Dark Pink",
+          "id": 5
+        },
+        "rgb": [
+          200,
+          112,
+          160
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6133726"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_earth_orange",
+        "element_id": "307025",
+        "lego": {
+          "name": "Earth Orange",
+          "id": 25
+        },
+        "bricklink": {
+          "name": "Brown",
+          "id": 8
+        },
+        "rebrickable": {
+          "name": "Brown",
+          "id": 6
+        },
+        "rgb": [
+          88,
+          57,
+          39
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "307025",
+          "4181973"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_grey",
+        "element_id": "307002",
+        "lego": {
+          "name": "Grey",
+          "id": 2
+        },
+        "bricklink": {
+          "name": "Light Gray",
+          "id": 9
+        },
+        "rebrickable": {
+          "name": "Light Gray",
+          "id": 7
+        },
+        "rgb": [
+          155,
+          161,
+          157
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "307002",
+          "307052"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_dark_grey",
+        "element_id": "4173260",
+        "lego": {
+          "name": "Dark Grey",
+          "id": 27
+        },
+        "bricklink": {
+          "name": "Dark Gray",
+          "id": 10
+        },
+        "rebrickable": {
+          "name": "Dark Gray",
+          "id": 8
+        },
+        "rgb": [
+          109,
+          110,
+          92
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4173260"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_bright_green",
+        "element_id": "6172375",
+        "lego": {
+          "name": "Bright Green",
+          "id": 37
+        },
+        "bricklink": {
+          "name": "Bright Green",
+          "id": 36
+        },
+        "rebrickable": {
+          "name": "Bright Green",
+          "id": 10
+        },
+        "rgb": [
+          75,
+          159,
+          74
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6172375"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_light_reddish_violet",
+        "element_id": "307009",
+        "lego": {
+          "name": "Light Reddish Violet",
+          "id": 9
+        },
+        "bricklink": {
+          "name": "Pink",
+          "id": 23
+        },
+        "rebrickable": {
+          "name": "Pink",
+          "id": 13
+        },
+        "rgb": [
+          252,
+          151,
+          172
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "307009",
+          "4108112"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_bright_yellow",
+        "element_id": "307024",
+        "lego": {
+          "name": "Bright Yellow",
+          "id": 24
+        },
+        "bricklink": {
+          "name": "Yellow",
+          "id": 3
+        },
+        "rebrickable": {
+          "name": "Yellow",
+          "id": 14
+        },
+        "rgb": [
+          242,
+          205,
+          55
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "307024"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_white",
+        "element_id": "307001",
+        "lego": {
+          "name": "White",
+          "id": 1
+        },
+        "bricklink": {
+          "name": "White",
+          "id": 1
+        },
+        "rebrickable": {
+          "name": "White",
+          "id": 15
+        },
+        "rgb": [
+          255,
+          255,
+          255
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "307001",
+          "6550138"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_brick_yellow",
+        "element_id": "4125253",
+        "lego": {
+          "name": "Brick Yellow",
+          "id": 5
+        },
+        "bricklink": {
+          "name": "Tan",
+          "id": 2
+        },
+        "rebrickable": {
+          "name": "Tan",
+          "id": 19
+        },
+        "rgb": [
+          228,
+          205,
+          158
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4125253"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_bright_violet",
+        "element_id": "4125279",
+        "lego": {
+          "name": "Bright Violet",
+          "id": 104
+        },
+        "bricklink": {
+          "name": "Purple",
+          "id": 24
+        },
+        "rebrickable": {
+          "name": "Purple",
+          "id": 22
+        },
+        "rgb": [
+          129,
+          0,
+          123
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4125279"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_bright_orange",
+        "element_id": "4119670",
+        "lego": {
+          "name": "Bright Orange",
+          "id": 106
+        },
+        "bricklink": {
+          "name": "Orange",
+          "id": 4
+        },
+        "rebrickable": {
+          "name": "Orange",
+          "id": 25
+        },
+        "rgb": [
+          254,
+          138,
+          24
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4119670",
+          "4277770",
+          "4558595"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_bright_reddish_violet",
+        "element_id": "6099364",
+        "lego": {
+          "name": "Bright Reddish Violet",
+          "id": 124
+        },
+        "bricklink": {
+          "name": "Magenta",
+          "id": 71
+        },
+        "rebrickable": {
+          "name": "Magenta",
+          "id": 26
+        },
+        "rgb": [
+          146,
+          57,
+          120
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6099364"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_bright_yellowish_green",
+        "element_id": "4537251",
+        "lego": {
+          "name": "Bright Yellowish Green",
+          "id": 119
+        },
+        "bricklink": {
+          "name": "Lime",
+          "id": 34
+        },
+        "rebrickable": {
+          "name": "Lime",
+          "id": 27
+        },
+        "rgb": [
+          187,
+          233,
+          11
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4537251"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_sand_yellow",
+        "element_id": "6055172",
+        "lego": {
+          "name": "Sand Yellow",
+          "id": 138
+        },
+        "bricklink": {
+          "name": "Dark Tan",
+          "id": 69
+        },
+        "rebrickable": {
+          "name": "Dark Tan",
+          "id": 28
+        },
+        "rgb": [
+          149,
+          138,
+          115
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6055172"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_light_purple",
+        "element_id": "4580007",
+        "lego": {
+          "name": "Light Purple",
+          "id": 222
+        },
+        "bricklink": {
+          "name": "Bright Pink",
+          "id": 104
+        },
+        "rebrickable": {
+          "name": "Bright Pink",
+          "id": 29
+        },
+        "rgb": [
+          228,
+          173,
+          200
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4580007",
+          "6251940"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_medium_lavender",
+        "element_id": "6097301",
+        "lego": {
+          "name": "Medium Lavender",
+          "id": 324
+        },
+        "bricklink": {
+          "name": "Medium Lavender",
+          "id": 157
+        },
+        "rebrickable": {
+          "name": "Medium Lavender",
+          "id": 30
+        },
+        "rgb": [
+          172,
+          120,
+          186
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6097301"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_lavender",
+        "element_id": "6211403",
+        "lego": {
+          "name": "Lavender",
+          "id": 325
+        },
+        "bricklink": {
+          "name": "Lavender",
+          "id": 154
+        },
+        "rebrickable": {
+          "name": "Lavender",
+          "id": 31
+        },
+        "rgb": [
+          225,
+          213,
+          237
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6211403"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_light_yellowish_orange",
+        "element_id": "4203654",
+        "lego": {
+          "name": "Light Yellowish Orange",
+          "id": 36
+        },
+        "bricklink": {
+          "name": "Very Light Orange",
+          "id": 96
+        },
+        "rebrickable": {
+          "name": "Very Light Orange",
+          "id": 68
+        },
+        "rgb": [
+          243,
+          207,
+          155
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4203654"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_reddish_brown",
+        "element_id": "4211288",
+        "lego": {
+          "name": "Reddish Brown",
+          "id": 192
+        },
+        "bricklink": {
+          "name": "Reddish Brown",
+          "id": 88
+        },
+        "rebrickable": {
+          "name": "Reddish Brown",
+          "id": 70
+        },
+        "rgb": [
+          88,
+          42,
+          18
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4211288"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_medium_stone_grey",
+        "element_id": "4211415",
+        "lego": {
+          "name": "Medium Stone Grey",
+          "id": 194
+        },
+        "bricklink": {
+          "name": "Light Bluish Gray",
+          "id": 86
+        },
+        "rebrickable": {
+          "name": "Light Bluish Gray",
+          "id": 71
+        },
+        "rgb": [
+          160,
+          165,
+          169
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4211415"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_dark_stone_grey",
+        "element_id": "4210848",
+        "lego": {
+          "name": "Dark Stone Grey",
+          "id": 199
+        },
+        "bricklink": {
+          "name": "Dark Bluish Gray",
+          "id": 85
+        },
+        "rebrickable": {
+          "name": "Dark Bluish Gray",
+          "id": 72
+        },
+        "rgb": [
+          108,
+          110,
+          104
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4210848"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_medium_blue",
+        "element_id": "4235958",
+        "lego": {
+          "name": "Medium Blue",
+          "id": 102
+        },
+        "bricklink": {
+          "name": "Medium Blue",
+          "id": 42
+        },
+        "rebrickable": {
+          "name": "Medium Blue",
+          "id": 73
+        },
+        "rgb": [
+          90,
+          147,
+          219
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4235958",
+          "4527526"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_light_nougat",
+        "element_id": "4496991",
+        "lego": {
+          "name": "Light Nougat",
+          "id": 283
+        },
+        "bricklink": {
+          "name": "Light Nougat",
+          "id": 90
+        },
+        "rebrickable": {
+          "name": "Light Nougat",
+          "id": 78
+        },
+        "rgb": [
+          246,
+          215,
+          179
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4496991",
+          "6078399",
+          "6480394"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_cool_silver_drum_lacq_silver_ink",
+        "element_id": "6237120",
+        "lego": {
+          "name": "Cool Silver Drum Lacq / Silver Ink",
+          "id": 298
+        },
+        "bricklink": {
+          "name": "Metallic Silver",
+          "id": 67
+        },
+        "rebrickable": {
+          "name": "Metallic Silver",
+          "id": 80
+        },
+        "rgb": [
+          165,
+          169,
+          180
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6237120",
+          "6546115"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_warm_gold_drum_lacq_gold_ink",
+        "element_id": "6264167",
+        "lego": {
+          "name": "Warm Gold Drum Lacq / Gold Ink",
+          "id": 299
+        },
+        "bricklink": {
+          "name": "Metallic Gold",
+          "id": 65
+        },
+        "rebrickable": {
+          "name": "Metallic Gold",
+          "id": 82
+        },
+        "rgb": [
+          219,
+          172,
+          52
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6264167",
+          "6538102"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_medium_nougat",
+        "element_id": "6177146",
+        "lego": {
+          "name": "Medium Nougat",
+          "id": 312
+        },
+        "bricklink": {
+          "name": "Medium Nougat",
+          "id": 150
+        },
+        "rebrickable": {
+          "name": "Medium Nougat",
+          "id": 84
+        },
+        "rgb": [
+          170,
+          125,
+          85
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6177146"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_brown",
+        "element_id": "4497023",
+        "lego": {
+          "name": "Brown",
+          "id": 217
+        },
+        "bricklink": {
+          "name": "Light Brown",
+          "id": 91
+        },
+        "rebrickable": {
+          "name": "Light Brown",
+          "id": 86
+        },
+        "rgb": [
+          124,
+          80,
+          58
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4497023"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_nougat",
+        "element_id": "4497058",
+        "lego": {
+          "name": "Nougat",
+          "id": 18
+        },
+        "bricklink": {
+          "name": "Nougat",
+          "id": 28
+        },
+        "rebrickable": {
+          "name": "Nougat",
+          "id": 92
+        },
+        "rgb": [
+          208,
+          145,
+          104
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4497058",
+          "6419170"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_silver",
+        "element_id": "4133561",
+        "lego": {
+          "name": "Silver",
+          "id": 131
+        },
+        "bricklink": {
+          "name": "Pearl Light Gray",
+          "id": 66
+        },
+        "rebrickable": {
+          "name": "Pearl Light Gray",
+          "id": 135
+        },
+        "rgb": [
+          156,
+          163,
+          168
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4133561"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_flame_yellowish_orange",
+        "element_id": "6065504",
+        "lego": {
+          "name": "Flame Yellowish Orange",
+          "id": 191
+        },
+        "bricklink": {
+          "name": "Bright Light Orange",
+          "id": 110
+        },
+        "rebrickable": {
+          "name": "Bright Light Orange",
+          "id": 191
+        },
+        "rgb": [
+          248,
+          187,
+          61
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6065504"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_light_royal_blue",
+        "element_id": "6316569",
+        "lego": {
+          "name": "Light Royal Blue",
+          "id": 212
+        },
+        "bricklink": {
+          "name": "Bright Light Blue",
+          "id": 105
+        },
+        "rebrickable": {
+          "name": "Bright Light Blue",
+          "id": 212
+        },
+        "rgb": [
+          159,
+          195,
+          233
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6316569"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_cool_yellow",
+        "element_id": "6275877",
+        "lego": {
+          "name": "Cool Yellow",
+          "id": 226
+        },
+        "bricklink": {
+          "name": "Bright Light Yellow",
+          "id": 103
+        },
+        "rebrickable": {
+          "name": "Bright Light Yellow",
+          "id": 226
+        },
+        "rgb": [
+          255,
+          240,
+          58
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6275877"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_earth_blue",
+        "element_id": "4631385",
+        "lego": {
+          "name": "Earth Blue",
+          "id": 140
+        },
+        "bricklink": {
+          "name": "Dark Blue",
+          "id": 63
+        },
+        "rebrickable": {
+          "name": "Dark Blue",
+          "id": 272
+        },
+        "rgb": [
+          10,
+          52,
+          99
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4631385",
+          "6554193"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_earth_green",
+        "element_id": "6055171",
+        "lego": {
+          "name": "Earth Green",
+          "id": 141
+        },
+        "bricklink": {
+          "name": "Dark Green",
+          "id": 80
+        },
+        "rebrickable": {
+          "name": "Dark Green",
+          "id": 288
+        },
+        "rgb": [
+          24,
+          70,
+          50
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6055171",
+          "6618080"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_dark_brown",
+        "element_id": "6516867",
+        "lego": {
+          "name": "Dark Brown",
+          "id": 308
+        },
+        "bricklink": {
+          "name": "Dark Brown",
+          "id": 120
+        },
+        "rebrickable": {
+          "name": "Dark Brown",
+          "id": 308
+        },
+        "rgb": [
+          53,
+          33,
+          0
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6516867"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_new_dark_red",
+        "element_id": "4187196",
+        "lego": {
+          "name": "New Dark Red",
+          "id": 154
+        },
+        "bricklink": {
+          "name": "Dark Red",
+          "id": 59
+        },
+        "rebrickable": {
+          "name": "Dark Red",
+          "id": 320
+        },
+        "rgb": [
+          114,
+          14,
+          15
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4187196",
+          "4550169"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_dark_azur",
+        "element_id": "6151658",
+        "lego": {
+          "name": "Dark Azur",
+          "id": 321
+        },
+        "bricklink": {
+          "name": "Dark Azure",
+          "id": 153
+        },
+        "rebrickable": {
+          "name": "Dark Azure",
+          "id": 321
+        },
+        "rgb": [
+          7,
+          139,
+          201
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6151658"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_medium_azur",
+        "element_id": "4655243",
+        "lego": {
+          "name": "Medium Azur",
+          "id": 322
+        },
+        "bricklink": {
+          "name": "Medium Azure",
+          "id": 156
+        },
+        "rebrickable": {
+          "name": "Medium Azure",
+          "id": 322
+        },
+        "rgb": [
+          54,
+          174,
+          191
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4655243"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_aqua",
+        "element_id": "6251846",
+        "lego": {
+          "name": "Aqua",
+          "id": 323
+        },
+        "bricklink": {
+          "name": "Light Aqua",
+          "id": 152
+        },
+        "rebrickable": {
+          "name": "Light Aqua",
+          "id": 323
+        },
+        "rgb": [
+          173,
+          195,
+          192
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6251846"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_sand_green",
+        "element_id": "4155202",
+        "lego": {
+          "name": "Sand Green",
+          "id": 151
+        },
+        "bricklink": {
+          "name": "Sand Green",
+          "id": 48
+        },
+        "rebrickable": {
+          "name": "Sand Green",
+          "id": 378
+        },
+        "rgb": [
+          160,
+          188,
+          172
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4155202",
+          "6223913"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_sand_blue",
+        "element_id": "4173698",
+        "lego": {
+          "name": "Sand Blue",
+          "id": 135
+        },
+        "bricklink": {
+          "name": "Sand Blue",
+          "id": 55
+        },
+        "rebrickable": {
+          "name": "Sand Blue",
+          "id": 379
+        },
+        "rgb": [
+          96,
+          116,
+          161
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4173698",
+          "6138232"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_bright_yellowish_orange",
+        "element_id": "4130369",
+        "lego": {
+          "name": "Bright Yellowish Orange",
+          "id": 105
+        },
+        "bricklink": {
+          "name": "Medium Orange",
+          "id": 31
+        },
+        "rebrickable": {
+          "name": "Medium Orange",
+          "id": 462
+        },
+        "rgb": [
+          255,
+          167,
+          11
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "4130369"
+        ],
+        "in_kit": false,
+        "notes": ""
+      },
+      {
+        "key": "lego_dark_orange",
+        "element_id": "6143431",
+        "lego": {
+          "name": "Dark Orange",
+          "id": 38
+        },
+        "bricklink": {
+          "name": "Dark Orange",
+          "id": 68
+        },
+        "rebrickable": {
+          "name": "Dark Orange",
+          "id": 484
+        },
+        "rgb": [
+          169,
+          85,
+          0
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors-snapshot",
+          "element": "rebrickable-elements"
+        },
+        "element_ids": [
+          "6143431"
         ],
         "in_kit": false,
         "notes": ""

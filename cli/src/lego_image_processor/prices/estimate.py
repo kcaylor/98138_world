@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from ..layout.grid import PositionPlacementGrid
 from ..parts import LayoutInput, Lot, OwnedInputs, PartsList, build_parts_list
+from ..parts.partslist import PART_TYPE_TEXT
 from .snapshot import GuideFigures, PriceSnapshot, money_text
 from .wording import (ALL_COLORS_HINT, ATTRIBUTION, BASIS_SENTENCE, DEFAULT_STALE_DAYS, DISCLAIMER, ESTIMATE_NOTE,
                       LABELS, REASON_NO_DATA, REASON_NOT_IN_SNAPSHOT, SOURCE_TITLE, SOURCE_URL,
@@ -61,10 +62,11 @@ class EstimateLine:
 
     @property
     def label(self) -> str:
-        """``tile Medium Azur (LEGO 322)``."""
+        """``tile Medium Azur (LEGO 322)`` (``square tile Black (LEGO 26)`` for feature 016's 3070b)."""
+        kind = PART_TYPE_TEXT[self.lot.part_type]
         if self.lot.ids is None:
-            return f"{self.lot.part_type} {self.lot.layout_color_name} (code {self.lot.layout_color_code})"
-        return f"{self.lot.part_type} {self.lot.ids.lego_name} (LEGO {self.lot.ids.lego_id})"
+            return f"{kind} {self.lot.layout_color_name} (code {self.lot.layout_color_code})"
+        return f"{kind} {self.lot.ids.lego_name} (LEGO {self.lot.ids.lego_id})"
 
     def to_dict(self) -> Dict[str, Any]:
         l = self.lot

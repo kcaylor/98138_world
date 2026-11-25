@@ -191,5 +191,46 @@ def test_fixture_generator_reproduces_identical_bytes(tmp_path):
     tool = Path(__file__).resolve().parents[3] / "tools" / "fixtures011" / "make_price_fixture.py"
     r = subprocess.run([sys.executable, str(tool), "--out", str(tmp_path)], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
-    for name in ("bricklink_price_guide.json", "bricklink_price_guide.source.json"):
+    for name in ("bricklink_price_guide.json", "bricklink_price_guide.source.json",
+                 "bricklink_price_guide_3070b.json", "bricklink_price_guide_3070b.source.json"):
         assert (tmp_path / name).read_bytes() == (FIXTURE_DIR / name).read_bytes(), name
+    # feature 016 left the first fixture byte-identical (research R15)
+    assert hashlib.sha256((FIXTURE_DIR / "bricklink_price_guide.json").read_bytes()).hexdigest() == \
+        "38f9aea806e94683529a8be9b80d63f6f275448659c836d890cf376beaca9f35"
+
+
+# --- the square tile (feature 016 T064) ----------------------------------------------------------
+
+FIXTURE_3070B = FIXTURE_DIR / "bricklink_price_guide_3070b.json"
+
+
+def test_square_tile_lots_are_sorted_after_the_round_tiles(write_snapshot):
+    lots = [lot_entry("6141", "lego_white"), lot_entry("98138", "lego_earth_blue"),
+            lot_entry("3070b", "lego_black")]
+    s = load_snapshot(write_snapshot(snapshot_dict(lots)))
+    assert [l.lot.part_id for l in s.lots] == ["6141", "98138", "3070b"]
+    assert s.lot_for("3070b", 26).lot == lot_ref("3070b", "lego_black")
+    assert snapshot_to_json(s) == snapshot_to_json(parse_snapshot(snapshot_dict(lots)))
+    msg = _reject(write_snapshot, snapshot_dict([lots[0], lots[2], lots[1]]), "lots[2]")
+    assert "6141, 98138, 3070b" in msg
+
+
+def test_square_tile_lot_needs_the_cited_bricklink_item(write_snapshot):
+    from lego_image_processor.kit.part_numbers import load_part_numbers
+    d = snapshot_dict([lot_entry("3070b", "lego_black")])
+    assert d["lots"][0]["bricklink"]["item_no"] == load_part_numbers().get("3070b").bricklink_item_no
+    d["lots"][0]["bricklink"]["item_no"] = "3070b"
+    _reject(write_snapshot, d, "lots[0].bricklink.item_no")
+    d = snapshot_dict([lot_entry("6141", "lego_white")])
+    d["lots"][0]["part_id"] = "3070c"
+    _reject(write_snapshot, d, "lots[0].part_id")
+
+
+def test_3070b_fixture_adds_one_square_tile_lot_to_the_first():
+    first, second = load_snapshot(FIXTURE_SNAPSHOT), load_snapshot(FIXTURE_3070B)
+    assert second.complete and second.lot_set["kind"] == "named"
+    assert [l.lot.key for l in second.lots] == [l.lot.key for l in first.lots] + [("3070b", 26)]
+    assert second.lot_for("3070b", 26).basis == "sold"
+    src = json.loads((FIXTURE_DIR / "bricklink_price_guide_3070b.source.json").read_text(encoding="utf-8"))
+    assert src["synthetic"] is True and src["sha256"] == second.sha256
+    assert src["disclaimer"] == wording.DISCLAIMER and "not BrickLink data" in src["note"]

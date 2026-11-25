@@ -96,6 +96,9 @@ h3 { font-size: 1rem; margin: 1.2em 0 .4em; }
 .combos a:hover { border-color: var(--accent); }
 .combos a[aria-current="page"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .combo-id { font-weight: 700; }
+/* feature 016: a template version (e.g. Winkel tripel) beside the kit's combinations */
+.combos li.combo-template { margin-left: .4rem; padding-left: .8rem; border-left: 1px solid var(--line); }
+.rehang-note { margin: .5rem 0 0; }
 .preview { margin: 0; }
 .preview .stud-img { background: var(--stud-round-mat); image-rendering: auto; }  /* round studs, as built */
 .preview img { border-radius: 8px; box-shadow: var(--shadow); max-width: 1280px; }

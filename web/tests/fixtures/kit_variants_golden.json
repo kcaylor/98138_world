@@ -1,0 +1,123 @@
+{
+  "format_version": "1",
+  "title": "Digests of the web site's kit variants (feature 016, SC-001, SC-006)",
+  "generator": "web/tests/test_kit_golden.py with KIT_GOLDEN_WRITE=1",
+  "sites": [
+    {
+      "site": "small",
+      "maps": [
+        "official-31203",
+        "ocean-sst",
+        "ocean-el-nino"
+      ],
+      "part_labels": {"6141": "plate 1x1 round", "98138": "tile 1x1 round"},
+      "map_rows": {
+        "official-31203": {"id": "8b1ac95967c499b0a8bb1c34e5033b5f2f766acf4d580cdad0501cbef3724b1d", "title": "14db5087f316beb8d6d2df1b003bcc034c660b5bd9289279df4d7e2d260246f7", "description": "25da88f1db9ff68cf23b71620f2e4aa96a72f9c4c668efbee48b624d7391a8bf", "recipe": "43897e2e85d94480aa5de775650b90e7dd01196abd1fc8d43137da9c86d7595d", "default_combination": "798640599597df7a8daa32b1132f07850a68b5e71bd295650399a38074f52804", "layers": "61eda9ee3e6d4762e00a663f40e68d96a1d45c691a9280338aac01e577c51471", "datasets": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945", "citations": "efe58e18109a1fd561361fad54d1b8f99f8775a9382ee06b72ed91574e9ff389", "stickers": "f7390371123a7ce7282ffd505cc45d59d5ff38d86b3497b8ba2e7e9ab33d1305"},
+        "ocean-sst": {"id": "fca0c9d481c4bd905efc3dc834a19f495660978c39973f39ef919ff6a0013b1e", "title": "662d423d462a67176205686be9047c3a7975c04d59a190f0e33ef629727f0ad7", "description": "010687a9d866d585ee97a8ef2d0ccfb5d645a9b50a4b746b683ac84de5803161", "recipe": "e5f50e991e754414cacfa4e22b0b7fac88bd8ba96dfd41853a79559c999d94e8", "default_combination": "798640599597df7a8daa32b1132f07850a68b5e71bd295650399a38074f52804", "layers": "6b38fce58db863a87b4ea961e30790de3e1fa6cf8e871d4a2cfa03987d5d1a76", "datasets": "b3ad9d2c97c3781ca372d8cbbc6318585cc0c037195ae3fcad90a64e5f460d43", "citations": "ad6a6d9b550b27a73117db04199f10907c3f10f9263c856457034e3c4ebedb43", "stickers": "d1dd54ae198a1491867fc330da0316f335bb671ee14a027ba72e282eb7f728e7"},
+        "ocean-el-nino": {"id": "6a4d66741465397d9305a259d1f6d320db2c95642cd7ff52385ce9db2b5c9982", "title": "4dfb3538bc05371a32afa9cae894706944ba921d729327a7446252de1284400d", "description": "42b09ef3b7b125d03c4dfc0e42d6f7c11f97875adc5f93a57d04aa64fabdd6b8", "recipe": "ba1311016c5d01c2bce389c7746012ef4a836d1c58b90bfd51a099e8e962c8c1", "default_combination": "955cca1ceba45052d85984d3a2565f4ce25b7488602c60a165598bf80b26e472", "layers": "6c8be4f719704343462727d4a26bcc1d77c362b29b7f2fc7f83e8e9dfd4279d3", "datasets": "d218407396cfc81d1dafb470bef50fe6fb6ff4134fa526dc1322f19ff6b49c10", "citations": "bd2fea82edcc811010e81371801a1af6f7f5a9e2c36925f24c5f94cab7fbcba5", "stickers": "5dbb55071287119d43837b793c630a764ef25b171791d3c795d1f7497f3aae64"}
+      },
+      "variants": [
+        {
+          "map": "official-31203",
+          "combination": "A",
+          "digests": {"preview.png": "496c89694a17aa43bcde679aec277b35ca782c5bbc4773fa7d1e38900c85d038", "thumb.png": "67710e4f24aba4e5264e4809d3f784276416251d147d38ffe184abf8bad9d225", "parts.json (normalised)": "9b90129a37d31a2f5c3761ff65767240fc845176706c9086cb78ae33c0ea1458", "bricklink.xml": "fea9a4b1f549f7acc56dd2fed6a46e8c11559182bbd59df9c60f23340acc9b7e", "rebrickable.csv": "db415ad50881a4f771113e01b0ed82c31a9b7d67f5c47dea42c6ee18360ad9b0", "parts-1kit.json (normalised)": "498a088860e12133433d7fc23094d31fb7f9e8b8d375984a554357c4559cb80b", "layout.json (normalised)": "eeca4b9bb0b27434fdb73d11c69dd41989ef28a09bdc322c4ae70b5cf4d1a483", "cells.json": "7ccfa87b9d63e652d0fd71fd2834040fc2a81b6d0ad96ef7d58ac1029d00c60f", "manifest entry (normalised)": "1a08f7e8fefbf434033e6c119c7c8bc6f896714e36c4e8b4bc698931ecacde00", "page /maps/official-31203/A": "7f2765ab23f28505c551f33fc24130ffde1a7b5ee610173bcd28028765584d48"}
+        },
+        {
+          "map": "official-31203",
+          "combination": "B",
+          "digests": {"preview.png": "7b8209d0ae4e02f07bf20efe95c26c564b2ad379d7baca5c7a1c0e12fb7d0828", "thumb.png": "94f318c634bc3f29ea21bebc2aef68311ad31116c124e03df91acd421e231165", "parts.json (normalised)": "dafc26a0c9596b1e6d89a9d7f7ef30fead56f5f4ee75f2127ef0ad0b2c0d0556", "bricklink.xml": "fea9a4b1f549f7acc56dd2fed6a46e8c11559182bbd59df9c60f23340acc9b7e", "rebrickable.csv": "db415ad50881a4f771113e01b0ed82c31a9b7d67f5c47dea42c6ee18360ad9b0", "parts-1kit.json (normalised)": "e76ad0344dcc0a711414338269052d8a34823025c5c37605abfd2d72334b2a85", "layout.json (normalised)": "a72a36980c384ff72376321d8700a2bdb1bcd06d997d83055ab42a6347ec62e6", "cells.json": "c475c7ec0cd5e335c06f830565859b3f7c03b6624073c31f8b6dfb9ca8c3339c", "manifest entry (normalised)": "aeded296ca437b9f420f294730a9ce282a06a7c9d6113696ae43ac9454e237df", "page /maps/official-31203/B": "cdc06bc986c9be59fd0a890bc2cb4fe25c2dfc613ef7e1286cd26f291039d0bd"}
+        },
+        {
+          "map": "official-31203",
+          "combination": "C",
+          "digests": {"preview.png": "4277b5a43d820bbfeb9ceb0711db52cd15a0820c22f216b4babb3bf1b727b507", "thumb.png": "d935df718806da6d312776aff4af577ffd9415a48f2debc544c52c8a4c9b96d2", "parts.json (normalised)": "673e59204e8aecb6ea17d27a3b99e314f57bf5e2d5a11f89e837f741cd4bfc0e", "bricklink.xml": "fea9a4b1f549f7acc56dd2fed6a46e8c11559182bbd59df9c60f23340acc9b7e", "rebrickable.csv": "db415ad50881a4f771113e01b0ed82c31a9b7d67f5c47dea42c6ee18360ad9b0", "parts-1kit.json (normalised)": "8a329bb67fd5dcf89c3c5bb8ccee6525131c43d1b3c08d238fac7a17df3e0afd", "layout.json (normalised)": "74636a3cf0b413bead4879dc3d2826e50079f82bd5159aa024d5882e1cd5161b", "cells.json": "2d233493be6782ae22f480aac1972f71b4d1739b1cbeab7c50f6880b9e109aa1", "manifest entry (normalised)": "e7de16a005f833ca28f3f33b9ea116ea79b50e535940e5d31138418991a14127", "page /maps/official-31203/C": "d32880e9ba93af8953444e7334c20175c2785b3b1f6ed318436f518fdc64ff98"}
+        },
+        {
+          "map": "ocean-sst",
+          "combination": "A",
+          "digests": {"preview.png": "6ffafd0ca2b8dee10f66aa7b77dd636916e03d8538aa5ab6850410207c2e1cb8", "thumb.png": "3e00dcb0c504ccfc7ba4729c0ac234e42c7a6a3686003ded0af3020c079fe83a", "parts.json (normalised)": "65ac703ca117e95e65000eeee327c28eb5bf0dffe37ad8afe91cea199927ec4d", "bricklink.xml": "5328eb8f4c63c9812751a0faeab0604e0351941c6557bbdfe86a59f00b91fdde", "rebrickable.csv": "b66f99f9f5a89006a39719492aada449979bc61c08d98bc2d93cd48a62038275", "parts-1kit.json (normalised)": "db5e32b10ab17361632e36132a303fc19c6e45eca7738cee81854797751a7244", "layout.json (normalised)": "3622698312c3aba98c651e0e7551e73cf1486878c22525a5ae5f62df852875a6", "cells.json": "92811ab66e9020a4af5c7ee4122230bb8f931cf845b9a4333b2e1d88b03b6062", "manifest entry (normalised)": "b7a84fdd403d84f4ebce2bdb0180f70e3edcd554d3c8c0059e502fce1369efee", "page /maps/ocean-sst/A": "2b4fe0c0d5b32e3978eb8d7be23cd117e632cb033add82ae8bc198c852af06b2"}
+        },
+        {
+          "map": "ocean-sst",
+          "combination": "B",
+          "digests": {"preview.png": "f7f036c39d3e6d3547b73ef02713fddc1b5a3cb5035220febc59c6323634d996", "thumb.png": "ae705fadd3434f5f441ced73bdac57172e3c1e7c457fd980aec8a0918c5d688d", "parts.json (normalised)": "c11bf4fa09e3ceb9d4894c2f559b905686414d0599cd77b5e5dd14e77b8a033e", "bricklink.xml": "5328eb8f4c63c9812751a0faeab0604e0351941c6557bbdfe86a59f00b91fdde", "rebrickable.csv": "b66f99f9f5a89006a39719492aada449979bc61c08d98bc2d93cd48a62038275", "parts-1kit.json (normalised)": "35794fa0b57908504771b5190c411d3ca0512d38d74121a4f7613ca2a728a850", "layout.json (normalised)": "34a54dd36d4aca143de097da0d3e3c2d786437534c7fed848d72ac7f67f0e134", "cells.json": "ed650ccca682bcc7318a91d7c2ae7c12a9a6115dfae8a80979277977c7f30624", "manifest entry (normalised)": "3e9bb3ffd34842d40c054ddb296dc50754d3e7ae9e53274ced2a6c0187f4bb27", "page /maps/ocean-sst/B": "cf56277de1a1601e57c8adc681540ebc848db6ca0b25016b98adbd6d352f7b90"}
+        },
+        {
+          "map": "ocean-sst",
+          "combination": "C",
+          "digests": {"preview.png": "9e9a330db15e85dea3c4994a89aa82cb8eb59f22dba97e1f3d9f9dad7f1dc882", "thumb.png": "6f15263bdf53976f5b8480c0120c5168aed64fa3037fd1daca276dcf0d7c1420", "parts.json (normalised)": "8a3a8ff7284927d7aecf1d4e8812511d26a13df574f3a6ebe74381236bda4bf7", "bricklink.xml": "5328eb8f4c63c9812751a0faeab0604e0351941c6557bbdfe86a59f00b91fdde", "rebrickable.csv": "b66f99f9f5a89006a39719492aada449979bc61c08d98bc2d93cd48a62038275", "parts-1kit.json (normalised)": "cb579fd40e4ace2efb8082fbe64c72c86fef421e042614b75669c4666787a51f", "layout.json (normalised)": "b3500206dcfcb0b25961fa04ed953e254765339ce917b086c60cadc58ad78868", "cells.json": "3a42026a677a439000a4c7a26c2b5960e445ba403e251a2668d11d941062c296", "manifest entry (normalised)": "e91abbfa66d0a540a8a5f437c68a1faa345f47c51eb860615700ff122045bc15", "page /maps/ocean-sst/C": "60635b264ff1f3b3fb74197aed234d166bdc9a4401c745d0a9d576659fcd95ea"}
+        },
+        {
+          "map": "ocean-el-nino",
+          "combination": "A",
+          "digests": {"preview.png": "9a5bfd9cbc1ac6f2f28e25482ff94222330369d81a6ff0817d185fcfe458c282", "thumb.png": "0ffcbf08489dd1fba47b5b0090202bab2ad3f2445646258c8093c9d6cdb49537", "parts.json (normalised)": "cb2ce6bc648ecea653fa6f81b86e3ab3cdbcda6354b24c5f94ab8e9fb6b6dd24", "bricklink.xml": "f3977531c3a0a4f81b6da0e71a9a2247c3e42fd10a826c28ce91c01676e2c77b", "rebrickable.csv": "659721de7807231be785da03a0643ba16fc737fecff47f9f2790ab3e47236db5", "parts-1kit.json (normalised)": "9c01f4ae702fcea2162090841629257007b9c73896f4b3470d7a9eb57bf485b1", "bricklink-1kit.xml": "c54c203327852a2bbdd839822cdd620dd429dff22d4e03ab5e9bd57ce860a6fd", "rebrickable-1kit.csv": "5b2b62a6ae12b7b8ca97735cccb35b37d2d8dbb75dc7aecba52eb1d53ae6fb18", "layout.json (normalised)": "025799b9dcc4b8c96ce9f86bb370fd5cd0c804b2cb8139f00a384fa6fb681006", "cells.json": "9c391645d8e073ca7d7f0cfaee0c35d6175e08d753dd78d087bf11ebd17a0a5c", "manifest entry (normalised)": "345925809975a97e348143d85880246fddb18c42ddabf364b699000b6df6550b", "page /maps/ocean-el-nino/A": "97f7e7c2390e6fae683bb206b351573d99ae8795915233182a10b87a8f233e1f"}
+        },
+        {
+          "map": "ocean-el-nino",
+          "combination": "B",
+          "digests": {"preview.png": "d3492a14c4d5c4c1112617ea8d5f8035de14a47bd3eb7a8a8d539743c8799585", "thumb.png": "b9e953c5e145253bfdac824095b7c10c78f48894b0f06f414054c53d276ae185", "parts.json (normalised)": "a9d775e6a322186153d58d7a5455c3f09ed4e1828393b9924163745995046fc7", "bricklink.xml": "72d0ee5785e31205f4bef833c37f7f67a4b9eac6f4cf4126778c74566e2daa02", "rebrickable.csv": "38ccbd4c25fa0b264dafbe69773bc651286f8ba3aefcc1d66cf839056b9795f3", "parts-1kit.json (normalised)": "f2b1f0083a7ee46007a867011dae2fa10d2b1e69ac647374ea57fc297c11f218", "bricklink-1kit.xml": "18cc6fac767b4ca87872ab99959790c9f344427d8f02358eb5b7f12796db292a", "rebrickable-1kit.csv": "d4950fadd55964497427fed647709518d5a44554cd7f09b8b87a2dfd904470f7", "layout.json (normalised)": "cd63b708a873b7ed6e1a292f9ec80949ddeb7a4b5de9ca3d1a3009c503423eac", "cells.json": "d516f2ce67c10292e937f32cb23eb1c7200853449ec0aee678a4113acb70b1df", "manifest entry (normalised)": "0e0c903a4445b924f8a06b0dbe401b29538eb819964097e4e8c82fdfc616ce63", "page /maps/ocean-el-nino/B": "dc37cad7db122725512886be5dfcbdb723c40f6a27eb3cf78a8549530491f244"}
+        },
+        {
+          "map": "ocean-el-nino",
+          "combination": "C",
+          "digests": {"preview.png": "86ae60b3621f3b9c0b81c241a3d689146f55e576a1d0b7a4c93ac3220bbfad40", "thumb.png": "afa7c3ee34c7c608f9c77c56455350f49ef48a514efb48c23b9ec5ce843b2cd1", "parts.json (normalised)": "9c7d229e2a03fdfd0370705b020d2bffc65faabb2836310a4d7bc9afc877708f", "bricklink.xml": "45a1ad73919acf57db7d644adccf0401008989079bdcb2aa0f5436c431b23f46", "rebrickable.csv": "845820a766a2ac4be09dfd9ad7085f5e5398244312ee8edd08c26889e7e5df5d", "parts-1kit.json (normalised)": "1bcc03d4c27de70e915efbb6b6861009e0fe29abf107401b71508662a0a737c7", "bricklink-1kit.xml": "0234976af8542e65a1c6c68904d77ce264b71e0ac126e4a7387c2752cd71f7fb", "rebrickable-1kit.csv": "fdf075ebe4a387184b1e24313dd6fbcd34f0808883a5c97083fb3326e80b76ab", "layout.json (normalised)": "776de564fdba34b4f66f2bf448d000a956da80aa36bdb24ecf3c16034a3e1f84", "cells.json": "b77f74a7d01021dfc6927b8764126f38ec4003b14aefa247c21954a0308976bf", "manifest entry (normalised)": "1c1dac1294972fba06c66581044e1aca62551bd9ec0b869919111b72b4fee9f8", "page /maps/ocean-el-nino/C": "f75628d357a3bec205927b3c992a2178b2e39da3c8f37b87e9f1d65942274794"}
+        }
+      ]
+    },
+    {
+      "site": "living-planet",
+      "maps": [
+        "living-planet"
+      ],
+      "part_labels": {"6141": "plate 1x1 round", "98138": "tile 1x1 round"},
+      "map_rows": {
+        "living-planet": {"id": "735b017047d69bf9b23053aa0e65a990d5f7220c1fb271ee8bab64cfb9523c41", "title": "4068c311a9f029db377527c26cc3c33952131baf9539ab3ae692d769c45d1937", "description": "a7cfd99bc055c498b488451e656b5a6e43ba63c31b0bfe7d4757e8a0daa53f60", "recipe": "47438a2db29d447e6c78aa637a1ef3a7c20ad94c7257727061d906a88ee18d0a", "default_combination": "798640599597df7a8daa32b1132f07850a68b5e71bd295650399a38074f52804", "layers": "574eb5fe4f2f6782e43cadb849aeb7398f4b36e940fce3b5674e64e310662ca9", "datasets": "8d19ed67a8d0de4971ecd0bb9769022f9c477a3869ede8a27be719247d81dadc", "citations": "8838ecf6a593bbe59596898954bc7404df4aa3fe370a1130a073fd8c8979c38c", "stickers": "e7c8f3271736cdd7bdf27f26853718efff5c9f0d6fe722344c8edd94fb20356d"}
+      },
+      "variants": [
+        {
+          "map": "living-planet",
+          "combination": "A",
+          "digests": {"preview.png": "3ac0449d20acb1af05efbe354b0c260aed1c367d35382ef8e0d9e07ee02720a4", "thumb.png": "dd8ddb47d9df331a3a615575e0550ddf0b54d2f1d2b5417ca66a580819e7d0cf", "parts.json (normalised)": "c282e4069e3143b9ded0d5e30f34aa6f0b91f28f92db66cddbae40d1fbebe5ee", "bricklink.xml": "8041e136c911fa06a063f9e12cb58dd0127eb932c0e95a984af9a50888d4f9d6", "rebrickable.csv": "3b18914cd0f43c2e1dcf320960a1217c7246927f69c04ad718eb0fc3460649a4", "parts-1kit.json (normalised)": "f9e05dff25342a598717d54d2d3495a56efe1e217fad8d4d3ed228da7557fd7b", "bricklink-1kit.xml": "50779ed1c019d89725640a8d91d3e9423429ce00f4214f3d33fc353d01fc8b24", "rebrickable-1kit.csv": "e3aff0367bee4a099497b0b72b87972e7e38fbae36c647544806794bf2701915", "layout.json (normalised)": "ae63dd74835d5fcc9cd3d1ba7632284d5311172c261aa05a174784102ebfda64", "cells.json": "0b7dd85477f4a7dc114102c494e310f02f98d70a54f7b00cebfb625c7d20b062", "manifest entry (normalised)": "5262575e23a2056b7fe5ac3cde05314801f63313b17fbe80e805f1979f5f083e", "page /maps/living-planet/A": "a8f2cc82af2d51c99fa32ff4d24126c2995c12d768508882af773df97c571584"}
+        },
+        {
+          "map": "living-planet",
+          "combination": "B",
+          "digests": {"preview.png": "8414b00276c94dcb1179cf8951addd09fa4d6a4f6d51315be9450c44af062d56", "thumb.png": "aa2f1be7f52b7e8293b091633bf95704623f1802067fd10cb568571530158b92", "parts.json (normalised)": "ca7710de1efe202daeb8bcd909cc04565cc938bee31311446646b92564e0eaf3", "bricklink.xml": "5407e9aeffa83aad6f86e4ea4beb6d5979b02ce9e1ad6be8279ec653b64f6bae", "rebrickable.csv": "c3dc5bb7437a68f5388689d3bb9638fdb8706c78b863856b84053a663efde7a3", "parts-1kit.json (normalised)": "a442bc2ca453d50a251474130dd60ade16f0df326cfa63fa15cdba9328ca4c07", "bricklink-1kit.xml": "5653c178bf197fe44faa80008b5242beefeeaec907873c85217462db192c4201", "rebrickable-1kit.csv": "2cfd6264a143aefab1d66aa4a55b47b419190596b399d7cfb5d49e1a845ae4ec", "layout.json (normalised)": "6a430cb21f0771a59aa5b29cc921934c45fd9f81861b49c9b92378c78f2f59cc", "cells.json": "64ad1d80ff584ad9f9ff48e5297974d973e35b79db601d24ecb37399903d6524", "manifest entry (normalised)": "ac604aa26426b938f6bed45a99be26252a2a36d41a386b9f3bfb013329c015bb", "page /maps/living-planet/B": "bc71d318345403b62c127d21b41e391f35b2461b5badfd33c210a67518f28c64"}
+        },
+        {
+          "map": "living-planet",
+          "combination": "C",
+          "digests": {"preview.png": "6453ecd7ad755e3fd8367ad430813a55156bc1360600405cc3614c5a6c50e176", "thumb.png": "345094eb309099fe2bf67f87226ac6be481ef19d334cfef5cdbd6d31cbf62d1c", "parts.json (normalised)": "3f60d1895fe7a5678d6902d0a7dcddb9eb3128ad86725aadb18cee8197779fc5", "bricklink.xml": "49fb96ae26330ddd41a9c14a55fe1ec75a8f23452adef3be29933a27906a1f8f", "rebrickable.csv": "3c29b5c95c70be5e1fee02c9f277b3d7275da23a2b4712c0f099320d73d7e3c8", "parts-1kit.json (normalised)": "18fa4bb0c4ae7f77385eac3f20c3cc41efeece032d9cbfc9b1b2f9bc59ce0015", "bricklink-1kit.xml": "4e7acb0a3740fdded4160b8075e98b3ee7327d7a85a08d88c8fc41d979ac4e0c", "rebrickable-1kit.csv": "db94aa8e72ce6206f787b82a691e91df91b22a1b3ca75a1be1491bb31e7217b5", "layout.json (normalised)": "4a84283b138ae94bf9458e58882c14f54c3414a9770b8c2b753d1052b99a4f18", "cells.json": "c0de7d5d828c20b841a26d8b7aef46cbf131d3a36cc2085647ff78c3a86f6229", "manifest entry (normalised)": "c28f012fe657ba7cc29042a1112be2a24ad72b72c120d3ca5f5c2413210f33b1", "page /maps/living-planet/C": "bfe9a42fe3d159744910834810939dda4d7d4eb21447b08ad1a72594abdca32c"}
+        }
+      ]
+    },
+    {
+      "site": "rainfall",
+      "maps": [
+        "rainfall"
+      ],
+      "part_labels": {"6141": "plate 1x1 round", "98138": "tile 1x1 round"},
+      "map_rows": {
+        "rainfall": {"id": "8727284b6a472e08d18141805614d46fca53bca6b959d6284a3bbd2139b8d023", "title": "21f66cb38a295ff8a62b84dd526074d3199f49a4ea1bbb42045fc6645ba2cb30", "description": "95d73f71d9ac0c9af5d348b0686a6025f7b4c1b6822de059e57711c966b8507d", "recipe": "2d20d64f5f1bf4e39ac54a9471d75588c8203e4bac42f673d984f8ffbdab083f", "default_combination": "798640599597df7a8daa32b1132f07850a68b5e71bd295650399a38074f52804", "layers": "6f0c635024c5e7e65cd478a4db57ac66523ed9f7f9e3a99e3ab4dba8301d90fe", "datasets": "a9f31639562d11979be79b057792468b10d4bd26ec5be77ba3e1cc1ebee3be32", "citations": "fd908d629b80b2dca6143fa646fab6d94d2f0565f534c3226de528f26370aca5", "stickers": "355a4939ea4bb9bef8abb1bdef37d85617382d7f4baa020905f58f22ea55bc56"}
+      },
+      "variants": [
+        {
+          "map": "rainfall",
+          "combination": "A",
+          "digests": {"preview.png": "59119dea02fee2b3e06e2ed689c81078898df85869e8fa711adf3ca8238b527b", "thumb.png": "ed77b712f4c5f2f39b5205c86ab5835fa70a9534b8fcd91d5b2b04d72e97fd03", "parts.json (normalised)": "c0596e115b54a8db27aed2b88a0d90e4c26f71e7c7c6312e2238df98910576ce", "bricklink.xml": "b044c86a8a9dd3bf0dc426e7a1cb93600861e115f2d07b2a16db8eb79df64a64", "rebrickable.csv": "c69c700993a76173117a0b8e2802f26d431f2ee98c569cb8614e2d336227d64c", "parts-1kit.json (normalised)": "d5864020385d20b26f6f762b53b2f19e530e6aafa2fd39cce9bc7650e88a363e", "bricklink-1kit.xml": "69b239406025729ed104e9b50e391669285faf933d806bb2550861701a9ab8b1", "rebrickable-1kit.csv": "cbe9b5bf58175dc38a7fb79be0886540ddc32245c7b70fd7ab35cd545d1f8026", "layout.json (normalised)": "3d55ff9100f0149e01191edf58c687c88addad6a73900ff6d70309f4d958a4b8", "cells.json": "988a998625d4afd58c74c9be9446341e1e2fdcd1c4802a4805dec7723f8922b2", "manifest entry (normalised)": "1ab4fe1f5ad6948b27a51fb8e91fe9c6a493a1cd9ffbb871f7eb2c6eaa5b32a4", "page /maps/rainfall/A": "96ad5deb2b4da84b0b41cfdb8ff2b1d5180c0285d35fca46029136683bdfd438"}
+        },
+        {
+          "map": "rainfall",
+          "combination": "B",
+          "digests": {"preview.png": "1765da67f3b31a9c2da28218460fadd163bfadb797cea6da9c0e77442e86a29e", "thumb.png": "9fc6c30eb51aa1501ab2127b62662981ad0be7b00680b557d9cc9951e4699063", "parts.json (normalised)": "c4c940511fe50433476aaa3c898e0697bd8cf5c66b0ca2c6dfb87d5340507e6e", "bricklink.xml": "53468c35bbcfec04c1e94bdd005e04d7622c2b7b99144bc6811348c2f1a0bd47", "rebrickable.csv": "5f42301921fe22e58e67f668e69b56ee3a3f32c27ebba51bf9604df540098191", "parts-1kit.json (normalised)": "27acb4c8231c0eff49d4d3a2a3f7c0ca27c2ed172afb3ff37959d864f031b736", "bricklink-1kit.xml": "1a57ab17ad748705402457dc69dd16e6195821529aa7728291a4ae2b10936840", "rebrickable-1kit.csv": "dd000628ffff18778059e8f4d9bb38629c429a8782504e84a146bf444c9da5c9", "layout.json (normalised)": "03f310ba4ff50dff199ae614e6bdb9c55076342b66f9fc0a328d0b102dba4ee6", "cells.json": "49eb26b531dcffc7a207e68a1d1e3336a6660bdd3b0152e50b92257c44367b1f", "manifest entry (normalised)": "a651cbe56f156a55d0889abde9fd464c32be43e13a2644416eb09e6b9cf8262b", "page /maps/rainfall/B": "8029fd6e37be338fc6b8b886b7e94cb7a95c8f98606530f54998a21cd3911a93"}
+        },
+        {
+          "map": "rainfall",
+          "combination": "C",
+          "digests": {"preview.png": "c1c41325e547dad3ecc880a6a480fdd381e0f708e565e255f49a1ddbeec67f02", "thumb.png": "6f4a8177e6fd0a44280b13fd0a0a5874635789d73663b54cd0f3e98dfbe19b8f", "parts.json (normalised)": "c428193092d6372926e9e347cf48f91dec4cda9dc6cf121fc8821da2046c6d8e", "bricklink.xml": "68a6f6ced820001f21dad9ee6efc622c34396ad89cbb5222c5ae0366eb013714", "rebrickable.csv": "e3b8ea2debfb7ca16fabedcd9b13ceeb45d3a7d731e271473d2a9f1bf3bb838a", "parts-1kit.json (normalised)": "8f37fa28112172bf513fa9d7c55bca30a5e8133054cd053fea9700a13034087e", "bricklink-1kit.xml": "8a9d6d159559912facb1f66d339b265d462f645d476fd80358f275911e4c0092", "rebrickable-1kit.csv": "677affe9c0bd4080d577c733fb86beed876d067d1fb8229ebe8effb1e8a36208", "layout.json (normalised)": "b386637b53fa203176280262aea53fd48ac2748aa81626c9557a6269ec6bda41", "cells.json": "8927afa0bfcf3bd78ce4b4e964c2867a7674d6742d649aa88ee7e96b81670715", "manifest entry (normalised)": "9e52a60d6ce2307ee65b61b6b6443c8de94dd84a2828e8b5a20fdd974abeec1b", "page /maps/rainfall/C": "164e3df1db8d2000b0ad732704b495a43efce7d13a844828b6a83d0a2872139a"}
+        }
+      ]
+    }
+  ],
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
+}

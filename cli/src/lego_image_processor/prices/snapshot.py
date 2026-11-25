@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from . import wording
-from .lots import LotRef, lot_ref_by_lego_id
+from .lots import PART_ORDER, LotRef, lot_ref_by_lego_id
 from .wording import ATTRIBUTION, DISCLAIMER, ESTIMATE_NOTE
 
 FORMAT_VERSION = "1"
@@ -304,8 +304,9 @@ def _lot_set(v: Any) -> Dict[str, Any]:
 def _lot(v: Any, where: str, started: datetime, finished: datetime) -> SnapshotLot:
     o = _obj(v, where, LOT_KEYS)
     part_id = o["part_id"]
-    if part_id not in ("6141", "98138"):
-        raise _Invalid(f"{where}.part_id", "must be '6141' or '98138'")
+    if part_id not in PART_ORDER:
+        names = [f"'{p}'" for p in PART_ORDER]
+        raise _Invalid(f"{where}.part_id", f"must be {', '.join(names[:-1])} or {names[-1]}")
     lego_id = _int(o["lego_color_id"], f"{where}.lego_color_id", 0)
     ref = lot_ref_by_lego_id(part_id, lego_id)
     if ref is None:
@@ -359,7 +360,7 @@ def _parse(data: Any) -> PriceSnapshot:
         lot = _lot(raw, f"lots[{i}]", started, finished)
         if lots and lot.lot.sort_key <= lots[-1].lot.sort_key:
             rule = "duplicate lot" if lot.lot.key == lots[-1].lot.key else "out of order"
-            raise _Invalid(f"lots[{i}]", f"{rule}: lots must be sorted by part (6141, 98138), then "
+            raise _Invalid(f"lots[{i}]", f"{rule}: lots must be sorted by part ({', '.join(PART_ORDER)}), then "
                                          "LEGO color ID, each once")
         lots.append(lot)
     if d["complete"] != (len(lots) == lot_set["count"]):

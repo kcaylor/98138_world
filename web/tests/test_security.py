@@ -14,6 +14,9 @@ SRC = Path(__file__).resolve().parents[1] / "src" / "web98138"
 @pytest.mark.parametrize("path", ["/", "/about", "/maps/ocean-sst/A", "/static/style.css",
                                   "/maps/ocean-sst/A/preview.png",
                                   "/maps/ocean-sst/A/download/layout", "/healthz", "/nope",
+                                  # feature 016: a template variant's page, image and download
+                                  "/maps/ocean-sst/winkel-tripel", "/maps/ocean-sst/winkel-tripel/preview.png",
+                                  "/maps/ocean-sst/winkel-tripel/download/bricklink",
                                   # feature 017: the sticker routes
                                   "/maps/ocean-sst/stickers/kit-31203/sticker-large.svg",
                                   "/maps/ocean-sst/stickers/kit-31203/download/stickers-letter"])
@@ -31,7 +34,7 @@ def test_security_headers_no_cookies(client, path):
 
 
 def test_no_third_party_resources(client):
-    for path in ("/", "/about", "/maps/ocean-sst/A", "/maps/official-31203/B"):
+    for path in ("/", "/about", "/maps/ocean-sst/A", "/maps/official-31203/B", "/maps/ocean-sst/winkel-tripel"):
         html = client.get(path).text
         for attr in re.findall(r'(?:src|href)="([^"]+)"', html):
             tag_ok = attr.startswith("/") or attr.startswith("#")
@@ -65,7 +68,7 @@ def test_healthz(client):
     r = client.get("/healthz")
     assert r.status_code == 200
     j = r.json()
-    assert j["status"] == "ok" and j["variants"] == 9 and j["generated_at"]
+    assert j["status"] == "ok" and j["variants"] == 10 and j["generated_at"]   # 9 kit + 1 Winkel (016)
 
 
 def test_manifest_public(client, site_dir):

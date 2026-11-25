@@ -1,8 +1,11 @@
-"""Marketplace part numbers for the kit's two map parts (``part_numbers.json``, feature 005).
+"""Marketplace part numbers for the map parts (``part_numbers.json``, feature 005).
 
 Each marketplace numbers the 1x1 round plate differently: BrickLink files it as item 4073 (6141 is
 an alternate number), Rebrickable as part 6141, LEGO as design 6141. The 1x1 round tile is 98138 on
-both marketplaces (LEGO designs 98138 and 35381). Values come from pinned archived catalog pages
+both marketplaces (LEGO designs 98138 and 35381). Feature 016 adds the 1x1 square tile 3070b of
+template margins, which is not in the kit: BrickLink files it as item 3070 (3070b is an alternate
+there), Rebrickable as part 3070b, LEGO as design 3070 among others; the kit-inventory rules apply
+to the kit's two parts only. Values come from pinned archived catalog pages
 (``tools/partnumbers``); nothing here is typed in by hand.
 Not affiliated with or endorsed by The LEGO Group.
 """
@@ -21,7 +24,8 @@ from .inventory import load_kit_inventory
 from .source import DISCLAIMER
 
 PART_NUMBERS_PATH = DATA_DIR / "part_numbers.json"
-PARTS = ("6141", "98138")
+PARTS = ("6141", "98138", "3070b")
+KIT_PARTS = ("6141", "98138")  # the kit's map parts; 3070b is not in kit 31203 (016)
 ROLE_FOR_PART = {"6141": "land", "98138": "ocean"}
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -122,16 +126,19 @@ def parse_part_numbers(data: Dict[str, Any]) -> PartNumberTable:
         if not colors or not all(_str(c) for c in colors):
             raise _fail(f"{where}: bricklink colors must be a non-empty list of names")
         designs = tuple(row.get("lego_design_ids") or ())
-        if not designs or part_id not in designs:
+        if not designs or not all(_str(d) for d in designs):
+            raise _fail(f"{where}: lego_design_ids must be a non-empty list")
+        if part_id in KIT_PARTS and part_id not in designs:
             raise _fail(f"{where}: lego_design_ids must include {part_id}")
         cits = {}
         for cat, entry in (("bricklink", bl), ("rebrickable", rb)):
             if entry.get("citation") not in by_id:
                 raise _fail(f"{where}: {cat} citation {entry.get('citation')!r} does not resolve to source.pages")
             cits[cat] = by_id[entry["citation"]]
-        kit_elements = inv.by_role(ROLE_FOR_PART[part_id])
-        if any(bl["item_no"] not in e.part_ids for e in kit_elements):
-            raise _fail(f"{where}: BrickLink {bl['item_no']} disagrees with the kit inventory's part_ids")
+        if part_id in KIT_PARTS:
+            kit_elements = inv.by_role(ROLE_FOR_PART[part_id])
+            if any(bl["item_no"] not in e.part_ids for e in kit_elements):
+                raise _fail(f"{where}: BrickLink {bl['item_no']} disagrees with the kit inventory's part_ids")
         parts[part_id] = PartNumbers(
             part_id=part_id, name=row["name"], lego_design_ids=designs, bricklink_item_type="P",
             bricklink_item_no=bl["item_no"], bricklink_alternates=alternates, bricklink_colors=colors,
