@@ -1,5 +1,7 @@
 """Per-cell chooser data (feature 015, FR-001, FR-004, FR-005; SC-001)."""
 
+import json
+
 import numpy as np
 import pytest
 
@@ -106,10 +108,17 @@ class TestDefaultEqualsBuild:
             assert _default_colors(map_cells(r)) == _layout_colors(r)
 
     def test_does_not_change_layout(self, placed):
+        def stable(layout):  # generated_at has one-second resolution; two builds may differ
+            d = json.loads(layout.to_json())
+            d.get("metadata", {}).pop("generated_at", None)
+            d.pop("generated_at", None)
+            return d
+
         r = _build("ocean-sst")
         before = r.layout.to_json()
         map_cells(r)
-        assert r.layout.to_json() == before == _build("ocean-sst").layout.to_json()
+        assert r.layout.to_json() == before
+        assert stable(r.layout) == stable(_build("ocean-sst").layout)
 
 
 class TestDataLayers:
