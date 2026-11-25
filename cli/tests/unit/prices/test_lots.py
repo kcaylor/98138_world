@@ -95,7 +95,8 @@ def test_parse_lot():
 
 def test_square_tile_part_order_and_type():
     from lego_image_processor.prices.lots import PART_ORDER, PART_TYPE
-    assert list(PART_ORDER) == ["6141", "98138", "3070b"] == list(PART_TYPE)
+    # feature 017 appends the in-margin plaque's tile 10202 (test_plaque_tile_part_order_and_type)
+    assert list(PART_ORDER)[:3] == ["6141", "98138", "3070b"] == list(PART_TYPE)[:3]
     assert PART_TYPE["3070b"] == "square_tile"
 
 
@@ -129,3 +130,64 @@ def test_recipe_lots_add_the_margin_colors():
     assert keys == {("3070b", lot_ref("3070b", "lego_white").lego_color_id),
                     ("3070b", lot_ref("3070b", "lego_bright_yellow").lego_color_id)}
     assert {l.key for l in recipe_lots([base]) if l.part_id == "3070b"} == {("3070b", 26)}
+
+
+# --- the in-margin plaque tile (feature 017 T072; FR-024; contracts/in-margin-plaque.md) --------
+# Lot 10202:26 is cited in plaque_parts.json, not in part_colors.json: lot_ref and parse_lot read it
+# there; recipe_lots adds it only for a recipe naming a corner; all_cited_lots (``--all-colors``)
+# keeps to the part_colors parts.
+
+def _tile():
+    from lego_image_processor.kit.plaque_parts import load_plaque_parts
+    return load_plaque_parts().plaques["small"].tile
+
+
+def test_plaque_tile_part_order_and_type():
+    from lego_image_processor.prices.lots import PART_ORDER, PART_TYPE
+    tile = _tile()
+    assert list(PART_ORDER) == ["6141", "98138", "3070b", tile.part_id] == list(PART_TYPE)
+    assert PART_TYPE[tile.part_id] == "plaque_tile"
+
+
+def test_lot_ref_plaque_tile_from_plaque_parts():
+    tile = _tile()
+    lot = lot_ref(tile.part_id, tile.color.key)
+    assert (lot.part_id, lot.color_key, lot.lego_color_id, lot.lego_color_name) == \
+        (tile.part_id, tile.color.key, tile.color.lego.id, tile.color.lego.name)
+    assert (lot.bricklink_item_type, lot.bricklink_item_no) == ("P", tile.numbers.bricklink_item_no)
+    assert (lot.bricklink_color_id, lot.bricklink_color_name) == (tile.color.bricklink.id, tile.color.bricklink.name)
+    assert lot.key == (tile.part_id, 26) and lot.spec == "10202:26" and lot.part_type == "plaque_tile"
+    assert lot.bricklink_color_id == 11
+    with pytest.raises(ValueError, match="no cited color 'lego_white' for part 10202"):
+        lot_ref(tile.part_id, "lego_white")
+
+
+def test_parse_lot_plaque_tile_checks_the_color_against_plaque_parts():
+    tile = _tile()
+    assert parse_lot("10202:26") == lot_ref(tile.part_id, tile.color.key)
+    assert named_lots(["10202:26", "3070b:26", "98138:140", "6141:1"])[-1] == parse_lot("10202:26")
+    for bad, match in (("10202:0", "no cited color with LEGO ID 0 for part 10202"),
+                       ("10202:1", "no cited color with LEGO ID 1 for part 10202"),
+                       ("3958:26", "not a map part"), ("4974:26", "not a map part")):
+        with pytest.raises(ValueError, match=match):
+            parse_lot(bad)
+
+
+def test_recipe_lots_add_the_plaque_only_for_a_recipe_naming_a_corner():
+    base = load_recipe("ocean-sst")
+    text = base.path.read_text(encoding="utf-8")
+    with_corner = parse_recipe(text + '\n[margin]\nplaque = "bottom-left"\n', path=base.path)
+    a, b = {l.key for l in recipe_lots([base])}, {l.key for l in recipe_lots([with_corner])}
+    assert b - a == {("10202", 26)} and a <= b
+    keys = [l.key for l in recipe_lots([with_corner])]
+    assert keys[-1] == ("10202", 26)                        # last: part order 6141, 98138, 3070b, 10202
+    # no bundled recipe names a corner, so the default lot set (and a fetch of it) is unchanged
+    assert all(getattr(load_recipe(p).margin, "plaque", None) is None for p in bundled_recipes().values())
+    assert "10202" not in {l.part_id for l in recipe_lots()} and len(recipe_lots()) == 26
+
+
+def test_all_cited_lots_keep_to_the_part_colors_parts():
+    lots = all_cited_lots()
+    table = load_part_colors()
+    assert {l.part_id for l in lots} == {"6141", "98138", "3070b"} == set(table.parts)
+    assert len(lots) == sum(len(table.for_part(p)) for p in table.parts)

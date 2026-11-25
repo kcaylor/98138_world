@@ -152,7 +152,7 @@
 {% if stickers %}{% set st = stickers %}{% set sbase = '/maps/' ~ map.id ~ '/stickers/' ~ sticker_template %}
 <section id="stickers" class="panel stickers" aria-labelledby="stickers-heading">
   <h2 id="stickers-heading">Stickers for a plaque</h2>
-  <p class="note">Print both stickers on white sticker paper, cut them out along the marks and press each onto a Black tile, on its own or on a Black plate of the same size as a standalone plaque. The stickers are the same for every combination.</p>
+  <p class="note">Print both stickers on white sticker paper, cut them out along the marks and press each onto a Black tile, on its own or on a Black plate of the same size as a standalone plaque. {% if template %}These are the {{ template.projection }} version's stickers: their line names the projection, and the large one also credits the dataset that decided land and ocean.{% else %}The stickers are the same for every combination.{% endif %}</p>
   <div class="sticker-figs">
   {% for p in st.plaques %}{% set tile = p.parts | selectattr('role', 'equalto', 'tile') | first %}
     <figure class="sticker-fig sticker-{{ p.size }}">

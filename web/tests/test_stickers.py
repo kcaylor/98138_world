@@ -1,7 +1,10 @@
-"""Map stickers in the build step (feature 017, US2): one sticker set per map, written with the
-CLI library, listed in the manifest (FR-018, SC-008; contracts/web.md; research R12).
+"""Map stickers in the build step (feature 017, US2): one sticker set per map and template,
+written with the CLI library, listed in the manifest (FR-018, FR-020, SC-008; contracts/web.md;
+research R12, R14).
 
 Built offline from the CLI's dataset fixtures (the session, living-planet and rainfall sites).
+The session builds on the confirmed Winkel tripel template (conftest), so ocean-sst,
+living-planet and rainfall also have a Winkel variant and its own sticker set (T059).
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -18,6 +21,7 @@ import pytest
 from conftest import PRICES, TODAY
 
 KIT = "kit-31203"
+TID = "winkel-tripel"
 DISCLAIMER = "Not affiliated with or endorsed by The LEGO Group."
 STICKER_FILES = {
     "stickers-letter": ("stickers-letter.pdf", "application/pdf",
@@ -38,23 +42,41 @@ def site(request):
     return out, json.loads((out / "manifest.json").read_text(encoding="utf-8"))
 
 
-def _library_set(map_id, combination, cache_dir):
+def _library_set(map_id, combination, cache_dir, template=None):
+    """The library's set of ``map_id`` in ``combination``, or (``template``) on that template."""
     from lego_image_processor.layout.arrangement import parse_arrangement
     from lego_image_processor.maps.build import build_map
     from lego_image_processor.maps.recipe import load_recipe
     from lego_image_processor.stickers import sticker_set
 
     recipe = load_recipe(map_id)
-    result = build_map(recipe, cache_dir=cache_dir, compare_official=False,
-                       arrangement=parse_arrangement(combination))
+    if template is not None:
+        result = build_map(recipe, cache_dir=cache_dir, compare_official=False, template=template)
+    else:
+        result = build_map(recipe, cache_dir=cache_dir, compare_official=False,
+                           arrangement=parse_arrangement(combination))
     return recipe, sticker_set(result)
 
 
-def test_one_sticker_set_per_map(site):
+def _template_blocks(manifest):
+    """(map row, template id, sticker block) of every template sticker set."""
+    return [(m, t, st) for m in manifest["maps"] for t, st in m["stickers"].items() if t != KIT]
+
+
+def test_one_sticker_set_per_map_and_template(site):
+    """US2-1, FR-020: the kit set, then one set per template variant, in the variants' order."""
+    _, manifest = site
+    for m in manifest["maps"]:
+        assert list(m["stickers"]) == [KIT, *m.get("template_variants", {})], m["id"]
+    ids = {m["id"]: list(m.get("template_variants", {})) for m in manifest["maps"]}
+    assert all(t == [TID] for t in ids.values() if t)
+    assert {"ocean-sst", "living-planet", "rainfall"} & set(ids) == {k for k, t in ids.items() if t}
+
+
+def test_one_kit_sticker_set_per_map(site):
     """US2-1: four files under maps/<map>/stickers/kit-31203/, never per combination."""
     out, manifest = site
     for m in manifest["maps"]:
-        assert list(m["stickers"]) == [KIT], m["id"]
         block = m["stickers"][KIT]
         assert list(block["files"]) == list(STICKER_FILES)
         for kind, f in block["files"].items():
@@ -127,6 +149,70 @@ def test_files_are_the_library_render(site, fixture_datasets):
         assert f"hung as {m['default_combination']}" in text
 
 
+def test_template_sets(site, fixture_datasets):
+    """T059 (FR-020, US2-4): each template variant's set has four files under
+    maps/<map>/stickers/<template-id>/ named 98138-world_<map>_<template-id>_<kind>.<ext>, and is
+    the library's set of the map built on that template: its line names the projection and its
+    credit the template's dataset."""
+    from lego_image_processor.stickers import render_sticker_pdf, render_sticker_svgs
+    from lego_image_processor.templates import load_template
+
+    out, manifest = site
+    blocks = _template_blocks(manifest)
+    assert blocks, "the session sites have Winkel variants"
+    for m, tid, block in blocks:
+        assert tid in m["template_variants"]
+        assert list(block) == ["files", "title", "line", "alt", "legend", "credit", "plaques",
+                               "notes"]
+        assert list(block["files"]) == list(STICKER_FILES)
+        for kind, f in block["files"].items():
+            name, media, desc = STICKER_FILES[kind]
+            ext = name.rsplit(".", 1)[1]
+            assert f["path"] == f"maps/{m['id']}/stickers/{tid}/{name}"
+            data = (out / f["path"]).read_bytes()
+            assert f["bytes"] == len(data) and f["sha256"] == hashlib.sha256(data).hexdigest()
+            assert f["media_type"] == media and f["description"] == desc
+            assert f["filename"] == f"98138-world_{m['id']}_{tid}_{kind}.{ext}"
+        assert sorted(p.name for p in (out / "maps" / m["id"] / "stickers" / tid).iterdir()) == \
+            sorted(n for n, _, _ in STICKER_FILES.values())
+        tpl = load_template(tid)
+        recipe, s = _library_set(m["id"], None, fixture_datasets, template=tpl)
+        assert s.template.to_dict()["id"] == tid
+        t, line = s.text.title, s.text.line
+        assert line.endswith(f" {tpl.projection_title} projection.")
+        assert block["title"] == t and block["line"] == line
+        assert block["alt"] == {"small": f"Small sticker: {t}. {line}",
+                                "large": f"Large sticker: {t}. {line}"}
+        assert block["legend"] == [{"label": sw.label, "color": sw.lego_name, "part": sw.part_id}
+                                   for sw in s.legend]
+        assert block["credit"] == list(s.credit_lines)
+        etopo = next(c for c in s.credits if c.dataset == tpl.dataset.id)
+        assert block["credit"].count(etopo.text) == 1
+        assert block["notes"] == NOTES
+        by_size = {p["size"]: p for p in s.to_dict()["plaques"]}
+        assert block["plaques"] == [by_size["large"], by_size["small"]]
+        files = block["files"]
+        assert (out / files["stickers-letter"]["path"]).read_bytes() == render_sticker_pdf(s, "letter")
+        assert (out / files["stickers-a4"]["path"]).read_bytes() == render_sticker_pdf(s, "a4")
+        svgs = dict(render_sticker_svgs(s))
+        for kind in ("sticker-small", "sticker-large"):
+            assert (out / files[kind]["path"]).read_text(encoding="utf-8") == svgs[f"{kind}.svg"]
+        assert block != m["stickers"][KIT]
+
+
+def test_template_variant_files_have_no_plaque(site):
+    """FR-020: the template variant's layout stays as 016 builds it, without an in-margin plaque,
+    and no sticker file sits among a variant's files."""
+    out, manifest = site
+    for m, tid, _ in _template_blocks(manifest):
+        v = m["template_variants"][tid]
+        assert "stickers" not in v and not (set(v["files"]) & set(STICKER_FILES))
+        layout = json.loads((out / v["files"]["layout"]["path"]).read_text(encoding="utf-8"))
+        assert layout["metadata"]["template"]["id"] == tid
+        assert "plaque" not in layout["metadata"]
+        assert not (out / "maps" / m["id"] / tid / "stickers").exists()
+
+
 def test_el_nino_set_from_its_own_combination(manifest):
     nino = next(m for m in manifest["maps"] if m["id"] == "ocean-el-nino")
     assert nino["default_combination"] == "B" and KIT in nino["stickers"]
@@ -138,11 +224,13 @@ def test_total_bytes_counts_the_stickers(site):
     variants = sum(f["bytes"] for m in manifest["maps"]     # kit and template variants (016)
                    for v in list(m["variants"].values()) + list(m.get("template_variants", {}).values())
                    for f in v["files"].values())
-    stickers = sum(f["bytes"] for m in manifest["maps"] for f in m["stickers"][KIT]["files"].values())
+    stickers = sum(f["bytes"] for m in manifest["maps"] for st in m["stickers"].values()
+                   for f in st["files"].values())       # kit and template sets
     assert manifest["total_bytes"] == variants + stickers
     for m in manifest["maps"]:
-        size = sum(f["bytes"] for f in m["stickers"][KIT]["files"].values())
-        assert 0 < size <= SET_LIMIT, (m["id"], size)
+        for tid, st in m["stickers"].items():
+            size = sum(f["bytes"] for f in st["files"].values())
+            assert 0 < size <= SET_LIMIT, (m["id"], tid, size)
 
 
 # --- additions only (FR-018): the sticker step patched out --------------------------------------
@@ -158,9 +246,10 @@ def _tree(root: Path):
 
 
 def test_sticker_step_only_adds(tmp_path, fixture_datasets, monkeypatch):
-    """A build with the sticker step patched out has identical variant entries and variant files;
-    the sticker block, its files and total_bytes are the only differences. Built in B only, so
-    both maps need the one extra build in their default combination A."""
+    """A build with the sticker step patched out has identical variant entries and variant files,
+    the Winkel variant's included (FR-020); the sticker blocks, their files and total_bytes are
+    the only differences. Built in B only, so both maps need the one extra build in their default
+    combination A; ocean-sst's Winkel set comes from its Winkel variant's build."""
     from lego_image_processor.layout import grid
     from lego_image_processor.maps import build
 
@@ -180,22 +269,26 @@ def test_sticker_step_only_adds(tmp_path, fixture_datasets, monkeypatch):
 
     monkeypatch.setattr(prebuild, "build_map_stickers", counted)
     with_st = prebuild.build_site(tmp_path / "with", **kw)
-    assert calls == maps
+    assert calls == ["official-31203", "ocean-sst", "ocean-sst"]   # kit sets, then the Winkel set
     monkeypatch.setattr(prebuild, "build_map_stickers", lambda *a, **k: None)
     without = prebuild.build_site(tmp_path / "without", **kw)
 
     for m in with_st["maps"]:
         assert list(m["variants"]) == ["B"] and KIT in m["stickers"]
+    sst = next(m for m in with_st["maps"] if m["id"] == "ocean-sst")
+    assert list(sst["stickers"]) == [KIT, TID] and list(sst["template_variants"]) == [TID]
     assert all("stickers" not in m for m in without["maps"])
-    added = sum(f["bytes"] for m in with_st["maps"] for f in m.pop("stickers")[KIT]["files"].values())
+    added = sum(f["bytes"] for m in with_st["maps"] for st in m.pop("stickers").values()
+                for f in st["files"].values())
     for key in ("generated_at", "build_seconds"):
         with_st.pop(key), without.pop(key)
     assert with_st.pop("total_bytes") == without.pop("total_bytes") + added
     assert with_st == without
     a, b = _tree(tmp_path / "with"), _tree(tmp_path / "without")
     extra = sorted(set(a) - set(b))
-    assert extra == sorted(f"maps/{m}/stickers/{KIT}/{n}" for m in maps
-                           for n, _, _ in STICKER_FILES.values())
+    assert extra == sorted([f"maps/{m}/stickers/{KIT}/{n}" for m in maps
+                            for n, _, _ in STICKER_FILES.values()]
+                           + [f"maps/ocean-sst/stickers/{TID}/{n}" for n, _, _ in STICKER_FILES.values()])
     assert set(b) <= set(a)
     for path in b:
         if path != "manifest.json":
@@ -229,6 +322,76 @@ def test_echo_names_the_sticker_set(tmp_path, fixture_datasets):
     build_site(tmp_path / "o", maps=["official-31203"], combinations=["A"],
                cache_dir=fixture_datasets, echo=lines.append, prices_path=PRICES, today=TODAY)
     assert any(line.startswith("official-31203 stickers: 4 files") for line in lines)
+
+
+def test_echo_names_the_template_set(tmp_path, fixture_datasets):
+    from web98138.prebuild import build_site
+
+    lines = []
+    build_site(tmp_path / "o", maps=["ocean-sst"], combinations=["A"], cache_dir=fixture_datasets,
+               echo=lines.append, prices_path=PRICES, today=TODAY)
+    assert any(line.startswith(f"ocean-sst stickers: 4 files ({KIT})") for line in lines)
+    assert any(line.startswith(f"ocean-sst stickers: 4 files ({TID})") for line in lines)
+
+
+# --- the catalog accepts only listed template ids (contracts/web.md "Catalog check") ----------
+
+def _site_copy(site_dir, tmp_path, edit):
+    import shutil
+
+    dst = tmp_path / "site"
+    shutil.copytree(site_dir, dst)
+    p = dst / "manifest.json"
+    m = json.loads(p.read_text(encoding="utf-8"))
+    edit(m)
+    p.write_text(json.dumps(m), encoding="utf-8")
+    return dst
+
+
+def test_catalog_serves_listed_template_sets(site_dir):
+    from web98138.catalog import Catalog
+
+    cat = Catalog.load(site_dir)
+    assert cat.stickers("ocean-sst", TID)["line"].endswith(" Winkel tripel projection.")
+    assert cat.sticker_file("ocean-sst", TID, "sticker-large").is_file()
+    assert cat.stickers("official-31203", TID) is None
+
+
+def test_catalog_rejects_an_unlisted_template_set(site_dir, tmp_path):
+    from web98138.catalog import Catalog, CatalogError
+
+    def edit(m):
+        sst = next(r for r in m["maps"] if r["id"] == "ocean-sst")
+        sst["stickers"]["mercator"] = sst["stickers"][TID]
+
+    with pytest.raises(CatalogError, match=r"ocean-sst stickers: unknown template 'mercator' "
+                                           r"\(known: kit-31203, winkel-tripel\)"):
+        Catalog.load(_site_copy(site_dir, tmp_path, edit))
+
+
+def test_catalog_rejects_a_template_set_without_the_listed_template(site_dir, tmp_path):
+    """A Winkel set in a manifest that lists no templates (kit variants only) is unknown."""
+    from web98138.catalog import Catalog, CatalogError
+
+    def edit(m):
+        m.pop("templates")
+        for r in m["maps"]:
+            r.pop("template_variants", None)
+
+    with pytest.raises(CatalogError, match=r"unknown template 'winkel-tripel' \(known: kit-31203\)"):
+        Catalog.load(_site_copy(site_dir, tmp_path, edit))
+
+
+def test_catalog_checks_template_set_files(site_dir, tmp_path):
+    from web98138.catalog import Catalog, CatalogError
+
+    def edit(m):
+        sst = next(r for r in m["maps"] if r["id"] == "ocean-sst")
+        del sst["stickers"][TID]["files"]["sticker-small"]
+
+    with pytest.raises(CatalogError, match=r"ocean-sst stickers winkel-tripel: missing file kind "
+                                           r"'sticker-small'"):
+        Catalog.load(_site_copy(site_dir, tmp_path, edit))
 
 
 def test_kit_template_id_matches_the_library():

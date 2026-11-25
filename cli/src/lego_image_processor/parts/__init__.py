@@ -13,10 +13,10 @@ from .partslist import (ACKNOWLEDGEMENT, PRICE_NOTE, Leftover, LayoutInput, Layo
                         PartsList,
                         build_parts_list, owned_parts, read_layout)
 from .resolve import (REASON_CODE_MISMATCH, REASON_NO_COLOR, ResolvedColor, Unresolved,
-                      resolve_color)
+                      resolve_color, resolve_plaque_tile)
 
 __all__ = [
-    "resolve_color", "ResolvedColor", "Unresolved", "REASON_NO_COLOR", "REASON_CODE_MISMATCH",
+    "resolve_color", "resolve_plaque_tile", "ResolvedColor", "Unresolved", "REASON_NO_COLOR", "REASON_CODE_MISMATCH",
     "parse_owned_csv", "parse_owned_text", "parse_percent", "OwnedFile", "OwnedFileError",
     "OwnedInputs",
     "build_parts_list", "owned_parts", "read_layout", "LayoutInput", "LayoutInputError", "Lot", "Leftover", "PartsList",

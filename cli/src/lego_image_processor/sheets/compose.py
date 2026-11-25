@@ -9,6 +9,11 @@ A layout on a non-kit template (feature 016, ``metadata.template``) uses the sam
 frames, hung as A; its margin studs, 1x1 square tiles, are drawn as squares, and the overview names
 the template, says the frames cannot be re-hung and cites the template's file and dataset. Kit
 layouts are drawn exactly as before.
+A layout with an in-margin plaque (feature 017, ``metadata.plaque``; contracts/in-margin-plaque.md
+"Build sheets and counts") lacks exactly the plaque's studs: its section page draws one Black
+rectangle outlined 0.4 mm over them, labelled with the tile and its lot number, and counts the lot
+once; the legend gives it a square swatch, the overview map draws the rectangle and the totals line
+names the tile. Layouts without a plaque are drawn as before.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -25,9 +30,9 @@ from .. import __version__
 from ..kit.source import DISCLAIMER
 from ..layout.grid import PositionPlacementGrid
 from ..parts import ACKNOWLEDGEMENT, LayoutInput, LayoutInputError, PartsList, build_parts_list
-from ..parts.partslist import PART_TYPE_TEXT, check_grid
+from ..parts.partslist import PART_TYPE_TEXT, PLAQUE_PART_TYPE, check_grid
 from ..templates import REHANG_RULE
-from .counts import SectionCount, count_sections
+from .counts import SectionCount, count_sections, plaque_section
 from .legend import LegendEntry, build_legend, lot_numbers, text_color
 from .model import (BLACK, GREY, OUTLINE, PT_MM, RGB, WHITE, Circle, Item, Line, Page, PageSize,
                     Rect, Text, latin1_safe, paper_size)
@@ -60,6 +65,8 @@ CONTENT_BOTTOM = 24.0  # mm above the page's bottom edge: scale bar and footer l
 LEGEND_TOP = 37.0
 LEGEND_ROW = 9.0
 COUNT_ROW = 5.5
+PLAQUE_OUTLINE = 0.4  # mm, the in-margin plaque's outline on a section page (feature 017)
+MAP_STUD_R = 0.6
 
 
 class SheetError(ValueError):
@@ -77,6 +84,7 @@ class SheetSet:
     counts: Tuple[SectionCount, ...]
     parts_list: PartsList
     map_metadata: Optional[Dict[str, Any]] = None
+    plaque: Optional["PlaqueMark"] = None  # feature 017: the in-margin plaque, when the layout has one
 
     @property
     def page_kinds(self) -> Dict[str, int]:
@@ -157,6 +165,45 @@ def is_square(entry: LegendEntry) -> bool:
     return entry.lot.part_type == "square_tile"
 
 
+def is_plaque(entry: LegendEntry) -> bool:
+    """The in-margin plaque's tile (feature 017): one rectangle over its studs, a square swatch."""
+    return entry.lot.part_type == PLAQUE_PART_TYPE
+
+
+@dataclass(frozen=True)
+class PlaqueMark:
+    """The in-margin plaque on the sheets (feature 017): its studs (top-left ``row``/``col`` in
+    0-based board coordinates as hung, ``height`` x ``width``), its legend entry and its section."""
+
+    row: int
+    col: int
+    height: int
+    width: int
+    entry: LegendEntry
+    section: str
+
+    @property
+    def label(self) -> str:
+        """``tile 6x6 (10202)``: the part label (``PART_LABEL``) and the part."""
+        return f"{self.entry.part_label} ({self.entry.lot.part_id})"
+
+
+def plaque_items(mark: PlaqueMark, x: float, y: float) -> List[Item]:
+    """The plaque at true scale with its top-left stud's cell at (``x``, ``y``): one rectangle 6
+    pitches minus the stud gap wide (as the preview), outlined, with its lot number and label."""
+    gap = PITCH - STUD_D
+    e = mark.entry
+    rx, ry = x + gap / 2, y + gap / 2
+    w, h = mark.width * PITCH - gap, mark.height * PITCH - gap
+    cx, cy = rx + w / 2, ry + h / 2
+    return [Rect(rx, ry, w, h, e.rgb, OUTLINE, PLAQUE_OUTLINE, tag="plaque",
+                 data=d(x=mark.col, y=mark.row, width=mark.width, height=mark.height, lot=e.number)),
+            Text(cx, cy - 1.0, str(e.number), 16, "center", True, e.text_color, tag="plaque-number",
+                 data=d(lot=e.number)),
+            Text(cx, cy + 5.0, mark.label, 9, "center", False, e.text_color, tag="plaque-label",
+                 data=d(lot=e.number))]
+
+
 def stud(cx: float, cy: float, entry: LegendEntry, r: float, number_size: float,
          x: int, y: int) -> List[Item]:
     if is_square(entry):
@@ -174,8 +221,8 @@ def stud(cx: float, cy: float, entry: LegendEntry, r: float, number_size: float,
 
 
 def disc(cx: float, cy: float, r: float, entry: LegendEntry, size: float, tag: str) -> List[Item]:
-    """A lot's swatch with its number: a disc, or a square for a square tile."""
-    if is_square(entry):
+    """A lot's swatch with its number: a disc, or a square for a square tile or the plaque tile."""
+    if is_square(entry) or is_plaque(entry):
         out: List[Item] = [Rect(cx - r, cy - r, 2 * r, 2 * r, entry.rgb, OUTLINE, 0.2, tag=tag,
                                 data=d(lot=entry.number))]
     else:
@@ -217,7 +264,10 @@ def locator(x0: float, y0: float, current: Section, cell: float = 4.0,
 
 def section_page(size: PageSize, section: Section, grid_cells: Dict[Tuple[int, int], LegendEntry],
                  count: SectionCount, legend: Sequence[LegendEntry], title: str, number: int,
-                 total: int, arrangement: Optional[Arrangement] = None) -> Page:
+                 total: int, arrangement: Optional[Arrangement] = None,
+                 plaque: Optional[PlaqueMark] = None) -> Page:
+    """One section at true scale; ``plaque`` (feature 017) when it holds the in-margin plaque,
+    whose studs have no cell."""
     arrangement = arrangement or parse_arrangement(None)
     W, H = size.width_mm, size.height_mm
     items: List[Item] = []
@@ -249,8 +299,13 @@ def section_page(size: PageSize, section: Section, grid_cells: Dict[Tuple[int, i
     for j in range(16):
         for i in range(16):
             x, y = s.x_range[0] + i, s.y_range[0] + j
-            items += stud(x0 + (i + 0.5) * PITCH, y0 + (j + 0.5) * PITCH, grid_cells[(x, y)],
-                          STUD_D / 2, 8.0, x, y)
+            e = grid_cells.get((x, y))
+            if e is None:  # under the in-margin plaque (feature 017; build_sheet_set checks it)
+                continue
+            items += stud(x0 + (i + 0.5) * PITCH, y0 + (j + 0.5) * PITCH, e, STUD_D / 2, 8.0, x, y)
+    if plaque is not None:
+        items += plaque_items(plaque, x0 + (plaque.col - s.x_range[0]) * PITCH,
+                              y0 + (plaque.row - s.y_range[0]) * PITCH)
 
     # Count table: the section's lots in lot order, column-major.
     by_number = {e.number: e for e in legend}
@@ -306,7 +361,7 @@ def overview_page(size: PageSize, title: str, grid: PositionPlacementGrid,
                   cells: Dict[Tuple[int, int], LegendEntry], legend: Sequence[LegendEntry],
                   layout: Dict[str, Any], map_meta: Optional[Dict[str, Any]], n_legend_pages: int,
                   chosen: Sequence[Section], total: int,
-                  arrangement: Optional[Arrangement] = None) -> Page:
+                  arrangement: Optional[Arrangement] = None, plaque: Optional[PlaqueMark] = None) -> Page:
     arrangement = arrangement or parse_arrangement(None)
     template = getattr(grid, "template", None)  # feature 016: None on the kit template
     bounds = arrangement.boundaries()
@@ -324,14 +379,22 @@ def overview_page(size: PageSize, title: str, grid: PositionPlacementGrid,
     items.append(Rect(x0, y0, mw, mh, MAP_BG, None, 0, tag="map-bg"))
     for y in range(GRID_HEIGHT):
         for x in range(GRID_WIDTH):
-            e = cells[(x, y)]
+            e = cells.get((x, y))
+            if e is None:  # under the in-margin plaque (feature 017)
+                continue
             cx, cy = x0 + (x + 0.5) * MAP_PITCH, y0 + (y + 0.5) * MAP_PITCH
             if is_square(e):
-                items.append(Rect(cx - 0.6, cy - 0.6, 1.2, 1.2, e.rgb, None, 0, tag="map-stud"))
+                items.append(Rect(cx - MAP_STUD_R, cy - MAP_STUD_R, 2 * MAP_STUD_R, 2 * MAP_STUD_R, e.rgb, None, 0,
+                                  tag="map-stud"))
             else:
-                items.append(Circle(cx, cy, 0.6, e.rgb, None, 0, tag="map-stud"))
+                items.append(Circle(cx, cy, MAP_STUD_R, e.rgb, None, 0, tag="map-stud"))
             if e.lot.part_type == "plate":
                 items.append(Circle(cx, cy, 0.33, None, GREY, 0.1, tag="map-ring"))
+    if plaque is not None:  # one rectangle, as on its section page (stud gap as between map studs)
+        gap = MAP_PITCH - 2 * MAP_STUD_R
+        items.append(Rect(x0 + plaque.col * MAP_PITCH + gap / 2, y0 + plaque.row * MAP_PITCH + gap / 2,
+                          plaque.width * MAP_PITCH - gap, plaque.height * MAP_PITCH - gap, plaque.entry.rgb,
+                          None, 0, tag="map-plaque", data=d(lot=plaque.entry.number)))
     sec = 16 * MAP_PITCH
     for c in range(1, N_COLS):
         if c * 16 not in bounds:
@@ -376,14 +439,19 @@ def overview_page(size: PageSize, title: str, grid: PositionPlacementGrid,
         flow.width += 4.0
         flow.y += 3.5
     squares = sum(e.lot.needed for e in legend if is_square(e))
-    pieces = (f"{plates + tiles + squares:,} pieces: {plates:,} plates 1x1 round (land, part 6141), "
-              f"{tiles:,} tiles 1x1 round (ocean, part 98138)")
+    plaques = [e for e in legend if is_plaque(e)]  # feature 017: the in-margin plaque's tile
+    pieces = (f"{plates + tiles + squares + sum(e.lot.needed for e in plaques):,} pieces: {plates:,} plates "
+              f"1x1 round (land, part 6141), {tiles:,} tiles 1x1 round (ocean, part 98138)")
     if template is not None or squares:
         pieces += f", {squares:,} tiles 1x1 square (margin, part 3070b)"
+    for e in plaques:
+        pieces += f", {e.lot.needed:,} {e.part_label} (plaque, part {e.lot.part_id})"
     flow.para(f"{pieces}; {lots}.", 8.5, tag="totals")
     drawn = "Plates (land) are drawn with a ring, tiles (ocean) plain"
     if template is not None or squares:
         drawn += ", square tiles (margin) as squares"
+    if plaques:
+        drawn += ", the plaque tile as one outlined rectangle"
     labels = [s.label for s in chosen]
     which = "A1 to H5" if len(chosen) == 40 else ", ".join(labels)
     flow.para(f"This set: 1 overview page, {n_legend_pages} legend page(s), {len(chosen)} section "
@@ -537,7 +605,8 @@ def build_sheet_set(layout: Union[LayoutInput, PositionPlacementGrid],
                     layout_path: Optional[Union[str, Path]] = None, paper: str = "letter",
                     sections: Optional[Union[str, Iterable[str]]] = None,
                     title: Optional[str] = None, layout_sha256: Optional[str] = None) -> SheetSet:
-    """The overview, legend and section pages for a full 128 x 80 layout."""
+    """The overview, legend and section pages for a full 128 x 80 layout (feature 017: all but the
+    studs under a recorded in-margin plaque)."""
     try:
         size = paper_size(paper)
     except ValueError as exc:
@@ -557,23 +626,43 @@ def build_sheet_set(layout: Union[LayoutInput, PositionPlacementGrid],
         chosen = parse_section_labels(sections, arrangement)
     except ValueError as exc:
         raise SheetError(str(exc))
-    if len(grid.positions) != FULL_POSITIONS:
-        raise SheetError(f"layout has {len(grid.positions):,} of {FULL_POSITIONS:,} positions; build "
-                         "sheets need every position of the 128 x 80 grid")
+    try:
+        holder = plaque_section(grid, arrangement)  # feature 017: the in-margin plaque, in one section
+    except ValueError as exc:
+        raise SheetError(str(exc))
+    covered = grid.plaque_positions if holder is not None else frozenset()
+    under = sorted({(p.x, p.y) for p in grid.positions} & covered, key=lambda c: (c[1], c[0]))
+    if under:
+        raise SheetError(f"layout has {len(under):,} position(s) under the plaque recorded in metadata.plaque, "
+                         f"first ({under[0][0]}, {under[0][1]}); the plaque's studs carry no piece")
+    if len(grid.positions) != FULL_POSITIONS - len(covered):
+        message = (f"layout has {len(grid.positions):,} of {FULL_POSITIONS:,} positions; build sheets need "
+                   "every position of the 128 x 80 grid")
+        if covered:
+            message += f" but the {len(covered):,} studs under the plaque recorded in metadata.plaque"
+        raise SheetError(message)
     legend = build_legend(pl)
     numbers = lot_numbers(legend)
     by_number = {e.number: e for e in legend}
     cells = {(p.x, p.y): by_number[numbers[(p.lego_part_id, p.color_id)]] for p in grid.positions}
+    mark = None
+    if holder is not None:
+        rec, st = grid.plaque, grid.plaque["studs"]
+        mark = PlaqueMark(row=st["row"], col=st["col"], height=st["height"], width=st["width"],
+                          entry=by_number[numbers[(str(rec.get("part_id")), str(rec.get("color")))]],
+                          section=holder.label)
     counts = count_sections(grid, legend)
     count_by_label = {c.section.label: c for c in counts}
     title = title if title is not None and title.strip() else default_title(grid, layout_path)
     n_legend = max(1, math.ceil(len(legend) / legend_rows_per_page(size)))
     total = 1 + n_legend + len(chosen)
     pages: List[Page] = [overview_page(size, title, grid, cells, legend, pl.layout,
-                                       grid.map_metadata, n_legend, chosen, total, arrangement)]
+                                       grid.map_metadata, n_legend, chosen, total, arrangement, mark)]
     pages += legend_pages(size, legend, title, 2, total)
     for i, s in enumerate(chosen):
         pages.append(section_page(size, s, cells, count_by_label[s.label], legend, title,
-                                  2 + n_legend + i, total, arrangement))
+                                  2 + n_legend + i, total, arrangement,
+                                  mark if mark is not None and mark.section == s.label else None))
     return SheetSet(title=title, layout=pl.layout, legend=legend, pages=tuple(pages), paper=size,
-                    sections=chosen, counts=counts, parts_list=pl, map_metadata=grid.map_metadata)
+                    sections=chosen, counts=counts, parts_list=pl, map_metadata=grid.map_metadata,
+                    plaque=mark)

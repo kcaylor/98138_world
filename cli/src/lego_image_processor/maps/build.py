@@ -16,6 +16,12 @@ data are sampled at the template's studs (``reproject``, ``nodata``, ``overrides
 square tile (part 3070b) in the margin color or the ring color (``maps/margin.py``), and the layout
 and report gain ``template``, ``margin`` and the template's dataset citation. Kit builds take the
 code path and write the keys they always did. Map builds never read ``maps/ice.py``.
+
+In-margin plaque (feature 017, FR-021 - FR-023; research R15): when the margin treatment names a
+corner (``--plaque`` or the recipe's ``[margin].plaque``), the small plaque's tile is placed there
+(``margin.place_plaque``; a misfit stops the build). Its studs carry no position, the layout records
+``metadata.plaque`` and the report ``margin.plaque``, and the margin counts leave its studs out. On
+the kit, ``--plaque`` is an error and the recipe key is ignored (decision E2).
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -41,7 +47,7 @@ from ..layout.position import (LAND_PART_ID, LAND_PART_TYPE, MARGIN_PART_ID, MAR
 from ..templates import (KIT_TEMPLATE_ID, Template, TemplateError, compatibility, confirmed_text, kit_template,
                          load_template, template_ids)
 from .classify import MapBuildError, classify
-from .margin import MarginTreatment, margin_cells, margin_labels
+from .margin import InMarginPlaque, MarginTreatment, PlaqueError, margin_cells, margin_labels, plaque_for
 from .projection import load_kit_projection
 from .recipe import Layer, Recipe
 from .nodata import apply_value, no_data_cells
@@ -70,6 +76,7 @@ class MapResult:
     arrangement: Optional[Arrangement] = None  # as hung (feature 009: resolved by resolve_arrangement)
     template: Optional[Template] = None  # feature 016: the template built on (resolve_template)
     margin: Optional[MarginTreatment] = None  # feature 016: the margin treatment (non-kit templates)
+    plaque: Optional[InMarginPlaque] = None  # feature 017: the in-margin plaque, when one is placed
 
 
 def land_mask_array() -> np.ndarray:
@@ -288,6 +295,9 @@ def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool
     tpl, template_source = resolve_template(recipe, template)
     on_template = not tpl.is_kit
     treatment = None
+    plaque = None
+    if not on_template:  # feature 017 (E2): --plaque on the kit stops; the recipe's key is ignored
+        _plaque(tpl, margin)
     if on_template:  # feature 016: checks first, then the template's own classes and studs
         problem = compatibility(recipe, tpl, arrangement_arg)
         if problem is not None:
@@ -297,6 +307,7 @@ def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool
                                 f"kit grid; template {tpl.id} has its own grid")
         compare_official = False
         treatment = margin or recipe.margin or MarginTreatment()
+        plaque = _plaque(tpl, treatment)  # feature 017: before any data are read
         land = np.array(tpl.land)
         ocean = np.array(tpl.ocean)
         projection = tpl.grid_projection
@@ -392,9 +403,12 @@ def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool
         margin_mask = np.array(tpl.margin)
         labels[margin_mask] = margin_labels(tpl, treatment)[margin_mask]
         margin_record = treatment.provenance(margin_cells(tpl, treatment))
+    covered = np.zeros_like(land) if plaque is None else plaque.mask(land.shape)  # feature 017
     positions = []
     for y in range(H):
         for x in range(W):
+            if covered[y, x]:  # under the in-margin plaque: no 1x1 piece
+                continue
             if margin_mask[y, x]:
                 c = table.get(MARGIN_PART_ID, labels[y, x])
                 positions.append(PositionPlacement(
@@ -427,7 +441,8 @@ def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool
     layout = PositionPlacementGrid(width=W, height=H, positions=positions, source_image=f"recipe:{recipe.id}",
                                    schema_version=CURRENT_SCHEMA_VERSION, map_metadata=provenance,
                                    arrangement=arrangement.record(),
-                                   template=tpl.layout_record() if on_template else None)
+                                   template=tpl.layout_record() if on_template else None,
+                                   plaque=None if plaque is None else plaque.layout_record())
     if compare_official is None:
         compare_official = recipe.id.startswith("official-31203")
     agreement = agreement_with_official(layout, arrangement) if compare_official else None
@@ -437,7 +452,10 @@ def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool
         "arrangement_source": arrangement_source,
     }
     if on_template:  # feature 016 (FR-013): non-kit reports only
-        report.update(template=tpl.report_record(), template_source=template_source, margin=margin_record)
+        report_margin = margin_record
+        if plaque is not None:  # feature 017: margin.plaque, only when placed
+            report_margin = dict(margin_record, plaque=plaque.report_record())
+        report.update(template=tpl.report_record(), template_source=template_source, margin=report_margin)
     report.update({
         "shadow": recipe.shadow.provenance(n_shadow), "layers": layer_reports, "thresholds": dict(THRESHOLDS),
         "citations": citations,
@@ -449,7 +467,16 @@ def build_map(recipe: Recipe, *, cache_dir=None, compare_official: Optional[bool
     if agreement is not None:
         report["agreement_with_official"] = agreement
     return MapResult(recipe=recipe, layout=layout, report=report, classes=classes, fields=fields,
-                     agreement=agreement, arrangement=arrangement, template=tpl, margin=treatment)
+                     agreement=agreement, arrangement=arrangement, template=tpl, margin=treatment, plaque=plaque)
+
+
+def _plaque(tpl: Template, treatment: Optional[MarginTreatment]) -> Optional[InMarginPlaque]:
+    """The in-margin plaque ``treatment`` places on ``tpl`` (feature 017), or None; a misfit, or
+    ``--plaque`` on the kit, raises ``MapBuildError``."""
+    try:
+        return plaque_for(tpl, treatment)
+    except PlaqueError as exc:
+        raise MapBuildError(str(exc)) from exc
 
 
 def check_recipe(recipe: Recipe, *, cache_dir=None, arrangement: Optional[Arrangement] = None,

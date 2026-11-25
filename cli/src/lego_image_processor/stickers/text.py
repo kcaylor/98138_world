@@ -1,8 +1,10 @@
 """Sticker text: the resolved title and line, legend numbers, and text blocks that wrap, then
 shrink, but never truncate (feature 017; FR-004, FR-013; research R3, R7, R8).
 
-- ``resolve_text(recipe)``: the sticker title (``[sticker] title``, else the recipe title) and
-  line (``[sticker] line``, else the recipe description), each with its source.
+- ``resolve_text(recipe, template=None)``: the sticker title (``[sticker] title``, else the recipe
+  title) and line (``[sticker] line``, else the recipe description), each with its source. On a
+  non-kit template (feature 016) the line ends with " <projection> projection." ("Winkel tripel
+  projection.", FR-025), after a full stop added to a line that has none.
 - Numbers: hyphen-minus, comma thousands separator, no trailing zeros, a space before the unit,
   "°C" for the Celsius spellings (``maps.cells`` mapping). Without a step a number keeps up to six
   significant digits; rank-derived bounds round to the display step
@@ -70,9 +72,24 @@ class ResolvedText:
                 "line_source": self.line_source}
 
 
-def resolve_text(recipe: Recipe) -> ResolvedText:
+PROJECTION_SUFFIX = " {} projection."
+SENTENCE_END = ".!?"
+
+
+def with_projection(line: str, projection_title: str) -> str:
+    """``line`` ending with " <projection> projection." (FR-025): "... tile colors. Winkel tripel
+    projection."; a line without a full stop (or ! or ?) gets one first."""
+    line = line.rstrip()
+    if line[-1:] not in SENTENCE_END:
+        line += "."
+    return line + PROJECTION_SUFFIX.format(projection_title)
+
+
+def resolve_text(recipe: Recipe, template=None) -> ResolvedText:
     """Title: the ``[sticker]`` table's, else the recipe's. Line: the table's, else the recipe's
-    description; with neither, ``StickerError`` "add a [sticker] line"."""
+    description; with neither, ``StickerError`` "add a [sticker] line". ``template``: the
+    ``templates.Template`` the map is built on; a non-kit one adds its projection to the line
+    (``Template.projection_title``); the line's source stays the table or the description."""
     table = recipe.sticker
     if table is not None and table.title:
         title, title_source = table.title, SOURCE_TABLE
@@ -85,6 +102,8 @@ def resolve_text(recipe: Recipe) -> ResolvedText:
     else:
         raise StickerError(f"recipe {recipe.id} has no sticker line and no description: add a "
                            f"[sticker] line (contracts/recipe-sticker.md)")
+    if template is not None and not template.is_kit:
+        line = with_projection(line, template.projection_title)
     return ResolvedText(title=title, title_source=title_source, line=line, line_source=line_source)
 
 

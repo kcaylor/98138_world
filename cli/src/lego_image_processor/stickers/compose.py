@@ -19,6 +19,13 @@ build sheets' ``furniture()``. Every block must fit its area; one that does not 
 Same input, same set: nothing depends on the time or the machine. Sets made from builds in
 combinations A, B and C are equal but for ``arrangement`` (SC-003); the print sheet's line
 "legend values from the build hung as <C>" is the only text that depends on it.
+
+On a confirmed non-kit template (feature 016; FR-001, FR-025; research R14) both stickers' line
+ends with the template's projection ("Winkel tripel projection."), the credits add the
+template's dataset once, the legend reads the template's studs, the JSON ``template`` is ``{id,
+title, projection, dataset}`` and the print sheet's provenance (and the SVG metadata) add 016's
+template line (``sheets.compose.template_line``). A ``MapResult`` on an unconfirmed template gets
+no set (016 FR-004; ``build_map`` refuses to make one).
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -34,13 +41,15 @@ from ..kit.plaque_parts import Plaque, PlaquePart, load_plaque_parts
 from ..kit.source import DISCLAIMER
 from ..layout.arrangement import parse_arrangement
 from ..maps.build import MapResult
-from ..sheets.compose import CONTENT_BOTTOM, MARGIN, RING_RATIO, cap_offset, furniture, text_width
+from ..sheets.compose import (CONTENT_BOTTOM, MARGIN, RING_RATIO, cap_offset, furniture,
+                              template_line, text_width)
 from ..sheets.legend import text_color
 from ..sheets.model import (PT_MM, RGB, WHITE, Circle, Item, Line, Page, PageSize, Rect, Text,
                             paper_size)
 from ..templates import KIT_TEMPLATE_ID  # feature 016's kit template id (re-exported here)
+from ..templates import confirmed_text
 from . import StickerError
-from .credits import Credit, credit_lines, credits_for
+from .credits import Credit, credit_lines, credits_for, template_dataset_entry
 from .geometry import StickerGeometry, geometry_for
 from .legend import Legend, Swatch, map_legend
 from .text import (CAP_HEIGHT, MIN_PT, STEP_PT, ResolvedText, TextBlock, TextSpec,
@@ -126,12 +135,35 @@ class RecipeRef:
 
 @dataclass(frozen=True)
 class TemplateRef:
-    """The board template (JSON ``template``): the kit until feature 016 adds others."""
+    """The board template (JSON ``template``): ``{id}`` for the kit; for another template (016)
+    ``{id, title, projection, dataset}``: its title, the projection's name as the sticker line
+    gives it and the id of the dataset that decided land and ocean. ``line`` is 016's provenance
+    line of the template (print sheet and SVG metadata), not in the JSON."""
 
     id: str = KIT_TEMPLATE_ID
+    title: Optional[str] = None
+    projection: Optional[str] = None
+    dataset: Optional[str] = None
+    line: Optional[str] = None
 
-    def to_dict(self) -> Dict[str, str]:
-        return {"id": self.id}
+    @property
+    def is_kit(self) -> bool:
+        return self.id == KIT_TEMPLATE_ID
+
+    def to_dict(self) -> Dict[str, Optional[str]]:
+        if self.is_kit:
+            return {"id": self.id}
+        return {"id": self.id, "title": self.title, "projection": self.projection,
+                "dataset": self.dataset}
+
+
+def template_ref(template) -> TemplateRef:
+    """The ``TemplateRef`` of a ``templates.Template`` (the kit's for the kit or None)."""
+    if template is None or template.is_kit:
+        return TemplateRef()
+    return TemplateRef(id=template.id, title=template.title, projection=template.projection_title,
+                       dataset=None if template.dataset is None else template.dataset.id,
+                       line=template_line(template.layout_record()))
 
 
 @dataclass(frozen=True)
@@ -508,6 +540,7 @@ class StickerSet:
     notes: Notes
     tool_version: str
     disclaimer: str
+    credit_lines: Tuple[str, ...] = ()   # the large sticker's "Data:" lines (not in the JSON)
 
     @property
     def stickers(self) -> Tuple[Sticker, Sticker]:
@@ -533,28 +566,33 @@ class StickerSet:
 
 
 def sticker_set(result: MapResult) -> StickerSet:
-    """Both stickers of a built map on the kit template. Raises ``StickerError`` when the recipe
-    has no sticker line or a text does not fit at 5 pt (naming the sticker, the field and the
-    space needed and available)."""
+    """Both stickers of a built map, on the kit or on a confirmed template (``result.template``).
+    Raises ``StickerError`` when the recipe has no sticker line, a text does not fit at 5 pt
+    (naming the sticker, the field and the space needed and available) or the template is not
+    confirmed."""
     recipe = result.recipe
-    tpl = getattr(result, "template", None)
-    if tpl is not None and not tpl.is_kit:   # feature 016 merge (T053); T056 makes template sets
-        raise StickerError(f"sticker sets are made on the kit template {KIT_TEMPLATE_ID} only; "
-                           f"{recipe.id} is built on {tpl.id}")
-    text = resolve_text(recipe)
+    tpl = result.template
+    if tpl is not None and tpl.is_kit:
+        tpl = None
+    if tpl is not None and not tpl.buildable:
+        raise StickerError(f"template {tpl.id} is not confirmed by the project owner, so no "
+                           f"stickers are made on it; confirmed templates: {confirmed_text()}")
+    text = resolve_text(recipe, tpl)
     legend = map_legend(result)
-    credits = credits_for(recipe)
+    template_entry = template_dataset_entry(tpl)
+    credits = credits_for(recipe, template_entry)
+    lines = credit_lines(recipe, credits, None if template_entry is None else template_entry.id)
     table = load_plaque_parts()
     small_p, large_p = table.plaques["small"], table.plaques["large"]
     small = small_sticker(text, small_p)
-    large = large_sticker(text, credit_lines(recipe, credits), legend, large_p)
+    large = large_sticker(text, lines, legend, large_p)
     arrangement = (result.arrangement or parse_arrangement(None)).id
     return StickerSet(recipe=RecipeRef(id=recipe.id, title=recipe.title, sha256=recipe.sha256,
                                        format=recipe.format),
-                      template=TemplateRef(), arrangement=arrangement, text=text, small=small,
+                      template=template_ref(tpl), arrangement=arrangement, text=text, small=small,
                       large=large, legend=legend, credits=tuple(credits),
                       plaques=(small_p, large_p), notes=Notes(), tool_version=__version__,
-                      disclaimer=DISCLAIMER)
+                      disclaimer=DISCLAIMER, credit_lines=tuple(lines))
 
 
 # --- the print sheet --------------------------------------------------------------------------
@@ -705,6 +743,8 @@ def print_sheet(stickers: StickerSet, paper: str = "letter") -> PrintSheet:
         _Para("Provenance", SHEET_HEADING_PT, "notes-heading", "provenance", bold=True, gap=0.3),
         _Para(f"Recipe {s.recipe.id}, SHA-256 {s.recipe.sha256}; legend values from the build "
               f"hung as {s.arrangement}.", SHEET_BODY_PT, "provenance", "provenance", gap=0.3),
+        *([_Para(s.template.line, SHEET_BODY_PT, "provenance", "provenance", gap=0.3)]
+          if s.template.line else []),   # a non-kit template (016's wording)
         _Para(MADE_WITH.format(tool=TOOL, version=s.tool_version), SHEET_BODY_PT, "provenance",
               "provenance"),
     ]

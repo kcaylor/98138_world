@@ -11,8 +11,9 @@ contracts/sticker-files.md; data-model.md "Sticker files").
   ``<g id="cut-line">`` with the cut line as a magenta hairline. Items are written by the build
   sheets' serialiser (``sheets.render_svg.item_svg``); every text carries ``textLength`` (its
   Helvetica width) so a substitute font keeps the measured width. ``<metadata>`` holds the
-  recipe, every dataset's full citation and license and the tool version, nothing that depends
-  on the arrangement, so the SVGs of A, B and C builds are byte-identical.
+  recipe, a non-kit template's line (016), every dataset's full citation and license and the
+  tool version, nothing that depends on the arrangement, so the SVGs of A, B and C builds are
+  byte-identical.
 - ``render_sticker_json(set)``: the JSON summary (``StickerSet.to_dict()``), UTF-8, indent 2.
 
 Same input, same bytes: no timestamps, fixed attribute order, two-decimal numbers, ``\\n``.
@@ -104,10 +105,13 @@ def render_sticker_pdf(stickers: StickerSet, paper: str = "letter") -> bytes:
 # --- SVG ----------------------------------------------------------------------------------------
 
 def svg_metadata(s: StickerSet) -> str:
-    """The citations block of both SVGs: recipe id and SHA-256, every dataset's id, version,
-    title, full citation and license (and acknowledgement), and the tool version."""
+    """The citations block of both SVGs: recipe id and SHA-256, on a non-kit template 016's
+    template line, every dataset's id, version, title, full citation and license (and
+    acknowledgement), and the tool version."""
     data = " ".join(citation_text(c) for c in s.credits)
     out = f"Recipe {s.recipe.id} (SHA-256 {s.recipe.sha256})."
+    if s.template.line:
+        out += f" {s.template.line}"
     if data:
         out += f" Data: {data}"
     return out + f" Made with {TOOL} {s.tool_version}."

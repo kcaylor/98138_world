@@ -17,7 +17,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 from ..datasets.registry import DatasetEntry, load_registry
 from ..kit.part_colors import load_part_colors
 from ..layout.arrangement import Arrangement, ArrangementError, parse_arrangement, valid_values
-from .margin import DEFAULT_MARGIN_COLOR, MarginTreatment, color_rule, ring_rule
+from .margin import DEFAULT_MARGIN_COLOR, PLAQUE_CORNERS, MarginTreatment, color_rule, corner_rule, ring_rule
 
 FORMAT = "1"
 DEFAULT_SEED = 31203
@@ -46,7 +46,7 @@ _ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{1,63}$")
 _TOP_KEYS = {"format", "id", "title", "description", "seed", "arrangement", "land", "ocean", "shadow",
              "template", "margin",  # feature 016: template, margin
              "sticker"}  # feature 017: the [sticker] table
-_MARGIN_KEYS = {"color", "ring"}  # feature 016 (labels are feature 017)
+_MARGIN_KEYS = {"color", "ring", "plaque"}  # feature 016; plaque: feature 017 (the in-margin plaque's corner)
 _SHADOW_KEYS = {"enabled", "color", "direction"}
 _DATA_KEYS = {"role", "colors", "dataset", "local", "variable", "transform", "classification", "texture",
               "no_data", "sampling", "override", "legend"}
@@ -753,11 +753,14 @@ def _template(v: Any) -> Optional[str]:
 
 def _margin(t: Any) -> Optional[MarginTreatment]:
     """The optional ``[margin]`` table (feature 016, research R12): ``color`` (a 3070b color, default
-    Black) and an optional ``ring`` color that must differ from it. Used only on non-kit templates."""
+    Black) and an optional ``ring`` color that must differ from it. Used only on non-kit templates.
+    Feature 017 (FR-021): an optional ``plaque``, the corner of the in-margin plaque (one of
+    ``PLAQUE_CORNERS``); ignored on kit builds, with 016's margin note."""
     if t is None:
         return None
     if not isinstance(t, dict):
-        raise RecipeError("margin", "must be a table with color and ring (1x1 square tile colors, part 3070b)")
+        raise RecipeError("margin", "must be a table with color and ring (1x1 square tile colors, part 3070b) "
+                                    "and plaque (a corner)")
     _check_keys(t, _MARGIN_KEYS, "margin")
     color = t.get("color", DEFAULT_MARGIN_COLOR)
     rule = color_rule(color)
@@ -770,7 +773,11 @@ def _margin(t: Any) -> Optional[MarginTreatment]:
             raise RecipeError("margin.ring", rule)
         if ring == color:
             raise RecipeError("margin.ring", ring_rule(ring, color))
-    return MarginTreatment(color=color, ring=ring)
+    plaque = t.get("plaque")
+    if plaque is not None and (not isinstance(plaque, str) or plaque not in PLAQUE_CORNERS):
+        raise RecipeError("margin.plaque", corner_rule())
+    return MarginTreatment(color=color, ring=ring, plaque=plaque,
+                           plaque_source=None if plaque is None else "recipe")
 
 
 def _arrangement(v: Any) -> Optional[Arrangement]:

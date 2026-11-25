@@ -5,7 +5,8 @@ download everything to build it: layout JSON, parts lists (full and topped up fr
 BrickLink wanted list, Rebrickable CSV and build-sheet PDFs (US Letter and A4). Feature 008; see
 `specs/008-web-app/`. Five maps also come in a Winkel tripel version, a curved map on the same
 board, on the template the project owner confirmed on 2026-11-24 (feature 016,
-`specs/016-map-templates/`).
+`specs/016-map-templates/`). Every map page also offers two stickers for a Black plaque tile, as a
+print sheet and SVG files (feature 017, `specs/017-map-stickers/`).
 
 Not affiliated with or endorsed by The LEGO Group.
 
@@ -26,6 +27,15 @@ Not affiliated with or endorsed by The LEGO Group.
   gives no variants and one note line. The committed `winkel-tripel` was confirmed by the project
   owner on 2026-11-24, so the site builds 29 variants: the 24 kit variants and 5 Winkel versions.
   Kit variants and their files do not change.
+- **Stickers** (feature 017): per map, one sticker set from the build in the recipe's own
+  combination (the same for A, B and C), in `maps/<map>/stickers/kit-31203/`, and one per template
+  variant in `maps/<map>/stickers/<template-id>/`: `stickers-letter.pdf` and `stickers-a4.pdf` (the
+  print sheet), `sticker-small.svg` and `sticker-large.svg`. The manifest lists them in
+  `maps[].stickers.<template-id>`: `files` (path, size, SHA-256, media type, description, download
+  name `98138-world_<map>_<kind>.<ext>`, with `_<template-id>` after the map for a template set),
+  then the texts the page shows: `title`, `line`, `alt`, `legend`, `credit` (the large sticker's
+  "Data:" lines, for "What the large sticker says"), `plaques` (the plaque parts with cited IDs)
+  and `notes`. `total_bytes` counts the sticker files. No site variant has an in-margin plaque.
 - **Service** (`web98138.app`, FastAPI + Jinja2): checks the output at start-up and serves pages and
   files from it. It never imports the CLI library, builds maps or downloads data. Every page works
   without JavaScript; map pages load one hand-written first-party script, `static/palette.js`
@@ -35,11 +45,17 @@ Not affiliated with or endorsed by The LEGO Group.
 
 Routes: `/`, `/about`, `/maps/<map>/<A|B|C|template-id>`, `.../preview.png`, `.../thumb.png`, `.../cells.json`,
 `.../download/<kind>` (`layout`, `parts`, `parts-1kit`, `bricklink`, `rebrickable`,
-`bricklink-1kit`, `rebrickable-1kit`, `sheets-letter`, `sheets-a4`), `/manifest.json`, `/healthz`,
-`/robots.txt`. Contract: `specs/008-web-app/contracts/routes.md`; template variants:
-`specs/016-map-templates/contracts/web.md`. A template page (for example
-`/maps/ocean-sst/winkel-tripel`) says its frames cannot be re-hung and that square tiles fill the
-margin, and offers the same nine downloads.
+`bricklink-1kit`, `rebrickable-1kit`, `sheets-letter`, `sheets-a4`),
+`/maps/<map>/stickers/<kit-31203|template-id>/sticker-small.svg` and `.../sticker-large.svg`
+(inline, for the page's images), `/maps/<map>/stickers/<kit-31203|template-id>/download/<kind>`
+(`stickers-letter`, `stickers-a4`, `sticker-small`, `sticker-large`), `/manifest.json`,
+`/healthz`, `/robots.txt`. Contract: `specs/008-web-app/contracts/routes.md`; template variants:
+`specs/016-map-templates/contracts/web.md`; stickers: `specs/017-map-stickers/contracts/web.md`.
+A template page (for example `/maps/ocean-sst/winkel-tripel`) says its frames cannot be re-hung
+and that square tiles fill the margin, and offers the same nine downloads. Each map page has a
+"Stickers for a plaque" panel, without JavaScript: both stickers with alt text, what the large
+one says, the plaque parts, the color note and the four sticker downloads; a kit page shows the
+kit set, a template page its template's set.
 
 ## Develop
 

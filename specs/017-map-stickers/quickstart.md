@@ -58,9 +58,11 @@ lego-image-processor dataset list   # ERSST v5 LTM, ETOPO 2022, GPCP, NSIDC cach
    part, and ends with the disclaimer (US1-10, SC-005). Maintainer:
    `PYTHONPATH=tools poetry run python -m partcolors plaque-parts --check` → "no differences".
 
-8. **Nothing else changed.** `map build ocean-sst -o a.json` on this branch and on af3ce57 give
-   layouts that differ only in the recipe SHA-256 (and its derived checksums); parts lists,
-   exports, sheets and `cells.json` likewise (SC-006, FR-017).
+8. **Nothing else changed.** `map build ocean-sst -o a.json` on this branch and on 6038d9c (the
+   branch's base; its recipe files equal af3ce57's, and af3ce57's previews predate 6038d9c's round
+   studs on black) give layouts that differ only in the recipe SHA-256 (and its derived
+   checksums); parts lists, exports, estimates (with `--prices`), sheets and `cells.json`
+   likewise (SC-006, FR-017).
 
 9. **Web (P2).**
    ```bash
@@ -82,11 +84,18 @@ lego-image-processor dataset list   # ERSST v5 LTM, ETOPO 2022, GPCP, NSIDC cach
     `map build ocean-sst --template winkel-tripel --plaque bottom-left -o p.json --preview p.png`:
     `metadata.plaque` at rows 73–78, columns 1–6; 10,204 positions; land and ocean positions equal
     the build without `--plaque` (US3-1, SC-009). `parts list p.json --kits 1`: one Black tile 6x6
-    (10202) to buy, 36 fewer square tiles, leftovers unchanged; `parts estimate p.json` prices
-    the tile or is incomplete with it unpriced (US3-2). `sheets build p.json -o p-sheets.pdf`:
-    section A5 shows one outlined rectangle "tile 6x6 (10202)", counted there and in the legend
-    (US3-3). `validate p.json` passes; `map cells … --plaque bottom-left` marks `P` studs.
+    (10202) to buy, 36 fewer square tiles, leftovers unchanged; `parts estimate p.json --prices
+    FILE` prices the tile or is incomplete with it unpriced (US3-2): no snapshot is packaged until
+    the owner's refresh (T091), so use `tests/fixtures/prices/bricklink_price_guide_3070b.json`
+    (no 10202 row: incomplete, the tile unpriced, a `--lot 10202:26` hint) and
+    `tests/fixtures/prices/bricklink_price_guide_plaque.json` (complete). `sheets build p.json -o
+    p-sheets.pdf`: section A5 shows one outlined rectangle "tile 6x6 (10202)", counted there and
+    in the legend (US3-3). `validate p.json` finds no mask mismatch and reports the square tiles
+    and the plaque tile as beyond the kit (80.5% buildable from the kit, as without the plaque);
+    `map cells … --plaque bottom-left` marks `P` studs.
 
 12. **Plaque errors.** `--plaque bottom-left` without `--template` → "the kit template has no
-    margin"; a corner that does not fit → the space needed and available; a recipe naming a
-    corner built with `--plaque none` → no plaque (US3-5, US3-6).
+    margin"; a corner that does not fit → the space needed and available (every corner of the
+    packaged Winkel template fits, so this needs a template copy with a smaller clear block, as in
+    `tests/contract/test_map_plaque_contract.py`); a recipe naming a corner built with `--plaque
+    none` → no plaque (US3-5, US3-6).

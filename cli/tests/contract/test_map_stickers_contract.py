@@ -406,3 +406,133 @@ class TestWritesOnlyTheStickers:
         assert after == before
         for word in ("Layout:", "Preview:", "Report:", "Cells:", "Sheets:"):
             assert word not in r.output
+
+
+# --- on a template (feature 016; T057: contracts/cli.md "--template", FR-001, FR-025) ----------
+
+class TestTemplate:
+    """``map stickers --template`` (016's ``TemplateType``) and the recipe ``template`` key, on
+    016's ``confirmed_winkel``; texts and counts from the loaded template."""
+
+    @staticmethod
+    def winkel_set(cache_dir, recipe_ref="ocean-sst", template="winkel-tripel"):
+        return sticker_set(build_map(load_recipe(recipe_ref), cache_dir=cache_dir,
+                                     compare_official=False, template=template))
+
+    @staticmethod
+    def recipe_file(recipes, rid, top_line):
+        text = bundled_recipes()[rid].read_text(encoding="utf-8")
+        assert "seed = 31203\n" in text
+        return recipes(f"{rid}-template.toml", text.replace("seed = 31203\n",
+                                                            f"seed = 31203\n{top_line}\n", 1))
+
+    def test_help_lists_template(self, runner):
+        r = runner.invoke(cli, ["map", "stickers", "--help"])
+        assert r.exit_code == 0 and "--template ID" in r.output
+        for opt in ("--margin-color", "--ring-color", "--arrangement"):
+            assert opt not in r.output
+
+    @pytest.mark.parametrize("fmt,name", [("pdf", "w.pdf"), ("json", "w.json"), ("svg", "w-svg")])
+    def test_files_are_the_template_set(self, runner, cached, confirmed_winkel, out_dir, fmt, name):
+        out = out_dir / name
+        r = stickers(runner, "ocean-sst", "--template", "winkel-tripel", "-o", out, "--format", fmt)
+        assert r.exit_code == 0, r.output
+        s = self.winkel_set(cached.cache_dir)
+        if fmt == "pdf":
+            assert out.read_bytes() == render_sticker_pdf(s, "letter")
+        elif fmt == "json":
+            assert out.read_text(encoding="utf-8") == render_sticker_json(s)
+            t = confirmed_winkel
+            assert json.loads(out.read_text(encoding="utf-8"))["template"] == {
+                "id": t.id, "title": t.title, "projection": t.projection_title, "dataset": t.dataset.id}
+        else:
+            for n, text in render_sticker_svgs(s):
+                assert (out / n).read_text(encoding="utf-8") == text
+        assert s.text.line.endswith(" Winkel tripel projection.")
+
+    def test_template_and_margin_lines_after_the_recipe_line(self, runner, cached, confirmed_winkel,
+                                                             out_dir):
+        t = confirmed_winkel
+        r = stickers(runner, "ocean-sst", "--template", "winkel-tripel", "-o", out_dir / "w.pdf")
+        assert r.exit_code == 0, r.output
+        lines = r.output.rstrip("\n").splitlines()
+        i = next(n for n, ln in enumerate(lines) if ln.startswith("Recipe: ocean-sst - "))
+        assert lines[i + 1] == f"Template: winkel-tripel ({t.title}) - from --template"
+        c = t.counts
+        assert lines[i + 2] == (f"Margin: {c['margin']:,} square tiles (part 3070b): lego_black; "
+                                "no ring")
+        assert lines[i + 3] == ("Legend values from the build hung as A (default); the frames of "
+                                "a curved map cannot be re-hung.")
+        s = self.winkel_set(cached.cache_dir)
+        assert f"Sticker line: {s.text.line} (sticker table)" in lines
+        heads = ["Recipe: ", "Template: ", "Margin: ", "Legend values from the build hung as ",
+                 "Sticker title: ", "Sticker line: ", "Large sticker: ", "Small sticker: ",
+                 "Parts for a standalone plaque", "Stickers: ", "Data citations and licenses:"]
+        at = [next(n for n, ln in enumerate(lines) if ln.startswith(h)) for h in heads]
+        assert at == sorted(at), list(zip(heads, at))
+        assert lines[-1] == DISCLAIMER
+
+    def test_template_dataset_cited(self, runner, cached, confirmed_winkel, out_dir):
+        r = stickers(runner, "ocean-sst", "--template", "winkel-tripel", "-o", out_dir / "w.pdf")
+        assert r.exit_code == 0, r.output
+        e = get_entry(confirmed_winkel.dataset.id)
+        assert r.output.count(f"  - {e.id} ({e.version}): ") == 1
+        assert "  - ersst-v5-ltm-1991-2020 (" in r.output
+
+    def test_recipe_template_key(self, runner, cached, confirmed_winkel, recipes, out_dir):
+        path = self.recipe_file(recipes, "ocean-sst", 'template = "winkel-tripel"')
+        r = stickers(runner, path, "-o", out_dir / "w.json", "--format", "json")
+        assert r.exit_code == 0, r.output
+        assert f"Template: winkel-tripel ({confirmed_winkel.title}) - from the recipe" in r.output
+        data = json.loads((out_dir / "w.json").read_text(encoding="utf-8"))
+        assert data["template"]["id"] == "winkel-tripel"
+        assert data["text"]["line"].endswith(" Winkel tripel projection.")
+
+    def test_option_wins_over_the_recipe(self, runner, cached, confirmed_winkel, recipes, out_dir):
+        path = self.recipe_file(recipes, "ocean-sst", 'template = "winkel-tripel"')
+        r = stickers(runner, path, "--template", "kit-31203", "-o", out_dir / "k.json",
+                     "--format", "json")
+        assert r.exit_code == 0, r.output
+        assert "Template:" not in r.output
+        assert json.loads((out_dir / "k.json").read_text(encoding="utf-8"))["template"] == {
+            "id": "kit-31203"}
+
+    def test_explicit_kit_template_prints_and_writes_as_today(self, runner, cached, out_dir):
+        plain = stickers(runner, "ocean-sst", "-o", out_dir / "a.pdf")
+        kit = stickers(runner, "ocean-sst", "--template", "kit-31203", "-o", out_dir / "b.pdf")
+        assert plain.exit_code == kit.exit_code == 0, kit.output
+        assert (out_dir / "a.pdf").read_bytes() == (out_dir / "b.pdf").read_bytes()
+        assert plain.output.replace("a.pdf", "b.pdf") == kit.output
+        assert "Template:" not in kit.output and "Margin:" not in kit.output
+        assert ("the stickers are the same for A, B and C." in kit.output)
+
+    def test_unknown_template_exit_2(self, runner, cached, confirmed_winkel, out_dir):
+        r = stickers(runner, "ocean-sst", "--template", "mercator", "-o", out_dir / "x.pdf")
+        assert r.exit_code == 2
+        assert "'mercator'" in r.output and "confirmed templates: kit-31203, winkel-tripel" in r.output
+        assert list(out_dir.iterdir()) == []
+
+    def test_unknown_recipe_template_exit_1(self, runner, cached, recipes, out_dir):
+        path = self.recipe_file(recipes, "ocean-sst", 'template = "mercator"')
+        r = stickers(runner, path, "-o", out_dir / "x.pdf")
+        assert r.exit_code == 1
+        assert "template: unknown template 'mercator'" in r.output
+        assert "confirmed templates: kit-31203" in r.output
+        assert last_line(r.output) == DISCLAIMER and list(out_dir.iterdir()) == []
+
+    @pytest.mark.parametrize("recipe_ref,want", [
+        ("official-31203", "kit31203-design"),
+        ("ocean-el-nino", "the frames of a curved map cannot be re-hung"),
+    ])
+    def test_map_that_cannot_build_on_the_template(self, runner, cached, confirmed_winkel, out_dir,
+                                                   recipe_ref, want):
+        r = stickers(runner, recipe_ref, "--template", "winkel-tripel", "-o", out_dir / "x.pdf")
+        assert r.exit_code == 1
+        assert f"Cannot build {recipe_ref}: " in r.output and want in r.output
+        assert last_line(r.output) == DISCLAIMER and list(out_dir.iterdir()) == []
+
+    def test_unconfirmed_template_exit_1(self, runner, cached, unconfirmed_winkel, out_dir):
+        r = stickers(runner, "ocean-sst", "--template", "winkel-tripel", "-o", out_dir / "x.pdf")
+        assert r.exit_code == 1
+        assert "not confirmed by the project owner" in r.output
+        assert last_line(r.output) == DISCLAIMER and list(out_dir.iterdir()) == []

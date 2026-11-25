@@ -1,21 +1,301 @@
 # Run state: 017-map-stickers
 
 Source: prompt (owner, 2026-11-23: stickers instead of brick labels; four scoping answers)
-Phase: implement
-Status: running
-Updated: 2026-11-24
+Phase: done (converge round 1: T092 appended and implemented; every task done but the owner's T091)
+Status: done; owner steps open: T091 price refresh, commit of the work since merge 0150441, push/PR, deploy
+Updated: 2026-11-25
 
 Worktree: ../98138_world-017 (branch 017-map-stickers, from main af3ce57,
 fast-forwarded to main 6038d9c on 2026-11-23: round studs on black for all map previews); 017 committed
 on its branch (e4142bb guard golden, 3257c9d feature); the local branch 016-map-templates (f33b464)
-merged into it on 2026-11-24 (T053, T054), merge commit by the coordinator; nothing pushed.
+merged into it on 2026-11-24 (T053, T054), merge commit 0150441 by the coordinator, which also holds
+016's kit goldens as T054 regenerated them; nothing pushed. Everything since the merge, Phase 5
+(T055-T082), Phase 6 (T083-T090) and converge round 1 (T092, docs/runbook.md), is uncommitted in the worktree (76 tracked files modified, 9
+new files), waiting for the owner's go-ahead to commit (run policy "commit: no").
 Scope of this run (owner): draft the spec; stop after clarify for review.
 Owner said "plan for 017" (2026-11-23): run plan, tasks and analyze; stop before implement.
+
+## Owner steps still open
+- T091: refresh the BrickLink price snapshot with every default lot plus `--lot 10202:26` (the
+  owner's credentials; tasks.md has the command); best together with 016's T109. Until then no
+  snapshot is packaged, so `parts estimate` needs `--prices FILE` and the web prebuild
+  `--no-prices` (or `--prices`).
+- Commit the uncommitted Phase 5 and Phase 6 work on the branch, then push and open the pull
+  request (it must say that 017, merging second, regenerated 016's kit goldens: T054, research R13).
+- Deploy (`fly`), after the merge to main: the owner's step, not planned here.
+- T042 and T081 are done (texts approved 2026-11-24; plaque offset confirmed 2026-11-25).
 
 ## Open questions
 - none
 
 ## Decisions
+- converge round 1 (agent, 2026-11-25): every FR (001-026), SC (001-010), the 23 acceptance
+  scenarios, the edge cases and the six contracts assessed against the code with targeted runs on
+  cached real data (session scratchpad 017/converge/): sticker sets of all eight maps identical for
+  A, B and C (to_dict without arrangement, both SVGs) and their legends as the spec sets out;
+  PDF, SVG and JSON content, metadata, fonts, no image; byte-identical outputs across two
+  PYTHONHASHSEED values; the error table (not cached exit 3, nothing written; non-Latin-1;
+  too-long line; OUT a file); `partcolors plaque-parts --check` and `partcolors build --check` "no
+  differences"; the wheel ships data/plaque_parts.json and stickers/; Winkel stickers; the
+  plaque through build, report, validate, parts list and exports, estimate (incomplete without a
+  10202 row, complete with the plaque fixture), sheets, counts and `map cells`, and its kit and
+  corner errors. Findings: one LOW partial (docs/runbook.md had no stickers or `--plaque` step),
+  appended as Phase 8 T092 and implemented (new step 11, old 11-12 renumbered 12-13; the stickers
+  panel in the local web section; a print-and-cut check; a troubleshooting line; every command
+  run on cached data). Reported, no task: the web suite has no socket guard of its own (pre-existing
+  since 008, offline by construction; SC-010); a plaque layout's parts list names Rebrickable
+  colors.csv twice in its sources (part_colors.json cites it as `rebrickable-colors-snapshot`,
+  plaque_parts.json as `rebrickable-colors`, as contracts/plaque-parts-file.md sets; merging them
+  needs a contract change). Full suites after T092: CLI 3192 passed, 1 skipped; web 296 passed;
+  guards G1-G4 and 016's kit goldens pass unchanged (git diff of both golden directories empty).
+  Next: a second converge round should find nothing; then the owner commits, opens the pull
+  request and runs T091
+- T090 (agent, 2026-11-25): implement is complete but for the owner's T091; next phase converge.
+  Who regenerated 016's kit goldens: 017, at T054 (cli/tests/fixtures/golden/kit_outputs.json and
+  web/tests/fixtures/kit_variants_golden.json, in merge commit 0150441); neither golden nor 017's
+  guard golden changed after it (git diff against HEAD is empty for both fixture directories)
+- T089 (agent, 2026-11-25): full suites with the CLI socket guard on (cli/tests/conftest.py): CLI
+  3192 passed, 1 skipped in 150 s (T001 baseline 1551 passed, 1 skipped; T079 checkpoint 3182/1;
+  +10 from T082 and T087); web 296 passed in 82 s (T001 baseline 134; unchanged since T079). Guards
+  (test_stickers_outputs_unchanged.py, G1-G4) and 016's kit goldens (CLI
+  test_kit_outputs_unchanged.py, web test_kit_golden.py) pass unchanged. The web suite has no
+  socket guard of its own (as on main since 008); it builds its site from the CLI's dataset
+  fixtures and never fetches. Logs: session scratchpad 017/t082/t089-cli.txt, t089-web.txt
+- T088 (agent, 2026-11-25): quickstart steps 1-12 walked on real cached data: steps 2-7 38/38
+  (T044's script on the current tree, 017/t082/t088-steps-2-7.txt); step 8 against 6038d9c's
+  outputs from T044: ocean-sst layout, report, parts lists, estimate, counts, cells, sheets PDF
+  (42 pages) and SVG differ only in the recipe SHA-256 and its derived checksums, preview, XML and
+  CSV identical (t088-step8-ocean-sst.txt); step 9: full prebuild `--no-prices` (29 variants, 13
+  sticker sets: 8 kit, 5 Winkel; 345 kB of sticker files) and the service (TestClient): A, B, C
+  panels identical, the Winkel pages show their own set and note, every sticker image and download
+  200, unknown set or kind 404 (s09-s10-web.txt); steps 10-12 as T082. Docs fixed in quickstart.md:
+  step 8 compares with 6038d9c (af3ce57's previews predate the round studs); step 11's `parts
+  estimate` needs `--prices FILE` (no packaged snapshot before T091; the two fixtures named) and
+  `validate` "passes" now reads "no mask mismatch; square tiles and the plaque tile beyond the kit
+  (80.5%)"; step 12's misfit needs a template copy (every packaged Winkel corner fits). No
+  behaviour mismatch found
+- T087 (agent, 2026-11-25): FR-026 audit, tests added to tests/contract/test_disclaimer.py: the
+  plaque parts file's two disclaimers; the Winkel sticker set (output, JSON, both stickers, SVG
+  `<desc>`, PDF subject and page); every output of a plaque layout (`map build|check|cells
+  --plaque`, `parts list|export|estimate`, `sheets build|counts`, `validate`, the SVG section page
+  with "tile 6x6 (10202)"); no endorsement wording ("official", "endorse", "sponsor",
+  "authoriz/s", "partner", "approved by") in any sticker text of official-31203, ocean-sst and
+  ocean-sst on Winkel, nor on the two ocean-sst print sheets. Covered elsewhere and listed in the
+  test's comment: `partcolors plaque-parts` output (test_plaque_parts_tool.py), all bundled sets
+  and "no Official in a sticker title" (test_stickers_bundled.py), plaque errors
+  (test_map_plaque_contract.py), the Stickers panel, about paragraph and footer
+  (web/tests/test_stickers_page.py). Noted, not changed: official-31203's print sheet "Data"
+  block cites its dataset by the registry title "Official LEGO 31203 World Map design grid" (004's
+  datasets.json, as every output of that map does; plan decision "print sheet keeps registry
+  citations"); its stickers do not
+- T083-T086 (agent, 2026-11-25): docs in the existing style: cli/README.md (Features bullet;
+  section "Map stickers": command, print sheet and printing at 100% on white sticker paper,
+  cutting, 1 mm inset, legend, credit, fitting and Latin-1, the `[sticker]` table, plaque parts
+  table with cited IDs and `partcolors plaque-parts --check`, `--template`, plaque in a margin
+  corner with `--plaque`, `[margin].plaque`, the corner table, outputs and estimate; Python library
+  lines; the maintainer-tools list); specs/004-map-recipes/contracts/recipe-format.md (017 note
+  beside 012's and 013's); README.md (stickers for every map, the corner plaque, `cli/` list);
+  web/README.md (sticker files, manifest `maps[].stickers.<template-id>` incl. `credit` and
+  template sets, file names, routes, the panel); docs/vision.md (016's merge brought a 017
+  "planned" row: updated to "built", no row added); CLAUDE.md and AGENTS.md (the same 017
+  paragraph after 016's; Layout: `stickers/` and `kit/` plaque_parts.py; nothing removed; the
+  paragraph names the large plaque as the smooth tile 4974). Also the contract
+  contracts/in-margin-plaque.md "Layout JSON" (T082's validate rule) and `validate --help`
+- T082 (agent, 2026-11-25): the offset stays as built (T081), so no placement change. Real data
+  (cached; session scratchpad 017/t082/, script run_t082.py, results.txt): 139 of 139 checks.
+  Step 10: `map stickers ocean-sst --template winkel-tripel` PDF and JSON: both lines end
+  "Winkel tripel projection.", the large credit adds ETOPO 2022, no title says Official; the
+  prebuild writes `stickers.winkel-tripel` for each of the 5 Winkel variants (credit lines with
+  ETOPO 2022 once, also for living-planet, whose recipe already reads it). Step 11, each corner
+  (top-left A1, top-right H1, bottom-left A5, bottom-right H5): `metadata.plaque` with the
+  contract's rows and columns, 10,204 positions, exactly the 36 studs absent, every other position
+  equal to the build without `--plaque`, margin 1,960 and plaque 1 in the statistics; `parts list
+  --kits 1` one 10202 lot (needed 1, kit_supply 0, BrickLink 10202 / 11, Rebrickable 10202 / 0,
+  last), 1,996 -> 1,960 square tiles, leftovers unchanged; `parts export` XML 10202 color 11 MINQTY
+  1, CSV `10202,0,1`; `parts estimate` incomplete with 016's 3070b fixture (the --lot 10202:26
+  hint), complete with the plaque fixture, and without `--prices` exit 1 (no packaged snapshot);
+  `sheets build` puts the plaque in its section, the section SVG has the outlined "tile 6x6
+  (10202)", `sheets counts` names the section; `validate` no mask mismatch; `map cells --plaque`
+  36 P and 1,960 M with the plaque block. Step 12: `--plaque` on the kit exit 1 "the kit template
+  has no margin", no file; unknown corner exit 2; a copied recipe with `template` and `[margin]
+  plaque = "top-right"` places it "from the recipe", `--plaque none` gives 10,240 positions and no
+  `metadata.plaque`, `--plaque bottom-left` wins, `--template kit-31203` ignores it with 016's
+  note; a misfit (template copy with an ocean stud at row 75, column 7, as the contract test)
+  exit 1 with the space needed and available (s12-misfit.txt). Buildability (the open item from
+  T079): 016 counts its margin square tiles as not buildable with the kit (`color_unavailable`
+  for 3070b, positions added to the score's violations; 016 research R17), so the plaque is made
+  consistent, test first (test_validator.py `test_the_plaque_tile_is_not_buildable_with_the_kit`,
+  `test_no_plaque_violation_without_a_plaque`; test_validate_contract.py two tests): a recorded
+  plaque is `color_unavailable` with `part_type` `plaque_tile`, `part_id` 10202, `color_id`
+  `lego_black`, `color_name` Black (from plaque_parts.json), `positions_required` 36 (the studs
+  it covers, the score's unit), no suggestion; the score drops from 80.9% to 80.5% on a plaque
+  layout, equal to the same map without a plaque. `validate` prints "Checking the plaque tile..."
+  / "✗ tile 6x6 (part 10202) unavailable in kit (no kit has part 10202)" after the square-tile
+  check and "Positions required: 36 (studs under one tile 6x6)"; `maps.margin.plaque_label`
+  shared with `plaque_text`. On a kit layout a recorded plaque is also a mask mismatch, so its
+  studs count twice there, as 016's square tiles on a kit layout do. Layouts without a plaque
+  validate as before (tests)
+- T081: in-margin plaque offset confirmed as built, one stud in from both board edges (rows 1-6 or
+  73-78, columns 1-6 or 121-126), by the project owner, 2026-11-25 (user)
+- implement T074-T079 (in-margin plaque: sheets, counts, cells, CLI wording; agent, 2026-11-24):
+  Sheets: `build_sheet_set` accepts a layout lacking exactly `metadata.plaque`'s studs (a piece under
+  the plaque: "layout has N position(s) under the plaque recorded in metadata.plaque"; any other
+  absent position: today's message, plus " but the 36 studs under the plaque recorded in
+  metadata.plaque" on a plaque layout); the plaque must lie in one section
+  (`sheets.counts.plaque_section`, else "metadata.plaque: rows ..., columns ... are not inside one
+  section (16 x 16 base)", exit 1 from `sheets build` and `sheets counts`). Section page: one Rect
+  (tag `plaque`) in the lot's cited Black, outline grey 0.4 mm, 6 pitches minus the stud gap (47 mm,
+  as the preview), lot number 16 pt bold and "tile 6x6 (10202)" (`PART_LABEL` + part id) 9 pt inside;
+  no 1x1 studs there; count table row "Black (tile 6x6)" 1 with a square swatch (A5 total 221).
+  Legend: square swatch (`disc` squares the plaque tile; `is_square` stays the 3070b test). Overview:
+  one Rect (tag `map-plaque`, stud gap 0.2 mm, no stroke); totals "10,205 pieces: ..., 1,960 tiles 1x1
+  square (margin, part 3070b), 1 tile 6x6 (plaque, part 10202);" and the how-to adds "the plaque tile as
+  one outlined rectangle". `count_sections` counts the plaque lot once in its section (`sheets counts`
+  JSON lists it); `SheetSet.plaque` (a `PlaqueMark`) carries entry and section. cells.json: `P` over
+  `M`, block `plaque` `{part_id, color, rgb, corner, cells}` right after `margin` (rgb the tile's cited
+  Black (5, 19, 29) from plaque_parts.json); palette unchanged; files without a plaque unchanged.
+  CLI wording: `maps.margin.plaque_text(record)` "tile 6x6 (part 10202), Black, bottom-left, rows
+  73-78, columns 1-6" (label and color from plaque_parts.json; the report's record has no color, so
+  the tile's Black); 016's `Margin:` line counts the report's `margin.cells` margin + ring (1,960 with
+  a plaque, the template's count without), then `Plaque: ... - from --plaque|from the recipe`;
+  `Layout: ... (10,204 positions, ..., 1,960 margin tiles, 1 plaque tile)` (len(positions) only with
+  a plaque). `parts list`/`parts estimate` header "10,204 positions and 1 tile 6x6 (plaque, part
+  10202)" and Template line "...margin in 1x1 square tiles (part 3070b) and the plaque tile 6x6 (part
+  10202), which kit 31203 does not have" (`parts.partslist.positions_text`, `template_text`,
+  `plaque_lot_text`; JSON unchanged: `layout.positions` stays the board's 10,240); `parts export` adds
+  "Plaque tile in the files: 1 tile 6x6 (plaque, part 10202); BrickLink 10202 / Black (11);
+  Rebrickable 10202 / Black (0)"; `sheets build` Lots line ends ", 1 tile 6x6 (plaque, part 10202) in
+  section A5"; `sheets counts` prints "Plaque: <plaque_text>; counted in section A5"; `validate`
+  prints "Total positions: 10,204" and "Plaque: <plaque_text> (36 studs without a 1x1 piece)" for a
+  plaque layout, and mask examples say "no piece" (absent stud) and "the plaque tile" instead of
+  None/plaque_tile (other part types as before). `--lot` help adds "or 10202:26 (the in-margin
+  plaque's tile 6x6)", `--all-colors` help "not the plaque tile 10202 (fetch it with --lot)". Estimate
+  hint reworded to 011's "Hint: fetch ... with: <command>" form: "fetch the plaque tile with:
+  lego-image-processor parts prices fetch --lot 10202:26, plus a --lot for every other lot the
+  snapshot should hold (a --lot fetch writes only the lots it names; --all-colors does not fetch the
+  plaque tile)"; the JSON note is the same sentence capitalised (was "Fetch the plaque tile: ...").
+  Output without a plaque is unchanged (tests). Noted, not changed: `validate`'s buildability score
+  divides by the board's 10,240 and counts the plaque's 36 studs as buildable with the kit (80.9% on
+  bl.json), though the plaque tile is not in the kit. Real data (session scratchpad 017/plaque/,
+  rebuilt with this code): map-build.txt, sheets-build.txt, sheet-A5-07.png, sheet-overview-01.png,
+  sheet-legend-02.png, sheets-counts.txt, bl-counts.json (lot 12 in A5, total 221), bl-cells.json
+  (36 P, 1,960 M), validate.txt, parts-*.txt. Checkpoint: CLI 3182 passed, 1 skipped; web 296 passed;
+  guards (test_stickers_outputs_unchanged.py) and 016's kit goldens (CLI and web) pass unchanged, no
+  golden file touched (agent)
+- implement T069-T073 (in-margin plaque: parts, exports, prices; agent, 2026-11-24): the plaque
+  lot is read from `metadata.plaque` (its studs carry no position): `partslist._plaque_lot`, needed
+  1, `kit_supply` 0 (`supplied_for` is 0 for any non-kit part), sorted by `PART_ORDER` 6141, 98138,
+  3070b, 10202 (`PART_TYPE["10202"] = "plaque_tile"`, `PART_TYPE_TEXT` and `sheets.legend.PART_LABEL`
+  "tile 6x6"); IDs from `parts.resolve.resolve_plaque_tile` (plaque_parts.json's `PartNumbers` and
+  `PartColor`, so the same `ResolvedColor`; a record in another color is an unverified lot with
+  "no cited color for part"); `check_grid` refuses a `metadata.plaque` whose part is not the plaque
+  tile (exit 1, "metadata.plaque: part '3958' is not the in-margin plaque tile (10202)").
+  `_citations()` resolves each id from the part_numbers pages, then the part_colors citations, then
+  plaque_parts.json `source.snapshots` (read only when an id is not found earlier), so kit lists keep
+  their bytes and `bricklink-10202` and `rebrickable-colors` are added (the human `Sources:` list
+  then shows "Rebrickable colors.csv (catalog download)" twice, once per id: same file, two ids;
+  left as is, none dropped). Owned and missing CSVs: `owned_parts` adds 10202 when the layout
+  records a plaque (016's rule: only parts the layout uses), and `parse_owned_text` reads its
+  Rebrickable part and color and its element from plaque_parts.json; elsewhere a 10202 row is
+  ignored and counted. Prices: `prices.lots` `PART_ORDER`/`PART_TYPE` add 10202, `PART_NAMES`
+  "6141, 98138, 3070b or 10202" (the snapshot's part and order errors list it too); `lot_ref`,
+  `lot_ref_by_lego_id` and so `parse_lot`/`named_lots` and the snapshot loader read the plaque tile
+  from plaque_parts.json; `recipe_lots()` adds `10202:26` when `margin.plaque` is set (no bundled
+  recipe: still 26 lots); `all_cited_lots()` loops only over `PartColorTable.parts` (unchanged).
+  Estimates: `--all-colors` does not fetch the plaque tile, so a missing plaque lot gets its own note
+  and table hint ("--all-colors does not fetch the plaque tile; fetch it with --lot 10202:26,
+  together with a --lot for every other lot the snapshot should hold (--lot writes only the lots it
+  names)", `wording.plaque_lot_hint`) and the --all-colors hint appears only for other missing lots.
+  T071: tests/fixtures/prices/bricklink_price_guide_plaque.json (+ .source.json) = 016's 3070b
+  fixture plus a synthetic 10202 Black row (SHA-256 2ca51cc0...); the two existing fixtures are
+  byte-identical (checked before and after). Tests amended for 017: the exact `PART_ORDER` lists of
+  016's test_partslist.py and test_lots.py check their first three parts (the new tests check all
+  four). Left for T079: CLI wording (`parts list`/`estimate` "Template:" lines and `--lot` help
+  still name only 3070b; `validate` still prints `None` as an absent stud's part type). Real data
+  (session scratchpad 017/plaque/bl.json): `parts list` 12 lots, last "tile 6x6 Black (26) 10202 /
+  Black (11) 1", 1,960 square tiles, 10,205 pieces; `parts export` XML `<ITEMID>10202</ITEMID>`
+  color 11 `<MINQTY>1</MINQTY>`, CSV `10202,0,1`; `parts estimate` complete with the plaque fixture,
+  with 016's 3070b fixture incomplete with only the tile unpriced. Checkpoint: CLI 3137 passed, 1
+  skipped; web 296 passed; guards G1-G4 and 016's kit goldens (CLI and web) pass unchanged, no golden
+  file touched (agent)
+- implement T055-T058 (stickers on a template, agent, 2026-11-24): `Template.projection_title`
+  in src/templates/__init__.py from `PROJECTION_TITLES` keyed by `projection["name"]`
+  (`winkel.TITLE` "Winkel tripel"; the kit's `KIT_PROJECTION` "Equidistant cylindrical"), not a
+  key of the template file (no template output changes); the web's `TEMPLATES` became the id
+  tuple `("winkel-tripel",)` and the manifest's `templates[].projection` is
+  `tpl.projection_title` (same text). `resolve_text(recipe, template)` appends " <projection>
+  projection." after a full stop it adds when the line has none (`with_projection`); sources
+  unchanged. `credits.template_dataset_entry(template)` looks the template's dataset id up in the
+  packaged registry (`templates.PACKAGED_REGISTRY`, which 016 checks the template file against);
+  `credit_lines(recipe, credits, template_dataset)`: on a template a `[sticker] credit` is
+  followed by the template dataset's line (FR-025; no bundled recipe has both). `StickerSet`
+  gains `credit_lines` (not in the JSON), which the prebuild's manifest `credit` uses. The legend
+  reads the template's land and ocean studs and its ocean-only shadow (`legend._masks`, as
+  `build_map`/`map_cells`); with the kit's mask, bathymetry's rank bounds on Winkel differed
+  (test). JSON `template` on a non-kit template: `{id, title, projection: "Winkel tripel",
+  dataset: "<dataset id>"}` (the full citation is in `credits`). The print sheet's Provenance and
+  the SVG `<metadata>` add 016's `template_line(template.layout_record())` after the recipe
+  (kit sets byte-identical: G1-G4 and 016's kit goldens pass). The T053 interim guard is gone;
+  `sticker_set` refuses only a `MapResult` on an unconfirmed template (016 FR-004; `build_map`
+  never makes one). `map stickers --template ID` (016's `TemplateType`, `TEMPLATE_HELP`; no margin
+  options): after the `Recipe:` line 016's `template_lines` (Template, Margin), and on a template
+  the legend line ends "the frames of a curved map cannot be re-hung." (016's `REHANG_RULE`)
+  instead of "the stickers are the same for A, B and C." Real data (cached): the five Winkel sets
+  fit on Letter and A4 (smallest text 5 pt, as the kit sets) (agent)
+- implement T059-T060 (template sticker sets on the site, agent, 2026-11-24): `build_map_stickers(
+  recipe, result, out, template=None)` makes the kit set as before or, with a template, the set
+  of that template variant's `MapResult` into maps/<map>/stickers/<template-id>/ with file names
+  `98138-world_<map>_<template-id>_<kind>.<ext>`; `build_site` adds it right after each template
+  variant (one echo line per set), so `maps[].stickers` is the kit set, then one per template
+  variant. `check_stickers(root, m, template_ids)` accepts the kit id and the manifest's listed
+  templates (error names both). map.html: on a template page the panel's note reads "These are
+  the Winkel tripel version's stickers: …" instead of "The stickers are the same for every
+  combination." (kit pages unchanged). web/tests/kit_golden.py: `row_digests` digests a map row's
+  `stickers` through `kit_stickers` (template variants' sets removed, each required once, no
+  other non-kit set), so the kit golden passes without rewriting; tests that strip a site to
+  kit-only (test_catalog, test_routes) also drop the template sticker sets (agent)
+- implement T061-T068 (in-margin plaque: choice, placement, layout, report, validation, preview;
+  agent, 2026-11-24): `MarginTreatment` gains `plaque` (a corner) and `plaque_source` (`option` |
+  `recipe`), both defaulted, so 016's treatments compare as before; recipe `[margin].plaque`
+  (`_MARGIN_KEYS` adds `plaque`, so the unknown-key rule lists "color, plaque, ring": 016's
+  test_recipe_template.py assertion amended); `resolve_margin(..., plaque=)` (a corner wins with
+  source `option`, `none` clears); `--plaque` (Click choice `PLAQUE_CORNERS` + `none`) joins 016's
+  `template_options`, so `map build`, `map check` and `map cells` take it. Placement in
+  src/maps/margin.py: `plaque_tile()` (plaque_parts small tile; IDs and size read there),
+  `plaque_studs`, `plaque_misfit` (block, margin and ring overridable, so the module and ring checks
+  are tested on their own: neither can fail on the 128 x 80 board with 016's exact-fit corner
+  blocks), `place_plaque`, `plaque_for`, frozen `InMarginPlaque` (`layout_record`, `report_record`,
+  `mask`, `positions`) and `PlaqueError(MarginError)` (`where` `--plaque` or `margin.plaque`), which
+  `build_map` turns into `MapBuildError` (exit 1, "Cannot build <id>: --plaque: the kit template has
+  no margin, so the plaque tile 6x6 (part 10202) cannot go in its <corner> corner; templates with a
+  margin: winkel-tripel (choose one with --template)"). The kit check runs right after the template
+  is resolved, before any data are read; a recipe corner on the kit is ignored and 016's
+  `echo_template` note prints, as for any `[margin]` (also for `--plaque none` on the kit, as 016
+  does for `--ring-color none`). `margin_cells` leaves the plaque out, so `metadata.map.margin.cells`
+  and the report's `margin.cells` drop by 36; the report's `margin` is a copy with `plaque` `{corner,
+  source, studs, part_id}` (`studs` the `{row, col, height, width}` block, as in `metadata.plaque`;
+  `metadata.map.margin` gets no `plaque` key). `MapResult.plaque`. Layout: `PositionPlacementGrid(
+  plaque=)`, `metadata.plaque` written last (after `template`), `plaque_positions`;
+  `statistics.plaque_tile_count` 1 right after `margin_tile_count`. Decided: `metadata.total_positions`
+  stays width x height (10,240, the board; `layout.total_positions` is the board everywhere) while
+  the positions and `statistics.total_tile_count` are 10,204; `coverage_percentage` counts the
+  plaque's studs as covered (100.0). Validator: on a template every board stud is checked: an absent
+  stud not under the plaque is a mask mismatch with `part_type` null, a piece under the plaque
+  expects `plaque_tile`, a plaque stud off the margin has `part_type` `plaque_tile`; on the kit only a
+  recorded plaque's studs are mismatches, so kit layouts validate as before (a template layout that
+  lacks a position without a plaque is now a mask error; 016 accepted it silently). Preview: one
+  rectangle in the tile's cited Black (plaque_parts.json, (5, 19, 29)), in the round style 6 pitches
+  minus the stud gap (inset 0.4 px each side at 8 px per stud, anti-aliased), in the square style
+  filling the cells; `write_preview` refuses a layout lacking any position other than its plaque's
+  studs (with or without a plaque; every map build is complete). Real data (cached):
+  `map build ocean-sst --template winkel-tripel --plaque bottom-left` (session scratchpad
+  017/plaque/bl.json, bl.png, bl-report.json): 10,204 positions, 1,960 margin tiles, plaque at rows
+  73-78, columns 1-6. Left for T078/T079: the `Plaque:` line; the `Layout:` line still reads
+  "10,240 positions, ..., 1,960 margin tiles"; 016's `Margin:` line reads the template's counts and
+  still says 1,996 square tiles with a plaque (use the report's `margin.cells`, equal without one);
+  `validate` prints `None` as the part type of an absent stud in its example lines. `map cells`
+  with a plaque still marks its studs `M` until T077. Checkpoint: CLI 3106 passed, 1 skipped; web 294
+  passed; guards G1-G4 and 016's kit goldens pass unchanged, no golden file touched (agent)
 - T053/T054 checkpoint (merged tree, uncommitted, 2026-11-24): CLI 2932 passed, 1 skipped (016
   alone 2216/1, 017 alone 2265/1); web 269 passed (016 alone 209, 017 alone 193); guards G1-G4
   pass unchanged, guard golden untouched; no unmerged path and no conflict marker; constitution
@@ -352,4 +632,5 @@ what 017's tasks assumed (T055-T082 amended in tasks.md, "Amended at T053"):
 - none
 
 ## Deferred findings
-- none
+- docs/runbook.md had no `map stickers` or `--plaque` step: done in converge round 1 (T092)
+- the web suite has no socket guard of its own (since 008); it is offline by construction (low)

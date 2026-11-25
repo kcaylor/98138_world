@@ -460,7 +460,9 @@ def test_winkel_page_without_javascript(client):
         assert re.fullmatch(r'<script src="/static/palette\.js\?v=[^"]+" defer>', tag), tag
     assert "<noscript>" in html
     assert re.search(r'<img id="preview-img" src="/maps/ocean-sst/winkel-tripel/preview\.png"', html)
-    assert html.count("/download/") == 9
+    assert html.count("/download/") == 9 + 4      # the variant's files, its sticker set's (017)
+    assert html.count(f"{WINKEL}/download/") == 9
+    assert html.count("/maps/ocean-sst/stickers/winkel-tripel/download/") == 4
 
 
 def test_winkel_page_headers_and_footer(client):
@@ -488,6 +490,7 @@ def test_about_without_templates_has_no_paragraph(site_dir, tmp_path):
         m.pop("templates")
         for mp in m["maps"]:
             mp.pop("template_variants", None)
+            mp.get("stickers", {}).pop("winkel-tripel", None)   # feature 017: their sticker sets
     with _client_for(site_dir, tmp_path, strip) as c:
         about = c.get("/about").text
         assert "Winkel" not in about and "3070b" not in about

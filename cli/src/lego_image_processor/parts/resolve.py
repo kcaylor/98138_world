@@ -4,6 +4,9 @@ A lot is verified only when the cited part-color table has a row for the layout'
 color ID equals the layout's ``lego_color_code``. Colors match by LEGO ID, not by name or key, so a
 palette's "Dark Red" (154) resolves to the cited "New Dark Red" (154). Marketplace part numbers
 come from ``part_numbers.json``. Nothing is guessed: any other case is unverified, with a reason.
+The in-margin plaque's tile (feature 017; ``resolve_plaque_tile``) is cited in ``plaque_parts.json``
+instead, which gives the same ``PartNumbers`` and ``PartColor`` objects, so its lot resolves to the
+same ``ResolvedColor``.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -14,6 +17,7 @@ from typing import Optional, Tuple, Union
 
 from ..kit.part_colors import PartColor, PartColorTable, load_part_colors
 from ..kit.part_numbers import PartNumberTable, PartNumbers, load_part_numbers
+from ..kit.plaque_parts import PlaquePartTable, load_plaque_parts
 
 REASON_NO_COLOR = "no cited color for part"
 REASON_CODE_MISMATCH = "color code mismatch"  # missing, invalid, or inconsistent LEGO color ID
@@ -108,3 +112,19 @@ def resolve_color(part_id: str, color_key: str, lego_color_code: Union[str, int,
     if row.bricklink.name not in numbers.bricklink_colors:
         return Unresolved(REASON_NOT_ON_PART_PAGE)
     return ResolvedColor(part=numbers, color=row)
+
+
+def resolve_plaque_tile(part_id: str, color_key: str,
+                        plaque_parts: Optional[PlaquePartTable] = None) -> Union[ResolvedColor, Unresolved]:
+    """Cited IDs for the in-margin plaque's tile (feature 017) from ``plaque_parts.json``: the part
+    must be a tile there and ``color_key`` its cited color (Black); otherwise unverified."""
+    table = plaque_parts or load_plaque_parts()
+    try:
+        part = table.get(str(part_id))
+    except KeyError:
+        return Unresolved(REASON_NO_COLOR)
+    if part.kind != "tile" or part.color.key != color_key:
+        return Unresolved(REASON_NO_COLOR)
+    if part.color.bricklink.name not in part.numbers.bricklink_colors:
+        return Unresolved(REASON_NOT_ON_PART_PAGE)
+    return ResolvedColor(part=part.numbers, color=part.color)

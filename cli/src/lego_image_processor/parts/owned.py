@@ -9,6 +9,8 @@ ignored and counted, so a full set inventory export can be passed in. The map pa
 two, 6141 and 98138, plus the 1x1 square tile 3070b on a layout that has square tiles (a non-kit
 template's margin, feature 016; ``partslist.owned_parts``). On a kit layout a 3070b row, or a row
 with one of 3070b's other catalog numbers, is therefore ignored and counted, as before feature 016.
+A layout with an in-margin plaque (feature 017) also reads its tile, part 10202, whose numbers and
+cited color come from ``plaque_parts.json``; elsewhere a 10202 row is ignored and counted.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -138,25 +140,30 @@ def parse_owned_text(text: str, path: Union[str, Path] = "<owned>",
     else:
         raise OwnedFileError(path, hline, f"header {','.join(header)!r} not recognised: expected "
                                           "'Part,Color,Quantity' or 'Element,Quantity' (Rebrickable import CSV)")
-    unknown = sorted(wanted - set(part_numbers.parts))
+    numbers = dict(part_numbers.parts)
+    colors = {p: tuple(part_colors.for_part(p)) for p in part_colors.parts}
+    if wanted - set(numbers):  # feature 017: the in-margin plaque's tile, cited in plaque_parts.json
+        from ..kit.plaque_parts import load_plaque_parts
+        for p, part in load_plaque_parts().parts.items():
+            if p in wanted and p not in numbers and part.kind == "tile":
+                numbers[p], colors[p] = part.numbers, (part.color,)
+    unknown = sorted(wanted - set(numbers))
     if unknown:
         raise ValueError(f"not a map part: {', '.join(unknown)}")
-    rebrickable_part = {part_numbers.get(p).rebrickable_part_num: p for p in part_numbers.parts
-                        if p in wanted}
+    rebrickable_part = {numbers[p].rebrickable_part_num: p for p in numbers if p in wanted}
     other_numbers = {}
-    for p, n in part_numbers.parts.items():
+    for p, n in numbers.items():
         if p not in wanted:
             continue
         for alt in (n.bricklink_item_no,) + n.bricklink_alternates + n.lego_design_ids:
             if alt not in rebrickable_part:
                 other_numbers[alt] = p
-    by_color = {p: {c.rebrickable.id: c.key for c in part_colors.for_part(p)} for p in part_colors.parts
-                if p in wanted}
+    by_color = {p: {c.rebrickable.id: c.key for c in colors[p]} for p in colors if p in wanted}
     by_element = {}
-    for p in part_colors.parts:
+    for p in colors:
         if p not in wanted:
             continue
-        for c in part_colors.for_part(p):
+        for c in colors[p]:
             for e in (c.element_id,) + tuple(c.element_ids):
                 by_element[e] = (p, c.key)
     out: Dict[LotKey, int] = {}
@@ -183,8 +190,11 @@ def parse_owned_text(text: str, path: Union[str, Path] = "<owned>",
                 raise OwnedFileError(path, line, f"color {color!r} is not a Rebrickable color number")
             key = by_color[part].get(cid)
             if key is None:
+                see = (f"see: lego-image-processor kit part-colors --part {part}" if part in part_colors.parts
+                       else "plaque_parts.json cites " + ", ".join(
+                           f"{c.rebrickable.name} ({c.rebrickable.id})" for c in colors[part]))
                 raise OwnedFileError(path, line, f"part {num} in Rebrickable color {cid} has no cited "
-                                                 f"row (see: lego-image-processor kit part-colors --part {part})")
+                                                 f"row ({see})")
         else:
             element = cell("element")
             if element not in by_element:

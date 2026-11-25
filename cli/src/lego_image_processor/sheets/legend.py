@@ -17,8 +17,10 @@ from ..parts import Lot, PartsList
 from .model import BLACK, GREY, RGB, WHITE, latin1_safe
 
 # One label per parts-list part type (parts.partslist.PART_TYPE); the web prebuild maps the parts
-# its variants use through it, so a new part type needs its label here (016 research R16).
-PART_LABEL = {"plate": "plate 1x1 round", "tile": "tile 1x1 round", "square_tile": "tile 1x1 square"}
+# its variants use through it, so a new part type needs its label here (016 research R16). Feature
+# 017: the in-margin plaque's tile (part 10202, plaque_parts.json).
+PART_LABEL = {"plate": "plate 1x1 round", "tile": "tile 1x1 round", "square_tile": "tile 1x1 square",
+              "plaque_tile": "tile 6x6"}
 NO_IDS = "no cited IDs"
 
 

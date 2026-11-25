@@ -4,7 +4,8 @@ This module does not import ``lego_image_processor``: the running service only r
 build step wrote. Feature 016: a map may also have ``template_variants`` (one per map template,
 keyed by the template's id, which is listed in the manifest's ``templates`` and is never A, B or C);
 they are checked like kit variants. A map's ``stickers`` block (feature 017) is optional, so an
-older manifest still serves. Not affiliated with or endorsed by The LEGO Group.
+older manifest still serves; its keys are the kit's id and template ids the manifest lists.
+Not affiliated with or endorsed by The LEGO Group.
 """
 
 from __future__ import annotations
@@ -27,7 +28,8 @@ ESTIMATE_KINDS = ("full", "one_kit")
 TEMPLATE_KEYS = ("id", "title", "projection", "board", "counts", "rehang", "description", "source")
 # feature 017: one sticker set per map and template (contracts/web.md "Catalog check"). The kit
 # template's id is lego_image_processor.templates.KIT_TEMPLATE_ID (feature 016); the service never
-# imports the library, so it is spelled here and a web test checks that the two agree.
+# imports the library, so it is spelled here and a web test checks that the two agree. Besides
+# these, a sticker set may be keyed by a template id the manifest's ``templates`` lists.
 KIT_TEMPLATE_ID = "kit-31203"
 STICKER_TEMPLATES = (KIT_TEMPLATE_ID,)
 STICKER_KINDS = ("stickers-letter", "stickers-a4", "sticker-small", "sticker-large")
@@ -92,18 +94,20 @@ def _is_list(v: Any) -> bool:
     return isinstance(v, list) and bool(v)
 
 
-def check_stickers(root: Path, m: Dict[str, Any]) -> None:
-    """A map's optional ``stickers`` block (feature 017): known templates, the four sticker kinds,
-    each file as a variant file, and the texts the map page shows."""
+def check_stickers(root: Path, m: Dict[str, Any], template_ids=()) -> None:
+    """A map's optional ``stickers`` block (feature 017): known templates (the kit's id and
+    ``template_ids``, the manifest's listed templates), the four sticker kinds, each file as a
+    variant file, and the texts the map page shows."""
     if "stickers" not in m:
         return
     blocks = m["stickers"]
     if not isinstance(blocks, dict):
         raise CatalogError(f"{m['id']} stickers: must be an object, found {type(blocks).__name__}")
+    known = list(STICKER_TEMPLATES) + [t for t in template_ids if t not in STICKER_TEMPLATES]
     for template_id, st in blocks.items():
-        if template_id not in STICKER_TEMPLATES:
+        if template_id not in known:
             raise CatalogError(f"{m['id']} stickers: unknown template {template_id!r} (known: "
-                               f"{', '.join(STICKER_TEMPLATES)})")
+                               f"{', '.join(known)})")
         where = f"{m['id']} stickers {template_id}: "
         _check(st, "files", lambda v: isinstance(v, dict), where, "an object")
         for kind in st["files"]:
@@ -307,6 +311,6 @@ class Catalog:
                     raise CatalogError(f"{m['id']} {t}: template must be {t!r}, found {v.get('template')!r}")
             for c, v in all_variants(m):
                 _check_files(root, f"{m['id']} {c}", v["files"])
-            check_stickers(root, m)
+            check_stickers(root, m, template_ids)
         check_prices(manifest)
         return cls(root, manifest, raw)

@@ -243,6 +243,7 @@ def test_kit_only_output_loads(copy):
         m.pop("templates")
         for mp in m["maps"]:
             mp.pop("template_variants", None)
+            mp.get("stickers", {}).pop(TID, None)   # feature 017: and their sticker sets
     _edit(copy, strip)
     cat = Catalog.load(copy)
     assert cat.variant_count == 9 and cat.templates == [] and cat.map("ocean-sst").template_ids == ()
@@ -259,7 +260,9 @@ def test_loads_stickers(site_dir):
     assert p is not None and p.name == "sticker-large.svg" and p.is_file()
     assert cat.sticker_entry("ocean-sst", KIT, "stickers-a4")["media_type"] == "application/pdf"
     assert cat.stickers("ocean-sst", KIT)["title"] == "Ocean temperature"
-    assert cat.sticker_file("ocean-sst", "winkel-tripel", "sticker-large") is None
+    w = cat.sticker_file("ocean-sst", "winkel-tripel", "sticker-large")   # feature 017 (T060)
+    assert w is not None and w.parent.name == "winkel-tripel" and w.is_file()
+    assert cat.sticker_file("official-31203", "winkel-tripel", "sticker-large") is None
     assert cat.sticker_file("ocean-sst", KIT, "layout") is None
     assert cat.sticker_file("nope", KIT, "sticker-large") is None
     assert cat.sticker_entry("ocean-sst", KIT, "../../manifest") is None
@@ -282,8 +285,8 @@ def _sticker_files(m, i=1):
 
 
 @pytest.mark.parametrize("edit, match", [
-    (lambda m: m["maps"][1]["stickers"].update({"winkel-tripel": m["maps"][1]["stickers"][KIT]}),
-     r"ocean-sst stickers: unknown template 'winkel-tripel'"),
+    (lambda m: m["maps"][1]["stickers"].update({"mercator": m["maps"][1]["stickers"][KIT]}),
+     r"ocean-sst stickers: unknown template 'mercator' \(known: kit-31203, winkel-tripel\)"),
     (lambda m: m["maps"][1].update(stickers=[]), r"ocean-sst stickers: must be an object"),
     (lambda m: _sticker_files(m).update({"sticker-huge": _sticker_files(m)["sticker-large"]}),
      r"ocean-sst stickers kit-31203: unknown file kind 'sticker-huge'"),

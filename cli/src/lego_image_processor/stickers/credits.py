@@ -6,6 +6,10 @@ dataset; each dataset once. The large sticker prints one "Data:" line per credit
 title>, doi:<doi>" or "<registry title>, <publisher>" without a DOI, unless the recipe's
 ``[sticker] credit`` replaces those lines; the print sheet (and the SVG metadata) always keeps
 every credit's full citation, license and acknowledgement (constitution IV).
+
+On a non-kit template (feature 016) the template's dataset is the registry entry of its
+``Template.dataset`` id (``template_dataset_entry``), from the packaged registry the template's
+own provenance is checked against; a ``[sticker] credit`` there still leaves its line (FR-025).
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -14,7 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Sequence, Tuple
 
-from ..datasets.registry import DatasetEntry
+from ..datasets.registry import DatasetEntry, load_registry
 from ..maps.recipe import Recipe
 
 
@@ -54,6 +58,17 @@ def credit(entry: DatasetEntry) -> Credit:
                   acknowledgement=entry.acknowledgement or None)
 
 
+def template_dataset_entry(template) -> Optional[DatasetEntry]:
+    """The registry entry of the dataset that decided a non-kit template's land and ocean
+    (``Template.dataset``, a ``TemplateDataset``, looked up by its id in the packaged registry);
+    None for the kit or no template."""
+    if template is None or template.is_kit or template.dataset is None:
+        return None
+    from ..templates import PACKAGED_REGISTRY
+
+    return load_registry(PACKAGED_REGISTRY).get(template.dataset.id)
+
+
 def credits_for(recipe: Recipe, template_dataset: Optional[DatasetEntry] = None) -> Tuple[Credit, ...]:
     """The credits of ``recipe``'s datasets, then ``template_dataset`` (non-kit templates), each
     dataset once."""
@@ -69,9 +84,14 @@ def credits_for(recipe: Recipe, template_dataset: Optional[DatasetEntry] = None)
     return tuple(out)
 
 
-def credit_lines(recipe: Recipe, credits: Sequence[Credit]) -> Tuple[str, ...]:
+def credit_lines(recipe: Recipe, credits: Sequence[Credit],
+                 template_dataset: Optional[str] = None) -> Tuple[str, ...]:
     """The large sticker's "Data:" lines: the ``[sticker] credit`` when set, else one line per
-    credit. The print sheet does not use these; it lists every credit in full."""
+    credit. On a non-kit template (``template_dataset``: its dataset id) a ``[sticker] credit``
+    is followed by the template dataset's line (FR-025). The print sheet does not use these; it
+    lists every credit in full."""
     if recipe.sticker is not None and recipe.sticker.credit:
-        return (recipe.sticker.credit,)
+        extra = tuple(c.text for c in credits
+                      if template_dataset is not None and c.dataset == template_dataset)
+        return (recipe.sticker.credit,) + extra
     return tuple(c.text for c in credits)

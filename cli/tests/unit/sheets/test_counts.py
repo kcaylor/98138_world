@@ -75,3 +75,34 @@ def test_square_tiles_are_counted_per_section_and_json_names_the_template(confir
 
 def test_kit_counts_have_no_template(official_grid):
     assert "template" not in json.loads(section_counts(official_grid).to_json())
+
+
+# --- the in-margin plaque (feature 017 T074; contracts/in-margin-plaque.md "Build sheets and counts") --
+
+def test_plaque_lot_is_counted_in_its_section(confirmed_winkel):
+    from lego_image_processor.kit.plaque_parts import load_plaque_parts
+    from lego_image_processor.maps.margin import place_plaque
+    from ...winkel_layouts import winkel_grid
+    tile = load_plaque_parts().plaques["small"].tile
+    rec = place_plaque(confirmed_winkel, "bottom-left", "option").layout_record()
+    sc = section_counts(winkel_grid(confirmed_winkel, plaque=rec), layout_path="p.json")
+    (e,) = [e for e in sc.legend if e.lot.part_type == "plaque_tile"]
+    holding = [s for s in sc.sections if e.number in s.counts]
+    assert [s.section.label for s in holding] == ["A5"] and holding[0].counts[e.number] == 1
+    assert holding[0].total == 256 - 36 + 1
+    assert all(s.total == 256 for s in sc.sections if s.section.label != "A5")
+    sq = next(x for x in sc.legend if x.lot.part_id == "3070b")
+    assert sum(s.counts.get(sq.number, 0) for s in sc.sections) == confirmed_winkel.counts["margin"] - 36
+    d = json.loads(sc.to_json())
+    row = next(r for r in d["legend"] if r["number"] == e.number)
+    assert (row["part_id"], row["part_type"], row["color_key"], row["total"]) == \
+        (tile.part_id, "plaque_tile", tile.color.key, 1)
+    a5 = next(s for s in d["sections"] if s["label"] == "A5")
+    assert a5["counts"][str(e.number)] == 1 and a5["total"] == 221
+    assert [int(k) for k in a5["counts"]] == sorted(int(k) for k in a5["counts"])
+
+
+def test_counts_without_a_plaque_have_no_plaque_lot(confirmed_winkel):
+    from ...winkel_layouts import winkel_grid
+    sc = section_counts(winkel_grid(confirmed_winkel))
+    assert not [e for e in sc.legend if e.lot.part_type == "plaque_tile"]

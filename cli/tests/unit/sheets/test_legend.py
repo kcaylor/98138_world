@@ -75,3 +75,26 @@ def test_square_tile_legend_row(confirmed_winkel):
     assert "Black (26) · tile 1x1 square · element 307026" == first
     item = load_part_numbers().get("3070b").bricklink_item_no
     assert f"BrickLink {item} / Black (11)" in second and "Rebrickable 3070b / Black (0)" in second
+
+
+# --- the in-margin plaque's tile (feature 017 T074; contracts/in-margin-plaque.md "Build sheets") --
+
+def test_plaque_tile_legend_row(confirmed_winkel):
+    from lego_image_processor.kit.plaque_parts import load_plaque_parts
+    from lego_image_processor.maps.margin import place_plaque
+    from lego_image_processor.sheets.legend import PART_LABEL
+    from ...winkel_layouts import winkel_grid
+    tile = load_plaque_parts().plaques["small"].tile
+    rec = place_plaque(confirmed_winkel, "bottom-left", "option").layout_record()
+    legend = build_legend(build_parts_list(winkel_grid(confirmed_winkel, plaque=rec)))
+    e = legend[-1]
+    w, h = tile.studs
+    assert (e.lot.part_type, e.part_label) == ("plaque_tile", PART_LABEL["plaque_tile"]) == \
+        ("plaque_tile", f"tile {w}x{h}")
+    assert e.verified and e.rgb == tuple(tile.color.rgb) and e.text_color == (255, 255, 255)
+    first, second = e.label_lines
+    assert first == f"{tile.color.lego.name} ({tile.color.lego.id}) · tile {w}x{h} · element {tile.color.element_id}"
+    assert f"BrickLink {tile.numbers.bricklink_item_no} / {tile.color.bricklink.name} ({tile.color.bricklink.id})" \
+        in second
+    assert f"Rebrickable {tile.numbers.rebrickable_part_num} / {tile.color.rebrickable.name} " \
+           f"({tile.color.rebrickable.id})" in second

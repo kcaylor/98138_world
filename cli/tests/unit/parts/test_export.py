@@ -96,3 +96,27 @@ def test_square_tiles_in_both_exports(confirmed_winkel):
             int(last.findtext("MINQTY"))) == ("P", pn.bricklink_item_no, row.bricklink.id, n)
     rows = to_rebrickable_csv(pl).splitlines()
     assert rows[-1] == f"3070b,{row.rebrickable.id},{n}"
+
+
+# --- the in-margin plaque tile (feature 017 T069; FR-024; contracts/in-margin-plaque.md) --------
+
+def test_plaque_tile_in_both_exports(confirmed_winkel):
+    from lego_image_processor.kit.plaque_parts import load_plaque_parts
+    from lego_image_processor.maps.margin import place_plaque
+    from ...winkel_layouts import winkel_grid
+    tile = load_plaque_parts().plaques["small"].tile
+    grid = winkel_grid(confirmed_winkel, plaque=place_plaque(confirmed_winkel, "bottom-left").layout_record())
+    pl = build_parts_list(grid, owned=OwnedInputs(kits=1))
+    items = ET.fromstring(to_bricklink_xml(pl)).findall("ITEM")
+    last = items[-1]
+    # the BrickLink item is plaque_parts.json's bricklink.item_no (which can differ from the part ID)
+    assert (last.findtext("ITEMTYPE"), last.findtext("ITEMID"), int(last.findtext("COLOR")),
+            last.findtext("MINQTY")) == ("P", tile.numbers.bricklink_item_no, tile.color.bricklink.id, "1")
+    assert int(last.findtext("COLOR")) == 11
+    assert sum(i.findtext("ITEMID") == tile.numbers.bricklink_item_no for i in items) == 1
+    rows = to_rebrickable_csv(pl).splitlines()
+    assert rows[-1] == f"{tile.numbers.rebrickable_part_num},{tile.color.rebrickable.id},1" == "10202,0,1"
+    # the square tiles hold 36 fewer pieces than without the plaque
+    plain = build_parts_list(winkel_grid(confirmed_winkel), owned=OwnedInputs(kits=1))
+    sq = lambda text: sum(int(r.split(",")[2]) for r in text.splitlines() if r.startswith("3070b,"))  # noqa: E731
+    assert sq(to_rebrickable_csv(plain)) - sq(to_rebrickable_csv(pl)) == 36

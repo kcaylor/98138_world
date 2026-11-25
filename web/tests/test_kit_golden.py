@@ -25,7 +25,10 @@ change the bundled recipes' checksums, and kit map pages and map rows gain the s
 that, the same sites' kit outputs, with recipe checksums and the checksums derived from them as
 placeholders, differed from feature 016's (which reproduced this file exactly) only by the Stickers
 panel on kit map pages, the about paragraph, the manifest's ``stickers`` blocks and
-``total_bytes``. The map rows now also compare the ``stickers`` field.
+``total_bytes``. The map rows now also compare the ``stickers`` field: since 017's T060 each
+template variant adds its own sticker set there, which ``kit_golden.kit_stickers`` removes (and
+requires) before the digest, so the kit set is compared exactly and the golden file is not
+rewritten for it.
 """
 
 from __future__ import annotations
@@ -141,3 +144,39 @@ class TestTemplateAllowance:
         assert kit_golden.compare(doc(kit), doc(both))                       # no template variant
         assert kit_golden.compare(doc(kit), doc(kit, {"ocean-sst": ["winkel-tripel"]}))
         assert kit_golden.compare(doc(kit), doc({**both, "x": "y"}, {"ocean-sst": ["winkel-tripel"]}))
+
+
+class TestTemplateStickerAllowance:
+    """Feature 017 (T060): a map row's ``stickers`` is digested without its template variants'
+    sets, so the kit set is still compared exactly; each template variant must have exactly one
+    set, and no other non-kit set may be there."""
+
+    KIT_SET = {"files": {}, "title": "Ocean temperature", "line": "Annual mean."}
+    WINKEL_SET = {"files": {}, "title": "Ocean temperature", "line": "Annual mean. Winkel tripel projection."}
+
+    def test_kit_only_stickers(self):
+        st = {"kit-31203": self.KIT_SET}
+        assert kit_golden.kit_stickers(st, "ocean-sst", []) == st
+        both = {"kit-31203": self.KIT_SET, "winkel-tripel": self.WINKEL_SET}
+        assert kit_golden.kit_stickers(both, "ocean-sst", ["winkel-tripel"]) == st
+        assert both["winkel-tripel"] == self.WINKEL_SET                 # the input is not changed
+
+    @pytest.mark.parametrize("stickers, tids", [
+        ({"kit-31203": KIT_SET}, ["winkel-tripel"]),                                 # set missing
+        ({"kit-31203": KIT_SET, "winkel-tripel": WINKEL_SET}, []),                   # no variant
+        ({"kit-31203": KIT_SET, "mercator": WINKEL_SET}, ["winkel-tripel"]),         # another id
+        ({"winkel-tripel": WINKEL_SET}, ["winkel-tripel"]),                          # no kit set
+    ])
+    def test_refuses_anything_else(self, stickers, tids):
+        with pytest.raises(AssertionError):
+            kit_golden.kit_stickers(stickers, "ocean-sst", tids)
+
+    def test_row_digest_ignores_only_the_template_sets(self):
+        kit = {"id": "ocean-sst", "stickers": {"kit-31203": self.KIT_SET}, "variants": {}}
+        both = {**kit, "stickers": {"kit-31203": self.KIT_SET, "winkel-tripel": self.WINKEL_SET},
+                "template_variants": {"winkel-tripel": {}}}
+        a, b = kit_golden.row_digests(kit), kit_golden.row_digests(both)
+        assert a["stickers"] == b["stickers"] and a["id"] == b["id"]
+        changed = {**both, "stickers": {"kit-31203": {**self.KIT_SET, "line": "Other."},
+                                        "winkel-tripel": self.WINKEL_SET}}
+        assert kit_golden.row_digests(changed)["stickers"] != a["stickers"]

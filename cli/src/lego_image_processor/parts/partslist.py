@@ -5,7 +5,10 @@ from the cited inventory, minus missing pieces, plus loose parts), shortfall, sp
 request), to buy and surplus. Map pieces only (Q6): the frame, section bases and other kit parts
 are not listed. The list carries no prices; feature 011's ``parts estimate`` prices it offline.
 A layout on a non-kit template (feature 016) also has the margin's 1x1 square tiles (part 3070b),
-which no kit supplies; their lots follow the plates and round tiles.
+which no kit supplies; their lots follow the plates and round tiles. A layout with an in-margin
+plaque (feature 017, ``metadata.plaque``) has one more lot: the plaque's tile (tile 6x6, part 10202,
+Black; IDs and citations from ``plaque_parts.json``), needed once and supplied by no kit; its 36 studs
+carry no position, so the square-tile lots hold 36 fewer pieces.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -16,7 +19,7 @@ import json
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from ..kit.colors import load_kit_color_table
 from ..kit.inventory import load_kit_inventory
@@ -25,14 +28,17 @@ from ..kit.part_numbers import KIT_PARTS, load_part_numbers
 from ..kit.source import DISCLAIMER
 from ..layout.grid import CURRENT_SCHEMA_VERSION, LayoutSchemaError, PositionPlacementGrid
 from .owned import OwnedInputs, percent_text
-from .resolve import ResolvedColor, Unresolved, resolve_color
+from .resolve import ResolvedColor, Unresolved, resolve_color, resolve_plaque_tile
 
 FORMAT_VERSION = "1"
 GRID_WIDTH, GRID_HEIGHT = 128, 80
-PART_ORDER = {"6141": 0, "98138": 1, "3070b": 2}
-PART_TYPE = {"6141": "plate", "98138": "tile", "3070b": "square_tile"}
+PART_ORDER = {"6141": 0, "98138": 1, "3070b": 2, "10202": 3}
+# feature 017: 10202 is the in-margin plaque's tile (plaque_parts.json ``plaques.small.tile``)
+PART_TYPE = {"6141": "plate", "98138": "tile", "3070b": "square_tile", "10202": "plaque_tile"}
+PLAQUE_PART_TYPE = "plaque_tile"
+MARGIN_TILE_PART = "3070b"  # the square tile of a non-kit template's margin (feature 016)
 # How tables and sheets write a part type (JSON keeps PART_TYPE); the kit's two read as before.
-PART_TYPE_TEXT = {"plate": "plate", "tile": "tile", "square_tile": "square tile"}
+PART_TYPE_TEXT = {"plate": "plate", "tile": "tile", "square_tile": "square tile", "plaque_tile": "tile 6x6"}
 ACKNOWLEDGEMENT = ("Catalog data: Rebrickable (rebrickable.com), BrickLink, LDraw, Brickset; kit "
                    "inventory from the LEGO 31203 building instructions.")
 # The parts list carries no prices (its format is unchanged); feature 011 estimates them offline
@@ -93,6 +99,12 @@ def check_grid(grid: PositionPlacementGrid, where: str = "layout") -> None:
         seen.add((pos.x, pos.y))
     if not seen:
         raise LayoutInputError(f"{where}: layout has no positions")
+    plaque = getattr(grid, "plaque", None)
+    if plaque is not None:  # feature 017: the in-margin plaque is the plaque tile, one lot
+        tiles = [p for p, t in PART_TYPE.items() if t == PLAQUE_PART_TYPE]
+        if str(plaque.get("part_id")) not in tiles:
+            raise LayoutInputError(f"{where}: metadata.plaque: part {plaque.get('part_id')!r} is not the "
+                                   f"in-margin plaque tile ({', '.join(tiles)})")
 
 
 @dataclass(frozen=True)
@@ -252,9 +264,13 @@ class PartsList:
 
 def owned_parts(grid: PositionPlacementGrid) -> Tuple[str, ...]:
     """The map parts an owned or missing CSV is read for (``parse_owned_csv(parts=)``, feature 016
-    T110): the kit's two, plus the square tile 3070b when the layout has square tiles. A kit
-    layout's CSVs are read as before feature 016, so a 3070b row there is ignored and counted."""
+    T110): the kit's two, plus the square tile 3070b when the layout has square tiles and (feature
+    017) the plaque tile 10202 when it records an in-margin plaque. A kit layout's CSVs are read as
+    before feature 016, so a 3070b or 10202 row there is ignored and counted."""
     used = {pos.lego_part_id for pos in grid.positions}
+    plaque = getattr(grid, "plaque", None)
+    if plaque is not None:
+        used.add(str(plaque.get("part_id")))
     return tuple(p for p in PART_ORDER if p in KIT_PARTS or p in used)
 
 
@@ -265,6 +281,37 @@ def template_block(grid: PositionPlacementGrid) -> Optional[Dict[str, Any]]:
     if not rec:
         return None
     return {"id": rec.get("id"), "title": rec.get("title")}
+
+
+def plaque_lot_text(lot: "Lot", quantity: Optional[int] = None) -> str:
+    """``1 tile 6x6 (plaque, part 10202)``: the in-margin plaque's lot as the CLI and sheets write
+    it (feature 017); ``quantity`` defaults to the lot's ``needed``."""
+    n = lot.needed if quantity is None else quantity
+    return f"{n:,} {PART_TYPE_TEXT[lot.part_type]} (plaque, part {lot.part_id})"
+
+
+def positions_text(layout: Dict[str, Any], lots: Sequence["Lot"]) -> str:
+    """The layout's positions for the ``parts list`` and ``parts estimate`` headers: ``10,240
+    positions``, or with an in-margin plaque (feature 017), whose studs carry no position, the
+    pieces of the other lots and the plaque's tile: ``10,204 positions and 1 tile 6x6 (plaque,
+    part 10202)``."""
+    plaques = [l for l in lots if l.part_type == PLAQUE_PART_TYPE]
+    if not plaques:
+        return f"{layout['positions']:,} positions"
+    n = sum(l.needed for l in lots if l.part_type != PLAQUE_PART_TYPE)
+    return f"{n:,} positions and " + ", ".join(plaque_lot_text(l) for l in plaques)
+
+
+def template_text(template: Dict[str, Any], lots: Sequence["Lot"] = ()) -> str:
+    """The ``Template:`` line of a non-kit layout's parts list or estimate (feature 016); with an
+    in-margin plaque (feature 017) it names the plaque's tile too."""
+    parts = f"1x1 square tiles (part {MARGIN_TILE_PART})"
+    plaques = [l for l in lots if l.part_type == PLAQUE_PART_TYPE]
+    if plaques:
+        parts += " and the plaque " + ", ".join(f"{PART_TYPE_TEXT[l.part_type]} (part {l.part_id})"
+                                                for l in plaques)
+    return (f"Template: {template['id']} ({template['title']}); margin in {parts}, which kit 31203 "
+            "does not have")
 
 
 def _arrangement_block(grid: PositionPlacementGrid) -> Dict[str, Any]:
@@ -288,9 +335,13 @@ def _map_provenance(meta: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
 
 
 def _citations(lots: Tuple[Lot, ...]) -> Tuple[Dict[str, Any], ...]:
+    """The kit instructions, then each lot's citation ids once, resolved from the part_numbers
+    pages, the part_colors citations and (feature 017, the plaque tile's sources) the pinned
+    snapshots of plaque_parts.json, in that order; then Rebrickable's terms."""
     inv = load_kit_inventory()
     pc = load_part_colors()
     pn = load_part_numbers()
+    plaque_pages: Optional[Dict[str, Any]] = None
     out: List[Dict[str, Any]] = [{
         "id": "kit-31203-instructions", "title": inv.source.title, "url": inv.source.url,
         "sha256": inv.source.sha256, "pages": [159], "used_for": "kit supply (parts inventory page)"}]
@@ -308,6 +359,12 @@ def _citations(lots: Tuple[Lot, ...]) -> Tuple[Dict[str, Any], ...]:
                 out.append(page.to_dict())
             elif cid in color_cits:
                 out.append(color_cits[cid].to_dict())
+            else:
+                if plaque_pages is None:  # read only for a lot cited there (the plaque tile)
+                    from ..kit.plaque_parts import load_plaque_parts
+                    plaque_pages = {p.id: p for p in load_plaque_parts().snapshots}
+                if cid in plaque_pages:
+                    out.append(plaque_pages[cid].to_dict())
     terms = pc.source.get("terms")
     if terms:
         out.append({"id": "rebrickable-terms", "title": "Rebrickable catalog terms",
@@ -330,6 +387,26 @@ def _leftovers(inv, owned: OwnedInputs, used: Counter) -> Tuple[Leftover, ...]:
                              kit_supply=supply, used=used[(part_id, e.color_key)]))
     rows.sort(key=lambda l: (PART_ORDER[l.part_id], l.lego_id))
     return tuple(rows)
+
+
+def _plaque_lot(record: Dict[str, Any], owned: OwnedInputs, inv) -> Lot:
+    """The lot of a layout's ``metadata.plaque`` (feature 017; data-model.md InMarginPlaque
+    parts-list lot): its tile, needed once, IDs from plaque_parts.json; owned kits supply none."""
+    part_id, color_key = str(record.get("part_id")), str(record.get("color"))
+    res = resolve_plaque_tile(part_id, color_key)
+    if isinstance(res, ResolvedColor):
+        name, code = res.lego_name, str(res.lego_id)
+    else:
+        name, code = color_key, ""
+    supply = max(0, owned.kits * inv.supplied_for(part_id, color_key) - owned.missing((part_id, color_key)))
+    loose = owned.loose((part_id, color_key))
+    shortfall = max(0, 1 - supply - loose)
+    p = owned.spares_percent
+    spares = -((-shortfall * p.numerator) // (100 * p.denominator)) if shortfall else 0
+    return Lot(part_id=part_id, color_key=color_key, layout_color_name=name, layout_color_code=code,
+               ids=res if isinstance(res, ResolvedColor) else None,
+               reason=None if isinstance(res, ResolvedColor) else res.reason,
+               needed=1, kit_supply=supply, loose=loose, spares=spares)
 
 
 def build_parts_list(layout: Union[LayoutInput, PositionPlacementGrid],
@@ -378,6 +455,9 @@ def build_parts_list(layout: Union[LayoutInput, PositionPlacementGrid],
                         ids=res if isinstance(res, ResolvedColor) else None,
                         reason=None if isinstance(res, ResolvedColor) else res.reason,
                         needed=needed, kit_supply=supply, loose=loose, spares=spares))
+    plaque = getattr(grid, "plaque", None)
+    if plaque is not None:  # feature 017: the in-margin plaque's tile, one piece no kit supplies
+        lots.append(_plaque_lot(plaque, owned, inv))
     lots.sort(key=lambda l: (0, PART_ORDER.get(l.part_id, 9), l.ids.lego_id, l.color_key) if l.verified
               else (1, PART_ORDER.get(l.part_id, 9), 0, l.color_key))
     lots_t = tuple(lots)

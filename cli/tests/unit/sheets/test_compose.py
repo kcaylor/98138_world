@@ -377,3 +377,157 @@ def test_kit_sheets_keep_their_text(official_set):
     assert "Every combination uses the same pieces." in " ".join(t.text for t in items(page, Text, "arrangement"))
     assert "square" not in " ".join(texts(page))
     assert not [r for p in official_set.pages for r in items(p, Rect, "stud")]
+
+
+# --- the in-margin plaque (feature 017 T074; US3-3; contracts/in-margin-plaque.md "Build sheets") --
+
+def _plaque_record(template, corner="bottom-left"):
+    from lego_image_processor.maps.margin import place_plaque
+    return place_plaque(template, corner, "option").layout_record()
+
+
+@pytest.fixture
+def plaque_tile():
+    from lego_image_processor.kit.plaque_parts import load_plaque_parts
+    return load_plaque_parts().plaques["small"].tile
+
+
+@pytest.fixture
+def plaque(confirmed_winkel):
+    from ...winkel_layouts import winkel_grid
+    rec = _plaque_record(confirmed_winkel)
+    grid = winkel_grid(confirmed_winkel, plaque=rec)
+    return grid, rec, build_sheet_set(grid, layout_path="plaque.json", layout_sha256="f" * 64)
+
+
+def _plaque_entry(s):
+    (e,) = [e for e in s.legend if e.lot.part_type == "plaque_tile"]
+    return e
+
+
+def _covered(rec):
+    st = rec["studs"]
+    return {(x, y) for y in range(st["row"], st["row"] + st["height"])
+            for x in range(st["col"], st["col"] + st["width"])}
+
+
+def test_plaque_section_page_draws_one_outlined_black_rectangle(plaque, plaque_tile):
+    from lego_image_processor.sheets.legend import PART_LABEL
+    from lego_image_processor.sheets.sections import section_for
+    grid, rec, s = plaque
+    st = rec["studs"]
+    sec = section_for(st["col"], st["row"])
+    assert sec.label == "A5"  # contracts/in-margin-plaque.md "Placement": bottom-left is module A5
+    e = _plaque_entry(s)
+    page = section_page(s, sec.label)
+    (r,) = items(page, Rect, "plaque")
+    assert r.fill == e.rgb == tuple(plaque_tile.color.rgb)  # the tile's cited Black
+    assert r.stroke is not None and abs(r.stroke_w - 0.4) < 1e-9
+    border = items(page, Rect, "grid-border")[0]
+    gap = PITCH - 7.0  # the stud gap: 6 pitches minus one gap, as the preview
+    assert abs(r.x - (border.x + (st["col"] - sec.x_range[0]) * PITCH + gap / 2)) < 1e-9
+    assert abs(r.y - (border.y + (st["row"] - sec.y_range[0]) * PITCH + gap / 2)) < 1e-9
+    assert abs(r.w - (st["width"] * PITCH - gap)) < 1e-9 and abs(r.h - (st["height"] * PITCH - gap)) < 1e-9
+    assert int(data(r)["lot"]) == e.number
+    # labelled "tile 6x6 (10202)" and its lot number, inside the rectangle
+    (label,) = items(page, Text, "plaque-label")
+    (number,) = items(page, Text, "plaque-number")
+    assert label.text == f"{PART_LABEL['plaque_tile']} ({plaque_tile.part_id})" == "tile 6x6 (10202)"
+    assert number.text == str(e.number) and number.bold
+    for t in (label, number):
+        assert r.x < t.x < r.x + r.w and r.y < t.y < r.y + r.h and t.color == e.text_color
+    # no 1x1 studs under it
+    studs = items(page, Circle, "stud") + items(page, Rect, "stud")
+    assert len(studs) == 256 - 36
+    assert not {(int(data(i)["x"]), int(data(i)["y"])) for i in studs} & _covered(rec)
+    assert len(items(page, Text, "stud-number")) == 256 - 36
+    # only that section page draws it
+    others = [p for p in s.pages if p.kind == "section" and p.label != sec.label]
+    assert not [i for p in others for i in p.items if i.tag.startswith("plaque")]
+
+
+def test_plaque_lot_in_the_section_count_table(plaque):
+    _, _, s = plaque
+    e = _plaque_entry(s)
+    page = section_page(s, "A5")
+    (n,) = [t for t in items(page, Text, "count") if int(data(t)["lot"]) == e.number]
+    assert n.text == "1"
+    (name,) = [t for t in items(page, Text, "count-name") if int(data(t)["lot"]) == e.number]
+    assert name.text.startswith("Black (tile 6x6)")
+    assert [int(data(r)["lot"]) for r in items(page, Rect, "count-disc")].count(e.number) == 1  # a square
+    assert items(page, Text, "count-total")[0].text == f"Total {256 - 36 + 1}"
+
+
+def test_plaque_legend_row_has_a_square_swatch(plaque, plaque_tile):
+    _, _, s = plaque
+    e = _plaque_entry(s)
+    assert e is s.legend[-1] and e.part_label == "tile 6x6"
+    pages = [p for p in s.pages if p.kind == "legend"]
+    swatches = [int(data(r)["lot"]) for p in pages for r in items(p, Rect, "swatch")]
+    assert e.number in swatches
+    lines = [t.text for p in pages for t in items(p, Text, "legend-line") if int(data(t)["lot"]) == e.number]
+    assert lines[0].startswith(f"Black ({plaque_tile.color.lego.id}) · tile 6x6 · element "
+                               f"{plaque_tile.color.element_id}")
+    (total,) = [t for p in pages for t in items(p, Text, "legend-total") if int(data(t)["lot"]) == e.number]
+    assert total.text == "1"
+
+
+def test_overview_draws_the_plaque_and_the_totals_name_it(plaque, confirmed_winkel, plaque_tile):
+    _, rec, s = plaque
+    e = _plaque_entry(s)
+    page = s.pages[0]
+    c = confirmed_winkel.counts
+    (r,) = items(page, Rect, "map-plaque")
+    assert r.fill == e.rgb
+    st = rec["studs"]
+    bg = items(page, Rect, "map-bg")[0]
+    assert bg.x + st["col"] * 1.4 < r.x < bg.x + (st["col"] + 1) * 1.4
+    assert bg.y + st["row"] * 1.4 < r.y < bg.y + (st["row"] + 1) * 1.4
+    assert abs(r.w - (6 * 1.4 - 0.2)) < 1e-9 and abs(r.h - (6 * 1.4 - 0.2)) < 1e-9
+    studs = items(page, Rect, "map-stud") + items(page, Circle, "map-stud")
+    assert len(studs) == 10240 - 36
+    totals = " ".join(t.text for t in items(page, Text, "totals"))
+    assert (f"10,205 pieces: {c['land']:,} plates 1x1 round (land, part 6141), {c['ocean']:,} tiles 1x1 round "
+            f"(ocean, part 98138), {c['margin'] - 36:,} tiles 1x1 square (margin, part 3070b), "
+            f"1 tile 6x6 (plaque, part {plaque_tile.part_id});") in totals
+    howto = " ".join(t.text for t in items(page, Text, "howto"))
+    assert "the plaque tile as one outlined rectangle" in howto
+
+
+def test_sheets_without_a_plaque_draw_none(winkel):
+    _, s = winkel
+    assert not [i for p in s.pages for i in p.items if i.tag in ("plaque", "plaque-label", "plaque-number",
+                                                                  "map-plaque")]
+    page = s.pages[0]
+    assert "plaque" not in " ".join(texts(page))
+
+
+def test_a_plaque_layout_missing_another_position_is_refused(confirmed_winkel):
+    from lego_image_processor.layout.grid import PositionPlacementGrid
+    from ...winkel_layouts import winkel_grid
+    grid = winkel_grid(confirmed_winkel, plaque=_plaque_record(confirmed_winkel))
+    positions = grid.positions[1:]
+    short = PositionPlacementGrid(width=128, height=80, positions=positions, source_image=grid.source_image,
+                                  generated_at="2026-11-23T00:00:00Z", template=grid.template,
+                                  plaque=grid.plaque)
+    with pytest.raises(SheetError, match="layout has 10,203 of 10,240 positions; build sheets need every "
+                                         "position of the 128 x 80 grid"):
+        build_sheet_set(short)
+
+
+def test_a_piece_under_the_plaque_is_refused(confirmed_winkel):
+    from lego_image_processor.layout.grid import PositionPlacementGrid
+    from ...winkel_layouts import winkel_grid
+    full = winkel_grid(confirmed_winkel)
+    grid = PositionPlacementGrid(width=128, height=80, positions=full.positions, source_image=full.source_image,
+                                 generated_at="2026-11-23T00:00:00Z", template=full.template,
+                                 plaque=_plaque_record(confirmed_winkel))
+    with pytest.raises(SheetError, match="under the plaque"):
+        build_sheet_set(grid)
+
+
+def test_a_plaque_across_two_sections_is_refused(confirmed_winkel):
+    from ...winkel_layouts import winkel_grid
+    rec = dict(_plaque_record(confirmed_winkel), studs={"row": 73, "col": 13, "height": 6, "width": 6})
+    with pytest.raises(SheetError, match="one section"):
+        build_sheet_set(winkel_grid(confirmed_winkel, plaque=rec))

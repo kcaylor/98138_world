@@ -13,8 +13,14 @@ ocean studs only, ``ice`` comes from the template's own ice file (``load_templat
 blocks are added: ``template`` (id, title and the dataset that decided land and ocean: id, version,
 citation, license), ``margin`` (part 3070b, the margin color and the ring with its cells, or null)
 and ``palette["3070b"]``. The default rendering takes the ring color on ``margin.ring.cells``, the
-margin color on the other ``M`` cells, and equals the layout. Kit files are unchanged. Not
-affiliated with or endorsed by The LEGO Group.
+margin color on the other ``M`` cells, and equals the layout. Kit files are unchanged.
+
+Feature 017 (contracts/in-margin-plaque.md ``cells.json``): with an in-margin plaque
+(``MapResult.plaque``) its studs are ``P`` instead of ``M`` and a ``plaque`` block follows
+``margin``: ``{part_id, color, rgb, corner, cells}`` (the tile's cited Black from
+plaque_parts.json; ``cells`` are the board indices). The default rendering takes the plaque's color
+on ``P`` cells. Files without a plaque are unchanged, and the site's chooser (``palette.js``) never
+receives one (no site variant has a plaque). Not affiliated with or endorsed by The LEGO Group.
 """
 
 from __future__ import annotations
@@ -173,14 +179,28 @@ def _margin_block(template, treatment) -> Dict[str, Any]:
     return {"part_id": MARGIN_PART_ID, "color": treatment.color, "ring": ring}
 
 
+def _plaque_block(plaque, shape) -> Dict[str, Any]:
+    """``plaque`` of a ``cells.json`` with an in-margin plaque (feature 017): its tile, cited color
+    and the board indices of its studs."""
+    from .margin import plaque_tile
+
+    tile = plaque_tile()
+    return {"part_id": plaque.part_id, "color": plaque.color, "rgb": [int(v) for v in tile.color.rgb],
+            "corner": plaque.corner, "cells": [int(i) for i in np.flatnonzero(plaque.mask(shape).ravel())]}
+
+
 def _template_cells(result, ice: Optional[IceRegions]) -> Dict[str, Any]:
-    """``map_cells`` on a non-kit template (feature 016): board coordinates, arrangement A."""
+    """``map_cells`` on a non-kit template (feature 016): board coordinates, arrangement A; the
+    in-margin plaque's studs ``P`` (feature 017)."""
     recipe, tpl = result.recipe, result.template
     land, ocean, margin = np.array(tpl.land), np.array(tpl.ocean), np.array(tpl.margin)
     ice = ice or load_template_ice(tpl)
     shadow = (shadow_mask(land, recipe.shadow.direction, ocean=ocean) if recipe.shadow.enabled
               else np.zeros_like(land))
     kinds = np.where(land, "L", np.where(margin, "M", np.where(shadow, "S", "O")))
+    plaque = getattr(result, "plaque", None)
+    if plaque is not None:
+        kinds = np.where(plaque.mask(land.shape), "P", kinds)
     ice_land = [int(i) for i in np.flatnonzero(ice.land.ravel())]
     ice_sea = [int(i) for i in np.flatnonzero(ice.sea.ravel())]
     layers = {}
@@ -189,7 +209,7 @@ def _template_cells(result, ice: Optional[IceRegions]) -> Dict[str, Any]:
         ice_cells = set(ice_land if layer.cls == "land" else ice_sea)
         layers[layer.cls] = _layer_block(layer, result.classes[layer.cls], mask,
                                          result.fields.get(layer.cls), ice_cells)
-    return {
+    out = {
         "format_version": CELLS_FORMAT,
         "recipe": {"id": recipe.id, "title": recipe.title, "sha256": recipe.sha256},
         "arrangement": result.arrangement.id,
@@ -200,12 +220,17 @@ def _template_cells(result, ice: Optional[IceRegions]) -> Dict[str, Any]:
         "shadow": {"enabled": bool(recipe.shadow.enabled), "color": recipe.shadow.color,
                    "cells": int(shadow.sum())},
         "margin": _margin_block(tpl, result.margin),
+    }
+    if plaque is not None:  # feature 017: only when one is placed
+        out["plaque"] = _plaque_block(plaque, land.shape)
+    out.update({
         "ice": {"land": ice_land, "sea": ice_sea, "color": "lego_white",
                 "source": {k: ice.source[k] for k in ("land_ice", "sea_ice") if k in ice.source}},
         "palette": part_palette(tuple(tpl.parts[k] for k in ("land", "ocean", "margin"))),
         "note": PREVIEW_NOTE,
         "disclaimer": DISCLAIMER,
-    }
+    })
+    return out
 
 
 def map_cells(result, *, ice: Optional[IceRegions] = None) -> Dict[str, Any]:

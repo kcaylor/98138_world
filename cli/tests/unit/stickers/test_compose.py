@@ -485,21 +485,9 @@ class TestSet:
                 assert set(row["citations"]) == ids and len(row["citations"]) == len(ids)
 
 
-# --- after the 016 merge (T053): no kit set from a template build ---------------------------
+# --- the kit template (016); sets on other templates: test_template_stickers.py (T055) --------
 
-class TestTemplateBuildBeforeT056:
-    """Until T056 makes template sticker sets (FR-025), a map built on a non-kit template (016)
-    gets no sticker set at all rather than a kit set with the kit's land mask applied to the
-    template's board. T055/T056 replace this test with the template stickers' tests."""
-
-    def test_winkel_build_is_refused(self, fixture_registry, confirmed_winkel):
-        fixture_registry.place_all()
-        result = build_map(sticker_recipe("ocean-sst"), cache_dir=fixture_registry.cache_dir,
-                           compare_official=False, template="winkel-tripel")
-        assert result.template.id == "winkel-tripel"
-        with pytest.raises(StickerError, match=r"kit template kit-31203 only.*winkel-tripel"):
-            sticker_set(result)
-
+class TestKitTemplate:
     def test_kit_build_has_the_kit_template(self, build):
         result = build("ocean-sst")
         assert result.template.id == KIT_TEMPLATE_ID and result.template.is_kit

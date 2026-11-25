@@ -3,8 +3,10 @@
 ``winkel_grid(template)`` fills every stud of a loaded template (``confirmed_winkel`` or
 ``synthetic_template``) by its class: land a plate color, ocean a tile color, margin the square
 tile in Black (and, with ``ring``, the template's ring studs in a second square-tile color), and
-records ``metadata.template`` as a template build does. No dataset is read, so the tests are fast;
-the integration tests build real recipes on the fixtures instead.
+records ``metadata.template`` as a template build does. With ``plaque`` (feature 017: a
+``metadata.plaque`` record, e.g. ``place_plaque(...).layout_record()``) the plaque's studs carry no
+position and the record is written, as a build with ``--plaque`` does. No dataset is read, so the
+tests are fast; the integration tests build real recipes on the fixtures instead.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -26,12 +28,20 @@ TYPE_FOR_CLASS = {"land": "plate", "ocean": "tile", "margin": "square_tile"}
 
 def winkel_grid(template, land: Color = WHITE, ocean: Tuple[Color, ...] = (MEDIUM_AZUR, EARTH_BLUE),
                 margin: Color = BLACK, ring: Optional[Color] = None,
-                map_metadata=None) -> PositionPlacementGrid:
-    """Every stud of ``template`` by class; ocean colors alternate by column."""
+                map_metadata=None, plaque=None) -> PositionPlacementGrid:
+    """Every stud of ``template`` by class; ocean colors alternate by column. ``plaque`` (a
+    ``metadata.plaque`` record) leaves its studs out."""
     ring_mask = template.ring
+    covered = set()
+    if plaque is not None:
+        s = plaque["studs"]
+        covered = {(x, y) for y in range(s["row"], s["row"] + s["height"])
+                   for x in range(s["col"], s["col"] + s["width"])}
     positions = []
     for y in range(template.height):
         for x in range(template.width):
+            if (x, y) in covered:
+                continue
             cls = template.class_at(y, x)
             if cls == "land":
                 key, name, code = land
@@ -46,4 +56,4 @@ def winkel_grid(template, land: Color = WHITE, ocean: Tuple[Color, ...] = (MEDIU
     return PositionPlacementGrid(width=template.width, height=template.height, positions=positions,
                                  source_image="recipe:synthetic-winkel",
                                  generated_at="2026-11-23T00:00:00Z", map_metadata=map_metadata,
-                                 template=template.layout_record())
+                                 template=template.layout_record(), plaque=plaque)

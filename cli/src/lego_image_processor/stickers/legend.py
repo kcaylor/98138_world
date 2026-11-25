@@ -15,6 +15,10 @@ included), rounded to the display step at which combinations A, B and C agree (r
 categorical colors by their cited LEGO names; background colors by role (``maps.cells``);
 no-data by the ``[sticker] no_data`` label or "no data"; overrides by name; the shadow as "land
 shadow". Swatch colors are the parts' cited sRGB (``part_colors.json``).
+
+On a non-kit template (feature 016) the land and ocean studs are the template's own and the
+shadow falls on its ocean studs only, as ``build_map`` and ``map_cells`` place them; the margin
+belongs to no layer and has no swatch.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -212,19 +216,32 @@ def _heading(layer: Layer) -> str:
 
 # --- the legend -------------------------------------------------------------------------------
 
-def map_legend(result: MapResult) -> Legend:
-    """The legend of a built map (data-model.md Swatch order and Meaning rules)."""
-    recipe = result.recipe
+def _masks(result: MapResult) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Land, ocean and shadow studs of the build: the kit's land/sea mask as hung, or a non-kit
+    template's land and ocean with the shadow on its ocean studs (feature 016)."""
+    recipe, tpl = result.recipe, result.template
+    if tpl is not None and not tpl.is_kit:
+        land, ocean = np.array(tpl.land), np.array(tpl.ocean)
+        shadow = (shadow_mask(land, recipe.shadow.direction, ocean=ocean) if recipe.shadow.enabled
+                  else np.zeros_like(land))
+        return land, ocean, shadow
     arrangement = result.arrangement or parse_arrangement(None)
     land = arrangement.roll(land_mask_array())
     shadow = (shadow_mask(land, recipe.shadow.direction) if recipe.shadow.enabled
               else np.zeros_like(land))
+    return land, ~land, shadow
+
+
+def map_legend(result: MapResult) -> Legend:
+    """The legend of a built map (data-model.md Swatch order and Meaning rules)."""
+    recipe = result.recipe
+    land, ocean, shadow = _masks(result)
     table = load_part_colors()
     labels = dict((recipe.sticker.no_data if recipe.sticker is not None else None) or {})
     groups = []
     for layer in recipe.layers:
         part = layer.part_id
-        mask = land if layer.cls == "land" else ~land & ~shadow
+        mask = land if layer.cls == "land" else ocean & ~shadow
         classes = result.classes[layer.cls]
         names = [table.get(part, k).lego.name for k in layer.colors]
         entries: List[Tuple[str, Meaning]] = list(zip(

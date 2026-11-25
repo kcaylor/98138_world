@@ -252,3 +252,94 @@ def test_kit_estimates_unchanged_by_the_square_tile_fixture():
     b = _report(grid, load_snapshot(FIXTURE_3070B)).to_dict()
     assert a["estimates"] == b["estimates"] and a["notes"] == b["notes"] and a["layout"] == b["layout"]
     assert "template" not in a["layout"]
+
+
+# --- the in-margin plaque tile (feature 017 T072; FR-024; contracts/in-margin-plaque.md) --------
+
+FIXTURE_PLAQUE = FIXTURE_SNAPSHOT.parent / "bricklink_price_guide_plaque.json"
+
+
+def _plaque_grid(template, corner="bottom-left"):
+    from lego_image_processor.maps.margin import place_plaque
+    from ...winkel_layouts import winkel_grid
+    return winkel_grid(template, plaque=place_plaque(template, corner).layout_record())
+
+
+def named_snapshot_of_every_recipe_lot_and_the_plaque():
+    """A ``named`` snapshot holding every ``recipe_lots()`` lot plus ``10202:26``, as the owner's
+    refresh writes it (T091): synthetic prices."""
+    from lego_image_processor.prices.lots import named_lots, recipe_lots
+    lots = named_lots([l.spec for l in recipe_lots()] + ["10202:26"])
+    return _snap([lot_entry(l.part_id, l.color_key) for l in lots], kind="named")
+
+
+def test_plaque_estimate_is_incomplete_without_a_plaque_row(confirmed_winkel):
+    r = _report(_plaque_grid(confirmed_winkel), load_snapshot(FIXTURE_3070B))
+    for kind in ("full", "one_kit"):
+        e = r.estimates[kind]
+        assert not e.complete
+        assert [(l.lot.part_id, l.lot.part_type, l.lot.color_key, l.quantity, l.basis, l.reason)
+                for l in e.unpriced_lines] == \
+            [("10202", "plaque_tile", "lego_black", 1, "unpriced", REASON_NOT_IN_SNAPSHOT)]
+        d = e.to_dict()
+        assert d["complete"] is False and d["unpriced"] == [
+            {"part_id": "10202", "part_type": "plaque_tile", "color_key": "lego_black", "name": "Black",
+             "quantity": 1, "reason": REASON_NOT_IN_SNAPSHOT}]
+        line = d["lines"][-1]
+        assert (line["part_id"], line["basis"], line["unit"], line["bricklink"]["item_no"]) == \
+            ("10202", "unpriced", None, "10202")
+    assert any("1 piece in 1 color could not be priced" in n for n in r.notes)
+    # --all-colors keeps to the part_colors parts, so it would not fetch the plaque tile: the note
+    # names the lot to list instead
+    from lego_image_processor.prices.wording import ALL_COLORS_HINT
+    assert not any(ALL_COLORS_HINT in n for n in r.notes)
+    hint = [n for n in r.notes if "--lot 10202:26" in n]
+    assert len(hint) == 1 and "--all-colors does not fetch the plaque tile" in hint[0]
+
+
+def test_plaque_and_other_missing_lots_get_both_hints(confirmed_winkel):
+    from lego_image_processor.prices.wording import ALL_COLORS_HINT
+    r = _report(_plaque_grid(confirmed_winkel), load_snapshot(FIXTURE_SNAPSHOT))   # no 3070b, no 10202
+    assert sum(ALL_COLORS_HINT in n for n in r.notes) == 1
+    assert sum("--lot 10202:26" in n for n in r.notes) == 1
+    from lego_image_processor.prices.text import echo_estimate
+    out = []
+    echo_estimate(r, echo=lambda *a, **k: out.append(a[0] if a else ""))
+    hints = [l for l in out if l.strip().startswith("Hint:")]
+    assert len(hints) == 2 and ALL_COLORS_HINT in hints[0] and "--lot 10202:26" in hints[1]
+
+
+def test_plaque_estimate_is_complete_with_the_plaque_fixture(confirmed_winkel):
+    snap = load_snapshot(FIXTURE_PLAQUE)
+    grid = _plaque_grid(confirmed_winkel)
+    r = _report(grid, snap)
+    full, one = r.estimates["full"], r.estimates["one_kit"]
+    assert full.complete and one.complete and full.pieces == 10205
+    tile = [l for l in full.lines if l.lot.part_id == "10202"]
+    assert len(tile) == 1 and tile[0].quantity == 1 and tile[0].basis == "sold"
+    assert tile[0].line[0] == snap.lot_for("10202", 26).figures.qty_avg_price
+    assert [l.lot.part_id for l in one.lines][-1] == "10202"     # the one-kit top-up buys it
+    # the other lots are priced as with 016's fixture; the square tiles hold 36 fewer pieces
+    other = _report(grid, load_snapshot(FIXTURE_3070B)).estimates["full"]
+    same = {(l.lot.part_id, l.lot.color_key): (l.quantity, l.line) for l in other.lines if l.lot.part_id != "10202"}
+    assert same == {(l.lot.part_id, l.lot.color_key): (l.quantity, l.line)
+                    for l in full.lines if l.lot.part_id != "10202"}
+
+
+def test_other_estimates_unaffected_by_the_plaque_fixture(confirmed_winkel):
+    from ...winkel_layouts import winkel_grid
+    for grid in (load_official_design().to_layout(), winkel_grid(confirmed_winkel)):
+        a = _report(grid, load_snapshot(FIXTURE_3070B)).to_dict()
+        b = _report(grid, load_snapshot(FIXTURE_PLAQUE)).to_dict()
+        assert a["estimates"] == b["estimates"] and a["notes"] == b["notes"] and a["layout"] == b["layout"]
+
+
+def test_named_snapshot_of_every_recipe_lot_and_the_plaque_is_complete(confirmed_winkel):
+    """T091 needs it: the owner's refresh lists every ``recipe_lots()`` lot plus ``10202:26``."""
+    from ...winkel_layouts import winkel_grid
+    snap = named_snapshot_of_every_recipe_lot_and_the_plaque()
+    assert snap.complete and snap.lot_set["kind"] == "named" and snap.lots[-1].lot.spec == "10202:26"
+    for grid in (load_official_design().to_layout(), winkel_grid(confirmed_winkel),
+                 _plaque_grid(confirmed_winkel), _plaque_grid(confirmed_winkel, "top-right")):
+        r = _report(grid, snap)
+        assert r.estimates["full"].complete and r.estimates["one_kit"].complete

@@ -268,3 +268,112 @@ def test_map_stickers_output_files_and_errors_carry_the_disclaimer(runner, tmp_p
         assert " ".join(sticker.block("disclaimer").lines) == DISCLAIMER, sticker.size
     footer = [t for t in print_sheet(s, "letter").page.items if getattr(t, "tag", "") == "disclaimer"]
     assert footer[-1].text == DISCLAIMER
+
+
+# --- Feature 017 (T087, FR-026) audit. Covered elsewhere: `partcolors plaque-parts` output and its
+# errors (unit/tools/test_plaque_parts_tool.py); every bundled map's sticker files and "no
+# Official in a sticker title" (integration/test_stickers_bundled.py); `map build|check|cells
+# --plaque` errors (test_map_plaque_contract.py); the Stickers panel, about paragraph and footer
+# (web/tests/test_stickers_page.py). Here: the plaque data file, the template sticker set, every
+# output of a plaque layout, and the sticker and print-sheet texts against endorsement wording.
+
+def test_plaque_parts_file_carries_the_disclaimer_twice():
+    data = json.loads((DATA_DIR / "plaque_parts.json").read_text(encoding="utf-8"))
+    assert data["source"]["disclaimer"] == DISCLAIMER and data["disclaimer"] == DISCLAIMER
+
+
+def test_template_sticker_set_carries_the_disclaimer(runner, tmp_path, fixture_registry, confirmed_winkel):
+    import io
+    import xml.etree.ElementTree as ET
+
+    from pypdf import PdfReader
+
+    fixture_registry.place_all()
+    pdf, svg, summary = tmp_path / "w.pdf", tmp_path / "svg", tmp_path / "w.json"
+    for out, fmt in ((pdf, "pdf"), (svg, "svg"), (summary, "json")):
+        result = runner.invoke(cli, ["map", "stickers", "ocean-sst", "--template", "winkel-tripel",
+                                     "-o", str(out), "--format", fmt])
+        assert result.exit_code == 0, result.output
+        assert _last_line(result.output) == DISCLAIMER, fmt
+    data = json.loads(summary.read_text(encoding="utf-8"))
+    assert data["disclaimer"] == DISCLAIMER and data["template"]["id"] == "winkel-tripel"
+    for size in ("small", "large"):
+        (disc,) = [b for b in data["stickers"][size]["blocks"] if b["field"] == "disclaimer"]
+        assert " ".join(disc["lines"]) == DISCLAIMER, size
+    for name in ("sticker-small.svg", "sticker-large.svg"):
+        root = ET.fromstring((svg / name).read_bytes())
+        assert root.find("{http://www.w3.org/2000/svg}desc").text == DISCLAIMER, name
+    reader = PdfReader(io.BytesIO(pdf.read_bytes()))
+    assert reader.metadata.subject.endswith(DISCLAIMER)
+    assert DISCLAIMER in " ".join(reader.pages[0].extract_text().split())
+
+
+def test_plaque_layout_outputs_carry_the_disclaimer(runner, tmp_path, fixture_registry, confirmed_winkel):
+    fixture_registry.place_all()
+    prices = Path(__file__).resolve().parents[1] / "fixtures" / "prices" / "bricklink_price_guide_plaque.json"
+    p = tmp_path / "p.json"
+    files = {name: tmp_path / name for name in ("r.json", "cells.json", "pl.json", "e.json",
+                                                "counts.json", "v.json")}
+    plaque = ["--template", "winkel-tripel", "--plaque", "bottom-left"]
+    commands = [
+        ["map", "build", "ocean-sst", *plaque, "-o", str(p), "--report", str(files["r.json"]),
+         "--preview", str(tmp_path / "p.png")],
+        ["map", "check", "ocean-sst", *plaque],
+        ["map", "cells", "ocean-sst", *plaque, "-o", str(files["cells.json"])],
+        ["parts", "list", str(p), "--kits", "1"],
+        ["parts", "list", str(p), "-o", str(files["pl.json"])],
+        ["parts", "export", str(p), "--kits", "1", "--bricklink", str(tmp_path / "p.xml"),
+         "--rebrickable", str(tmp_path / "p.csv")],
+        ["parts", "estimate", str(p), "--prices", str(prices), "--as-of", "2026-12-05",
+         "-o", str(files["e.json"])],
+        ["sheets", "build", str(p), "-o", str(tmp_path / "svg"), "--format", "svg", "--sections", "A5"],
+        ["sheets", "counts", str(p)],
+        ["sheets", "counts", str(p), "-o", str(files["counts.json"])],
+        ["validate", str(p), "-o", str(files["v.json"])],
+    ]
+    for command in commands:
+        result = runner.invoke(cli, command)
+        assert result.exit_code == 0, (command, result.output)
+        assert _last_line(result.output) == DISCLAIMER, command
+    meta = json.loads(p.read_text(encoding="utf-8"))["metadata"]
+    assert meta["plaque"]["corner"] == "bottom-left" and meta["disclaimer"] == DISCLAIMER
+    for name, path in files.items():
+        assert json.loads(path.read_text(encoding="utf-8"))["disclaimer"] == DISCLAIMER, name
+    pages = sorted((tmp_path / "svg").glob("*.svg"))
+    assert pages and all(DISCLAIMER in pg.read_text(encoding="utf-8") for pg in pages)
+    assert any("tile 6x6 (10202)" in pg.read_text(encoding="utf-8") for pg in pages)
+
+
+# Words that would claim a tie to The LEGO Group (FR-026); the disclaimer itself is removed first.
+_ENDORSEMENT = ("official", "endorse", "sponsor", "authoriz", "authoris", "partner", "approved by")
+
+
+def _claims(texts):
+    found = []
+    for text in texts:
+        rest = " ".join(text.split()).replace(DISCLAIMER, "").lower()
+        found += [(w, text) for w in _ENDORSEMENT if w in rest]
+    return found
+
+
+@pytest.mark.parametrize("recipe_id,template", [("official-31203", None), ("ocean-sst", None),
+                                                ("ocean-sst", "winkel-tripel")])
+def test_sticker_texts_imply_no_endorsement(recipe_id, template, fixture_registry, confirmed_winkel):
+    """Every text on both stickers (title, line, legend, credit, site) and, for the data maps,
+    every text on the print sheet. The kit design's print sheet cites its dataset by its registry
+    title ("Official LEGO 31203 World Map design grid", feature 004), as every other output does;
+    its stickers do not."""
+    from lego_image_processor.maps.build import build_map
+    from lego_image_processor.maps.recipe import load_recipe
+    from lego_image_processor.stickers import print_sheet, sticker_set
+
+    fixture_registry.place_all()
+    kwargs = {"template": template} if template else {}
+    s = sticker_set(build_map(load_recipe(recipe_id), cache_dir=fixture_registry.cache_dir,
+                              compare_official=False, **kwargs))
+    sticker_texts = [" ".join(b.lines) for st in (s.small, s.large) for b in st.blocks]
+    sticker_texts += [getattr(i, "text", "") for st in (s.small, s.large) for i in st.items]
+    assert DISCLAIMER in sticker_texts and not _claims(sticker_texts)
+    if recipe_id != "official-31203":
+        sheet = [getattr(i, "text", "") for i in print_sheet(s, "letter").page.items]
+        assert DISCLAIMER in sheet and not _claims(sheet)

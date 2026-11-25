@@ -28,7 +28,11 @@ is shown to the owner on a preview before it is final.
 
 The 36 covered positions are absent (10,204 positions). `statistics.margin_tile_count` counts
 the square tiles left; `statistics.plaque_tile_count` is 1. `validate` accepts the layout when
-the absent positions are exactly the plaque's studs and those are template margin studs.
+the absent positions are exactly the plaque's studs and those are template margin studs. As 016
+reports the square tiles, it reports the tile as `color_unavailable` (`part_type` `plaque_tile`,
+`part_id` `10202`, `positions_required` 36, the studs it covers; no suggestion), so the
+buildability score counts those studs as not buildable with the kit (80.5% for `ocean-sst` on
+Winkel, with or without a plaque; agent decision at T082, 2026-11-25).
 Counts: `metadata.margin_positions` and `metadata.map.margin.cells.margin` count the margin
 positions present in the layout (1,960 on the Winkel template with a plaque); the template's own
 counts in `metadata.template` stay as the template file records them (1,996); and

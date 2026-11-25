@@ -409,3 +409,116 @@ class TestValidatorOnTemplates:
                                     template=rec)
         with pytest.raises(ValueError, match="no-such-template"):
             validator.validate(bad, layout_file="w.json")
+
+
+class TestValidatorWithAPlaque:
+    """Feature 017 T065 (FR-024; contracts/in-margin-plaque.md "Layout JSON"): a layout may lack
+    exactly the studs its ``metadata.plaque`` records, and those must be template margin studs;
+    any other absent position, or a piece under the plaque, is a mask error."""
+
+    @pytest.fixture
+    def validator(self):
+        return LayoutValidator(kit_spec=load_kit_specification("31203"), palette=LegoPalette.load_default())
+
+    @staticmethod
+    def _plaque(template, corner="bottom-left"):
+        from lego_image_processor.maps.margin import place_plaque
+        return place_plaque(template, corner, "option")
+
+    @staticmethod
+    def _winkel(template, plaque=None):
+        from ..winkel_layouts import winkel_grid
+        return winkel_grid(template, plaque=plaque)
+
+    @staticmethod
+    def _regrid(grid, positions, plaque="same"):
+        return PositionPlacementGrid(width=grid.width, height=grid.height, positions=positions,
+                                     source_image=grid.source_image, generated_at=grid.generated_at,
+                                     template=grid.template, plaque=grid.plaque if plaque == "same" else plaque)
+
+    @staticmethod
+    def _mismatch(report):
+        return [v for v in report.violations if v.type == "mask_mismatch"]
+
+    def test_accepts_exactly_the_plaque_studs(self, validator, confirmed_winkel):
+        t = confirmed_winkel
+        p = self._plaque(t)
+        r = validator.validate(self._winkel(t, p.layout_record()), layout_file="w.json")
+        assert not self._mismatch(r)
+        (sq,) = [v for v in r.violations if getattr(v, "part_type", None) == "square_tile"]
+        assert sq.positions_required == t.counts["margin"] - p.cells
+
+    def test_another_absent_position_is_a_mask_error(self, validator, confirmed_winkel):
+        t = confirmed_winkel
+        g = self._winkel(t, self._plaque(t).layout_record())
+        gone = next(q for q in g.positions if q.part_type == "plate")
+        r = validator.validate(self._regrid(g, [q for q in g.positions if q is not gone]), layout_file="w.json")
+        (mm,) = self._mismatch(r)
+        assert mm.positions_required == 1 and mm.template == "winkel-tripel"
+        assert mm.examples == [{"x": gone.x, "y": gone.y, "part_type": None, "expected": "plate"}]
+        assert not r.buildable
+
+    def test_an_absent_position_without_a_plaque_is_a_mask_error(self, validator, confirmed_winkel):
+        g = self._winkel(confirmed_winkel)
+        gone = next(q for q in g.positions if q.part_type == "square_tile")
+        r = validator.validate(self._regrid(g, [q for q in g.positions if q is not gone]), layout_file="w.json")
+        (mm,) = self._mismatch(r)
+        assert mm.examples == [{"x": gone.x, "y": gone.y, "part_type": None, "expected": "square_tile"}]
+
+    def test_a_piece_under_the_plaque_is_a_mask_error(self, validator, confirmed_winkel):
+        t = confirmed_winkel
+        p = self._plaque(t)
+        full = self._winkel(t)  # every stud has its piece, but the layout records a plaque
+        r = validator.validate(self._regrid(full, full.positions, plaque=p.layout_record()), layout_file="w.json")
+        (mm,) = self._mismatch(r)
+        assert mm.positions_required == p.cells
+        assert {(e["part_type"], e["expected"]) for e in mm.examples} == {("square_tile", "plaque_tile")}
+
+    def test_a_plaque_off_the_margin_is_a_mask_error(self, validator, confirmed_winkel):
+        t = confirmed_winkel
+        land = next((x, y) for y in range(10, 70) for x in range(10, 118)
+                    if all(t.class_at(y + j, x + i) != "margin" for j in range(6) for i in range(6)))
+        rec = dict(self._plaque(t).layout_record(), studs={"row": land[1], "col": land[0], "height": 6, "width": 6})
+        g = self._winkel(t, rec)
+        r = validator.validate(g, layout_file="w.json")
+        (mm,) = self._mismatch(r)
+        assert mm.positions_required == 36
+        assert {e["part_type"] for e in mm.examples} == {"plaque_tile"}
+        assert {e["expected"] for e in mm.examples} <= {"plate", "tile"}
+
+    def test_a_plaque_on_a_kit_layout_is_a_mask_error(self, validator):
+        from lego_image_processor.kit import load_official_design
+        kit = load_official_design().to_layout()
+        rec = {"part_id": "10202", "color": "lego_black", "corner": "top-left",
+               "studs": {"row": 1, "col": 1, "height": 6, "width": 6}, "cells": 36}
+        covered = {(x, y) for y in range(1, 7) for x in range(1, 7)}
+        g = PositionPlacementGrid(width=kit.width, height=kit.height, source_image="x", plaque=rec,
+                                  positions=[q for q in kit.positions if (q.x, q.y) not in covered])
+        (mm,) = self._mismatch(validator.validate(g, layout_file="k.json"))
+        assert mm.positions_required == 36 and mm.template is None
+
+    def test_kit_layouts_validate_as_before(self, validator):
+        from lego_image_processor.kit import load_official_design
+        r = validator.validate(load_official_design().to_layout(), layout_file="o.json")
+        assert r.buildable and not self._mismatch(r)
+        assert not [v for v in r.violations if getattr(v, "part_type", None) == "plaque_tile"]
+
+    def test_the_plaque_tile_is_not_buildable_with_the_kit(self, validator, confirmed_winkel):
+        """T082: as 016 reports the margin's square tiles (no kit has part 3070b), the plaque's tile
+        is `color_unavailable` for part 10202 with no suggestion, and its 36 studs are not counted
+        as buildable with the kit."""
+        t = confirmed_winkel
+        p = self._plaque(t)
+        g = self._winkel(t, p.layout_record())
+        r = validator.validate(g, layout_file="w.json")
+        (pl,) = [v for v in r.violations if getattr(v, "part_type", None) == "plaque_tile"]
+        assert pl.to_dict() == {"type": "color_unavailable", "part_type": "plaque_tile", "part_id": "10202",
+                                "color_id": "lego_black", "color_name": "Black", "positions_required": 36}
+        assert pl.suggested_alternative is None
+        lost = sum(getattr(v, "shortfall", v.positions_required) for v in r.violations)
+        assert r.buildability_score == pytest.approx((g.total_positions - lost) / g.total_positions)
+        assert g.total_positions == 10240 and not r.buildable
+
+    def test_no_plaque_violation_without_a_plaque(self, validator, confirmed_winkel):
+        r = validator.validate(self._winkel(confirmed_winkel), layout_file="w.json")
+        assert not [v for v in r.violations if getattr(v, "part_type", None) == "plaque_tile"]
