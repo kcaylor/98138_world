@@ -337,3 +337,70 @@ def test_validate_kit_layout_has_no_template_lines():
     assert r.exit_code == 0, r.output
     assert "Template" not in r.output and "square" not in r.output and "Margin" not in r.output
     assert "Checking land/sea mask (arrangement A)..." in r.output
+
+
+# --- a layout with the in-margin plaque (feature 017 T065; contracts/in-margin-plaque.md) --------
+
+@pytest.fixture
+def plaque_file(confirmed_winkel, tmp_path):
+    from lego_image_processor.maps.margin import place_plaque
+    from ..winkel_layouts import winkel_grid
+    p = tmp_path / "plaque.json"
+    rec = place_plaque(confirmed_winkel, "bottom-left", "option").layout_record()
+    p.write_text(winkel_grid(confirmed_winkel, plaque=rec).to_json(), encoding="utf-8")
+    return p
+
+
+def test_validate_accepts_the_plaque_studs(plaque_file, confirmed_winkel, tmp_path):
+    out = tmp_path / "report.json"
+    r = CliRunner().invoke(cli, ["validate", str(plaque_file), "-o", str(out)])
+    assert r.exit_code == 0, r.output
+    assert "✓ Plates on land, tiles on ocean and square tiles on the margin" in r.output
+    report = json.loads(out.read_text())
+    assert not [v for v in report["violations"] if v["type"] == "mask_mismatch"]
+    (sq,) = [v for v in report["violations"] if v["part_type"] == "square_tile"]
+    assert sq["positions_required"] == confirmed_winkel.counts["margin"] - 36
+    assert r.output.rstrip("\n").splitlines()[-1] == DISCLAIMER
+
+
+def test_validate_reports_the_plaque_tile_beyond_the_kit(plaque_file, confirmed_winkel, tmp_path):
+    """T082: the plaque's tile is reported as 016 reports the square tiles (no kit has it), and its
+    36 studs are not counted as buildable with the kit."""
+    out = tmp_path / "report.json"
+    r = CliRunner().invoke(cli, ["validate", str(plaque_file), "-o", str(out)])
+    assert r.exit_code == 0, r.output
+    report = json.loads(out.read_text())
+    (pl,) = [v for v in report["violations"] if v["part_type"] == "plaque_tile"]
+    assert pl == {"type": "color_unavailable", "part_type": "plaque_tile", "part_id": "10202",
+                  "color_id": "lego_black", "color_name": "Black", "positions_required": 36}
+    lost = sum(v.get("shortfall", v["positions_required"]) for v in report["violations"])
+    assert report["buildability_score"] == round((10240 - lost) / 10240, 4)
+    assert "  Checking the plaque tile...\n    ✗ tile 6x6 (part 10202) unavailable in kit (no kit has part 10202)\n" \
+        in r.output
+    assert ("  Color Unavailable: Black (lego_black)\n    Part type: plaque_tile (10202)\n"
+            "    Positions required: 36 (studs under one tile 6x6)\n") in r.output
+    assert f"  Buildability: {(10240 - lost) / 10240 * 100:.1f}% (PARTIALLY BUILDABLE)" in r.output
+    assert f"  Violations: {len(report['violations'])}" in r.output
+
+
+def test_validate_without_a_plaque_has_no_plaque_lines(confirmed_winkel, tmp_path):
+    from ..winkel_layouts import winkel_grid
+    p = tmp_path / "w.json"
+    p.write_text(winkel_grid(confirmed_winkel).to_json(), encoding="utf-8")
+    r = CliRunner().invoke(cli, ["validate", str(p)])
+    assert r.exit_code == 0, r.output
+    assert "plaque" not in r.output.split("\n", 1)[1].lower()  # the first line names the file
+
+
+def test_validate_refuses_another_absent_position(plaque_file, confirmed_winkel, tmp_path):
+    d = json.loads(plaque_file.read_text())
+    gone = next(p for p in d["positions"] if p["part_type"] == "tile")
+    d["positions"].remove(gone)
+    bad = tmp_path / "bad.json"
+    bad.write_text(json.dumps(d), encoding="utf-8")
+    out = tmp_path / "report.json"
+    r = CliRunner().invoke(cli, ["validate", str(bad), "-o", str(out)])
+    assert r.exit_code == 0, r.output
+    assert "1 positions do not match template winkel-tripel" in r.output
+    (mm,) = [v for v in json.loads(out.read_text())["violations"] if v["type"] == "mask_mismatch"]
+    assert mm["examples"] == [{"x": gone["x"], "y": gone["y"], "part_type": None, "expected": "tile"}]

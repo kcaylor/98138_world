@@ -44,6 +44,15 @@ def reason_unverified(parts_reason: str) -> str:
 
 
 ALL_COLORS_HINT = "lego-image-processor parts prices fetch --all-colors"
+
+
+def plaque_lot_hint(spec: str) -> str:
+    """Feature 017, worded as ``ALL_COLORS_HINT``'s line (011 contracts/cli.md "Hint: fetch ... with:
+    <command>"): ``--all-colors`` fetches the part_colors parts only, not the in-margin plaque's
+    tile, and a ``--lot`` fetch writes a snapshot of only the lots it lists."""
+    return (f"fetch the plaque tile with: lego-image-processor parts prices fetch --lot {spec}, plus a --lot "
+            "for every other lot the snapshot should hold (a --lot fetch writes only the lots it names; "
+            "--all-colors does not fetch the plaque tile)")
 MISSING_SNAPSHOT_MESSAGE = ("no price snapshot is packaged yet; pass --prices FILE or run "
                             "`lego-image-processor parts prices fetch`")
 
@@ -57,6 +66,6 @@ PACKAGED_SNAPSHOT_PATH = DATA_DIR / "bricklink_price_guide.json"
 __all__ = [
     "ATTRIBUTION", "ESTIMATE_NOTE", "DISCLAIMER", "SOURCE_TITLE", "SOURCE_PUBLISHER", "SOURCE_URL",
     "BASIS_TEXT", "BASIS_SENTENCE", "STATISTIC_TEXT", "REASON_NOT_IN_SNAPSHOT", "REASON_NO_DATA",
-    "reason_unverified", "ALL_COLORS_HINT", "MISSING_SNAPSHOT_MESSAGE", "LABELS", "SHORT_LABELS",
+    "reason_unverified", "ALL_COLORS_HINT", "plaque_lot_hint", "MISSING_SNAPSHOT_MESSAGE", "LABELS", "SHORT_LABELS",
     "NOTHING_TO_BUY_TEXT", "DEFAULT_STALE_DAYS", "PACKAGED_SNAPSHOT_PATH",
 ]

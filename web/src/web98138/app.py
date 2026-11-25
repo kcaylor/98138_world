@@ -6,7 +6,9 @@ file and number shown was produced by the CLI library in the build step. Map pag
 first-party script, ``/static/palette.js`` (feature 015), which only recolors the prebuilt
 ``cells.json`` in the browser; every page works without it. Feature 016: a map's template variants
 (``/maps/<map>/<template-id>``, e.g. ``winkel-tripel``) are served like its combinations A, B, C;
-kit pages gain only a nav link to them.
+kit pages gain only a nav link to them. Each map's sticker set (feature 017) is served under
+``/maps/<map>/stickers/<template>/``: both SVGs inline for the page's ``<img>`` and all four files
+as downloads. Kit pages show the kit template's set, a template page its template's set.
 
 Run: ``WEB98138_SITE_DIR=DIR uvicorn web98138.app:app --port 8080``.
 Not affiliated with or endorsed by The LEGO Group.
@@ -25,7 +27,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import COMBINATIONS, DISCLAIMER, REPO_URL, SITE_HOST, __version__
-from .catalog import DOWNLOAD_KINDS, Catalog
+from .catalog import DOWNLOAD_KINDS, KIT_TEMPLATE_ID, STICKER_IMAGES, STICKER_KINDS, Catalog
 
 PKG = Path(__file__).resolve().parent
 STATIC = {"style.css": "text/css; charset=utf-8", "favicon.svg": "image/svg+xml",
@@ -149,6 +151,25 @@ def create_app(site_dir) -> FastAPI:
             return not_found(request)
         return RedirectResponse(f"/maps/{map_id}/{catalog.map(map_id).default_combination}", status_code=307)
 
+    # feature 017: sticker files, registered before the combination routes
+    def sticker_image(kind: str):
+        async def handler(request: Request, map_id: str, template_id: str):
+            entry = catalog.sticker_entry(map_id, template_id, kind)
+            if entry is None:
+                return not_found(request)
+            return serve(request, entry, catalog.sticker_file(map_id, template_id, kind), False)
+        return handler
+
+    for kind in STICKER_IMAGES:
+        get(f"/maps/{{map_id}}/stickers/{{template_id}}/{kind}.svg")(sticker_image(kind))
+
+    @get("/maps/{map_id}/stickers/{template_id}/download/{kind}")
+    async def sticker_download(request: Request, map_id: str, template_id: str, kind: str):
+        entry = catalog.sticker_entry(map_id, template_id, kind) if kind in STICKER_KINDS else None
+        if entry is None:
+            return not_found(request)
+        return serve(request, entry, catalog.sticker_file(map_id, template_id, kind), True)
+
     @get("/maps/{map_id}/{combination}")
     async def map_page(request: Request, map_id: str, combination: str):
         entry = catalog.map(map_id)
@@ -163,9 +184,12 @@ def create_app(site_dir) -> FastAPI:
             else:
                 return not_found(request)
         variant = entry.variant(combination)
+        # feature 017: the kit's sticker set on kit pages, the template's own set on a template page
+        sticker_template = combination if template is not None else KIT_TEMPLATE_ID
         return page(request, "map.html", map=entry, data=entry.data, variant=variant,
                     combination=combination, arrangement=catalog.arrangement(combination),
-                    template=template, map_templates=[catalog.template(t) for t in entry.template_ids])
+                    template=template, map_templates=[catalog.template(t) for t in entry.template_ids],
+                    stickers=catalog.stickers(map_id, sticker_template), sticker_template=sticker_template)
 
     def image(kind: str):
         async def handler(request: Request, map_id: str, combination: str):

@@ -78,8 +78,9 @@ class KitInventory:
 
         Only map elements whose role matches the part count: a Bright Green *plate* gets 0 even
         though the kit has 601 Bright Green *tiles* (feature 005 research R11). Any other part,
-        such as the 1x1 square tile 3070b of a template's margin (feature 016), is 0: the kit has
-        none, so a one-kit top-up buys every one.
+        such as the 1x1 square tile 3070b of a template's margin (feature 016) or the in-margin
+        plaque's tile 6x6, part 10202 (feature 017), is 0: the kit has none, so a one-kit top-up
+        buys every one.
         """
         role = MAP_ROLE_FOR_PART.get(str(part_id))
         if role is None:

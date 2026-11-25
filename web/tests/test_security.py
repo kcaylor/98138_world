@@ -16,7 +16,10 @@ SRC = Path(__file__).resolve().parents[1] / "src" / "web98138"
                                   "/maps/ocean-sst/A/download/layout", "/healthz", "/nope",
                                   # feature 016: a template variant's page, image and download
                                   "/maps/ocean-sst/winkel-tripel", "/maps/ocean-sst/winkel-tripel/preview.png",
-                                  "/maps/ocean-sst/winkel-tripel/download/bricklink"])
+                                  "/maps/ocean-sst/winkel-tripel/download/bricklink",
+                                  # feature 017: the sticker routes
+                                  "/maps/ocean-sst/stickers/kit-31203/sticker-large.svg",
+                                  "/maps/ocean-sst/stickers/kit-31203/download/stickers-letter"])
 def test_security_headers_no_cookies(client, path):
     r = client.get(path)
     h = r.headers

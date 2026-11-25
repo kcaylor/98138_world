@@ -83,7 +83,8 @@ class TestMarginTable:
 
     def test_unknown_key(self):
         e = _error(tables='[margin]\ncolor = "lego_black"\nlabel = "World"\n')
-        assert e.path == "margin.label" and "unknown key" in e.rule and "color, ring" in e.rule
+        # feature 017 adds the key plaque (the in-margin plaque's corner)
+        assert e.path == "margin.label" and "unknown key" in e.rule and "color, plaque, ring" in e.rule
 
     def test_not_a_table(self):
         assert _error('margin = "lego_black"').path == "margin"

@@ -1,0 +1,10 @@
+{
+  "fixture": "elements.csv",
+  "synthetic": true,
+  "note": "Synthetic excerpt with the header of the pinned Rebrickable elements.csv (sha256 dfc8641d58591c8188fe156a43831a7d774b48e61570d03e79940fefb812cbfc). The four Black rows (6155125, 395826, 6484420, 6094066) are that file's rows for parts 10202, 3958, 4974 and 92438 in Rebrickable color 0; the other rows are invented for tests (a non-Black row, a second Black element of 3958 with a higher ID, and a lower-numbered Black element of 92438 whose design_id differs). Not a copy of the catalog download. The 4974 row replaced the 90498 row (4603646) when the project owner chose the smooth tile 4974 for the large plaque on 2026-11-24.",
+  "source_terms": "Rebrickable catalog data, free for personal and commercial use with acknowledgement of Rebrickable as the data source.",
+  "generator": "hand-written for tests/unit/tools/test_plaque_parts_tool.py (feature 017 T010)",
+  "generated_on": "2026-11-24",
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group.",
+  "sha256": "8bd8487ca54b97ac28161e02343872cff4688d5bf35c957345073f169b3b7dfc"
+}

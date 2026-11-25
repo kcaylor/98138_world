@@ -40,3 +40,6 @@ kind = "halo"
 inner = 1.5     # studs from land: all Medium Azure
 outer = 3.0     # studs from land: Medium Azure on an even Poisson-disk subset, fading out
 spacing = 2.0   # minimum distance between those fade cells
+# Map stickers (feature 017): sticker texts approved by the project owner, 2026-11-24
+[sticker]
+line = "Height of the land in metres, from lowland green through tan and brown to grey and ice-sheet white."

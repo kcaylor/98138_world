@@ -47,7 +47,7 @@ def test_templates_list(manifest, template):
     t = manifest["templates"][0]
     assert list(t) == ["id", "title", "projection", "board", "counts", "rehang", "description", "source"]
     assert t["title"] == template.title and t["description"] == template.description
-    assert t["projection"] == "Winkel tripel"
+    assert t["projection"] == "Winkel tripel" == template.projection_title   # the library's (017)
     assert t["board"] == {"modules": [8, 5], "width": 128, "height": 80}
     assert t["counts"] == {k: template.counts[k] for k in ("land", "ocean", "margin", "ring")}
     assert t["rehang"] is False
@@ -147,6 +147,8 @@ def test_counts_and_total_include_template_variants(manifest):
     files = [f for m in manifest["maps"]
              for v in list(m["variants"].values()) + list(m.get("template_variants", {}).values())
              for f in v["files"].values()]
+    files += [f for m in manifest["maps"] for st in m.get("stickers", {}).values()   # feature 017
+              for f in st["files"].values()]
     assert manifest["total_bytes"] == sum(f["bytes"] for f in files)
 
 
@@ -159,7 +161,7 @@ def test_eligibility_is_exactly_the_five_maps(template):
     from web98138 import MAP_IDS, TEMPLATES
     from web98138.prebuild import template_reason
 
-    assert TID in TEMPLATES
+    assert TID in TEMPLATES and isinstance(TEMPLATES, tuple)   # ids only; names from the library
     ok = [m for m in MAP_IDS if compatibility(load_recipe(m), template) is None]
     assert tuple(ok) == ELIGIBLE
     for m in MAP_IDS:   # the prebuild asks the library, nothing else

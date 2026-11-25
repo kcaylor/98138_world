@@ -11,6 +11,11 @@ so rerunning gives identical bytes.
 Feature 016 (research R15) adds a second fixture, ``bricklink_price_guide_3070b.json``: the same
 lots plus one 1x1 square tile lot (3070b Black, the default margin color), so a Winkel tripel
 estimate can be complete; the first fixture is unchanged, so its Winkel estimates stay incomplete.
+
+Feature 017 (T071) adds a third, ``bricklink_price_guide_plaque.json``: 016's 3070b fixture plus one
+lot for the in-margin plaque's tile (6x6 tile 10202 Black, lot ``10202:26``, IDs from
+``plaque_parts.json``), so a Winkel tripel estimate with the plaque can be complete; the first two
+fixtures are unchanged, so with them a plaque estimate stays incomplete.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -30,6 +35,7 @@ from lego_image_processor.prices.wording import (ATTRIBUTION, DISCLAIMER, ESTIMA
 DEFAULT_OUT = Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "prices"
 NAME = "bricklink_price_guide.json"
 NAME_3070B = "bricklink_price_guide_3070b.json"
+NAME_PLAQUE = "bricklink_price_guide_plaque.json"
 
 # (part, color key, sold (qty_avg, avg, min, max, sales, pieces) or None, stock (...) or None)
 LOTS = [
@@ -74,6 +80,12 @@ LOTS = [
 LOTS_3070B = [
     ("3070b", "lego_black", ("0.0520", "0.0710", "0.0200", "0.6000", 950, 210000),
      ("0.0600", "0.0850", "0.0200", "1.5000", 2400, 1500000)),
+]
+
+# Feature 017: the in-margin plaque's tile (third fixture only).
+LOTS_PLAQUE = [
+    ("10202", "lego_black", ("0.6450", "0.7120", "0.2500", "2.5000", 310, 1420),
+     ("0.7900", "0.8800", "0.3000", "4.0000", 640, 5100)),
 ]
 
 STARTED, FINISHED = "2026-12-01T18:02:10Z", "2026-12-01T18:03:05Z"
@@ -154,6 +166,9 @@ def write(out: Path) -> None:
     _write_one(out, NAME, LOTS, LOTS_TEXT)
     _write_one(out, NAME_3070B, LOTS + LOTS_3070B,
                LOTS_TEXT + "; plus 1x1 square tile 3070b Black (feature 016, the default margin color)")
+    _write_one(out, NAME_PLAQUE, LOTS + LOTS_3070B + LOTS_PLAQUE,
+               LOTS_TEXT + "; plus 1x1 square tile 3070b Black (feature 016, the default margin color)"
+               "; plus tile 6x6 10202 Black (feature 017, the in-margin plaque)")
 
 
 def main() -> None:

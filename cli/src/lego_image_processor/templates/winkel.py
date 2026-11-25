@@ -26,6 +26,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 
 NAME = "winkel-tripel"
+TITLE = "Winkel tripel"  # the projection as maps, pages and stickers name it (feature 017)
 LAT_1 = 50.4598   # degrees; arccos(2/π), Winkel's own choice (PROJ's default is 0)
 LON_0 = 11.1      # degrees east; the centre of the kit board as hung in combination A
 CHUNK = 1_000_000  # points per vectorised step (bounds memory for 1080 x 2160 source grids)

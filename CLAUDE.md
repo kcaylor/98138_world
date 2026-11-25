@@ -180,6 +180,41 @@ the refusal on `unconfirmed_winkel` (a copy without the confirmation) and use th
 `/maps/<map>/winkel-tripel` (manifest `templates`, `maps[].template_variants`); kit variants are
 unchanged. Contracts: `specs/016-map-templates/contracts/`.
 
+Map stickers (feature 017, see `specs/017-map-stickers/`): `map stickers <recipe> -o OUT
+[--format pdf|svg|json] [--paper letter|a4] [--template ID]` makes two white-on-black stickers from
+the built map (never downloads; no `--arrangement`, one set serves A–E, its legend values from the
+recipe's own combination, D for the ENSO maps): a small one for a
+Black 6×6 tile with the title, a line and the disclaimer, and a large one for a Black 8×16 tile that
+adds "98138.world", the color legend and the data credit; as the print sheet (one page at true
+size: bleed, cut marks, plaque parts, citations, provenance), `sticker-small.svg` and
+`sticker-large.svg` (disclaimer in `<desc>`, citations in `<metadata>`) or a JSON summary. Code:
+`stickers/` (`sticker_set`, `render_sticker_pdf`, `render_sticker_svgs`). Texts come from the
+optional recipe table `[sticker]` (`title`, `line`, `credit`, `no_data`; without it, the recipe's
+title and description); the eight bundled recipes end with one (texts approved by the project
+owner on 2026-11-24; no sticker title says "Official"). Plaque parts, all Black, are cited in
+`data/plaque_parts.json` (`kit/plaque_parts.py`, `load_plaque_parts`): small tile 10202 and plate
+3958; the large plaque is the smooth tile 4974 (not the textured 90498) on plate 92438. Regenerate
+or check with `PYTHONPATH=tools python -m partcolors plaque-parts --check`. On a template the line
+ends with its projection ("Winkel tripel projection.") and the credit adds the template's dataset.
+In-margin plaque: `map build|check|cells --plaque CORNER|none` or `[margin].plaque` puts the 10202
+tile in a Winkel margin corner, one stud in from both board edges (rows 1–6 or 73–78, columns 1–6 or
+121–126; confirmed by the project owner on 2026-11-25); `--plaque` on the kit is an error. The
+layout records `metadata.plaque` and lacks its 36 studs (10,204 positions, 1,960 square tiles);
+parts lists and exports add one `plaque_tile` lot 10202 (estimate lot `10202:26`), sheets draw one
+outlined rectangle in its section, `map cells` marks its studs `P`, and `validate` accepts them and
+reports the tile as not in the kit. The web prebuild writes each map's kit set to
+`maps/<map>/stickers/kit-31203/` and one per template variant to `maps/<map>/stickers/<template-id>/`
+(manifest `maps[].stickers.<template-id>`: `files`, `title`, `line`, `alt`, `legend`, `credit`,
+`plaques`, `notes`), served at `/maps/<map>/stickers/<template>/sticker-small.svg|sticker-large.svg`
+and `.../download/<kind>`; every kit map page (A–E) shows the same "Stickers for a plaque" panel;
+no site variant has a plaque. Kit outputs differ only in the recipe checksum, held by
+`cli/tests/integration/test_stickers_outputs_unchanged.py` (G1 pins main 6f300dc's recipe
+checksums; golden `cli/tests/fixtures/golden/stickers_017_guard.json`, A–E, written from an
+unmodified export of main 6f300dc, re-based once from 6038d9c with the project owner's approval of
+2026-11-25, never from 017 code); the kit goldens (`kit_outputs.json`, `kit_variants_golden.json`)
+were regenerated on each merge of main into 017 (T054's proof, in their tests' docstrings).
+Contracts: `specs/017-map-stickers/contracts/`.
+
 1. **Python CLI** (`cli/`, package `lego_image_processor`), written to be released as open source.
 2. **Web application** (`web/`) on Fly.io at 98138.world. It calls the CLI library at build time and
    never duplicates its logic; the runtime image has no CLI dependencies.
@@ -188,12 +223,13 @@ unchanged. Contracts: `specs/016-map-templates/contracts/`.
 
 - `cli/src/lego_image_processor/`: `core/` (image I/O, quantization), `palette/` (LEGO colors,
   CIEDE2000 matching), `analysis/`, `layout/` (grid, land/sea mask, kit spec, validator, frame arrangements; feature 007), `kit/`
-  (kit reference data, part colors), `datasets/` (registry, verified cache, readers), `maps/`
+  (kit reference data, part colors, plaque parts `plaque_parts.py`; feature 017), `datasets/` (registry, verified cache, readers), `maps/`
   (recipes, projection, reprojection, classification, texture, suitability, build, preview, ice regions and chooser cells; feature 015),
   `parts/` (parts lists, cited IDs, marketplace exports; feature 005), `sheets/` (build sheets:
   sections, page model, PDF and SVG backends, per-section counts; feature 006), `prices/` (price
   snapshots, BrickLink fetch, offline estimates; feature 011), `templates/` (map templates: the kit
-  grid, Winkel tripel, boards, stud locations; feature 016), `cli/` (Click commands), `data/` (runtime reference data, shipped with the package).
+  grid, Winkel tripel, boards, stud locations; feature 016), `stickers/` (map stickers: texts, legend,
+  credits, print sheet, SVG and JSON; feature 017), `cli/` (Click commands), `data/` (runtime reference data, shipped with the package).
 - `cli/tools/`: maintainer-only tools (`kit31203` incl. `ice-mask`, `partcolors`, `fixtures004`, `fixtures011`, `maptemplates`, `projection_study`), not packaged.
 - `cli/tests/`: `unit/`, `integration/`, `contract/` (CLI I/O), `fixtures/`.
 - `web/`: `src/web98138/` (`prebuild.py`, `catalog.py`, `app.py`, `templates/`, `static/`, incl. `palette.js`),

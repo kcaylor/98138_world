@@ -21,14 +21,17 @@ def _build(rid, arrangement=None):
 
 def _default_colors(cells):
     """The default chooser rendering: each cell's color key (the script does the same). Feature 016:
-    a margin cell (``M``) takes the ring color on the ring, the margin color elsewhere."""
+    a margin cell (``M``) takes the ring color on the ring, the margin color elsewhere. Feature 017:
+    a plaque cell (``P``) takes the plaque's color."""
     out = []
     kinds = cells["cells"]
     layers = cells["layers"]
     margin = cells.get("margin") or {}
     ring = set((margin.get("ring") or {}).get("cells", ()))
     for i, k in enumerate(kinds):
-        if k == "M":
+        if k == "P":
+            out.append(cells["plaque"]["color"])
+        elif k == "M":
             out.append(margin["ring"]["color"] if i in ring else margin["color"])
         elif k == "S":
             out.append(cells["shadow"]["color"])
@@ -39,7 +42,13 @@ def _default_colors(cells):
 
 
 def _layout_colors(result):
-    return [p.color_id for p in sorted(result.layout.positions, key=lambda p: (p.y, p.x))]
+    """Each stud's color key in the layout; the studs under a recorded plaque (feature 017) take the
+    plaque's color."""
+    by_stud = {(p.x, p.y): p.color_id for p in result.layout.positions}
+    plaque = result.layout.plaque
+    for xy in result.layout.plaque_positions:
+        by_stud[xy] = plaque["color"]
+    return [by_stud[(x, y)] for y in range(result.layout.height) for x in range(result.layout.width)]
 
 
 @pytest.fixture
@@ -306,3 +315,55 @@ class TestTemplateCells:
         c = map_cells(_build("ocean-sst"))
         assert "template" not in c and "margin" not in c
         assert "M" not in c["cells"] and list(c["palette"]) == ["6141", "98138"]
+
+
+# --- Feature 017 (T076): map cells with the in-margin plaque (contracts/in-margin-plaque.md) ------
+
+class TestPlaqueCells:
+    """``map_cells`` of ``ocean-sst`` on ``confirmed_winkel`` with the plaque in a corner: ``P``
+    cells and a ``plaque`` block; files without a plaque are unchanged."""
+
+    def _build(self, corner=None, **kw):
+        from lego_image_processor.maps.margin import MarginTreatment
+
+        margin = None if corner is None else MarginTreatment(plaque=corner, plaque_source="option", **kw)
+        return build_map(load_recipe("ocean-sst"), compare_official=False, template="winkel-tripel",
+                         margin=margin)
+
+    @pytest.mark.parametrize("corner", ["bottom-left", "top-right"])
+    def test_p_cells_and_the_plaque_block(self, placed, confirmed_winkel, corner):
+        from lego_image_processor.kit.plaque_parts import load_plaque_parts
+
+        tile = load_plaque_parts().plaques["small"].tile
+        r = self._build(corner)
+        c = map_cells(r)
+        kinds = np.array(list(c["cells"])).reshape(80, 128)
+        mask = r.plaque.mask((80, 128))
+        assert ((kinds == "P") == mask).all() and (kinds == "P").sum() == 36
+        assert (kinds == "M").sum() == confirmed_winkel.counts["margin"] - 36
+        cells = [int(i) for i in np.flatnonzero(mask.ravel())]
+        assert c["plaque"] == {"part_id": tile.part_id, "color": tile.color.key,
+                               "rgb": [int(v) for v in tile.color.rgb], "corner": corner, "cells": cells}
+        assert list(c).index("plaque") == list(c).index("margin") + 1
+        assert c["palette"] == map_cells(self._build())["palette"]  # the palette is unchanged
+        for name, layer in c["layers"].items():
+            assert all(layer["classes"][i] == -1 for i in cells), name
+
+    def test_default_rendering_equals_layout(self, placed):
+        r = self._build("bottom-left")
+        assert _default_colors(map_cells(r)) == _layout_colors(r)
+
+    def test_with_a_ring(self, placed):
+        r = self._build("bottom-left", ring="lego_white")
+        c = map_cells(r)
+        assert not set(c["plaque"]["cells"]) & set(c["margin"]["ring"]["cells"])
+        assert _default_colors(c) == _layout_colors(r)
+
+    def test_without_a_plaque_unchanged(self, placed):
+        from lego_image_processor.maps.margin import MarginTreatment
+
+        a = map_cells(self._build())
+        b = map_cells(build_map(load_recipe("ocean-sst"), compare_official=False, template="winkel-tripel",
+                                margin=MarginTreatment()))
+        assert "plaque" not in a and "P" not in a["cells"]
+        assert a == b

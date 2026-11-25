@@ -1,11 +1,12 @@
 """Shared CLI options (feature 007: ``--arrangement``; feature 016: ``--template``, ``--margin-color``,
-``--ring-color``). Not affiliated with or endorsed by The LEGO Group."""
+``--ring-color``; feature 017: ``--plaque``). Not affiliated with or endorsed by The LEGO Group."""
 
 from __future__ import annotations
 
 import click
 
 from ..layout.arrangement import ArrangementError, parse_arrangement, valid_values
+from ..maps.margin import NO_PLAQUE, PLAQUE_CORNERS
 
 
 class ArrangementType(click.ParamType):
@@ -84,8 +85,17 @@ RING_COLOR_HELP = ("Color of the outline ring (margin studs touching the globe),
                    "recipe's [margin] ring, else no ring. Must differ from the margin color.")
 
 
+# feature 017 (FR-021; contracts/cli.md): the in-margin plaque's corner
+PLAQUE_CHOICES = PLAQUE_CORNERS + (NO_PLAQUE,)
+PLAQUE_HELP = ("Put the small plaque's Black tile in this margin corner of a non-kit template, one stud in "
+               "from both board edges, or `none`. Default: the recipe's [margin] plaque, else none; an "
+               "explicit --plaque wins. The kit template has no margin.")
+
+
 def template_options(f):
-    """``--template``, ``--margin-color`` and ``--ring-color`` (``map build``, ``map check``)."""
+    """``--template``, ``--margin-color``, ``--ring-color`` and (feature 017) ``--plaque`` (``map
+    build``, ``map check``, ``map cells``)."""
+    f = click.option("--plaque", type=click.Choice(PLAQUE_CHOICES), default=None, help=PLAQUE_HELP)(f)
     f = click.option("--ring-color", default=None, metavar="KEY|none", help=RING_COLOR_HELP)(f)
     f = click.option("--margin-color", default=None, metavar="KEY", help=MARGIN_COLOR_HELP)(f)
     f = click.option("--template", "template_id", type=TemplateType(), default=None, help=TEMPLATE_HELP)(f)

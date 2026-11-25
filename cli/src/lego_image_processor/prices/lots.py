@@ -6,6 +6,10 @@ the bundled recipes declare (land colors on plate 6141, ocean colors and the sha
 98138, and the margin colors on the 1x1 square tile 3070b that a non-kit template uses, feature
 016); arrangements move whole frames and never change colors, so it covers A, B and C. BrickLink
 files the square tile as item 3070 (``part_numbers.json``), so its lots are fetched by that number.
+Feature 017: the in-margin plaque's tile (tile 6x6, part 10202, Black) is lot ``10202:26``, cited in
+``plaque_parts.json`` (its BrickLink item there); ``recipe_lots`` adds it only for a recipe that
+names a corner (``[margin].plaque``; no bundled one does), and ``all_cited_lots`` keeps to the
+``part_colors.json`` parts, so ``--all-colors`` is unchanged.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -18,9 +22,9 @@ from typing import Dict, Iterable, Optional, Sequence, Tuple
 from ..kit.part_colors import PartColor, load_part_colors
 from ..kit.part_numbers import load_part_numbers
 
-PART_ORDER = {"6141": 0, "98138": 1, "3070b": 2}
-PART_TYPE = {"6141": "plate", "98138": "tile", "3070b": "square_tile"}
-PART_NAMES = "6141, 98138 or 3070b"
+PART_ORDER = {"6141": 0, "98138": 1, "3070b": 2, "10202": 3}
+PART_TYPE = {"6141": "plate", "98138": "tile", "3070b": "square_tile", "10202": "plaque_tile"}
+PART_NAMES = "6141, 98138, 3070b or 10202"
 # A part ID may end in one lowercase letter (3070b, feature 016); parse_lot still checks PART_ORDER.
 _LOT_RE = re.compile(r"^(\d+[a-z]?):(\d+)$")
 
@@ -59,8 +63,32 @@ class LotRef:
         return f"{self.part_id}:{self.lego_color_id}"
 
 
+def _plaque_tile(part_id: str):
+    """The in-margin plaque's tile in plaque_parts.json (a ``PlaquePart``) when ``part_id`` is it,
+    else None (feature 017)."""
+    if PART_TYPE.get(part_id) != "plaque_tile":
+        return None
+    from ..kit.plaque_parts import load_plaque_parts
+
+    try:
+        part = load_plaque_parts().get(part_id)
+    except KeyError:
+        return None
+    return part if part.kind == "tile" else None
+
+
+def _rows(part_id: str) -> Tuple[PartColor, ...]:
+    """The cited colors of a map part: part_colors.json, or plaque_parts.json for the plaque tile;
+    ``KeyError`` for any other part."""
+    tile = _plaque_tile(part_id)
+    if tile is not None:
+        return (tile.color,)
+    return load_part_colors().for_part(part_id)
+
+
 def _from_row(part_id: str, row: PartColor) -> LotRef:
-    numbers = load_part_numbers().get(part_id)
+    tile = _plaque_tile(part_id)
+    numbers = tile.numbers if tile is not None else load_part_numbers().get(part_id)
     if row.bricklink.name not in numbers.bricklink_colors:
         raise ValueError(f"{part_id} {row.key}: BrickLink color {row.bricklink.name!r} is not on "
                          f"BrickLink's catalog page for item {numbers.bricklink_item_no}")
@@ -71,11 +99,13 @@ def _from_row(part_id: str, row: PartColor) -> LotRef:
 
 
 def lot_ref(part_id: str, color_key: str) -> LotRef:
-    """The cited lot for ``part_id`` (6141, 98138 or 3070b) in ``color_key``; ``ValueError`` if none."""
+    """The cited lot for ``part_id`` (6141, 98138, 3070b or the plaque tile 10202) in ``color_key``;
+    ``ValueError`` if none."""
     try:
-        row = load_part_colors().get(str(part_id), color_key)
+        rows = _rows(str(part_id))
     except KeyError:
         raise ValueError(f"part {part_id!r} is not a map part ({PART_NAMES})")
+    row = next((r for r in rows if r.key == color_key), None)
     if row is None:
         raise ValueError(f"no cited color {color_key!r} for part {part_id}")
     return _from_row(str(part_id), row)
@@ -84,9 +114,10 @@ def lot_ref(part_id: str, color_key: str) -> LotRef:
 def lot_ref_by_lego_id(part_id: str, lego_color_id: int) -> Optional[LotRef]:
     """The cited lot with this LEGO color ID, or None."""
     try:
-        row = load_part_colors().by_lego_id(str(part_id), int(lego_color_id))
+        rows = _rows(str(part_id))
     except KeyError:
         return None
+    row = next((r for r in rows if r.lego.id == int(lego_color_id)), None)
     return None if row is None else _from_row(str(part_id), row)
 
 
@@ -102,8 +133,9 @@ def recipe_lots(recipes: Optional[Sequence] = None) -> Tuple[LotRef, ...]:
 
     Each recipe also adds its margin colors on the square tile (its ``[margin]`` table, else the
     default Black with no ring; feature 016, data-model.md PriceLot.recipe_lots), so a fetch covers
-    the recipe's builds on a non-kit template as well."""
-    from ..maps.margin import MARGIN_PART_ID, MarginTreatment
+    the recipe's builds on a non-kit template as well; and (feature 017) the in-margin plaque's
+    tile when its ``[margin]`` names a corner."""
+    from ..maps.margin import MARGIN_PART_ID, MarginTreatment, plaque_tile
 
     if recipes is None:
         recipes = bundled_recipe_objects()
@@ -115,6 +147,9 @@ def recipe_lots(recipes: Optional[Sequence] = None) -> Tuple[LotRef, ...]:
             out.append(lot_ref(r.ocean.part_id, r.shadow.color))
         margin = getattr(r, "margin", None) or MarginTreatment()
         out += [lot_ref(MARGIN_PART_ID, k) for k in (margin.color, margin.ring) if k]
+        if margin.plaque is not None:
+            tile = plaque_tile()
+            out.append(lot_ref(tile.part_id, tile.color.key))
     return sort_lots(out)
 
 
@@ -124,9 +159,11 @@ def bundled_recipe_objects():
 
 
 def all_cited_lots() -> Tuple[LotRef, ...]:
-    """Every cited color of the map parts (6141, 98138 and, since feature 016, 3070b)."""
+    """Every cited color of the map parts in part_colors.json (6141, 98138 and, since feature 016,
+    3070b); the plaque tile (feature 017, plaque_parts.json) is not among them."""
     table = load_part_colors()
-    return sort_lots(_from_row(part_id, row) for part_id in PART_ORDER for row in table.for_part(part_id))
+    return sort_lots(_from_row(part_id, row) for part_id in PART_ORDER if part_id in table.parts
+                     for row in table.for_part(part_id))
 
 
 def parse_lot(text: str) -> LotRef:

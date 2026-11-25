@@ -13,6 +13,15 @@ from ..layout.kit_spec import load_kit_specification
 from ..layout.validator import LayoutValidator
 
 
+# Feature 017: a mask example's part type without a piece (an absent stud) or under the in-margin
+# plaque; the other part types print as before.
+_EXAMPLE_PART = {None: "no piece", "plaque_tile": "the plaque tile"}
+
+
+def _example_part(part_type) -> str:
+    return _EXAMPLE_PART.get(part_type, str(part_type))
+
+
 @click.command()
 @click.argument("layout_file", type=click.Path(exists=True))
 @click.option(
@@ -32,7 +41,10 @@ def validate(layout_file: str, kit: str, output: str) -> None:
     (6141) in White, ocean the 1x1 round tile (98138) in 9 colors, with quantities from the
     instructions' parts inventory (page 159). Layouts must use schema 2.0. A layout on a non-kit
     template (map build --template) is checked against that template's classes, and its margin's
-    1x1 square tiles (3070b), which no kit has, are reported as beyond the kit.
+    1x1 square tiles (3070b), which no kit has, are reported as beyond the kit. A layout with an
+    in-margin plaque (map build --plaque) may lack exactly the studs under the plaque's tile, which
+    is named in the summary and, like the square tiles, reported as beyond the kit (tile 6x6, part
+    10202).
     Not affiliated with or endorsed by The LEGO Group.
 
     \b
@@ -69,12 +81,18 @@ def validate(layout_file: str, kit: str, output: str) -> None:
                 f"Unsupported layout format: {layout_path.suffix}. Use JSON format."
             )
 
-        click.echo(f"  Total positions: {layout.total_positions:,}")
+        plaque_rec = layout.plaque  # feature 017: the in-margin plaque; its studs carry no position
+        total = len(layout.positions) if plaque_rec is not None else layout.total_positions
+        click.echo(f"  Total positions: {total:,}")
         click.echo(f"  Land plates: {layout.land_positions:,}")
         click.echo(f"  Ocean tiles: {layout.ocean_positions:,}")
         template_rec = layout.template  # feature 016: None on the kit template
         if template_rec is not None:
             click.echo(f"  Margin square tiles: {layout.margin_positions:,}")
+        if plaque_rec is not None:
+            from ..maps.margin import plaque_text
+            n = len(layout.plaque_positions)
+            click.echo(f"  Plaque: {plaque_text(plaque_rec)} ({n:,} studs without a 1x1 piece)")
         click.echo(f"  Unique colors: {layout.unique_colors}")
         from ..layout.arrangement import arrangement_of
         click.echo(f"  Arrangement: {arrangement_of(layout).describe()}")
@@ -109,6 +127,7 @@ def validate(layout_file: str, kit: str, output: str) -> None:
         plate_unavailable = [v for v in color_unavailable if v.part_type == "plate"]
         tile_unavailable = [v for v in color_unavailable if v.part_type == "tile"]
         square_unavailable = [v for v in color_unavailable if v.part_type == "square_tile"]
+        plaque_unavailable = [v for v in color_unavailable if v.part_type == "plaque_tile"]  # feature 017
 
         # Show plate (land) validation
         if layout.land_positions > 0:
@@ -133,6 +152,14 @@ def validate(layout_file: str, kit: str, output: str) -> None:
             click.echo(f"  Checking square tile colors ({len(square_unavailable)} colors)...")
             click.echo(click.style(f"    ✗ {len(square_unavailable)} square tile colors unavailable in kit "
                                    "(no kit has part 3070b)", fg="red"))
+
+        # The in-margin plaque's tile (feature 017, T082): never in the kit either
+        if plaque_unavailable:
+            from ..maps.margin import plaque_label
+            click.echo("  Checking the plaque tile...")
+            for v in plaque_unavailable:
+                click.echo(click.style(f"    ✗ {plaque_label(v.part_id)} unavailable in kit "
+                                       f"(no kit has part {v.part_id})", fg="red"))
 
         if report.template is None:
             # Land/sea mask under the layout's arrangement (feature 007)
@@ -184,7 +211,12 @@ def validate(layout_file: str, kit: str, output: str) -> None:
             for v in color_unavailable:
                 click.echo(f"\n  Color Unavailable: {v.color_name} ({v.color_id})")
                 click.echo(f"    Part type: {v.part_type} ({v.part_id})")
-                click.echo(f"    Positions required: {v.positions_required}")
+                if v.part_type == "plaque_tile":  # feature 017: positions are the studs it covers
+                    from ..maps.margin import plaque_label
+                    label = plaque_label(v.part_id).split(" (part ")[0]
+                    click.echo(f"    Positions required: {v.positions_required} (studs under one {label})")
+                else:
+                    click.echo(f"    Positions required: {v.positions_required}")
                 if v.suggested_alternative:
                     click.echo(f"    Suggested alternative: {v.suggested_alternative.color_name} "
                               f"(ΔE00 {v.suggested_alternative.color_distance:.1f})")
@@ -196,7 +228,8 @@ def validate(layout_file: str, kit: str, output: str) -> None:
                     click.echo(f"\n  Mask Mismatch (template {v.template}): {v.positions_required:,} positions")
                 expects = "kit mask" if v.template is None else f"template {v.template}"
                 for e in v.examples[:3]:
-                    click.echo(f"    ({e['x']}, {e['y']}): {e['part_type']}, {expects} expects {e['expected']}")
+                    click.echo(f"    ({e['x']}, {e['y']}): {_example_part(e['part_type'])}, {expects} expects "
+                               f"{_example_part(e['expected'])}")
 
             for v in quantity_exceeded:
                 click.echo(f"\n  Quantity Exceeded: {v.color_name} ({v.color_id})")

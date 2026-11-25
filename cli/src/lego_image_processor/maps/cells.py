@@ -13,8 +13,14 @@ ocean studs only, ``ice`` comes from the template's own ice file (``load_templat
 blocks are added: ``template`` (id, title and the dataset that decided land and ocean: id, version,
 citation, license), ``margin`` (part 3070b, the margin color and the ring with its cells, or null)
 and ``palette["3070b"]``. The default rendering takes the ring color on ``margin.ring.cells``, the
-margin color on the other ``M`` cells, and equals the layout. Kit files are unchanged. Not
-affiliated with or endorsed by The LEGO Group.
+margin color on the other ``M`` cells, and equals the layout. Kit files are unchanged.
+
+Feature 017 (contracts/in-margin-plaque.md ``cells.json``): with an in-margin plaque
+(``MapResult.plaque``) its studs are ``P`` instead of ``M`` and a ``plaque`` block follows
+``margin``: ``{part_id, color, rgb, corner, cells}`` (the tile's cited Black from
+plaque_parts.json; ``cells`` are the board indices). The default rendering takes the plaque's color
+on ``P`` cells. Files without a plaque are unchanged, and the site's chooser (``palette.js``) never
+receives one (no site variant has a plaque). Not affiliated with or endorsed by The LEGO Group.
 """
 
 from __future__ import annotations
@@ -58,9 +64,18 @@ def part_palette(parts: Sequence[str] = KIT_PARTS) -> Dict[str, List[Dict[str, A
     return out
 
 
-def _units(layer: Layer) -> str:
+def variable_units(layer: Layer) -> str:
+    """The units of a data layer's variable as the registry spells them, "°C" for its Celsius
+    spellings; no ``log10`` prefix (the sticker legend prints log10 layers in data units, feature
+    017). A layer without a dataset (background) has none."""
+    if layer.dataset is None:
+        return ""
     u = str(((layer.dataset.variables or {}).get(layer.variable, {}) or {}).get("units", "") or "")
-    u = _UNITS.get(u.lower(), u)
+    return _UNITS.get(u.lower(), u)
+
+
+def _units(layer: Layer) -> str:
+    u = variable_units(layer)
     # values and bounds are exported after the recipe transform (feature 012 ``log10``)
     return f"log10 {u}".strip() if getattr(layer, "transform", None) == "log10" else u
 
@@ -74,18 +89,30 @@ def _round(v: float, d: int):
     return int(round(v)) if d == 0 else round(float(v), d)
 
 
-def _derived_bounds(values: np.ndarray, classes: np.ndarray, n: int, d: int) -> List[float]:
-    """Value boundaries between the built classes of a rank-based layer: the midpoint between the
-    last value of one class and the first of the next in sorted order (the blend texture swaps
-    cells in pairs, so class counts are those of the ranking)."""
+def derived_bounds(values: np.ndarray, classes: np.ndarray, n: int) -> List[float]:
+    """Value boundaries between the ``n`` built classes of a rank-based layer, unrounded: the
+    smallest value, the midpoint between the last value of one class and the first of the next in
+    sorted order, and the largest value (the blend texture swaps cells in pairs, so class counts
+    are those of the ranking). ``map cells`` rounds them; the sticker legend (feature 017) rounds
+    them to its display step."""
     sv = np.sort(values)
     counts = [int((classes == i).sum()) for i in range(n)]
     cum = np.cumsum(counts)[:-1]
     inner = []
     for c in cum:
         c = int(min(max(c, 1), len(sv) - 1))
-        inner.append(_round((sv[c - 1] + sv[c]) / 2.0, d))
-    return [_round(sv[0], d)] + inner + [_round(sv[-1], d)]
+        inner.append(float((sv[c - 1] + sv[c]) / 2.0))
+    return [float(sv[0])] + inner + [float(sv[-1])]
+
+
+def background_labels(layer: Layer) -> List[str]:
+    """The role of each color of a background layer: "offshore" and "coast ring" for a halo, the
+    layer's name for one color, else "background 1", "background 2", ... (shared with the
+    sticker legend, feature 017)."""
+    n = len(layer.colors)
+    return list(_BACKGROUND_LABELS.get(layer.texture.kind,
+                                       [layer.cls] if n == 1 else
+                                       [f"background {i + 1}" for i in range(n)]))
 
 
 def _layer_block(layer: Layer, classes: np.ndarray, mask: np.ndarray, fld, ice_cells: set) -> Dict[str, Any]:
@@ -98,9 +125,7 @@ def _layer_block(layer: Layer, classes: np.ndarray, mask: np.ndarray, fld, ice_c
     }
     if layer.role == "background":
         block.update(method="background", editable_classes=False, values=None,
-                     class_labels=_BACKGROUND_LABELS.get(layer.texture.kind,
-                                                         [layer.cls] if n == 1 else
-                                                         [f"background {i + 1}" for i in range(n)]))
+                     class_labels=background_labels(layer))
         return block
     method = layer.classification.method
     block.update(method=method, dataset=layer.dataset.id, variable=layer.variable,
@@ -125,7 +150,7 @@ def _layer_block(layer: Layer, classes: np.ndarray, mask: np.ndarray, fld, ice_c
                            for b in layer.classification.bounds]
         block["bounds_source"] = "recipe"
     elif method in RANK_METHODS:
-        block["bounds"] = _derived_bounds(layer_vals, classes[ok], n, d)
+        block["bounds"] = [_round(b, d) for b in derived_bounds(layer_vals, classes[ok], n)]
         block["bounds_source"] = "built classes"
     block["editable_classes"] = method == "bins" or method in RANK_METHODS
     no_value = [int(i) for i in np.flatnonzero((fld.filled & mask).ravel())]
@@ -154,14 +179,28 @@ def _margin_block(template, treatment) -> Dict[str, Any]:
     return {"part_id": MARGIN_PART_ID, "color": treatment.color, "ring": ring}
 
 
+def _plaque_block(plaque, shape) -> Dict[str, Any]:
+    """``plaque`` of a ``cells.json`` with an in-margin plaque (feature 017): its tile, cited color
+    and the board indices of its studs."""
+    from .margin import plaque_tile
+
+    tile = plaque_tile()
+    return {"part_id": plaque.part_id, "color": plaque.color, "rgb": [int(v) for v in tile.color.rgb],
+            "corner": plaque.corner, "cells": [int(i) for i in np.flatnonzero(plaque.mask(shape).ravel())]}
+
+
 def _template_cells(result, ice: Optional[IceRegions]) -> Dict[str, Any]:
-    """``map_cells`` on a non-kit template (feature 016): board coordinates, arrangement A."""
+    """``map_cells`` on a non-kit template (feature 016): board coordinates, arrangement A; the
+    in-margin plaque's studs ``P`` (feature 017)."""
     recipe, tpl = result.recipe, result.template
     land, ocean, margin = np.array(tpl.land), np.array(tpl.ocean), np.array(tpl.margin)
     ice = ice or load_template_ice(tpl)
     shadow = (shadow_mask(land, recipe.shadow.direction, ocean=ocean) if recipe.shadow.enabled
               else np.zeros_like(land))
     kinds = np.where(land, "L", np.where(margin, "M", np.where(shadow, "S", "O")))
+    plaque = getattr(result, "plaque", None)
+    if plaque is not None:
+        kinds = np.where(plaque.mask(land.shape), "P", kinds)
     ice_land = [int(i) for i in np.flatnonzero(ice.land.ravel())]
     ice_sea = [int(i) for i in np.flatnonzero(ice.sea.ravel())]
     layers = {}
@@ -170,7 +209,7 @@ def _template_cells(result, ice: Optional[IceRegions]) -> Dict[str, Any]:
         ice_cells = set(ice_land if layer.cls == "land" else ice_sea)
         layers[layer.cls] = _layer_block(layer, result.classes[layer.cls], mask,
                                          result.fields.get(layer.cls), ice_cells)
-    return {
+    out = {
         "format_version": CELLS_FORMAT,
         "recipe": {"id": recipe.id, "title": recipe.title, "sha256": recipe.sha256},
         "arrangement": result.arrangement.id,
@@ -181,12 +220,17 @@ def _template_cells(result, ice: Optional[IceRegions]) -> Dict[str, Any]:
         "shadow": {"enabled": bool(recipe.shadow.enabled), "color": recipe.shadow.color,
                    "cells": int(shadow.sum())},
         "margin": _margin_block(tpl, result.margin),
+    }
+    if plaque is not None:  # feature 017: only when one is placed
+        out["plaque"] = _plaque_block(plaque, land.shape)
+    out.update({
         "ice": {"land": ice_land, "sea": ice_sea, "color": "lego_white",
                 "source": {k: ice.source[k] for k in ("land_ice", "sea_ice") if k in ice.source}},
         "palette": part_palette(tuple(tpl.parts[k] for k in ("land", "ocean", "margin"))),
         "note": PREVIEW_NOTE,
         "disclaimer": DISCLAIMER,
-    }
+    })
+    return out
 
 
 def map_cells(result, *, ice: Optional[IceRegions] = None) -> Dict[str, Any]:

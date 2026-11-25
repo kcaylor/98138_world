@@ -1,10 +1,13 @@
 """Build step: every map x combination and every download, with a manifest (FR-014-FR-016).
 
 Run ``python -m web98138.prebuild --out DIR [--fetch] [--prices FILE | --no-prices]
-[--allow-partial-prices] [--templates LIST|none]``. It calls the same library functions as the CLI commands ``map build``,
-``map cells`` (feature 015), ``parts list``, ``parts export``, ``parts estimate`` and ``sheets
-build``; nothing here computes a
-map, a parts list, a price or a sheet itself (constitution VI). Only ``--fetch`` uses the network,
+[--allow-partial-prices] [--templates LIST|none]``. It calls the same library functions as the CLI
+commands ``map build``, ``map cells`` (feature 015), ``parts list``, ``parts export``, ``parts
+estimate``, ``sheets build`` and ``map stickers`` (feature 017); nothing here computes a map, a
+parts list, a price, a sheet or a sticker itself (constitution VI). Each map gets one sticker set,
+from the build in the recipe's default combination, under ``maps/<map>/stickers/kit-31203/`` (the
+kit template's id), and one per template variant, from that variant's build, under
+``maps/<map>/stickers/<template-id>/`` (FR-020). Only ``--fetch`` uses the network,
 to download missing pinned datasets (verified by SHA-256); prices come from a committed snapshot
 file (feature 011), never from the network.
 
@@ -63,6 +66,18 @@ TEMPLATE_DESCRIPTIONS = {
     "preview": "Preview, round studs on black and square tiles in the margin, 10 px per stud",
 }
 TEMPLATE_STUD_COUNTS = ("land", "ocean", "margin", "ring")
+
+# feature 017: one sticker set per map and template (contracts/web.md), under the template's id
+# (the kit's is lego_image_processor.templates.KIT_TEMPLATE_ID, feature 016). kind -> (file name,
+# media type, description); the SVG descriptions get the sticker's cut size.
+STICKER_KINDS: Dict[str, tuple] = {
+    "stickers-letter": ("stickers-letter.pdf", "application/pdf",
+                        "Sticker print sheet, US Letter: both stickers at true size"),
+    "stickers-a4": ("stickers-a4.pdf", "application/pdf",
+                    "Sticker print sheet, A4: both stickers at true size"),
+    "sticker-small": ("sticker-small.svg", "image/svg+xml", "Small sticker (SVG, {w} x {h} mm)"),
+    "sticker-large": ("sticker-large.svg", "image/svg+xml", "Large sticker (SVG, {w} x {h} mm)"),
+}
 
 
 class PrebuildError(RuntimeError):
@@ -199,7 +214,7 @@ def select_templates(names: Optional[Iterable[str]] = None):
 def _template_record(tpl) -> Dict[str, Any]:
     """The manifest's ``templates`` entry for a template the site built on (contracts/web.md)."""
     board = tpl.board
-    return {"id": tpl.id, "title": tpl.title, "projection": TEMPLATES.get(tpl.id, tpl.title),
+    return {"id": tpl.id, "title": tpl.title, "projection": tpl.projection_title,
             "board": {"modules": list(board["modules"]), "width": tpl.width, "height": tpl.height},
             "counts": {k: int(tpl.counts[k]) for k in TEMPLATE_STUD_COUNTS},
             "rehang": len(tpl.arrangements) > 1, "description": tpl.description,
@@ -228,7 +243,8 @@ def build_variant(recipe, combination: str, out: Path, rel: str, *, cache_dir=No
     """Write one variant's files with the library; return its manifest entry.
 
     With ``prices`` (a loaded snapshot), the entry has ``estimates`` from the same two parts
-    lists as the downloads, and ``_prices`` (the manifest's top-level block).
+    lists as the downloads, and ``_prices`` (the manifest's top-level block). ``_report`` and
+    ``_result`` (the ``MapResult``, feature 017) are for the caller, not the manifest.
 
     With ``template`` (a confirmed non-kit ``Template``; feature 016), ``combination`` is the
     template's id: the map is built on it (arrangement A) instead of hung as a combination, and the
@@ -320,6 +336,7 @@ def build_variant(recipe, combination: str, out: Path, rel: str, *, cache_dir=No
         "leftovers": [row.to_dict() for row in topup.leftovers],
         "files": entries,
         "_report": result.report,
+        "_result": result,
     }
     if prices is not None:
         from lego_image_processor.prices import estimate_parts_lists
@@ -333,6 +350,95 @@ def build_variant(recipe, combination: str, out: Path, rel: str, *, cache_dir=No
         entry["layers"] = _layers(result.report)
         entry["citations"] = _citations(result.report)
     return entry
+
+
+def _default_combination(recipe) -> str:
+    return recipe.arrangement.id if recipe.arrangement else "A"
+
+
+def build_map_stickers(recipe, result, out: Path, *, cache_dir=None,
+                       template=None) -> Optional[Dict[str, Any]]:
+    """Feature 017: a sticker set of the map, written with the library; return the manifest's
+    ``maps[].stickers`` entry keyed by the template's id (``{"kit-31203": {...}}``, the kit's
+    ``templates.KIT_TEMPLATE_ID``; contracts/web.md).
+
+    Kit (``template`` None): ``result`` is the ``MapResult`` of the recipe's default combination
+    when that combination is being built, else None, and the map is built once more in it. The
+    set's legend values come from that build; the stickers are the same in A-E (SC-003; D and E:
+    feature 010).
+    Files go to ``maps/<map>/stickers/kit-31203/``: the print sheet on Letter and A4 and both SVGs,
+    downloaded as ``98138-world_<map>_<kind>.<ext>``.
+
+    Template (``template``, a confirmed non-kit ``Template``; FR-020): ``result`` is the template
+    variant's ``MapResult`` (None: built on the template); files go to
+    ``maps/<map>/stickers/<template-id>/``, downloaded as
+    ``98138-world_<map>_<template-id>_<kind>.<ext>``. The set names the projection and credits the
+    template's dataset (the library's ``sticker_set``); the variant's own files are not touched.
+    """
+    from lego_image_processor.datasets.cache import DatasetError
+    from lego_image_processor.layout.arrangement import parse_arrangement
+    from lego_image_processor.maps.build import build_map
+    from lego_image_processor.maps.classify import MapBuildError
+    from lego_image_processor.stickers import (StickerError, render_sticker_pdf,
+                                               render_sticker_svgs, sticker_set)
+    from lego_image_processor.templates import KIT_TEMPLATE_ID
+
+    if template is not None and template.is_kit:
+        template = None
+    combination = _default_combination(recipe) if template is None else template.id
+    if result is None:
+        try:
+            if template is None:
+                result = build_map(recipe, cache_dir=cache_dir, compare_official=False,
+                                   arrangement=parse_arrangement(combination))
+            else:
+                result = build_map(recipe, cache_dir=cache_dir, compare_official=False,
+                                   template=template)
+        except DatasetError as exc:
+            raise PrebuildError(f"{recipe.id} {combination}: {exc}") from exc
+        except MapBuildError as exc:
+            raise PrebuildError(f"cannot build {recipe.id} {combination}: {exc}") from exc
+    template_id = KIT_TEMPLATE_ID if template is None else template.id
+    try:
+        s = sticker_set(result)
+        files: Dict[str, bytes] = {"stickers-letter": render_sticker_pdf(s, "letter"),
+                                   "stickers-a4": render_sticker_pdf(s, "a4")}
+        svgs = dict(render_sticker_svgs(s))
+    except StickerError as exc:
+        where = "" if template is None else f" ({template_id})"
+        raise PrebuildError(f"{recipe.id} stickers{where}: {exc}") from exc
+    if s.template.id != template_id:   # pragma: no cover - the library builds what it is given
+        raise PrebuildError(f"{recipe.id} stickers: made on {s.template.id}, not {template_id}")
+    for kind in ("sticker-small", "sticker-large"):
+        files[kind] = svgs[STICKER_KINDS[kind][0]].encode("utf-8")
+    rel = f"maps/{recipe.id}/stickers/{template_id}"
+    prefix = f"98138-world_{recipe.id}" + ("" if template is None else f"_{template_id}")
+    d = Path(out) / rel
+    d.mkdir(parents=True, exist_ok=True)
+    cut = {"sticker-small": s.small.geometry.cut_mm, "sticker-large": s.large.geometry.cut_mm}
+    entries = {}
+    for kind, (name, media, desc) in STICKER_KINDS.items():
+        data = files[kind]
+        (d / name).write_bytes(data)
+        if kind in cut:
+            desc = desc.format(w=f"{cut[kind][0]:.1f}", h=f"{cut[kind][1]:.1f}")
+        stem, ext = name.rsplit(".", 1)
+        entries[kind] = {"path": f"{rel}/{name}", "bytes": len(data), "sha256": _sha256(data),
+                         "media_type": media, "description": desc,
+                         "filename": f"{prefix}_{stem}.{ext}"}
+    title, line = s.text.title, s.text.line
+    plaques = {p["size"]: p for p in s.to_dict()["plaques"]}
+    block = {
+        "files": entries,
+        "title": title,
+        "line": line,
+        "alt": {"small": f"Small sticker: {title}. {line}", "large": f"Large sticker: {title}. {line}"},
+        "legend": [{"label": sw.label, "color": sw.lego_name, "part": sw.part_id} for sw in s.legend],
+        "credit": list(s.credit_lines),     # the large sticker's "Data:" lines
+        "plaques": [plaques["large"], plaques["small"]],   # as the print sheet lists them
+        "notes": s.notes.to_dict(),
+    }
+    return {template_id: block}
 
 
 def build_site(out, maps: Optional[Iterable[str]] = None,
@@ -385,11 +491,15 @@ def build_site(out, maps: Optional[Iterable[str]] = None,
                 raise PrebuildError(str(exc)) from exc
         variants = {}
         report = None
+        default_result = None
         for c in combinations:
             t0 = time.monotonic()
             v = build_variant(recipe, c, out, f"maps/{map_id}/{c}", cache_dir=cache_dir,
                               prices=prices, today=today)
             report = v.pop("_report")
+            result = v.pop("_result")
+            if c == _default_combination(recipe):
+                default_result = result
             block = v.pop("_prices", None)
             if block is not None:
                 prices_block = block
@@ -397,6 +507,19 @@ def build_site(out, maps: Optional[Iterable[str]] = None,
             size = sum(f["bytes"] for f in v["files"].values())
             echo(f"{map_id} {c}: {len(v['files'])} files, {size / 1e6:.1f} MB, "
                  f"{time.monotonic() - t0:.1f} s")
+        stickers: Dict[str, Any] = {}
+
+        def add_stickers(result, template=None):
+            t0 = time.monotonic()
+            block = build_map_stickers(recipe, result, out, cache_dir=cache_dir, template=template)
+            for template_id, st in (block or {}).items():
+                stickers[template_id] = st
+                size = sum(f["bytes"] for f in st["files"].values())
+                echo(f"{map_id} stickers: {len(st['files'])} files ({template_id}), "
+                     f"{size / 1e3:.0f} kB, {time.monotonic() - t0:.1f} s")
+
+        add_stickers(default_result)
+        default_result = None
         template_variants = {}
         for tpl in chosen_templates:   # feature 016: after the kit variants; kit files unchanged
             reason = template_reason(recipe, tpl)
@@ -407,6 +530,7 @@ def build_site(out, maps: Optional[Iterable[str]] = None,
             v = build_variant(recipe, tpl.id, out, f"maps/{map_id}/{tpl.id}", cache_dir=cache_dir,
                               prices=prices, today=today, template=tpl)
             v.pop("_report")
+            result = v.pop("_result")   # feature 017: the MapResult is for the caller, not the manifest
             block = v.pop("_prices", None)
             if block is not None and prices_block is None:
                 prices_block = block
@@ -415,6 +539,8 @@ def build_site(out, maps: Optional[Iterable[str]] = None,
             size = sum(f["bytes"] for f in v["files"].values())
             echo(f"{map_id} {tpl.id}: {len(v['files'])} files, {size / 1e6:.1f} MB, "
                  f"{time.monotonic() - t0:.1f} s")
+            add_stickers(result, tpl)   # feature 017 (FR-020): the variant's own sticker set
+            result = None
         datasets = [{"id": e.id, "version": e.version, "sha256": e.sha256, "url": e.url, "size": e.size,
                      **({"content_sha256": e.content_sha256} if e.content_sha256 else {}),
                      **({"files": len(e.files), "files_sha256": e.files_sha256} if e.files else {})}
@@ -424,7 +550,8 @@ def build_site(out, maps: Optional[Iterable[str]] = None,
                      "default_combination": recipe.arrangement.id if recipe.arrangement else "A",
                      "layers": _layers(report), "datasets": datasets,
                      "citations": _citations(report), "variants": variants,
-                     **({"template_variants": template_variants} if template_variants else {})})
+                     **({"template_variants": template_variants} if template_variants else {}),
+                     **({"stickers": stickers} if stickers else {})})
     manifest = {
         "format_version": FORMAT_VERSION,
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -444,6 +571,8 @@ def build_site(out, maps: Optional[Iterable[str]] = None,
         manifest["prices"] = prices_block
     manifest["build_seconds"] = round(time.monotonic() - started, 1)
     total = sum(f["bytes"] for m in rows for v in _all_variants(m) for f in v["files"].values())
+    total += sum(f["bytes"] for m in rows for st in m.get("stickers", {}).values()
+                 for f in st["files"].values())       # feature 017: the site's size, stickers too
     manifest["total_bytes"] = total
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
                                        encoding="utf-8")

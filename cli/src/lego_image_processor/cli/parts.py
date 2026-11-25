@@ -19,7 +19,8 @@ from ..parts import (ACKNOWLEDGEMENT, BRICKLINK_UPLOAD_NOTE, PRICE_NOTE, LayoutI
                      build_parts_list, owned_parts, parse_owned_csv, parse_percent, read_layout,
                      to_bricklink_xml, to_rebrickable_csv)
 from ..parts.owned import percent_text
-from ..parts.partslist import PART_TYPE_TEXT
+from ..parts.partslist import (PART_TYPE_TEXT, PLAQUE_PART_TYPE, plaque_lot_text, positions_text,
+                               template_text)
 from .map import CommandError, _table
 
 NOTHING_TO_BUY = "Nothing to buy: the owned parts cover this layout."
@@ -78,7 +79,7 @@ def _describe_inputs(pl: PartsList, echo) -> None:
     lay = pl.layout
     src = lay["map"]["recipe"]["id"] if lay.get("map") else None
     echo(f"Parts list for {lay['path']} ({f'recipe {src}' if src else lay['source_image']}; "
-         f"{lay['positions']:,} positions; map pieces only)")
+         f"{positions_text(lay, pl.lots)}; map pieces only)")
     o = pl.owned
     parts = [f"{o.kits} kit(s) of {pl.kit_id}"]
     if o.owned_files:
@@ -92,15 +93,15 @@ def _describe_inputs(pl: PartsList, echo) -> None:
     arr = lay.get("arrangement") or {}
     if arr.get("id", "A") != "A":
         echo(f"Arrangement: {arr['id']} ({arr['name']}). {arr['note']}")
-    echo_template(lay, echo)
+    echo_template(lay, echo, pl.lots)
 
 
-def echo_template(layout_block, echo) -> None:
-    """The template line of a non-kit layout (feature 016); nothing for the kit template."""
+def echo_template(layout_block, echo, lots=()) -> None:
+    """The template line of a non-kit layout (feature 016), naming the in-margin plaque's tile when
+    ``lots`` hold it (feature 017); nothing for the kit template."""
     t = layout_block.get("template")
     if t:
-        echo(f"Template: {t['id']} ({t['title']}); margin in 1x1 square tiles (part 3070b), which kit "
-             "31203 does not have")
+        echo(template_text(t, lots))
 
 
 def _lot_rows(pl: PartsList, all_columns: bool) -> List[List[str]]:
@@ -239,6 +240,12 @@ def export_cmd(layout_path, bricklink_path, rebrickable_path, condition, allow_p
         if csv_text is not None:
             rebrickable_path.write_text(csv_text, encoding="utf-8")
             echo(f"Wrote Rebrickable parts CSV {rebrickable_path}: {len(lots)} rows, {pieces:,} pieces")
+        for l in lots:  # feature 017: the in-margin plaque's tile, named with its marketplace IDs
+            if l.part_type == PLAQUE_PART_TYPE:
+                r = l.ids
+                echo(f"Plaque tile in the files: {plaque_lot_text(l, l.to_buy)}; BrickLink {r.bricklink_item_no} / "
+                     f"{r.bricklink_color_name} ({r.bricklink_color_id}); Rebrickable {r.rebrickable_part_num} / "
+                     f"{r.rebrickable_color_name} ({r.rebrickable_color_id})")
         if xml is not None:
             echo(BRICKLINK_UPLOAD_NOTE)
     if omitted:

@@ -20,11 +20,11 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from ..layout.grid import PositionPlacementGrid
 from ..parts import LayoutInput, Lot, OwnedInputs, PartsList, build_parts_list
-from ..parts.partslist import PART_TYPE_TEXT
+from ..parts.partslist import PART_TYPE_TEXT, PLAQUE_PART_TYPE
 from .snapshot import GuideFigures, PriceSnapshot, money_text
 from .wording import (ALL_COLORS_HINT, ATTRIBUTION, BASIS_SENTENCE, DEFAULT_STALE_DAYS, DISCLAIMER, ESTIMATE_NOTE,
                       LABELS, REASON_NO_DATA, REASON_NOT_IN_SNAPSHOT, SOURCE_TITLE, SOURCE_URL,
-                      reason_unverified)
+                      plaque_lot_hint, reason_unverified)
 
 FORMAT_VERSION = "1"
 KINDS = ("full", "one_kit")
@@ -229,6 +229,12 @@ def _estimate(kind: str, pl: PartsList, snapshot: PriceSnapshot) -> Estimate:
     return Estimate(kind=kind, owned_kits=pl.owned.kits, lines=lines)
 
 
+def plaque_specs(lines) -> List[str]:
+    """The ``--lot`` specs of the plaque-tile lines among ``lines`` (feature 017), each once."""
+    return list(dict.fromkeys(f"{l.lot.part_id}:{l.lot.ids.lego_id}" for l in lines
+                              if l.lot.part_type == PLAQUE_PART_TYPE and l.lot.ids is not None))
+
+
 def _check_lists(full: PartsList, one_kit: PartsList) -> None:
     for name, pl, kits in (("full", full, 0), ("one_kit", one_kit, 1)):
         o = pl.owned
@@ -276,8 +282,12 @@ def _notes(snapshot: PriceSnapshot, staleness: Dict[str, Any],
             u = e.by_basis["unpriced"]
             notes.append(f"Incomplete: {_plural(u['pieces'], 'piece')} in {_plural(u['lots'], 'color')} "
                          f"could not be priced ({e.label[0].lower() + e.label[1:]}).")
-    if any(l.reason == REASON_NOT_IN_SNAPSHOT for e in estimates.values() for l in e.lines):
+    missing = [l for e in estimates.values() for l in e.lines if l.reason == REASON_NOT_IN_SNAPSHOT]
+    if any(l.lot.part_type != PLAQUE_PART_TYPE for l in missing):
         notes.append(f"Fetch every cited color with: {ALL_COLORS_HINT}")
+    for spec in plaque_specs(missing):  # feature 017: --all-colors does not cover the plaque tile
+        hint = plaque_lot_hint(spec)
+        notes.append(f"{hint[0].upper()}{hint[1:]}.")
     stock = estimates["full"].stock_lines
     if stock:
         notes.append("Priced from current for-sale listings (no sales in 6 months): "

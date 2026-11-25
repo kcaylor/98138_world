@@ -161,6 +161,56 @@
   <p class="note ack">{{ manifest.acknowledgement }} Rebrickable part and color IDs courtesy of <a href="https://rebrickable.com">Rebrickable</a>.</p>
 </section>
 
+{% if stickers %}{% set st = stickers %}{% set sbase = '/maps/' ~ map.id ~ '/stickers/' ~ sticker_template %}
+<section id="stickers" class="panel stickers" aria-labelledby="stickers-heading">
+  <h2 id="stickers-heading">Stickers for a plaque</h2>
+  <p class="note">Print both stickers on white sticker paper, cut them out along the marks and press each onto a Black tile, on its own or on a Black plate of the same size as a standalone plaque. {% if template %}These are the {{ template.projection }} version's stickers: their line names the projection, and the large one also credits the dataset that decided land and ocean.{% else %}The stickers are the same for every combination.{% endif %}</p>
+  <div class="sticker-figs">
+  {% for p in st.plaques %}{% set tile = p.parts | selectattr('role', 'equalto', 'tile') | first %}
+    <figure class="sticker-fig sticker-{{ p.size }}">
+      <img src="{{ sbase }}/sticker-{{ p.size }}.svg" alt="{{ st.alt[p.size] }}">
+      <figcaption>{{ p.size | capitalize }} sticker, {{ '%.1f' | format(p.sticker_mm[0]) }} × {{ '%.1f' | format(p.sticker_mm[1]) }} mm, for a {{ tile.color.lego.name }} {{ p.studs | sort | join(' × ') }} tile (part {{ tile.part_id }}). {{ st.notes.printed }}</figcaption>
+    </figure>
+  {% endfor %}
+  </div>
+  <details class="sticker-says">
+    <summary>What the large sticker says</summary>
+    <p class="sticker-title"><strong>{{ st.title }}</strong> <span class="sub">98138.world</span></p>
+    <p>{{ st.line }}</p>
+    <ul class="sticker-legend">
+    {% for row in st.legend %}<li>{{ row.label }} <span class="id">({{ row.color }}, {{ part_labels.get(row.part, row.part) }})</span></li>
+    {% endfor %}</ul>
+    {% for c in st.credit %}<p>{% if loop.first %}Data: {% endif %}{{ c }}</p>{% endfor %}
+    <p>{{ DISCLAIMER }}</p>
+  </details>
+  <h3 id="plaque-heading">Parts for a standalone plaque</h3>
+  <div class="table-scroll" role="region" aria-labelledby="plaque-heading" tabindex="0">
+  <table class="lots plaque-parts">
+    <thead><tr><th scope="col">Plaque</th><th scope="col">Part</th><th scope="col">Color (LEGO)</th><th scope="col">BrickLink item / color</th><th scope="col">Rebrickable part / color</th><th scope="col" class="num">Quantity</th></tr></thead>
+    <tbody>
+    {% for p in st.plaques %}{% for part in p.parts %}
+      <tr>
+        <th scope="row">{{ p.size | capitalize }} sticker: {{ part.role }}</th>
+        <td>{{ part.name }} <span class="id">(design {{ part.lego_design_ids | join(', ') }})</span></td>
+        <td>{{ part.color.lego.name }} <span class="id">({{ part.color.lego.id }}; element {{ part.element_id }})</span></td>
+        <td>{{ part.bricklink_item }} / {{ part.color.bricklink.name }} <span class="id">({{ part.color.bricklink.id }})</span></td>
+        <td>{{ part.rebrickable_part }} / {{ part.color.rebrickable.name }} <span class="id">({{ part.color.rebrickable.id }})</span></td>
+        <td class="num">{{ part.quantity }}</td>
+      </tr>
+    {% endfor %}{% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="note"><strong>{{ st.notes.printed }}</strong> {{ st.notes.colors }} IDs from pinned BrickLink catalog pages and LDraw and Rebrickable snapshots; no price estimate for the plaque parts.</p>
+  <ul class="downloads">
+  {% for kind, f in st.files.items() %}
+    <li><a href="{{ sbase }}/download/{{ kind }}" download="{{ f.filename }}"><span class="dl-name">{{ f.description }}</span><span class="dl-meta">{{ f | ext }} · {{ f.bytes | size }}</span></a></li>
+  {% endfor %}
+  </ul>
+  <p class="note">Print the sheet at 100% (no fit-to-page) and check the 100 mm scale bar. {{ DISCLAIMER }}</p>
+</section>
+{% endif %}
+
 <div class="columns">
 <section aria-labelledby="layers-heading" class="panel">
   <h2 id="layers-heading">How this map is made</h2>

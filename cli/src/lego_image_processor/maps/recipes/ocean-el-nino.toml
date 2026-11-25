@@ -36,3 +36,6 @@ colors = [   # cold -> warm; anomaly classes in °C, see bounds
 [ocean.classification]
 method = "bins"
 bounds = [-9, -1.5, -0.5, -0.25, -0.1, 0.1, 0.3, 0.5, 1.0, 9]
+# Map stickers (feature 017): sticker texts approved by the project owner, 2026-11-24
+[sticker]
+line = "Sea surface temperature anomaly of a strong El Niño, in °C against the 1971-2000 average."

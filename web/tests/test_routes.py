@@ -160,6 +160,13 @@ def test_every_download(client, manifest):
         assert hashlib.sha256(r.content).hexdigest() == f["sha256"]
         n += 1
     assert n >= 6 * 7
+    # feature 017: each map's four sticker files
+    for m in manifest["maps"]:
+        for kind, f in m["stickers"]["kit-31203"]["files"].items():
+            r = client.get(f"/maps/{m['id']}/stickers/kit-31203/download/{kind}")
+            assert r.status_code == 200, (m["id"], kind)
+            assert r.headers["content-disposition"] == f'attachment; filename="{f["filename"]}"'
+            assert hashlib.sha256(r.content).hexdigest() == f["sha256"]
 
 
 def test_download_contents_parse(client):
@@ -206,6 +213,9 @@ def test_downloads_listed_with_size(client, manifest):
             continue
         assert f'href="/maps/ocean-sst/A/download/{kind}"' in html
         assert escape(f["description"]) in html
+    for kind, f in manifest["maps"][1]["stickers"]["kit-31203"]["files"].items():  # feature 017
+        assert f'href="/maps/ocean-sst/stickers/kit-31203/download/{kind}"' in html
+        assert escape(f["description"]) in html
 
 
 # --- US4: about ----------------------------------------------------------------------------
@@ -215,7 +225,8 @@ def test_about(client):
     for text in ("frames 1·2·3, Europe and Africa in the centre",
                  "frames 3·1·2, America in the centre",
                  "frames 2·3·1, Asia and Australia in the centre",
-                 "pp. 7–8", "cookies", "analytics", REPO):
+                 "pp. 7–8", "cookies", "analytics", REPO,
+                 "Stickers for a plaque"):   # feature 017
         assert text in html, text
 
 
@@ -450,7 +461,9 @@ def test_winkel_page_without_javascript(client):
         assert re.fullmatch(r'<script src="/static/palette\.js\?v=[^"]+" defer>', tag), tag
     assert "<noscript>" in html
     assert re.search(r'<img id="preview-img" src="/maps/ocean-sst/winkel-tripel/preview\.png"', html)
-    assert html.count("/download/") == 9
+    assert html.count("/download/") == 9 + 4      # the variant's files, its sticker set's (017)
+    assert html.count(f"{WINKEL}/download/") == 9
+    assert html.count("/maps/ocean-sst/stickers/winkel-tripel/download/") == 4
 
 
 def test_winkel_page_headers_and_footer(client):
@@ -478,6 +491,7 @@ def test_about_without_templates_has_no_paragraph(site_dir, tmp_path):
         m.pop("templates")
         for mp in m["maps"]:
             mp.pop("template_variants", None)
+            mp.get("stickers", {}).pop("winkel-tripel", None)   # feature 017: their sticker sets
     with _client_for(site_dir, tmp_path, strip) as c:
         about = c.get("/about").text
         assert "Winkel" not in about and "3070b" not in about

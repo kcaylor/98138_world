@@ -155,7 +155,8 @@ def _winkel(template, **kw):
 def test_every_part_type_has_a_sheet_label():
     from lego_image_processor.parts.partslist import PART_ORDER, PART_TYPE
     from lego_image_processor.sheets.legend import PART_LABEL
-    assert list(PART_ORDER) == ["6141", "98138", "3070b"] == list(PART_TYPE)
+    # feature 017 appends the in-margin plaque's tile 10202 (test_plaque_tile_part_order_type_and_labels)
+    assert list(PART_ORDER)[:3] == ["6141", "98138", "3070b"] == list(PART_TYPE)[:3]
     assert PART_TYPE["3070b"] == "square_tile"
     assert set(PART_TYPE.values()) <= set(PART_LABEL)
     assert PART_LABEL["square_tile"] == "tile 1x1 square"
@@ -235,3 +236,151 @@ def test_loose_square_tiles_count_on_a_template_layout(confirmed_winkel, write_c
     # no kit supplies square tiles, so missing ones subtract nothing (supply never below 0)
     assert (sq.kit_supply, sq.loose, sq.owned, sq.to_buy) == (0, 40, 40, n - 40)
     assert pl.owned.ignored_rows == 1
+
+
+# --- the in-margin plaque tile (feature 017 T069; FR-024, SC-009; contracts/in-margin-plaque.md) -
+# The plaque's 36 studs carry no position: its tile is one lot read from ``metadata.plaque``, with
+# every ID from plaque_parts.json (never from the part number: a BrickLink item can differ from the
+# part ID, as 6141 is item 4073 and 3070b is item 3070).
+
+def _plaque_tile():
+    from lego_image_processor.kit.plaque_parts import load_plaque_parts
+    return load_plaque_parts().plaques["small"].tile
+
+
+def _plaque_record(template, corner="bottom-left"):
+    from lego_image_processor.maps.margin import place_plaque
+    return place_plaque(template, corner).layout_record()
+
+
+def _plaque_grid(template, corner="bottom-left", **kw):
+    return _winkel(template, plaque=_plaque_record(template, corner), **kw)
+
+
+def test_plaque_tile_part_order_type_and_labels():
+    from lego_image_processor.parts.partslist import PART_ORDER, PART_TYPE, PART_TYPE_TEXT
+    from lego_image_processor.sheets.legend import PART_LABEL
+    tile = _plaque_tile()
+    assert list(PART_ORDER) == ["6141", "98138", "3070b", tile.part_id] == list(PART_TYPE)
+    assert PART_TYPE[tile.part_id] == "plaque_tile"
+    w, h = tile.studs
+    assert PART_LABEL["plaque_tile"] == f"tile {w}x{h}" == "tile 6x6" == PART_TYPE_TEXT["plaque_tile"]
+
+
+def test_plaque_lot_has_the_cited_ids(confirmed_winkel):
+    pl = build_parts_list(_plaque_grid(confirmed_winkel))
+    tile = _plaque_tile()
+    assert [l.part_id for l in pl.lots] == ["6141", "98138", "98138", "3070b", tile.part_id]
+    lot = pl.lots[-1]
+    assert (lot.part_type, lot.color_key, lot.verified, lot.needed) == ("plaque_tile", tile.color.key, True, 1)
+    d = lot.to_dict()
+    assert d["lego"] == {"name": tile.color.lego.name, "id": tile.color.lego.id,
+                         "element_id": tile.color.element_id}
+    assert d["bricklink"] == {"item_type": "P", "item_no": tile.numbers.bricklink_item_no,
+                              "color_name": tile.color.bricklink.name, "color_id": tile.color.bricklink.id}
+    assert d["rebrickable"] == {"part_num": tile.numbers.rebrickable_part_num,
+                                "color_name": tile.color.rebrickable.name,
+                                "color_id": tile.color.rebrickable.id}
+    assert d["rgb"] == list(tile.color.rgb)
+    assert lot.ids.part.lego_design_ids == tile.numbers.lego_design_ids
+    # Black: BrickLink 11, Rebrickable 0 (as plaque_parts.json cites them)
+    assert (tile.color.bricklink.id, tile.color.rebrickable.id) == (11, 0)
+    assert (d["bricklink"]["color_id"], d["rebrickable"]["color_id"]) == (11, 0)
+
+
+def test_plaque_citations_resolve_from_plaque_parts(confirmed_winkel):
+    from lego_image_processor.kit.part_colors import load_part_colors
+    from lego_image_processor.kit.part_numbers import load_part_numbers
+    from lego_image_processor.kit.plaque_parts import load_plaque_parts
+    pl = build_parts_list(_plaque_grid(confirmed_winkel))
+    lot = pl.lots[-1]
+    by_id = {c["id"]: c for c in pl.citations}
+    cids = lot.ids.citation_ids
+    assert set(cids) <= set(by_id)                                   # none is dropped
+    assert {"bricklink-10202", "rebrickable-elements"} <= set(cids)  # the contract's examples
+    shared = {p.id for p in load_part_numbers().pages} | {c.id for c in load_part_colors().citations}
+    snaps = {p.id: p for p in load_plaque_parts().snapshots}
+    own = [c for c in cids if c not in shared]
+    assert "bricklink-10202" in own
+    for cid in own:                                                  # resolved from source.snapshots
+        assert by_id[cid] == snaps[cid].to_dict()
+    assert len(by_id) == len(pl.citations)                           # each once
+
+
+def test_plaque_replaces_36_square_tiles_and_nothing_else(confirmed_winkel):
+    plain = build_parts_list(_winkel(confirmed_winkel), owned=OwnedInputs(kits=1))
+    plaque = build_parts_list(_plaque_grid(confirmed_winkel), owned=OwnedInputs(kits=1))
+    a = {(l.part_id, l.color_key): l.needed for l in plain.lots}
+    b = {(l.part_id, l.color_key): l.needed for l in plaque.lots}
+    tile = _plaque_tile()
+    cells = tile.studs[0] * tile.studs[1]
+    assert b.pop((tile.part_id, tile.color.key)) == 1
+    assert b[("3070b", "lego_black")] == a[("3070b", "lego_black")] - cells == confirmed_winkel.counts["margin"] - 36
+    assert {k: v for k, v in b.items() if k[0] != "3070b"} == {k: v for k, v in a.items() if k[0] != "3070b"}
+    one_stud = sum(l.needed for l in plaque.lots if l.part_type != "plaque_tile")
+    assert one_stud == 10204 and plaque.totals()["needed"] == 10205            # SC-009
+    assert [l.to_dict() for l in plaque.leftovers] == [l.to_dict() for l in plain.leftovers]
+    assert plaque.totals()["leftover"] == plain.totals()["leftover"]
+
+
+def test_one_kit_buys_the_plaque_tile(confirmed_winkel):
+    from lego_image_processor.kit.inventory import load_kit_inventory
+    tile = _plaque_tile()
+    assert load_kit_inventory().supplied_for(tile.part_id, tile.color.key) == 0
+    for kits in (1, 3):
+        lot = build_parts_list(_plaque_grid(confirmed_winkel), owned=OwnedInputs(kits=kits)).lots[-1]
+        assert (lot.kit_supply, lot.owned, lot.shortfall, lot.to_buy) == (0, 0, 1, 1)
+
+
+def test_parts_list_json_with_a_plaque(confirmed_winkel):
+    pl = build_parts_list(_plaque_grid(confirmed_winkel), layout_path="p.json")
+    d = json.loads(pl.to_json())
+    row = d["lots"][-1]
+    assert (row["part_id"], row["part_type"], row["needed"], row["kit_supply"]) == \
+        (_plaque_tile().part_id, "plaque_tile", 1, 0)
+    assert list(row) == list(d["lots"][0])
+    assert d["totals"]["lots"] == len(d["lots"]) and d["totals"]["unverified_lots"] == 0
+    assert d["layout"]["positions"] == 10240                 # the board; 36 of its studs are the plaque
+    assert pl.to_json() == build_parts_list(_plaque_grid(confirmed_winkel), layout_path="p.json").to_json()
+
+
+def test_layouts_without_a_plaque_have_no_plaque_lot(confirmed_winkel, small_grid):
+    for grid in (small_grid, _winkel(confirmed_winkel)):
+        assert "plaque_tile" not in {l.part_type for l in build_parts_list(grid).lots}
+
+
+def test_plaque_record_must_name_the_plaque_tile(confirmed_winkel):
+    rec = dict(_plaque_record(confirmed_winkel), part_id="3958")     # the plaque plate, not a tile
+    with pytest.raises(LayoutInputError, match="metadata.plaque"):
+        build_parts_list(_winkel(confirmed_winkel, plaque=rec))
+
+
+def test_plaque_in_an_uncited_color_is_unverified(confirmed_winkel):
+    from lego_image_processor.parts.resolve import REASON_NO_COLOR
+    rec = dict(_plaque_record(confirmed_winkel), color="lego_white")
+    pl = build_parts_list(_winkel(confirmed_winkel, plaque=rec))
+    lot = pl.lots[-1]
+    assert (lot.part_type, lot.verified, lot.reason, lot.needed) == ("plaque_tile", False, REASON_NO_COLOR, 1)
+
+
+def test_owned_csv_reads_the_plaque_tile_only_on_a_plaque_layout(confirmed_winkel, write_csv):
+    from lego_image_processor.parts import owned_parts
+    tile = _plaque_tile()
+    grid = _plaque_grid(confirmed_winkel)
+    assert owned_parts(grid) == ("6141", "98138", "3070b", tile.part_id)
+    assert owned_parts(_winkel(confirmed_winkel)) == ("6141", "98138", "3070b")
+    text = f"Part,Color,Quantity\n{tile.numbers.rebrickable_part_num},{tile.color.rebrickable.id},1\n"
+    owned = parse_owned_csv(write_csv("o.csv", text), parts=owned_parts(grid))
+    assert owned.quantities == {(tile.part_id, tile.color.key): 1} and owned.ignored_rows == 0
+    lot = build_parts_list(grid, owned=OwnedInputs(kits=1, owned_files=(owned,))).lots[-1]
+    assert (lot.loose, lot.owned, lot.to_buy, lot.surplus) == (1, 1, 0, 0)
+    by_element = parse_owned_csv(write_csv("e.csv", f"Element,Quantity\n{tile.color.element_id},2\n"),
+                                 parts=owned_parts(grid))
+    assert by_element.quantities == {(tile.part_id, tile.color.key): 2}
+    # a layout without the plaque ignores (and counts) the row, as a kit layout does 3070b's
+    plain = parse_owned_csv(write_csv("p.csv", text), parts=owned_parts(_winkel(confirmed_winkel)))
+    assert plain.quantities == {} and plain.ignored_rows == 1
+    from lego_image_processor.parts import OwnedFileError
+    with pytest.raises(OwnedFileError, match=f"part {tile.part_id} in Rebrickable color 15 has no cited row"):
+        parse_owned_csv(write_csv("w.csv", f"Part,Color,Quantity\n{tile.part_id},15,1\n"),
+                        parts=owned_parts(grid))

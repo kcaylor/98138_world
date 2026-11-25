@@ -10,10 +10,10 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Callable, List, Sequence
 
-from ..parts.partslist import PART_TYPE_TEXT
-from .estimate import KINDS, Estimate, EstimateLine, EstimateReport
+from ..parts.partslist import PART_TYPE_TEXT, PLAQUE_PART_TYPE, positions_text, template_text
+from .estimate import KINDS, Estimate, EstimateLine, EstimateReport, plaque_specs
 from .wording import (ALL_COLORS_HINT, ATTRIBUTION, DISCLAIMER, ESTIMATE_NOTE, NOTHING_TO_BUY_TEXT,
-                      REASON_NOT_IN_SNAPSHOT, SHORT_LABELS, STATISTIC_TEXT)
+                      REASON_NOT_IN_SNAPSHOT, SHORT_LABELS, STATISTIC_TEXT, plaque_lot_hint)
 
 Echo = Callable[..., None]
 
@@ -108,15 +108,15 @@ def echo_estimate(report: EstimateReport, lines: bool = False, echo: Echo = None
     lay = report.layout
     recipe = (lay.get("map") or {}).get("recipe") or {}
     what = f"recipe {recipe['id']}" if recipe.get("id") else lay.get("source_image") or "layout"
-    echo(f"Price estimate for {lay.get('path') or 'layout'} ({what}; {lay['positions']:,} positions; "
+    lots = [l.lot for l in report.estimates["full"].lines]  # every lot: the full estimate needs them all
+    echo(f"Price estimate for {lay.get('path') or 'layout'} ({what}; {positions_text(lay, lots)}; "
          "map pieces only)")
     arr = lay.get("arrangement") or {}
     if arr.get("id", "A") != "A":
         echo(f"Arrangement: {arr['id']} ({arr['name']}). {arr['note']}")
     t = lay.get("template")  # feature 016: non-kit layouts only
     if t:
-        echo(f"Template: {t['id']} ({t['title']}); margin in 1x1 square tiles (part 3070b), which kit "
-             "31203 does not have")
+        echo(template_text(t, lots))
     s = report.snapshot
     snap = report._snapshot_obj
     sha = f"SHA-256 {s['sha256'][:8]}…" if s.get("sha256") else "SHA-256 unknown"
@@ -142,8 +142,11 @@ def echo_estimate(report: EstimateReport, lines: bool = False, echo: Echo = None
              "be priced:")
         for l in unpriced:
             echo(f"  {_lot_name(l)}: {l.reason}; {_plural(l.quantity, 'piece')}")
-        if any(l.reason == REASON_NOT_IN_SNAPSHOT for l in unpriced):
+        missing = [l for l in unpriced if l.reason == REASON_NOT_IN_SNAPSHOT]
+        if any(l.lot.part_type != PLAQUE_PART_TYPE for l in missing):
             echo(f"  Hint: fetch every cited color with: {ALL_COLORS_HINT}")
+        for spec in plaque_specs(missing):  # feature 017
+            echo(f"  Hint: {plaque_lot_hint(spec)}")
     if full.stock_lines:
         echo("Priced from current for-sale listings (no sales in 6 months): "
              + ", ".join(l.label for l in full.stock_lines))

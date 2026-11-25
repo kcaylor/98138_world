@@ -57,6 +57,25 @@ def test_part_labels_add_the_square_tile_only_when_a_variant_uses_it():
         "6141": "plate 1x1 round", "98138": "tile 1x1 round", "3070b": "tile 1x1 square"}
 
 
+def test_part_labels_know_the_plaque_tile_but_the_site_has_none(manifest):
+    # feature 017 (T069/T070): the CLI's in-margin plaque tile has a label, so a variant with a
+    # plaque would never meet a part type without one; no site variant has a plaque (FR-020), so the
+    # session site's labels are unchanged.
+    from lego_image_processor.kit.plaque_parts import load_plaque_parts
+    from lego_image_processor.parts.partslist import PART_TYPE
+
+    from web98138.prebuild import _part_labels
+
+    tile = load_plaque_parts().plaques["small"].tile.part_id
+    assert PART_TYPE[tile] == "plaque_tile"
+    row = {"variants": {"A": {"lots": [{"part_id": p} for p in ("6141", "98138", "3070b", tile)],
+                              "leftovers": [{"part_id": "6141"}, {"part_id": "98138"}]}}}
+    assert _part_labels([row]) == {"6141": "plate 1x1 round", "98138": "tile 1x1 round",
+                                   "3070b": "tile 1x1 square", tile: "tile 6x6"}
+    assert tile not in manifest["part_labels"]
+    assert list(manifest["part_labels"]) == ["6141", "98138", "3070b"]
+
+
 def test_every_variant_has_files_matching_checksums(site_dir, manifest):
     for m in manifest["maps"]:
         assert set(m["variants"]) == {"A", "B", "C", "D", "E"}
@@ -70,6 +89,8 @@ def test_every_variant_has_files_matching_checksums(site_dir, manifest):
                 assert f["path"] == f"maps/{m['id']}/{c}/{p.name}"
                 if kind not in ("preview", "thumb"):
                     assert f["filename"].startswith(f"98138-world_{m['id']}_{c}_")
+            # feature 017: sticker files are per map, never in a variant
+            assert not {"stickers-letter", "stickers-a4", "sticker-small", "sticker-large"} & set(v["files"])
 
 
 def test_preview_sizes(site_dir, manifest):
@@ -136,6 +157,12 @@ def test_map_page_data(manifest):
     assert cit["license"] and cit["citation"]
     assert isinstance(sst["variants"]["A"]["warnings"], list)
     assert sst["recipe"]["sha256"]
+    # feature 017: one sticker block per map, after the variants and 016's template variants
+    # (additive)
+    for m in manifest["maps"]:
+        keys = ["id", "title", "description", "recipe", "default_combination", "layers", "datasets",
+                "citations", "variants"] + (["template_variants"] if "template_variants" in m else [])
+        assert list(m) == keys + ["stickers"], m["id"]
 
 
 def test_missing_dataset_without_fetch_is_an_error(tmp_path, fixture_datasets):
@@ -271,6 +298,31 @@ def test_partial_snapshot_refused_unless_allowed(tmp_path, fixture_datasets, cap
     assert main(args) == 1
     assert "partial" in capsys.readouterr().err
     assert main(args + ["--allow-partial-prices"]) == 0
+
+
+def test_named_snapshot_with_the_plaque_lot_is_complete_for_load_prices(tmp_path):
+    """Feature 017 (T072, needed by the owner's T091): a ``named`` snapshot of every
+    ``recipe_lots()`` lot plus the plaque tile's ``10202:26`` is complete, so the prebuild takes it
+    without --allow-partial-prices. Synthetic figures from the fixture snapshot."""
+    from lego_image_processor.prices.lots import named_lots, recipe_lots
+
+    from web98138.prebuild import load_prices
+
+    data = json.loads(PRICES.read_text())
+    proto = data["lots"][0]
+    lots = named_lots([l.spec for l in recipe_lots()] + ["10202:26"])
+    data["lots"] = [{**proto, "part_id": l.part_id, "lego_color_id": l.lego_color_id,
+                     "color_key": l.color_key, "lego_color_name": l.lego_color_name,
+                     "bricklink": {"item_type": l.bricklink_item_type, "item_no": l.bricklink_item_no,
+                                   "color_id": l.bricklink_color_id, "color_name": l.bricklink_color_name}}
+                    for l in lots]
+    data["lot_set"] = {"kind": "named", "recipes": [], "count": len(lots)}
+    data["complete"] = True
+    p = tmp_path / "named.json"
+    p.write_text(json.dumps(data))
+    snap = load_prices(p)
+    assert snap.complete and snap.lot_set["kind"] == "named"
+    assert snap.lots[-1].lot.spec == "10202:26" and len(snap.lots) == len(recipe_lots()) + 1
 
 
 def test_no_prices(tmp_path, fixture_datasets):

@@ -44,6 +44,11 @@ A CLI tool that converts images to LEGO-compatible color palettes and generates 
   (part 3070b) in one color and an optional outline ring (`template` commands, `map build
   --template`, recipe keys `template` and `[margin]`); maps build on it once the project owner
   confirms its layout
+- **Map stickers** (feature 017): two printed stickers for a Black plaque beside any map, a small
+  one for a 6 × 6 tile and a large one with the color legend and data credit for an 8 × 16 tile,
+  as a print sheet (PDF), SVG files or a JSON summary, with the plaque parts' cited IDs (`map
+  stickers`, recipe table `[sticker]`); on Winkel tripel, an optional plaque tile in a margin
+  corner (`--plaque`, `[margin].plaque`)
 
 ## Installation
 
@@ -731,6 +736,120 @@ with no name. A rewrite keeps the confirmation only while the layout stays the s
 `data/templates/<id>.json` and its ice studs `<id>-ice.json`, whose `template_layout_sha256`
 must equal the template's layout digest. Formats: `specs/016-map-templates/contracts/`.
 
+### Map stickers
+
+Two printed stickers for a plaque beside the map, white on black: a small one for a Black 6 × 6
+tile and a large one for a Black 8 × 16 tile. Both carry the map's title, one line about it and
+"Not affiliated with or endorsed by The LEGO Group."; the large one adds "98138.world", the color
+legend and the data credit. Everything is taken from the recipe and the built map.
+
+```bash
+lego-image-processor map stickers ocean-sst -o sst.pdf                   # print sheet, US Letter
+lego-image-processor map stickers ocean-sst -o sst-a4.pdf --paper a4     # A4, same sticker sizes
+lego-image-processor map stickers ocean-sst -o sst-svg --format svg      # sticker-small.svg, sticker-large.svg
+lego-image-processor map stickers ocean-sst -o sst.json --format json    # texts, legend, credits, parts
+lego-image-processor map stickers ocean-sst --template winkel-tripel -o w.pdf
+```
+
+- **Print sheet**: one page with both stickers at true size, Black bleed and cut marks, the plaque
+  parts with their IDs, each dataset's citation and license, a 100 mm scale bar and "Print at
+  100% (no fit-to-page)". Print it on white sticker paper at 100%, measure the scale bar, and cut
+  along the marks: the large sticker is 125.8 × 61.8 mm and the small one 45.8 mm square, 1 mm
+  inside the tile on every side (the tiles are about 127.8 × 63.8 and 47.8 × 47.8 mm), so a thin
+  black edge of the tile shows. Printed colors only approximate the LEGO colors.
+- **Legend**: every class of the built map with its color: `bins` ranges with open end classes,
+  rank boundaries from the build, the recipe's second legend unit, background roles, override
+  names, "land shadow", and color names without values for the kit design. Rank values are rounded
+  to a step at which A, B, C, D and E agree, so one set serves all five combinations (the map is
+  built in the recipe's own arrangement, D for the ENSO maps; there is no `--arrangement`).
+- **Credit**: each dataset's title and DOI (the publisher when there is no DOI), including
+  `land_from`, override and template datasets. On a template the line ends with its projection
+  ("Winkel tripel projection.") and the large sticker credits the template's dataset (ETOPO 2022)
+  once.
+- Text wraps, then shrinks, never below 5 pt; text that still does not fit stops with the sticker,
+  the field and the space needed and available. PDF text is Latin-1 (standard Helvetica): a field
+  with other characters stops the PDF and suggests `--format svg`, which takes any text. The same
+  input gives the same bytes. No file holds an image, logo or LEGO artwork; each SVG carries the
+  disclaimer in `<desc>` and the citations and licenses in `<metadata>`.
+- Never downloads (build first with `map build --fetch`); on any error nothing is written.
+
+The texts come from an optional recipe table. Each bundled recipe has one, with texts approved by
+the project owner on 2026-11-24; bundled sticker titles do not say "Official".
+
+```toml
+[sticker]
+title = "World Map, kit 31203 design"       # optional; default: the recipe's title
+line = "White land and the kit's ocean pattern in nine tile colors, cell for cell from its building instructions."
+credit = "Design grid from the LEGO 31203 building instructions, extracted by 98138.world."   # optional
+no_data = { land = "ice", ocean = "sea ice" }   # optional: labels for the layers' no_data colors
+```
+
+Every value is a non-empty single line. `line` is required in the table; a recipe without the
+table uses its `title` and `description`. `credit` replaces the large sticker's "Data:" lines only
+(the print sheet keeps every citation). A `no_data` label needs that layer's `[<layer>.no_data]`
+rule (default label "no data"). The table changes no layout, parts list, sheet or estimate; only
+the recipe's own SHA-256 changes. Format: `specs/017-map-stickers/contracts/recipe-sticker.md`.
+
+**Plaque parts.** The command, the print sheet and the JSON summary list the parts of a standalone
+plaque, all in Black (BrickLink 11, Rebrickable 0); the sticker is printed, not a LEGO part, and
+none of these parts is in kit 31203:
+
+| Plaque | Tile | Plate (standalone) |
+|---|---|---|
+| Small, 6 × 6 | Tile 6 x 6 with Bottom Tubes: design 10202, element 6155125; BrickLink 10202, Rebrickable 10202 | Plate 6 x 6: design 3958, element 395826; BrickLink 3958, Rebrickable 3958 |
+| Large, 8 × 16 | Tile 8 x 16 with Bottom Tubes, Polished Surface (smooth): design 4974, element 6484420; BrickLink 4974, Rebrickable 4974 | Plate 8 x 16: design 92438, element 6094066; BrickLink 92438, Rebrickable 92438 |
+
+The IDs are cited in `data/plaque_parts.json`, built by a maintainer tool from the pinned
+partcolors snapshots (Rebrickable elements and colors, LDraw, the BrickLink color guide) and four
+archived BrickLink catalog pages. From `cli/`, `PYTHONPATH=tools poetry run python -m partcolors
+plaque-parts --check` must report "no differences". Format:
+`specs/017-map-stickers/contracts/plaque-parts-file.md`.
+
+**Plaque in a margin corner.** On a template with a margin (Winkel tripel), `--plaque CORNER` on
+`map build`, `map check` and `map cells`, or `plaque` in the recipe's `[margin]` table, puts the
+small plaque's Black tile 6x6 (10202) in a margin corner, one stud in from both board edges
+(confirmed by the project owner on 2026-11-25):
+
+| Corner | Rows | Columns | Section |
+|---|---|---|---|
+| `top-left` | 1–6 | 1–6 | A1 |
+| `top-right` | 1–6 | 121–126 | H1 |
+| `bottom-left` | 73–78 | 1–6 | A5 |
+| `bottom-right` | 73–78 | 121–126 | H5 |
+
+```bash
+lego-image-processor map build ocean-sst --template winkel-tripel --plaque bottom-left -o p.json --preview p.png
+lego-image-processor parts list p.json --kits 1        # one tile 6x6 (10202) to buy, 36 fewer square tiles
+lego-image-processor sheets build p.json -o p-sheets.pdf
+lego-image-processor map cells ocean-sst --template winkel-tripel --plaque bottom-left -o cells.json
+```
+
+```toml
+[margin]
+plaque = "bottom-left"    # top-left, top-right, bottom-left or bottom-right
+```
+
+- `--plaque` wins over the recipe; `--plaque none` turns a recipe's plaque off. `--plaque` on the
+  kit template stops with "the kit template has no margin" (exit 1); a recipe's corner on a kit
+  build is ignored with the margin note. The tile must lie in the corner's clear block and in one
+  16 × 16 module, at least one stud from the outline ring; otherwise the build stops with the
+  space needed and available.
+- The layout records `metadata.plaque` (part, color, corner, studs) and has 10,204 positions: the
+  36 studs under the tile carry no 1×1 piece, so the margin has 1,960 square tiles instead of
+  1,996; land and ocean are unchanged. The build prints a `Plaque:` line; the preview draws the
+  tile as one Black rectangle.
+- Parts lists, exports and the one-kit top-up add one lot, a Black tile 6x6 (after 6141, 98138 and
+  3070b); leftovers list kit elements only. Build sheets draw the tile as one outlined rectangle
+  labelled "tile 6x6 (10202)" in its section, counted there and in the legend. `map cells` marks
+  its studs `P`. `validate` accepts exactly the plaque's studs as absent and reports the tile, like
+  the square tiles, as not in the kit (`ocean-sst` on Winkel with a plaque: 80.5% buildable from
+  the kit, as without one).
+- `parts estimate` prices the tile as lot `10202:26`; a snapshot without it gives an incomplete
+  estimate with the tile unpriced and a hint to fetch it with `parts prices fetch --lot 10202:26`
+  (`--all-colors` does not fetch it). Format: `specs/017-map-stickers/contracts/in-margin-plaque.md`.
+
+The web site's variants carry no plaque; it offers each variant's stickers.
+
 ### Python library
 
 ```python
@@ -766,11 +885,21 @@ t = load_template("winkel-tripel")    # t.status, t.counts, t.class_at(row, col)
 t.stud_at(48.86, 2.35)                 # (18, 61): the stud that holds a location, or None
 t.location(0, 0)                       # None: a margin stud is off the globe
 build_map(load_recipe("ocean-sst"), template="winkel-tripel")   # confirmed templates only
+
+from lego_image_processor.stickers import render_sticker_pdf, render_sticker_svgs, sticker_set
+from lego_image_processor.kit.plaque_parts import load_plaque_parts
+
+s = sticker_set(build_map(load_recipe("ocean-sst")))   # a MapResult, kit or template
+s.to_dict()                                           # the JSON summary
+pdf_bytes = render_sticker_pdf(s, paper="letter")     # the print sheet
+render_sticker_svgs(s)                                # [("sticker-small.svg", text), ("sticker-large.svg", text)]
+load_plaque_parts().plaques["small"].tile             # 10202 in Black, with cited IDs
 ```
 
 Maintainer tools (from `cli/`, need the pinned sources in the cache; `--check` must report
 "no differences"): `PYTHONPATH=tools python -m partnumbers build --check`,
-`PYTHONPATH=tools python -m partcolors build --check` and
+`PYTHONPATH=tools python -m partcolors build --check`,
+`PYTHONPATH=tools python -m partcolors plaque-parts --check` and
 `PYTHONPATH=tools python -m maptemplates build winkel-tripel --check`.
 
 ## Development

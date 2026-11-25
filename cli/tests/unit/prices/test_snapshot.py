@@ -192,11 +192,15 @@ def test_fixture_generator_reproduces_identical_bytes(tmp_path):
     r = subprocess.run([sys.executable, str(tool), "--out", str(tmp_path)], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     for name in ("bricklink_price_guide.json", "bricklink_price_guide.source.json",
-                 "bricklink_price_guide_3070b.json", "bricklink_price_guide_3070b.source.json"):
+                 "bricklink_price_guide_3070b.json", "bricklink_price_guide_3070b.source.json",
+                 "bricklink_price_guide_plaque.json", "bricklink_price_guide_plaque.source.json"):
         assert (tmp_path / name).read_bytes() == (FIXTURE_DIR / name).read_bytes(), name
     # feature 016 left the first fixture byte-identical (research R15)
     assert hashlib.sha256((FIXTURE_DIR / "bricklink_price_guide.json").read_bytes()).hexdigest() == \
         "38f9aea806e94683529a8be9b80d63f6f275448659c836d890cf376beaca9f35"
+    # and feature 017 (T071) left 016's 3070b fixture byte-identical
+    assert hashlib.sha256((FIXTURE_DIR / "bricklink_price_guide_3070b.json").read_bytes()).hexdigest() == \
+        "013037b9a275d51f37eb7b978bac3ee600b1662c6cbbaf0d490d576c21ccc101"
 
 
 # --- the square tile (feature 016 T064) ----------------------------------------------------------
@@ -234,3 +238,43 @@ def test_3070b_fixture_adds_one_square_tile_lot_to_the_first():
     src = json.loads((FIXTURE_DIR / "bricklink_price_guide_3070b.source.json").read_text(encoding="utf-8"))
     assert src["synthetic"] is True and src["sha256"] == second.sha256
     assert src["disclaimer"] == wording.DISCLAIMER and "not BrickLink data" in src["note"]
+
+
+# --- the in-margin plaque tile (feature 017 T071, T072) ------------------------------------------
+
+FIXTURE_PLAQUE = FIXTURE_DIR / "bricklink_price_guide_plaque.json"
+
+
+def test_plaque_tile_lot_is_sorted_last_and_needs_its_cited_ids(write_snapshot):
+    from lego_image_processor.kit.plaque_parts import load_plaque_parts
+    tile = load_plaque_parts().plaques["small"].tile
+    lots = [lot_entry("6141", "lego_white"), lot_entry("3070b", "lego_black"),
+            lot_entry(tile.part_id, tile.color.key)]
+    s = load_snapshot(write_snapshot(snapshot_dict(lots)))
+    assert [l.lot.part_id for l in s.lots] == ["6141", "3070b", tile.part_id]
+    assert s.lot_for(tile.part_id, 26).lot == lot_ref(tile.part_id, tile.color.key)
+    assert lots[2]["bricklink"] == {"item_type": "P", "item_no": tile.numbers.bricklink_item_no,
+                                    "color_id": tile.color.bricklink.id, "color_name": tile.color.bricklink.name}
+    msg = _reject(write_snapshot, snapshot_dict([lots[0], lots[2], lots[1]]), "lots[2]")
+    assert "6141, 98138, 3070b, 10202" in msg
+    d = snapshot_dict([lot_entry(tile.part_id, tile.color.key)])
+    d["lots"][0]["bricklink"]["color_id"] = 1
+    _reject(write_snapshot, d, "lots[0].bricklink.color_id")
+    d = snapshot_dict([lot_entry(tile.part_id, tile.color.key)])
+    d["lots"][0].update(lego_color_id=1)
+    _reject(write_snapshot, d, "lots[0].lego_color_id")
+    d = snapshot_dict([lot_entry(tile.part_id, tile.color.key)])
+    d["lots"][0]["part_id"] = "3958"                          # the plaque's plate is not a map part
+    _reject(write_snapshot, d, "lots[0].part_id")
+
+
+def test_plaque_fixture_adds_one_plaque_tile_lot_to_the_3070b_fixture():
+    second, third = load_snapshot(FIXTURE_3070B), load_snapshot(FIXTURE_PLAQUE)
+    assert third.complete and third.lot_set["kind"] == "named"
+    assert [l.lot.key for l in third.lots] == [l.lot.key for l in second.lots] + [("10202", 26)]
+    assert [l.to_dict() for l in third.lots[:-1]] == [l.to_dict() for l in second.lots]
+    assert third.lot_for("10202", 26).basis == "sold"
+    src = json.loads((FIXTURE_DIR / "bricklink_price_guide_plaque.source.json").read_text(encoding="utf-8"))
+    assert src["synthetic"] is True and src["sha256"] == third.sha256
+    assert src["disclaimer"] == wording.DISCLAIMER and "not BrickLink data" in src["note"]
+    assert "10202" in src["lots"]

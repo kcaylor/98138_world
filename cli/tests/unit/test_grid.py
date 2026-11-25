@@ -385,3 +385,76 @@ class TestTemplateLayout:
         st = self._grid(self.TEMPLATE).compute_statistics()
         assert st.margin_tile_count == 2
         assert self._grid().compute_statistics().margin_tile_count is None
+
+
+class TestPlaqueLayout:
+    """Feature 017 (T065; FR-023; contracts/in-margin-plaque.md "Layout JSON" and "Counts";
+    data-model.md InMarginPlaque): ``metadata.plaque`` only when a plaque is placed; its 36 studs
+    carry no position; the margin counts are the square tiles present, while ``metadata.template``
+    keeps the template's own counts. Counts come from the loaded template, not from the contract."""
+
+    @staticmethod
+    def _plaque(template, corner="bottom-left"):
+        from lego_image_processor.maps.margin import place_plaque
+        return place_plaque(template, corner, "option")
+
+    @staticmethod
+    def _grid(template, plaque=None):
+        from ..winkel_layouts import winkel_grid
+        return winkel_grid(template, plaque=None if plaque is None else plaque.layout_record())
+
+    def test_plaque_layout(self, confirmed_winkel):
+        t = confirmed_winkel
+        c = t.counts
+        p = self._plaque(t)
+        g = self._grid(t, p)
+        assert len(g.positions) == t.width * t.height - p.cells == 10204
+        assert g.total_positions == t.width * t.height  # the board's studs
+        assert g.plaque == p.layout_record()
+        assert g.plaque_positions == p.positions()
+        assert g.margin_positions == c["margin"] - p.cells
+        d = json.loads(g.to_json())
+        m = d["metadata"]
+        assert m["plaque"] == {"part_id": "10202", "color": "lego_black", "corner": "bottom-left",
+                               "studs": {"row": 73, "col": 1, "height": 6, "width": 6}, "cells": 36}
+        assert list(m)[-1] == "plaque" and list(m).index("plaque") == list(m).index("template") + 1
+        assert m["margin_positions"] == c["margin"] - 36
+        assert m["template"]["counts"]["margin"] == c["margin"]  # the template file's own count
+        s = d["statistics"]
+        assert s["total_tile_count"] == 10204
+        assert s["margin_tile_count"] == c["margin"] - 36
+        assert s["plaque_tile_count"] == 1
+        keys = list(s)
+        assert keys.index("plaque_tile_count") == keys.index("margin_tile_count") + 1
+        assert sum(s["color_frequency_by_part_type"]["square_tile"].values()) == c["margin"] - 36
+        assert s["coverage_percentage"] == 100.0  # the plaque covers its studs
+        studs = {(q["x"], q["y"]) for q in d["positions"]}
+        assert not studs & p.positions()
+
+    def test_round_trip(self, confirmed_winkel):
+        g = self._grid(confirmed_winkel, self._plaque(confirmed_winkel, "top-right"))
+        again = PositionPlacementGrid.from_json(g.to_json())
+        assert again.plaque == g.plaque and again.plaque_positions == g.plaque_positions
+        assert again.to_json() == g.to_json()
+
+    def test_statistics_object(self, confirmed_winkel):
+        t = confirmed_winkel
+        assert self._grid(t, self._plaque(t)).compute_statistics().plaque_tile_count == 1
+        assert self._grid(t).compute_statistics().plaque_tile_count is None
+
+    def test_layouts_without_a_plaque_read_and_write_as_before(self, confirmed_winkel):
+        g = self._grid(confirmed_winkel)
+        assert g.plaque is None and g.plaque_positions == frozenset()
+        d = json.loads(g.to_json())
+        assert "plaque" not in d["metadata"] and "plaque_tile_count" not in d["statistics"]
+        again = PositionPlacementGrid.from_json(g.to_json())
+        assert again.plaque is None and again.to_json() == g.to_json()
+        kit = PositionPlacementGrid.from_json(TestTemplateLayout()._grid().to_json())
+        assert kit.plaque is None and "plaque" not in json.loads(kit.to_json())["metadata"]
+
+    @pytest.mark.parametrize("studs", [None, {"row": 1, "col": 1, "height": 6}, {"row": -1, "col": 1,
+                                                                                   "height": 6, "width": 6}])
+    def test_malformed_record(self, studs):
+        rec = {"part_id": "10202", "color": "lego_black", "corner": "top-left", "studs": studs, "cells": 36}
+        with pytest.raises(ValueError, match="metadata.plaque"):
+            PositionPlacementGrid(width=128, height=80, positions=[], source_image="x", plaque=rec)

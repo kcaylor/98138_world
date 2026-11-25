@@ -14,6 +14,7 @@ import click
 
 from ..kit.source import DISCLAIMER
 from ..parts import LayoutInputError, read_layout
+from ..parts.partslist import PLAQUE_PART_TYPE, plaque_lot_text
 from ..sheets import SheetError, build_sheet_set, render_pdf, render_svg, section_counts
 from ..sheets.legend import PART_LABEL
 from ..sheets.model import is_latin1
@@ -96,6 +97,9 @@ def build_cmd(layout_path, output, output_format, paper, section_list, title, qu
     pieces = f"{t['needed']:,} pieces"
     if template:
         pieces += f", {squares:,} of them square tiles (part 3070b)"
+    plaque = sheet_set.plaque  # feature 017: the in-margin plaque's tile and its section
+    if plaque is not None:
+        pieces += f", {plaque_lot_text(plaque.entry.lot)} in section {plaque.section}"
     click.echo(f"Lots: {lots}; {pieces}")
     if template:
         from ..templates import REHANG_RULE
@@ -119,7 +123,10 @@ def build_cmd(layout_path, output, output_format, paper, section_list, title, qu
 def counts_cmd(layout_path, output_format, output, quiet):
     """Pieces per section (A1-H5) and lot, as a table or JSON."""
     layout = _read(layout_path)
-    sc = section_counts(layout)
+    try:
+        sc = section_counts(layout)
+    except ValueError as exc:  # feature 017: a recorded plaque off the board or across two sections
+        raise CommandError(f"{layout.path}: {exc}", 1)
     if output is not None:
         if not output.parent.is_dir():
             raise CommandError(f"output directory {output.parent} does not exist", 1)
@@ -138,6 +145,12 @@ def counts_cmd(layout_path, output_format, output, quiet):
     if sc.template is not None:
         click.echo(f"Template {sc.template['id']} ({sc.template['title']}): margin square tiles counted "
                    "per section")
+    plaque = layout.grid.plaque  # feature 017: the in-margin plaque's tile, in the section holding it
+    if plaque is not None:
+        from ..maps.margin import plaque_text
+        number = next(e.number for e in sc.legend if e.lot.part_type == PLAQUE_PART_TYPE)
+        where = next(s.section.label for s in sc.sections if number in s.counts)
+        click.echo(f"Plaque: {plaque_text(plaque)}; counted in section {where}")
     if sc.arrangement != "A":
         click.echo(f"Arrangement {sc.arrangement}: sections labelled as hung; kit section in brackets")
     for s in sc.sections:

@@ -143,3 +143,43 @@ class TestTemplateOptions:
         assert CliRunner().invoke(cli, ["map", "cells", "official-31203", "-o", str(plain)]).exit_code == 0
         assert out.read_bytes() == plain.read_bytes()
         assert "template" not in json.loads(out.read_text(encoding="utf-8"))
+
+
+# --- Feature 017 (T076): `map cells ... --plaque` (contracts/in-margin-plaque.md "cells.json") ------
+
+class TestPlaque:
+    def test_plaque_cells(self, tmp_path, fixture_registry, confirmed_winkel):
+        from lego_image_processor.kit.plaque_parts import load_plaque_parts
+        from lego_image_processor.maps.margin import place_plaque
+
+        fixture_registry.place_all()
+        t = confirmed_winkel
+        tile = load_plaque_parts().plaques["small"].tile
+        out = tmp_path / "p.json"
+        r = CliRunner().invoke(cli, ["map", "cells", "ocean-sst", "--template", "winkel-tripel",
+                                     "--plaque", "bottom-left", "-o", str(out)])
+        assert r.exit_code == 0, r.output
+        data = json.loads(out.read_text(encoding="utf-8"))
+        studs = place_plaque(t, "bottom-left").studs
+        cells = sorted(y * 128 + x for y in range(studs["row"], studs["row"] + studs["height"])
+                       for x in range(studs["col"], studs["col"] + studs["width"]))
+        assert data["plaque"] == {"part_id": tile.part_id, "color": tile.color.key,
+                                  "rgb": list(tile.color.rgb), "corner": "bottom-left", "cells": cells}
+        assert data["cells"].count("P") == 36 and data["cells"].count("M") == t.counts["margin"] - 36
+        assert all(data["cells"][i] == "P" for i in cells)
+        lines = r.output.splitlines()
+        margin = lines.index(f"Margin: {t.counts['margin'] - 36:,} square tiles (part 3070b): lego_black; no ring")
+        w, h = tile.studs
+        assert lines[margin + 1] == (
+            f"Plaque: tile {w}x{h} (part {tile.part_id}), {tile.color.lego.name}, bottom-left, rows "
+            f"{studs['row']}-{studs['row'] + h - 1}, columns {studs['col']}-{studs['col'] + w - 1} - from --plaque")
+        assert r.output.rstrip("\n").splitlines()[-1] == DISCLAIMER
+
+    def test_without_a_plaque(self, tmp_path, fixture_registry, confirmed_winkel):
+        fixture_registry.place_all()
+        out = tmp_path / "w.json"
+        r = CliRunner().invoke(cli, ["map", "cells", "ocean-sst", "--template", "winkel-tripel", "-o", str(out)])
+        assert r.exit_code == 0, r.output
+        data = json.loads(out.read_text(encoding="utf-8"))
+        assert "plaque" not in data and "P" not in data["cells"]
+        assert "Plaque" not in r.output

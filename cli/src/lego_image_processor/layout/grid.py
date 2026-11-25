@@ -1,4 +1,11 @@
-"""Position placement grid and statistics for LEGO World Map layouts."""
+"""Position placement grid and statistics for LEGO World Map layouts.
+
+Feature 017 (FR-023; contracts/in-margin-plaque.md "Layout JSON"): a layout on a non-kit template
+may record an in-margin plaque in ``metadata.plaque`` (``{part_id, color, corner, studs: {row, col,
+height, width}, cells}``, written only when one is placed). Its studs carry no position, so the
+margin counts are the square tiles present; ``statistics.plaque_tile_count`` is 1 and the coverage
+counts the plaque's studs as covered. Layouts without it read and write as before.
+"""
 
 from __future__ import annotations
 
@@ -8,12 +15,28 @@ from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from io import StringIO
-from typing import Dict, List, Any, Optional
+from typing import Dict, FrozenSet, List, Any, Optional, Tuple
 
 from .position import LAND_PART_TYPE, MARGIN_PART_TYPE, OCEAN_PART_TYPE, PositionPlacement
 
 CURRENT_SCHEMA_VERSION = "2.0"
 DISCLAIMER = "Not affiliated with or endorsed by The LEGO Group."
+_PLAQUE_STUD_KEYS = ("row", "col", "height", "width")
+
+
+def plaque_positions(record: Optional[Dict[str, Any]]) -> FrozenSet[Tuple[int, int]]:
+    """The studs ``(x, y)`` a ``metadata.plaque`` record covers (feature 017); empty for None.
+    Raises ``ValueError`` naming ``metadata.plaque`` for a malformed record."""
+    if record is None:
+        return frozenset()
+    studs = record.get("studs") if isinstance(record, dict) else None
+    if not (isinstance(studs, dict) and all(
+            isinstance(studs.get(k), int) and not isinstance(studs.get(k), bool) for k in _PLAQUE_STUD_KEYS)
+            and studs["row"] >= 0 and studs["col"] >= 0 and studs["height"] > 0 and studs["width"] > 0):
+        raise ValueError("metadata.plaque: studs must be {row, col, height, width}, non-negative integers "
+                         "(height and width positive)")
+    r, c, h, w = (studs[k] for k in _PLAQUE_STUD_KEYS)
+    return frozenset((x, y) for y in range(r, r + h) for x in range(c, c + w))
 
 
 class LayoutSchemaError(ValueError):
@@ -47,6 +70,8 @@ class LayoutStatistics:
         coverage_percentage: Percentage of grid filled (100.0 for valid layouts)
         margin_tile_count: Square tiles of a non-kit template's margin (feature 016); None (and
             not written) for kit layouts
+        plaque_tile_count: The in-margin plaque's tile (feature 017): 1 when the layout records a
+            plaque; None (and not written) otherwise
     """
 
     total_tile_count: int
@@ -58,6 +83,7 @@ class LayoutStatistics:
     most_common_color: Dict[str, Any]
     coverage_percentage: float
     margin_tile_count: Optional[int] = None
+    plaque_tile_count: Optional[int] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert statistics to dictionary.
@@ -75,12 +101,19 @@ class LayoutStatistics:
             "most_common_color": self.most_common_color,
             "coverage_percentage": self.coverage_percentage
         }
-        if self.margin_tile_count is None:
+        if self.margin_tile_count is None and self.plaque_tile_count is None:
             return out
-        # feature 016, non-kit layouts only: the margin count follows the ocean count
+        # feature 016, non-kit layouts only: the margin count follows the ocean count;
+        # feature 017: the plaque's tile follows it
         keys = list(out)
-        keys.insert(keys.index("ocean_tile_count") + 1, "margin_tile_count")
-        out["margin_tile_count"] = self.margin_tile_count
+        after = "ocean_tile_count"
+        if self.margin_tile_count is not None:
+            keys.insert(keys.index(after) + 1, "margin_tile_count")
+            out["margin_tile_count"] = self.margin_tile_count
+            after = "margin_tile_count"
+        if self.plaque_tile_count is not None:
+            keys.insert(keys.index(after) + 1, "plaque_tile_count")
+            out["plaque_tile_count"] = self.plaque_tile_count
         return {k: out[k] for k in keys}
 
 
@@ -115,6 +148,7 @@ class PositionPlacementGrid:
         map_metadata: Optional[Dict[str, Any]] = None,
         arrangement: Optional[Dict[str, Any]] = None,
         template: Optional[Dict[str, Any]] = None,
+        plaque: Optional[Dict[str, Any]] = None,
     ):
         """Initialize position placement grid.
 
@@ -129,6 +163,8 @@ class PositionPlacementGrid:
             arrangement: Optional ``metadata.arrangement`` record (feature 007); None means A
             template: Optional ``metadata.template`` record (feature 016); None means the kit
                 template, and no template, margin or square-tile keys are written
+            plaque: Optional ``metadata.plaque`` record (feature 017): the in-margin plaque, whose
+                studs carry no position; None means no plaque, and no plaque keys are written
         """
         self._width = width
         self._height = height
@@ -139,6 +175,8 @@ class PositionPlacementGrid:
         self._map_metadata = map_metadata
         self._arrangement = arrangement
         self._template = template
+        self._plaque = plaque
+        self._plaque_positions = plaque_positions(plaque)
 
         if generated_at is None:
             self._generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -231,6 +269,16 @@ class PositionPlacementGrid:
         return self._template
 
     @property
+    def plaque(self) -> Optional[Dict[str, Any]]:
+        """The ``metadata.plaque`` record (feature 017); None without an in-margin plaque."""
+        return self._plaque
+
+    @property
+    def plaque_positions(self) -> FrozenSet[Tuple[int, int]]:
+        """The studs ``(x, y)`` the in-margin plaque covers (feature 017); empty without one."""
+        return self._plaque_positions
+
+    @property
     def positions(self) -> List[PositionPlacement]:
         """List of all position placements (copy)."""
         return list(self._positions)
@@ -264,6 +312,7 @@ class PositionPlacementGrid:
             LayoutStatistics with composition information
         """
         on_template = self._template is not None  # feature 016: margin counts for non-kit layouts only
+        plaque_tiles = 1 if self._plaque is not None else None  # feature 017
         if not self._positions:
             by_type = {LAND_PART_TYPE: {}, OCEAN_PART_TYPE: {}}
             if on_template:
@@ -277,7 +326,8 @@ class PositionPlacementGrid:
                 color_frequency_by_part_type=by_type,
                 most_common_color={},
                 coverage_percentage=0.0,
-                margin_tile_count=0 if on_template else None
+                margin_tile_count=0 if on_template else None,
+                plaque_tile_count=plaque_tiles
             )
 
         # Count colors
@@ -299,7 +349,9 @@ class PositionPlacementGrid:
 
         # Calculate coverage
         expected_positions = self._width * self._height
-        coverage = (len(self._positions) / expected_positions * 100.0) if expected_positions > 0 else 0.0
+        # feature 017: the in-margin plaque covers its studs
+        covered = len(self._positions) + len(self._plaque_positions - set(self._position_map))
+        coverage = (covered / expected_positions * 100.0) if expected_positions > 0 else 0.0
 
         by_type = {
             LAND_PART_TYPE: dict(plate_colors),
@@ -318,7 +370,8 @@ class PositionPlacementGrid:
             color_frequency_by_part_type=by_type,
             most_common_color=most_common_color,
             coverage_percentage=coverage,
-            margin_tile_count=self._margin_positions if on_template else None
+            margin_tile_count=self._margin_positions if on_template else None,
+            plaque_tile_count=plaque_tiles
         )
 
     def to_json(self, indent: int = 2) -> str:
@@ -359,6 +412,8 @@ class PositionPlacementGrid:
             data["metadata"]["arrangement"] = self._arrangement
         if self._template is not None:
             data["metadata"]["template"] = self._template
+        if self._plaque is not None:  # feature 017: only when an in-margin plaque is placed
+            data["metadata"]["plaque"] = self._plaque
         return json.dumps(data, indent=indent)
 
     def to_csv(self) -> str:
@@ -419,4 +474,5 @@ class PositionPlacementGrid:
             map_metadata=metadata.get("map"),
             arrangement=metadata.get("arrangement"),
             template=metadata.get("template"),
+            plaque=metadata.get("plaque"),
         )

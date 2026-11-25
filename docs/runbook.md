@@ -252,7 +252,61 @@ The sea-ice rule, its comparison with the approved prototype and the choice of 6
 the file count and a manifest checksum; a revised NSIDC file fails its checksum and needs a new
 pinned version.
 
-### 11. Make your own map
+### 11. Stickers for a plaque (feature 017)
+
+Every map gets two printed labels, white on black, made from the built map: a large sticker for a
+Black tile 8×16 (part 4974) and a small one for a Black tile 6×6 (part 10202). They build the map
+from cached data, like `map cells`, and never download:
+
+```bash
+lego-image-processor map stickers ocean-sst -o sst-stickers.pdf                 # print sheet, Letter
+lego-image-processor map stickers ocean-sst -o sst-stickers-a4.pdf --paper a4   # A4, same sizes
+lego-image-processor map stickers rainfall -o rain-stickers-svg --format svg    # one SVG per sticker
+lego-image-processor map stickers official-31203 -o official-stickers.json --format json
+```
+
+What to look for:
+
+- `sst-stickers.pdf` is one page: the large sticker (125.8 × 61.8 mm) and the small one (45.8 mm
+  square) at true size, with a black bleed and cut marks, the 100 mm scale bar, "Print at 100% (no
+  fit-to-page)", the parts for a standalone plaque, the ERSST v5 citation and license, and the
+  disclaimer.
+- The large sticker reads "Ocean temperature", the sticker line, nine ocean swatches from "-2 °C;
+  land shadow" to "28 to 30 °C", White "land", the ERSST v5 credit with its DOI, "98138.world" and
+  the disclaimer; the small one only the title, the line and the disclaimer.
+- The output lists each plaque's tile and, to stand it alone, a Black plate of the same size (3958
+  for 6×6, 92438 for 8×16), with LEGO element, BrickLink and Rebrickable IDs, and says the sticker
+  is printed, not a LEGO part. The stickers are the same for A, B, C, D and E, and making them writes
+  nothing but the file you name.
+- `rain-stickers-svg/` holds `sticker-small.svg` and `sticker-large.svg` in millimetres, each with
+  its cut line as `<g id="cut-line">` for a cutting machine. `rainfall`'s legend is in mm/yr, with
+  one White swatch for Antarctica and Greenland and one for sea ice.
+
+The title and line come from the recipe's optional `[sticker]` table (`title`, `line`, `credit`,
+`no_data`), else from its `title` and `description`; see `cli/README.md`.
+
+On the Winkel tripel template (feature 016) the stickers name the projection, and the small
+plaque's tile can go into a margin corner as part of the build:
+
+```bash
+lego-image-processor map stickers ocean-sst --template winkel-tripel -o sst-winkel-stickers.pdf
+lego-image-processor map build ocean-sst --template winkel-tripel --plaque bottom-left \
+  -o sst-plaque.json --preview sst-plaque.png
+lego-image-processor parts list sst-plaque.json --kits 1
+lego-image-processor sheets build sst-plaque.json -o sst-plaque-sheets.pdf --sections A5
+```
+
+- The Winkel stickers' line ends with "Winkel tripel projection." and the large one also credits
+  ETOPO 2022, which decided land and ocean.
+- `--plaque bottom-left` puts one Black tile 6×6 at rows 73–78, columns 1–6 (one stud in from the
+  board edges), in place of 36 square margin tiles: the `Plaque:` line says where, and `Layout:`
+  counts 10,204 positions and 1 plaque tile. Land and ocean are the same as without it.
+- The parts list has the tile to buy (BrickLink 10202, Black) and 1,960 square tiles instead of
+  1,996; section A5 of the sheets draws the tile as one outlined rectangle "tile 6x6 (10202)".
+- A recipe can name the corner with `plaque = "bottom-left"` in its `[margin]` table;
+  `--plaque none` turns it off, and `--plaque` on the kit template is an error (it has no margin).
+
+### 12. Make your own map
 
 ```bash
 lego-image-processor map recipes --copy ocean-sst my-map.toml
@@ -265,7 +319,7 @@ lego-image-processor map build my-map.toml -o my-map.json --preview my-map.png
 `--part 6141` lists the plate colors. A recipe can also point to your own gridded data file, if it
 declares the file's checksum, citation and license (see `specs/004-map-recipes/quickstart.md`).
 
-### 12. From an image (the original feature 001/002 path)
+### 13. From an image (the original feature 001/002 path)
 
 ```bash
 lego-image-processor quantize photo.jpg -o photo_lego.png    # snap colors to LEGO colors
@@ -290,8 +344,10 @@ open http://127.0.0.1:8080/
 Look for: the gallery of four maps; on a map page the A/B/C switch (the preview shifts by whole
 frames), the parts summary (official, bathymetry and ocean temperature say one kit covers every
 piece; land elevation needs about 6,300 more), the lots table with BrickLink and Rebrickable IDs,
-the downloads list (top-up files only appear when one kit is not enough), and the citations. Try it
-at phone width. `.venv/bin/pytest` runs the web tests offline. Deploying: `docs/deploy.md`.
+the downloads list (top-up files only appear when one kit is not enough), and the citations. The
+"Stickers for a plaque" panel shows both stickers, what the large one says, the plaque parts with
+their IDs and four downloads (print sheet Letter and A4, both SVGs), the same for A–E and
+without JavaScript; a Winkel tripel page shows its own set. Try it at phone width. `.venv/bin/pytest` runs the web tests offline. Deploying: `docs/deploy.md`.
 
 ## Checks that need you
 
@@ -303,6 +359,10 @@ These can't be automated:
    `elev-bricklink.xml`, and check that every item is found with the right color. Then price it.
 3. **Rebrickable import.** On Rebrickable, go to My LEGO → Parts Lists → Import, and upload
    `elev-rebrickable.csv`. Check that all 11 lots import with the right colors.
+4. **Sticker print.** Print `sst-stickers.pdf` at 100% on white sticker paper. The scale bar should
+   measure 100 mm, the large sticker's cut line 125.8 × 61.8 mm and the small one's 45.8 mm. Cut
+   one out along its marks and lay it on its Black tile: about 1 mm of tile should show on every
+   side.
 
 Tell me what you find, especially any part or color that fails to match.
 
@@ -316,5 +376,8 @@ Tell me what you find, especially any part or color that fails to match.
   if it keeps failing, the source changed and the pin needs updating.
 - **Exit 6 from `parts export`:** some colors in the layout have no cited IDs. `parts list` shows
   which; `--allow-partial` exports the rest.
+- **`map stickers` stops on a text:** a title, line or legend that does not fit at 5 pt names the
+  field or layer and the space needed and available; shorten it in the recipe's `[sticker]` table. Text
+  outside Latin-1 cannot go in the PDF (standard Helvetica): use `--format svg`.
 - **Run the test suite:** `cd cli && uv pip install pytest pytest-cov pytest-benchmark pypdf`,
   then `.venv/bin/pytest -q` (about 970 tests, 1–2 minutes). Tests never use the network.

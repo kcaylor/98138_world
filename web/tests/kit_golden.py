@@ -21,7 +21,14 @@ as before, so the golden file can still be written from an unmodified main.
 
 It also keeps each map row of the manifest (fields other than ``variants``, digested; later
 additive fields are not compared) and the top-level ``part_labels``. ``compare`` names the site,
-map, combination and item that differ. Not affiliated with or endorsed by The LEGO Group.
+map, combination and item that differ.
+
+Feature 017 (T060) allows one more change of a site with template variants: each template variant
+has its own sticker set in the map row's ``stickers`` (FR-020). ``kit_stickers`` removes those
+sets before the row's ``stickers`` field is digested (``row_digests``), so the kit set is still
+compared exactly; each template variant must have exactly one set, and no other non-kit set may be
+there. A site without template variants digests exactly as before.
+Not affiliated with or endorsed by The LEGO Group.
 """
 
 from __future__ import annotations
@@ -43,6 +50,7 @@ NORMALISED = ("layout", "parts", "parts-1kit")
 SKIPPED = ("sheets-letter", "sheets-a4")   # PDFs: covered by the CLI golden
 ASSET_TOKEN = "<asset>"
 TEMPLATE_PART_LABELS = {"3070b": "tile 1x1 square"}   # feature 016: added only with template variants
+KIT_TEMPLATE_ID = "kit-31203"   # feature 017: the kit's sticker set (catalog.KIT_TEMPLATE_ID)
 _ASSET = re.compile(r"\?v=[^\"'&\s>]+")
 _BUILT = re.compile(r"Built \d{4}-\d{2}-\d{2} with lego-image-processor (\S+?)(?: \(commit [0-9a-f]+\))?;")
 
@@ -107,6 +115,36 @@ def strip_template_nav(html: str, map_id: str, template_ids) -> str:
     return html
 
 
+def kit_stickers(stickers: Mapping[str, Any], map_id: str, template_ids) -> Dict[str, Any]:
+    """A map row's ``stickers`` without its template variants' sets (feature 017, FR-020): the
+    kit set as main's site has it. Raises if the kit set is missing, if a template variant has no
+    set, or if a non-kit set belongs to no template variant."""
+    tids = list(template_ids)
+    if KIT_TEMPLATE_ID not in stickers:
+        raise AssertionError(f"{map_id}: no {KIT_TEMPLATE_ID} sticker set")
+    for tid in tids:
+        if tid not in stickers:
+            raise AssertionError(f"{map_id}: no sticker set for template variant {tid}")
+    extra = [t for t in stickers if t != KIT_TEMPLATE_ID and t not in tids]
+    if extra:
+        raise AssertionError(f"{map_id}: sticker sets for {', '.join(extra)}, which it has no variant on")
+    return {k: v for k, v in stickers.items() if k not in tids}
+
+
+def row_digests(m: Mapping[str, Any]) -> Dict[str, str]:
+    """Digests of a manifest map row's fields other than ``variants``; ``stickers`` as
+    ``kit_stickers`` leaves it."""
+    tids = list(m.get("template_variants") or ())
+    out = {}
+    for k, v in m.items():
+        if k == "variants":
+            continue
+        if k == "stickers":
+            v = kit_stickers(v, m["id"], tids)
+        out[k] = _sha(canonical(v))
+    return out
+
+
 def page_digest(html: str) -> str:
     return _sha(normalise_page(html).encode("utf-8"))
 
@@ -124,7 +162,7 @@ def site_digests(site_dir, name: str = "site") -> Dict[str, Any]:
     templates: Dict[str, List[str]] = {}
     with TestClient(create_app(site_dir), base_url="https://98138.world") as client:
         for m in manifest["maps"]:
-            rows[m["id"]] = {k: _sha(canonical(v)) for k, v in m.items() if k != "variants"}
+            rows[m["id"]] = row_digests(m)
             tids = list(m.get("template_variants") or ())
             if tids:
                 templates[m["id"]] = tids

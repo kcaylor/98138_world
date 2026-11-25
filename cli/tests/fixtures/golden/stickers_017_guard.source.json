@@ -1,0 +1,36 @@
+{
+  "fixture": "stickers_017_guard.json",
+  "what": "Feature 017 guard golden (research R13 G3; FR-017, SC-006): digests of every kit 31203 output of the 8 bundled recipes x combinations A, B, C, D, E, built from the dataset fixtures (tests/fixtures/datasets, via the fixture_registry fixture) and from each recipe's bytes before its sticker block: layout JSON and report JSON (generated_at fixed to 2026-01-01T00:00:00Z), preview PNG bytes and decoded pixels, parts lists (full and one kit), BrickLink XML and Rebrickable CSV (full and one kit; null when nothing is to buy), parts estimate JSON on the synthetic price fixture (tests/fixtures/prices/bricklink_price_guide.json, as of 2026-12-05), section counts JSON and cells.json; plus the sheets PDF (Letter) bytes and every sheets SVG page of land-elevation and ocean-sst in A. Compared by tests/integration/test_stickers_outputs_unchanged.py::test_guard_golden. Written from code without any feature 017 change, never from feature 017 code: a changed digest is a bug in the new code.",
+  "generator": "STICKERS_017_GUARD_WRITE=1 pytest tests/integration/test_stickers_outputs_unchanged.py -k guard_golden, run from cli/ of an unmodified export of main 6f300dc (git archive 6f300dc, its own uv venv: Python 3.11, uv pip install -e cli pytest pypdf) with only feature 017's tests/integration/stickers_guard.py and test_stickers_outputs_unchanged.py copied in (library functions only); the file was then copied into this branch",
+  "code": {
+    "commit": "6f300dc",
+    "note": "library code of main 6f300dc (feature 010, Pacific-centred arrangements D and E, merged as PR #19 on top of feature 016), unmodified: every file under cli/src, web/src, cli/tools, cli/tests/fixtures and cli/tests/conftest.py of the export equals its 6f300dc blob (git hash-object), and no file was added under cli/src or web/src. The recipe checksums recorded here are main 6f300dc's (equal to af3ce57's for six recipes; feature 010 changed ocean-el-nino and ocean-la-nina, whose default arrangement is now D)",
+    "previous": {
+      "commit": "6038d9c",
+      "sha256": "d1a136fee9986d84c98bd44758bd0f14fc3c3a44278304245607ce0936c886bc",
+      "combinations": ["A", "B", "C"],
+      "recipes": "af3ce57 values (research R13)"
+    }
+  },
+  "rebased": {
+    "on": "2026-11-25",
+    "approved_by": "project owner, 2026-11-25 (commit 017, merge main into 017 and re-baseline the guard)",
+    "reason": "main moved while feature 017 was built: feature 010 (Pacific-centred arrangements D and E) adds an assembly page to every sheet set, adds combinations D and E and sets the ENSO recipes' default arrangement to D, so main's own kit outputs and two recipe checksums changed; the guard now pins main 6f300dc and covers D and E",
+    "differences_from_previous": "for A, B and C: of the 6 recipes whose files did not change, only the sheets PDF and SVG pages of land-elevation and ocean-sst (the assembly page and page counts) differ; of ocean-el-nino and ocean-la-nina only the outputs that record the recipe checksum differ (layout, report, cells, parts lists, estimate, counts); previews, exports and every other digest are equal. D and E (16 variants) are new"
+  },
+  "generated_on": "2026-11-25",
+  "python": "3.11.13",
+  "libraries": {
+    "lego-image-processor": "0.1.0",
+    "numpy": "1.26.4",
+    "Pillow": "10.4.0",
+    "reportlab": "5.1.0",
+    "scipy": "1.17.1",
+    "scikit-image": "0.21.0",
+    "h5py": "3.16.0",
+    "click": "8.5.1"
+  },
+  "license": "Derived from the project's own outputs; the dataset fixtures keep their sources' licenses (see each tests/fixtures/datasets/*.source.json).",
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group.",
+  "sha256": "fc53ead022a411acf046c2af760fa727c1fb93292499f306bcf7e634495e71b8"
+}

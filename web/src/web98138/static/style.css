@@ -212,3 +212,16 @@ h3 { font-size: 1rem; margin: 1.2em 0 .4em; }
   .pc-table select { min-width: 9rem; }
   .pc-bounds input { width: 5.5rem; }
 }
+
+/* map stickers (feature 017): both stickers at the same scale, on their white SVG paper */
+.stickers .sticker-figs { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 1rem 1.5rem; margin: .4rem 0 1rem; }
+.sticker-fig { margin: 0; flex: 0 1 auto; max-width: 100%; }
+.sticker-fig img { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; background: #ffffff; }
+.sticker-fig figcaption { color: var(--muted); font-size: .87rem; margin-top: .4rem; max-width: 34rem; }
+.sticker-says { margin: 0 0 1rem; }
+.sticker-says summary { cursor: pointer; font-weight: 600; }
+.sticker-says p { margin: .4em 0; }
+.sticker-legend { padding-left: 1.1rem; margin: .3em 0; columns: 2 16rem; column-gap: 1.5rem; }
+.sticker-legend li { margin: .15em 0; break-inside: avoid; }
+.plaque-parts tbody th { min-width: 9rem; }
+.stickers .downloads { margin-top: .6rem; }

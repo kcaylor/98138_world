@@ -1,4 +1,6 @@
-"""`map` commands: build a layout from a recipe, check a recipe, list bundled recipes (feature 004).
+"""`map` commands: build a layout from a recipe, check a recipe, list bundled recipes (feature 004);
+`map cells` (feature 015); `map stickers`, the plaque stickers of a map (feature 017; on a template
+with `--template`, as `map build`).
 
 Only `map build --fetch` uses the network (to download a recipe's missing pinned datasets).
 Not affiliated with or endorsed by The LEGO Group.
@@ -17,10 +19,11 @@ from ..datasets.cache import DatasetError, fetch, is_cached
 from ..kit.source import DISCLAIMER
 from ..maps.build import build_map, missing_datasets
 from ..maps.classify import MapBuildError
-from ..maps.margin import MarginError, MarginTreatment, resolve_margin
+from ..maps.margin import MarginError, MarginTreatment, plaque_text, resolve_margin
 from ..maps.recipe import Recipe, RecipeError, bundled_recipes, load_recipe
 from ..maps.suitability import extra_tiles
-from .options import arrangement_option, template_options
+from ..templates import REHANG_RULE
+from .options import TEMPLATE_HELP, TemplateType, arrangement_option, template_options
 
 
 class CommandError(click.ClickException):
@@ -68,13 +71,16 @@ def arrangement_line(report: Dict[str, Any], arrangement) -> str:
 
 
 _TEMPLATE_SOURCE_TEXT = {"recipe": "from the recipe", "option": "from --template", "default": "default"}
+_PLAQUE_SOURCE_TEXT = {"recipe": "from the recipe", "option": "from --plaque"}
 KIT_MARGIN_NOTE = ("Note: margin settings are not used on the kit template kit-31203 (it has no margin); "
                    "they apply to templates with a margin, such as winkel-tripel.")
 
 
 def template_lines(result) -> List[str]:
     """``Template: ...`` and ``Margin: ...`` for a non-kit build (feature 016, contracts/cli.md);
-    nothing for the kit, whose output stays as it was."""
+    nothing for the kit, whose output stays as it was. The margin line counts the square tiles
+    placed (the report's ``margin.cells``: the template's margin studs, fewer the in-margin plaque's);
+    with a plaque (feature 017) a ``Plaque: ...`` line follows it."""
     t = result.template
     if t is None or t.is_kit:
         return []
@@ -82,19 +88,27 @@ def template_lines(result) -> List[str]:
     source = _TEMPLATE_SOURCE_TEXT.get(report.get("template_source", ""), "")
     margin = report["margin"]
     counts = report["template"]["counts"]
+    cells = margin.get("cells")
+    placed = cells["margin"] + cells["ring"] if cells else counts["margin"]
     ring = f"ring {counts['ring']:,} {margin['ring']}" if margin["ring"] else "no ring"
-    return [f"Template: {t.id} ({t.title})" + (f" - {source}" if source else ""),
-            f"Margin: {counts['margin']:,} square tiles (part {margin['part_id']}): {margin['color']}; {ring}"]
+    lines = [f"Template: {t.id} ({t.title})" + (f" - {source}" if source else ""),
+             f"Margin: {placed:,} square tiles (part {margin['part_id']}): {margin['color']}; {ring}"]
+    plaque = margin.get("plaque")
+    if plaque:
+        how = _PLAQUE_SOURCE_TEXT.get(plaque.get("source", ""), "")
+        lines.append(f"Plaque: {plaque_text(plaque)}" + (f" - {how}" if how else ""))
+    return lines
 
 
 def resolve_margin_options(recipe: Recipe, margin_color: Optional[str],
-                           ring_color: Optional[str]) -> Optional[MarginTreatment]:
+                           ring_color: Optional[str], plaque: Optional[str] = None) -> Optional[MarginTreatment]:
     """The recipe's ``[margin]`` overridden by ``--margin-color``/``--ring-color`` (exit 1 on a bad
-    color); None when neither the recipe nor an option sets one (feature 016)."""
-    if recipe.margin is None and margin_color is None and ring_color is None:
+    color) and (feature 017) ``--plaque``; None when neither the recipe nor an option sets one
+    (feature 016)."""
+    if recipe.margin is None and margin_color is None and ring_color is None and plaque is None:
         return None
     try:
-        return resolve_margin(recipe.margin, margin_color, ring_color)
+        return resolve_margin(recipe.margin, margin_color, ring_color, plaque)
     except MarginError as exc:
         raise CommandError(str(exc), 1)
 
@@ -272,7 +286,7 @@ def map_group() -> None:
 @template_options
 @click.option("--quiet", "-q", is_flag=True, help="Suppress output")
 def build(recipe, output, preview, preview_style, report_path, cache_dir, do_fetch, compare_official, arrangement,
-          template_id, margin_color, ring_color, quiet):
+          template_id, margin_color, ring_color, plaque, quiet):
     """Build RECIPE (a recipe file or a bundled recipe id) into a schema 2.0 layout.
 
     \b
@@ -282,10 +296,11 @@ def build(recipe, output, preview, preview_style, report_path, cache_dir, do_fet
         lego-image-processor map build land-elevation --arrangement B -o elev-B.json
         lego-image-processor map build ocean-el-nino -o el-nino.json   # hung as B (recipe)
         lego-image-processor map build ocean-sst --template winkel-tripel -o w.json --preview w.png
+        lego-image-processor map build ocean-sst --template winkel-tripel --plaque bottom-left -o w.json
     """
     echo = (lambda *a, **k: None) if quiet else click.echo
     r = _load(recipe)
-    margin = resolve_margin_options(r, margin_color, ring_color)
+    margin = resolve_margin_options(r, margin_color, ring_color, plaque)
     if do_fetch:
         for entry in missing_datasets(r, cache_dir):
             echo(f"Fetching {entry.id} ({entry.size:,} bytes) from {entry.url}")
@@ -317,11 +332,15 @@ def build(recipe, output, preview, preview_style, report_path, cache_dir, do_fet
             _write_json(report_path, result.report)
     except OSError as exc:
         raise CommandError(f"Cannot write output: {exc}", 1)
-    margin_tiles = (f", {result.layout.margin_positions:,} margin tiles"
-                    if result.layout.template is not None else "")  # feature 016: non-kit layouts only
-    echo(f"Layout: {output} ({result.layout.total_positions:,} positions, "
-         f"{result.layout.land_positions:,} land plates, {result.layout.ocean_positions:,} ocean tiles"
-         f"{margin_tiles})")
+    lay = result.layout
+    margin_tiles = (f", {lay.margin_positions:,} margin tiles"
+                    if lay.template is not None else "")  # feature 016: non-kit layouts only
+    # feature 017: the in-margin plaque's studs carry no position; its tile is counted on its own
+    plaque_tile_text = ", 1 plaque tile" if lay.plaque is not None else ""
+    positions = len(lay.positions) if lay.plaque is not None else lay.total_positions
+    echo(f"Layout: {output} ({positions:,} positions, "
+         f"{lay.land_positions:,} land plates, {lay.ocean_positions:,} ocean tiles"
+         f"{margin_tiles}{plaque_tile_text})")
     if preview:
         echo(f"Preview: {preview}")
     if report_path:
@@ -336,10 +355,10 @@ def build(recipe, output, preview, preview_style, report_path, cache_dir, do_fet
 @click.option("--cache-dir", type=click.Path(file_okay=False), help="Dataset cache root (default: per-user cache)")
 @arrangement_option(default=None)
 @template_options
-def check(recipe, report_path, cache_dir, arrangement, template_id, margin_color, ring_color):
+def check(recipe, report_path, cache_dir, arrangement, template_id, margin_color, ring_color, plaque):
     """Run the suitability check on RECIPE without writing a layout (exit 0 even with warnings)."""
     r = _load(recipe)
-    margin = resolve_margin_options(r, margin_color, ring_color)
+    margin = resolve_margin_options(r, margin_color, ring_color, plaque)
     try:
         result = build_map(r, cache_dir=cache_dir, compare_official=False, arrangement=arrangement,
                            template=template_id, margin=margin)
@@ -364,14 +383,15 @@ def check(recipe, report_path, cache_dir, arrangement, template_id, margin_color
 @click.option("--cache-dir", type=click.Path(file_okay=False), help="Dataset cache root (default: per-user cache)")
 @arrangement_option(default=None)
 @template_options
-def cells(recipe, output, cache_dir, arrangement, template_id, margin_color, ring_color):
+def cells(recipe, output, cache_dir, arrangement, template_id, margin_color, ring_color, plaque):
     """Write RECIPE's per-cell classes, values, shadow and ice regions for recoloring (JSON).
 
     The file feeds the web site's palette chooser (feature 015): each layer's built class and
     data value per cell, default class bounds, the land shadow, the ice-covered cells and the
     cited colors of both parts with CIE L*. On a map template with a margin (`--template`) it
     also marks the margin cells (M) and gives the margin and ring colors and the square tile's
-    colors. It is a preview aid only: layouts, parts lists, prices and build sheets do not use
+    colors; with `--plaque` it marks the plaque's studs (P) and gives its tile and color. It is a
+    preview aid only: layouts, parts lists, prices and build sheets do not use
     it. Never downloads (build first with `map build --fetch`).
 
     \b
@@ -383,7 +403,7 @@ def cells(recipe, output, cache_dir, arrangement, template_id, margin_color, rin
     from ..maps.ice import TemplateIceError, template_ice_path
 
     r = _load(recipe)
-    margin = resolve_margin_options(r, margin_color, ring_color)
+    margin = resolve_margin_options(r, margin_color, ring_color, plaque)
     try:
         result = build_map(r, cache_dir=cache_dir, compare_official=False, arrangement=arrangement,
                            template=template_id, margin=margin)
@@ -425,6 +445,121 @@ def cells(recipe, output, cache_dir, arrangement, template_id, margin_color, rin
     click.echo(f"Cells: {output} ({len(text.encode('utf-8')):,} bytes)")
     click.echo(data["note"])
     echo_citations(result.report["citations"])
+    click.echo(DISCLAIMER)
+
+
+def _sticker_line(st, legend=None) -> str:
+    from ..stickers.compose import tile_label
+
+    g = st.geometry
+    lo, hi = st.text_sizes
+    out = (f"{st.size.capitalize()} sticker: {g.cut_mm[0]:.1f} x {g.cut_mm[1]:.1f} mm for a "
+           f"{st.plaque.tile.color.lego.name} tile {tile_label(st.plaque)}")
+    if legend is not None:
+        n = len(legend)
+        groups = ", ".join(f"{gr.layer} {len(gr.swatches)}" for gr in legend.groups)
+        out += f"; {n} swatch{'' if n == 1 else 'es'} ({groups})"
+    return out + f"; text {lo:g}-{hi:g} pt"
+
+
+def _credit_citations(credits) -> List[Dict[str, Any]]:
+    """The sticker set's credits in ``echo_citations`` form."""
+    return [{"id": c.dataset, "version": c.version, "citation": c.citation, "doi": c.doi,
+             "license": c.license, "acknowledgement": c.acknowledgement} for c in credits]
+
+
+@map_group.command()
+@click.argument("recipe")
+@click.option("--output", "-o", required=True, type=click.Path(),
+              help="PDF file (pdf), directory (svg) or JSON file (json) to write")
+@click.option("--format", "fmt", type=click.Choice(["pdf", "svg", "json"]), default="pdf",
+              show_default=True,
+              help="pdf: the print sheet; svg: sticker-small.svg and sticker-large.svg in OUTPUT; "
+                   "json: the sticker-set summary")
+@click.option("--paper", type=click.Choice(["letter", "a4"], case_sensitive=False), default=None,
+              help="Paper of the print sheet (PDF only)  [default: letter]")
+@click.option("--cache-dir", type=click.Path(file_okay=False), help="Dataset cache root (default: per-user cache)")
+@click.option("--template", "template_id", type=TemplateType(), default=None, help=TEMPLATE_HELP)
+def stickers(recipe, output, fmt, paper, cache_dir, template_id):
+    """Make the two plaque stickers of RECIPE: a small one for a Black 6 x 6 tile and a large one
+    for a Black 8 x 16 tile, white on black, with the map's color legend and data credit.
+
+    The map is built in the recipe's own arrangement (as `map cells` does); the stickers are the
+    same for A, B, C, D and E. On a template (--template, or the recipe's `template`) the sticker line
+    names its projection and the large sticker credits the dataset that decided land and ocean.
+    Writes nothing but OUTPUT, and nothing at all on an error. Never downloads (build first with
+    `map build --fetch`). Print the PDF at 100% on white sticker paper and cut along the marks.
+
+    \b
+    Examples:
+        lego-image-processor map stickers ocean-sst -o stickers.pdf
+        lego-image-processor map stickers ocean-sst -o stickers-a4.pdf --paper a4
+        lego-image-processor map stickers rainfall -o rainfall-svg --format svg
+        lego-image-processor map stickers my-map.toml -o stickers.json --format json
+        lego-image-processor map stickers ocean-sst --template winkel-tripel -o winkel.pdf
+    """
+    from ..stickers import (StickerError, render_sticker_json, render_sticker_pdf,
+                            render_sticker_svgs, sticker_set)
+    from ..stickers.compose import COLORS_NOTE, PARTS_HEADING, part_line
+    from ..sheets.model import paper_size
+
+    out = Path(output)
+    if fmt == "svg" and out.exists() and not out.is_dir():
+        raise CommandError(f"{out} is a file; --format svg writes a directory holding "
+                           "sticker-small.svg and sticker-large.svg", 1)
+    r = _load(recipe)
+    try:
+        result = build_map(r, cache_dir=cache_dir, compare_official=False, template=template_id)
+    except DatasetError as exc:
+        raise _dataset_failure(exc)
+    except MapBuildError as exc:
+        raise CommandError(f"Cannot build {r.id}: {exc}", 1)
+    sheet = paper_size(paper or "letter")
+    try:
+        s = sticker_set(result)
+        if fmt == "pdf":
+            files = [(out, render_sticker_pdf(s, paper=sheet.name))]
+        elif fmt == "svg":
+            files = [(out / name, text.encode("utf-8")) for name, text in render_sticker_svgs(s)]
+        else:
+            files = [(out, render_sticker_json(s).encode("utf-8"))]
+    except StickerError as exc:
+        raise CommandError(str(exc), 1)
+    try:
+        if fmt == "svg":
+            out.mkdir(parents=True, exist_ok=True)
+        for path, data in files:
+            path.write_bytes(data)
+    except OSError as exc:
+        raise CommandError(f"Cannot write output: {exc}", 1)
+
+    source = _SOURCE_TEXT.get(result.report.get("arrangement_source", ""), "default")
+    click.echo(f"Recipe: {r.id} - {r.title} (format {r.format}, SHA-256 {r.sha256})")
+    lines = template_lines(result)   # feature 016: Template and Margin lines, none on the kit
+    for line in lines:
+        click.echo(line)
+    same = (f"{REHANG_RULE}." if lines else "the stickers are the same for A, B, C, D and E.")
+    click.echo(f"Legend values from the build hung as {s.arrangement} ({source}); {same}")
+    click.echo(f"Sticker title: {s.text.title} ({s.text.title_source})")
+    click.echo(f"Sticker line: {s.text.line} ({s.text.line_source})")
+    click.echo(_sticker_line(s.large, s.legend))
+    click.echo(_sticker_line(s.small))
+    click.echo(f"{PARTS_HEADING} (the sticker is printed, not a LEGO part):")
+    for st in (s.large, s.small):
+        head = f"  {st.size.capitalize()}: "
+        for i, part in enumerate(st.plaque.parts):
+            click.echo((head if i == 0 else " " * len(head)) + part_line(part))
+    if paper is not None and fmt != "pdf":
+        click.echo(f"Note: --paper applies to PDF output only; not used with --format {fmt}.")
+    if fmt == "pdf":
+        click.echo(f"Stickers: {out} ({sheet.label}, 1 page, {len(files[0][1]):,} bytes)")
+    elif fmt == "svg":
+        listed = ", ".join(f"{path} ({len(data):,} bytes)" for path, data in files)
+        click.echo(f"Stickers: {listed}")
+    else:
+        click.echo(f"Stickers: {out} (JSON summary, {len(files[0][1]):,} bytes)")
+    click.echo(COLORS_NOTE)
+    echo_citations(_credit_citations(s.credits))
     click.echo(DISCLAIMER)
 
 

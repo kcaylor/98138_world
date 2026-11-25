@@ -92,3 +92,6 @@ unobserved_lat = 60
 
 [shadow]
 color = "lego_black"
+# Map stickers (feature 017): sticker texts approved by the project owner, 2026-11-24
+[sticker]
+line = "Annual mean precipitation, 1991-2020, from desert tan to rainforest green on land and pale to deep blue at sea."

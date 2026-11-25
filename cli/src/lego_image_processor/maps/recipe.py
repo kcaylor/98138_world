@@ -17,7 +17,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 from ..datasets.registry import DatasetEntry, load_registry
 from ..kit.part_colors import load_part_colors
 from ..layout.arrangement import Arrangement, ArrangementError, parse_arrangement, valid_values
-from .margin import DEFAULT_MARGIN_COLOR, MarginTreatment, color_rule, ring_rule
+from .margin import DEFAULT_MARGIN_COLOR, PLAQUE_CORNERS, MarginTreatment, color_rule, corner_rule, ring_rule
 
 FORMAT = "1"
 DEFAULT_SEED = 31203
@@ -31,6 +31,8 @@ _BOUND_KEYS = ("lat_min", "lat_max", "lon_min", "lon_max")
 _OVERRIDE_KEYS = {"name", "color", "exclude", "dataset", "variable", "min_value", "unobserved_lat",
                   *_BOUND_KEYS}
 _LEGEND_KEYS = {"units", "factor"}
+_STICKER_KEYS = {"title", "line", "credit", "no_data"}  # feature 017
+_STICKER_NO_DATA_KEYS = {"land", "ocean"}
 METHODS = ("bins", "quantile", "rank", "rank-to-supply", "categorical")
 RANK_METHODS = ("quantile", "rank", "rank-to-supply")
 DATA_TEXTURES = ("none", "blend")
@@ -42,8 +44,9 @@ LOCAL_FORMATS = ("netcdf3", "npy", "dods")
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{1,63}$")
 
 _TOP_KEYS = {"format", "id", "title", "description", "seed", "arrangement", "land", "ocean", "shadow",
-             "template", "margin"}  # feature 016: template, margin
-_MARGIN_KEYS = {"color", "ring"}  # feature 016 (labels are feature 017)
+             "template", "margin",  # feature 016: template, margin
+             "sticker"}  # feature 017: the [sticker] table
+_MARGIN_KEYS = {"color", "ring", "plaque"}  # feature 016; plaque: feature 017 (the in-margin plaque's corner)
 _SHADOW_KEYS = {"enabled", "color", "direction"}
 _DATA_KEYS = {"role", "colors", "dataset", "local", "variable", "transform", "classification", "texture",
               "no_data", "sampling", "override", "legend"}
@@ -187,6 +190,21 @@ class Legend:
 
 
 @dataclass(frozen=True)
+class StickerText:
+    """The optional ``[sticker]`` table (feature 017, FR-004; contracts/recipe-sticker.md).
+
+    ``line``: the sticker's one-line description; ``title``: the sticker title (None: the recipe's
+    title); ``credit``: replaces the large sticker's "Data:" lines only (None: the registry
+    credits); ``no_data``: no-data labels per layer (``land``/``ocean``) that has a no-data rule.
+    Only ``stickers/`` reads it: no layout, report, parts list, cells file or sheet does."""
+
+    line: str
+    title: Optional[str] = None
+    credit: Optional[str] = None
+    no_data: Dict[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class Layer:
     cls: str
     role: str
@@ -222,6 +240,7 @@ class Recipe:
     arrangement: Optional[Arrangement] = None  # feature 009: the recipe's default; None = key absent
     template: Optional[str] = None  # feature 016: a known template id; None = key absent (the kit)
     margin: Optional[MarginTreatment] = None  # feature 016: the [margin] table; None = table absent
+    sticker: Optional[StickerText] = None      # feature 017: the [sticker] table; None = absent
 
     @property
     def layers(self) -> Tuple[Layer, Layer]:
@@ -712,9 +731,10 @@ def _parse(data: Dict[str, Any], raw: bytes, path: Optional[Path], base_dir: Pat
     arrangement = _arrangement(data.get("arrangement"))
     template = _template(data.get("template"))
     margin = _margin(data.get("margin"))
+    sticker = _sticker(data.get("sticker"), (land, ocean))
     return Recipe(format=fmt, id=rid, title=title, description=description, seed=seed, land=land,
                   ocean=ocean, sha256=hashlib.sha256(raw).hexdigest(), path=path, shadow=shadow,
-                  arrangement=arrangement, template=template, margin=margin)
+                  arrangement=arrangement, template=template, margin=margin, sticker=sticker)
 
 
 def _template(v: Any) -> Optional[str]:
@@ -733,11 +753,14 @@ def _template(v: Any) -> Optional[str]:
 
 def _margin(t: Any) -> Optional[MarginTreatment]:
     """The optional ``[margin]`` table (feature 016, research R12): ``color`` (a 3070b color, default
-    Black) and an optional ``ring`` color that must differ from it. Used only on non-kit templates."""
+    Black) and an optional ``ring`` color that must differ from it. Used only on non-kit templates.
+    Feature 017 (FR-021): an optional ``plaque``, the corner of the in-margin plaque (one of
+    ``PLAQUE_CORNERS``); ignored on kit builds, with 016's margin note."""
     if t is None:
         return None
     if not isinstance(t, dict):
-        raise RecipeError("margin", "must be a table with color and ring (1x1 square tile colors, part 3070b)")
+        raise RecipeError("margin", "must be a table with color and ring (1x1 square tile colors, part 3070b) "
+                                    "and plaque (a corner)")
     _check_keys(t, _MARGIN_KEYS, "margin")
     color = t.get("color", DEFAULT_MARGIN_COLOR)
     rule = color_rule(color)
@@ -750,7 +773,11 @@ def _margin(t: Any) -> Optional[MarginTreatment]:
             raise RecipeError("margin.ring", rule)
         if ring == color:
             raise RecipeError("margin.ring", ring_rule(ring, color))
-    return MarginTreatment(color=color, ring=ring)
+    plaque = t.get("plaque")
+    if plaque is not None and (not isinstance(plaque, str) or plaque not in PLAQUE_CORNERS):
+        raise RecipeError("margin.plaque", corner_rule())
+    return MarginTreatment(color=color, ring=ring, plaque=plaque,
+                           plaque_source=None if plaque is None else "recipe")
 
 
 def _arrangement(v: Any) -> Optional[Arrangement]:
@@ -764,6 +791,44 @@ def _arrangement(v: Any) -> Optional[Arrangement]:
         return parse_arrangement(v)
     except ArrangementError:
         raise RecipeError("arrangement", rule)
+
+
+def _sticker_string(v: Any, path: str) -> str:
+    """A sticker text: a non-empty string on one line (no line break or tab). Latin-1 is not a
+    parse rule; ``map stickers --format pdf`` checks it (research R5)."""
+    if not isinstance(v, str) or not v.strip() or "\t" in v or v.splitlines() != [v]:
+        raise RecipeError(path, "must be a non-empty single-line string")
+    return v
+
+
+def _sticker(t: Any, layers: Tuple[Layer, Layer]) -> Optional[StickerText]:
+    """The optional ``[sticker]`` table (feature 017, contracts/recipe-sticker.md)."""
+    if t is None:
+        return None
+    if not isinstance(t, dict):
+        raise RecipeError("sticker", "must be a table")
+    _check_keys(t, _STICKER_KEYS, "sticker")
+    if "line" not in t:
+        raise RecipeError("sticker.line", "is required")
+    line = _sticker_string(t["line"], "sticker.line")
+    title = _sticker_string(t["title"], "sticker.title") if "title" in t else None
+    credit = _sticker_string(t["credit"], "sticker.credit") if "credit" in t else None
+    no_data: Dict[str, str] = {}
+    raw = t.get("no_data")
+    if raw is not None:
+        if not isinstance(raw, dict):
+            raise RecipeError("sticker.no_data", "must be a table")
+        _check_keys(raw, _STICKER_NO_DATA_KEYS, "sticker.no_data")
+        rules = {layer.cls: layer.no_data for layer in layers}
+        for cls in ("land", "ocean"):
+            if cls not in raw:
+                continue
+            where = f"sticker.no_data.{cls}"
+            label = _sticker_string(raw[cls], where)
+            if rules[cls] is None:
+                raise RecipeError(where, f"the {cls} layer has no no_data rule")
+            no_data[cls] = label
+    return StickerText(line=line, title=title, credit=credit, no_data=no_data)
 
 
 def _shadow(t: Any) -> Shadow:

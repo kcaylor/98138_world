@@ -21,7 +21,9 @@ frame (data-model.md Template.id, .projection, .board, .classes, .locations, .pa
 Stud lookups (FR-005): ``Template.stud_at(lat, lon)`` and ``Template.location(row, col)``; for
 non-kit templates ``Template.grid_projection`` is a ``geometry.TemplateProjection`` (``cells_for``,
 ``locations``, ``abs_lat``), for the kit the ``maps.projection.KitProjection``. Margins use the
-1x1 square tile ``MARGIN_PART_ID`` (3070b). Not affiliated with or endorsed by The LEGO Group.
+1x1 square tile ``MARGIN_PART_ID`` (3070b). ``Template.projection_title`` names the projection as
+maps, pages and stickers show it ("Winkel tripel"; feature 017), from ``PROJECTION_TITLES``.
+Not affiliated with or endorsed by The LEGO Group.
 """
 
 from __future__ import annotations
@@ -48,6 +50,10 @@ KIT_TEMPLATE_ID = "kit-31203"
 MARGIN_PART_ID = "3070b"
 LAND_PART_ID, OCEAN_PART_ID = "6141", "98138"
 TEMPLATE_PARTS = {"land": LAND_PART_ID, "ocean": OCEAN_PART_ID, "margin": MARGIN_PART_ID}
+KIT_PROJECTION = "kit-31203-equirectangular"
+# The projections' names as maps, pages and stickers show them (feature 017, research R14), keyed by
+# ``projection.name``: in code, not in the template files, whose SHA-256 every output records.
+PROJECTION_TITLES = {winkel.NAME: winkel.TITLE, KIT_PROJECTION: "Equidistant cylindrical"}
 FORMAT_VERSION = "1"
 DISCLAIMER = "Not affiliated with or endorsed by The LEGO Group."
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "data" / "templates"
@@ -211,6 +217,13 @@ class Template:
         return copy.deepcopy(self._source)
 
     @property
+    def projection_title(self) -> str:
+        """The projection's name as maps, pages and stickers show it ("Winkel tripel"), from
+        ``PROJECTION_TITLES`` by ``projection["name"]`` (feature 017)."""
+        name = self._projection["name"]
+        return PROJECTION_TITLES.get(name, name)
+
+    @property
     def arrangements(self) -> Tuple[str, ...]:
         return tuple(self._frame["arrangements"])
 
@@ -344,7 +357,7 @@ def kit_template() -> Template:
     lon_col = np.array([p.cell_center(0, c)[1] for c in range(W)])
     lat = np.repeat(lat_row[:, None], W, axis=1)
     lon = np.repeat(lon_col[None, :], H, axis=0)
-    projection = {"name": "kit-31203-equirectangular", "proj": None, "lat_1": None, "lon_0": None,
+    projection = {"name": KIT_PROJECTION, "proj": None, "lat_1": None, "lon_0": None,
                   "citation": ("kit_31203_projection.json: the kit grid's equidistant cylindrical projection "
                                "fitted to the kit's land/sea mask (feature 004, research R2)"),
                   "fit": {"mode": "kit", "left_edge_lon": p.left_edge_lon, "deg_per_col": p.deg_per_col,

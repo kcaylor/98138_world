@@ -257,3 +257,115 @@ def test_black_margin_layout_and_parts_keep_cited_black(confirmed_winkel):
     pl = build_parts_list(layout)
     lots = [lot for lot in pl.lots if lot.part_id == "3070b"]
     assert [(lot.color_key, lot.needed) for lot in lots] == [("lego_black", 1996)]
+
+
+# --- Feature 017 (T067; FR-024; research R15; contracts/in-margin-plaque.md "Preview"): the
+# in-margin plaque is one filled rectangle in the tile's cited Black over its 6 x 6 studs (in the
+# round style 6 pitches minus the gap between studs, as a round stud leaves; edge to edge in the
+# square style). A layout may lack exactly the plaque's studs and no other position.
+
+PLAQUE_STUDS = (73, 1)  # bottom-left: rows 73-78, columns 1-6
+
+
+def _plaque_rgb():
+    from lego_image_processor.kit.plaque_parts import load_plaque_parts
+    tile = load_plaque_parts().plaques["small"].tile
+    return tuple(tile.color.rgb)
+
+
+def _plaque_layout(margin='color = "lego_dark_stone_grey"\n', corner="bottom-left"):
+    return _margin_layout(margin + f'plaque = "{corner}"\n')
+
+
+def test_plaque_is_one_black_rectangle(tmp_path, confirmed_winkel):
+    layout = _plaque_layout()
+    black = _plaque_rgb()
+    grey = preview_mod.color_rgb()[("3070b", "lego_dark_stone_grey")]
+    assert black == CITED_BLACK
+    out = tmp_path / "p.png"
+    write_preview(layout, out)
+    img = np.asarray(Image.open(out).convert("RGB"))
+    r0, c0 = PLAQUE_STUDS
+    for y in range(r0, r0 + 6):
+        for x in range(c0, c0 + 6):
+            assert tuple(img[y * 8 + 4, x * 8 + 4]) == black  # on a stud
+    for (y, x) in ((r0 + 1, c0 + 1), (r0 + 3, c0 + 4), (r0 + 4, c0 + 2)):  # inner studs
+        assert tuple(img[y * 8, x * 8]) == black            # between studs: no gap inside the tile
+        assert tuple(img[y * 8 + 7, x * 8 + 7]) == black
+    top, left, bottom, right = r0 * 8, c0 * 8, (r0 + 6) * 8 - 1, (c0 + 6) * 8 - 1
+    assert tuple(img[top + 1, left + 1]) == black and tuple(img[bottom - 1, right - 1]) == black
+    # just outside: the neighbouring margin square tiles, edge to edge
+    for (py, px) in ((top - 1, left + 20), (bottom + 1, left + 20), (top + 20, left - 1), (top + 20, right + 1)):
+        assert tuple(img[py, px]) == grey
+    # the outermost pixel ring is part covered (the gap a round stud leaves), so neither colour
+    edge = tuple(img[top + 20, left])
+    assert edge != black and edge != grey
+
+
+def test_plaque_in_the_square_style_fills_its_cells(tmp_path, confirmed_winkel):
+    layout = _plaque_layout()
+    black = _plaque_rgb()
+    out = tmp_path / "s.png"
+    write_preview(layout, out, style="square")
+    img = np.asarray(Image.open(out).convert("RGB"))
+    r0, c0 = PLAQUE_STUDS
+    assert (img[r0 * 8:(r0 + 6) * 8, c0 * 8:(c0 + 6) * 8] == black).all()
+    grey = preview_mod.color_rgb()[("3070b", "lego_dark_stone_grey")]
+    assert tuple(img[r0 * 8 - 1, c0 * 8]) == grey and tuple(img[r0 * 8, c0 * 8 - 1]) == grey
+
+
+def test_plaque_on_a_black_margin_and_a_light_background(tmp_path, confirmed_winkel):
+    """A Black margin blends into the background (016); the plaque keeps the tile's cited Black."""
+    layout = _plaque_layout('color = "lego_black"\n')
+    out = tmp_path / "b.png"
+    write_preview(layout, out, background=(233, 233, 233))
+    img = np.asarray(Image.open(out).convert("RGB"))
+    r0, c0 = PLAQUE_STUDS
+    assert tuple(img[(r0 + 2) * 8, (c0 + 2) * 8]) == _plaque_rgb()
+    assert tuple(img[(r0 + 2) * 8, c0 * 8 - 1]) == (233, 233, 233)
+
+
+@pytest.mark.parametrize("corner", ["top-left", "top-right", "bottom-right"])
+def test_plaque_in_every_corner(tmp_path, confirmed_winkel, corner):
+    layout = _plaque_layout(corner=corner)
+    s = layout.plaque["studs"]
+    out = tmp_path / "c.png"
+    write_preview(layout, out, scale=1, style="square")
+    img = np.asarray(Image.open(out).convert("RGB"))
+    assert (img[s["row"]:s["row"] + 6, s["col"]:s["col"] + 6] == _plaque_rgb()).all()
+
+
+def test_preview_without_a_plaque_is_unchanged(tmp_path, confirmed_winkel):
+    """The same layout built without the plaque draws the margin there, as 016 does."""
+    plain = _margin_layout('color = "lego_dark_stone_grey"\n')
+    with_plaque = _plaque_layout()
+    a, b = tmp_path / "a.png", tmp_path / "b.png"
+    write_preview(plain, a)
+    write_preview(with_plaque, b)
+    ia = np.asarray(Image.open(a).convert("RGB"))
+    ib = np.asarray(Image.open(b).convert("RGB"))
+    r0, c0 = PLAQUE_STUDS
+    outside = np.ones(ia.shape[:2], dtype=bool)
+    outside[r0 * 8:(r0 + 6) * 8, c0 * 8:(c0 + 6) * 8] = False
+    assert (ia[outside] == ib[outside]).all()
+    assert tuple(ia[(r0 + 2) * 8, (c0 + 2) * 8]) == preview_mod.color_rgb()[("3070b", "lego_dark_stone_grey")]
+
+
+def _regrid(layout, positions, plaque="same"):
+    from lego_image_processor.layout.grid import PositionPlacementGrid
+    return PositionPlacementGrid(width=layout.width, height=layout.height, positions=positions,
+                                 source_image=layout.source_image, generated_at=layout.generated_at,
+                                 map_metadata=layout.map_metadata, template=layout.template,
+                                 plaque=layout.plaque if plaque == "same" else plaque)
+
+
+def test_a_layout_may_lack_only_the_plaque_studs(tmp_path, confirmed_winkel):
+    layout = _plaque_layout()
+    gone = layout.positions[500]
+    with pytest.raises(ValueError, match=f"no piece at column {gone.x}, row {gone.y}"):
+        write_preview(_regrid(layout, [p for p in layout.positions if p is not gone]), tmp_path / "x.png")
+    plain = _margin_layout('color = "lego_dark_stone_grey"\n')
+    with pytest.raises(ValueError, match="under the plaque"):
+        write_preview(_regrid(plain, plain.positions, plaque=layout.plaque), tmp_path / "y.png")
+    with pytest.raises(ValueError, match="no piece"):
+        write_preview(_regrid(plain, plain.positions[1:]), tmp_path / "z.png")

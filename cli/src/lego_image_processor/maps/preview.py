@@ -11,6 +11,13 @@ other margin colors and the outline ring keep their cited colors (owner, 2026-11
 drawing changes: layouts, parts lists, exports, sheets and cells.json keep LEGO Black's cited color.
 Kit layouts have no square tiles, so their previews are unchanged (SC-001).
 
+Feature 017 (FR-024; research R15; contracts/in-margin-plaque.md "Preview"): the in-margin plaque
+(``metadata.plaque``) is drawn as one filled rectangle in its tile's cited Black over its studs. In
+the round style it spans the studs minus the gap a round stud leaves (``STUD_DIAMETER``), half of it
+on each side, anti-aliased; in the square style it fills the studs' cells. A layout may lack exactly
+the plaque's studs and no other position (``ValueError`` otherwise); previews without a plaque are
+unchanged.
+
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -55,10 +62,60 @@ def _ring_color(layout):
     return (meta.get("margin") or {}).get("ring")
 
 
+def _check_positions(layout) -> None:
+    """A layout may lack exactly its plaque's studs (feature 017) and no other position."""
+    covered = getattr(layout, "plaque_positions", frozenset())
+    off = [(x, y) for (x, y) in covered if not (0 <= x < layout.width and 0 <= y < layout.height)]
+    if off:
+        raise ValueError(f"the plaque (metadata.plaque) covers studs off the {layout.width} x {layout.height} board")
+    present = set()
+    for pos in layout.positions:
+        if (pos.x, pos.y) in covered:
+            raise ValueError(f"a piece at column {pos.x}, row {pos.y} is under the plaque (metadata.plaque)")
+        present.add((pos.x, pos.y))
+    for y in range(layout.height):
+        for x in range(layout.width):
+            if (x, y) not in present and (x, y) not in covered:
+                raise ValueError(f"the layout has no piece at column {x}, row {y}; a layout may lack only the "
+                                 f"studs of its plaque (metadata.plaque)")
+
+
+def plaque_rgb(record) -> Tuple[int, int, int]:
+    """The cited RGB of the plaque tile a ``metadata.plaque`` record names (plaque_parts.json)."""
+    from ..kit.plaque_parts import load_plaque_parts
+
+    try:
+        part = load_plaque_parts().get(str(record.get("part_id")))
+    except KeyError:
+        part = None
+    if part is None or part.color.key != record.get("color"):
+        raise ValueError(f"no cited RGB for {record.get('color')} on plaque part {record.get('part_id')}")
+    return tuple(part.color.rgb)
+
+
+def _edge_coverage(n: int, start: float, stop: float) -> np.ndarray:
+    """Share of each of ``n`` pixels inside [start, stop) (pixel i spans [i, i + 1))."""
+    i = np.arange(n, dtype=np.float64)
+    return np.clip(np.minimum(i + 1.0, stop) - np.maximum(i, start), 0.0, 1.0)
+
+
+def _draw_plaque(img: np.ndarray, record, scale: int, style: str) -> np.ndarray:
+    """``img`` (as drawn, H*scale x W*scale x 3) with the plaque's filled rectangle over its studs."""
+    s = record["studs"]
+    inset = (1.0 - STUD_DIAMETER) / 2.0 * scale if style == "round" else 0.0
+    ys = _edge_coverage(img.shape[0], s["row"] * scale + inset, (s["row"] + s["height"]) * scale - inset)
+    xs = _edge_coverage(img.shape[1], s["col"] * scale + inset, (s["col"] + s["width"]) * scale - inset)
+    a = (ys[:, None] * xs[None, :])[..., None]
+    color = np.asarray(plaque_rgb(record), dtype=np.float64)
+    return np.rint(color * a + img.astype(np.float64) * (1.0 - a)).astype(np.uint8)
+
+
 def write_preview(layout, path, scale: int = 8, style: str = DEFAULT_STYLE,
                   background: Tuple[int, int, int] = DEFAULT_BACKGROUND) -> Path:
     if style not in STYLES:
         raise ValueError(f"unknown preview style {style!r} (expected one of {', '.join(STYLES)})")
+    _check_positions(layout)
+    plaque = getattr(layout, "plaque", None)  # feature 017
     rgb = color_rgb()
     img = np.zeros((layout.height, layout.width, 3), dtype=np.uint8)
     square = np.zeros((layout.height, layout.width), dtype=bool)
@@ -71,6 +128,9 @@ def write_preview(layout, path, scale: int = 8, style: str = DEFAULT_STYLE,
         is_square = pos.part_type == MARGIN_PART_TYPE
         img[pos.y, pos.x] = background if is_square and pos.color_id == blend else rgb[key]
         square[pos.y, pos.x] = is_square
+    for (x, y) in getattr(layout, "plaque_positions", frozenset()):  # under the plaque: background
+        img[y, x] = background
+        square[y, x] = True
     if scale > 1:
         img = np.repeat(np.repeat(img, scale, axis=0), scale, axis=1)
     if style == "round":
@@ -80,6 +140,8 @@ def write_preview(layout, path, scale: int = 8, style: str = DEFAULT_STYLE,
         a = a[..., None]
         bg = np.asarray(background, dtype=np.float64)
         img = np.rint(img * a + bg * (1.0 - a)).astype(np.uint8)
+    if plaque is not None:
+        img = _draw_plaque(img, plaque, scale, style)
     path = Path(path)
     Image.fromarray(img, "RGB").save(path, format="PNG")
     return path
