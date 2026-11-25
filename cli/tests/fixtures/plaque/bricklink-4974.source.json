@@ -1,0 +1,9 @@
+{
+  "fixture": "bricklink-4974.html",
+  "synthetic": true,
+  "note": "Synthetic, not a copy of a catalog page: a few lines in the structure partnumbers.build.parse_bricklink_part reads (title, 'Item No:', the color list of the 'All' tab), with the item name 'Tile 8 x 16 with Bottom Tubes, Polished Surface' and a short invented color list that includes Black (BrickLink id 11). Replaces the synthetic bricklink-90498 page: the project owner chose the smooth tile 4974 for the large plaque on 2026-11-24.",
+  "generator": "hand-written for tests/unit/tools/test_plaque_parts_tool.py (feature 017 T010)",
+  "generated_on": "2026-11-24",
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group.",
+  "sha256": "838b9afe6f4fcfce1c3b26cc6e291339eef56dd9e8e94b5496313055a62b6e3d"
+}

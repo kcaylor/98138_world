@@ -42,6 +42,8 @@ def test_every_variant_has_files_matching_checksums(site_dir, manifest):
                 assert f["path"] == f"maps/{m['id']}/{c}/{p.name}"
                 if kind not in ("preview", "thumb"):
                     assert f["filename"].startswith(f"98138-world_{m['id']}_{c}_")
+            # feature 017: sticker files are per map, never in a variant
+            assert not {"stickers-letter", "stickers-a4", "sticker-small", "sticker-large"} & set(v["files"])
 
 
 def test_preview_sizes(site_dir, manifest):
@@ -108,6 +110,10 @@ def test_map_page_data(manifest):
     assert cit["license"] and cit["citation"]
     assert isinstance(sst["variants"]["A"]["warnings"], list)
     assert sst["recipe"]["sha256"]
+    # feature 017: one sticker block per map, after the variants (additive)
+    for m in manifest["maps"]:
+        assert list(m) == ["id", "title", "description", "recipe", "default_combination", "layers",
+                           "datasets", "citations", "variants", "stickers"], m["id"]
 
 
 def test_missing_dataset_without_fetch_is_an_error(tmp_path, fixture_datasets):

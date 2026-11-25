@@ -1,4 +1,5 @@
-"""`map` commands: build a layout from a recipe, check a recipe, list bundled recipes (feature 004).
+"""`map` commands: build a layout from a recipe, check a recipe, list bundled recipes (feature 004);
+`map cells` (feature 015); `map stickers`, the plaque stickers of a map (feature 017).
 
 Only `map build --fetch` uses the network (to download a recipe's missing pinned datasets).
 Not affiliated with or endorsed by The LEGO Group.
@@ -358,6 +359,115 @@ def cells(recipe, output, cache_dir, arrangement):
     click.echo(f"Cells: {output} ({len(text.encode('utf-8')):,} bytes)")
     click.echo(data["note"])
     echo_citations(result.report["citations"])
+    click.echo(DISCLAIMER)
+
+
+def _sticker_line(st, legend=None) -> str:
+    from ..stickers.compose import tile_label
+
+    g = st.geometry
+    lo, hi = st.text_sizes
+    out = (f"{st.size.capitalize()} sticker: {g.cut_mm[0]:.1f} x {g.cut_mm[1]:.1f} mm for a "
+           f"{st.plaque.tile.color.lego.name} tile {tile_label(st.plaque)}")
+    if legend is not None:
+        n = len(legend)
+        groups = ", ".join(f"{gr.layer} {len(gr.swatches)}" for gr in legend.groups)
+        out += f"; {n} swatch{'' if n == 1 else 'es'} ({groups})"
+    return out + f"; text {lo:g}-{hi:g} pt"
+
+
+def _credit_citations(credits) -> List[Dict[str, Any]]:
+    """The sticker set's credits in ``echo_citations`` form."""
+    return [{"id": c.dataset, "version": c.version, "citation": c.citation, "doi": c.doi,
+             "license": c.license, "acknowledgement": c.acknowledgement} for c in credits]
+
+
+@map_group.command()
+@click.argument("recipe")
+@click.option("--output", "-o", required=True, type=click.Path(),
+              help="PDF file (pdf), directory (svg) or JSON file (json) to write")
+@click.option("--format", "fmt", type=click.Choice(["pdf", "svg", "json"]), default="pdf",
+              show_default=True,
+              help="pdf: the print sheet; svg: sticker-small.svg and sticker-large.svg in OUTPUT; "
+                   "json: the sticker-set summary")
+@click.option("--paper", type=click.Choice(["letter", "a4"], case_sensitive=False), default=None,
+              help="Paper of the print sheet (PDF only)  [default: letter]")
+@click.option("--cache-dir", type=click.Path(file_okay=False), help="Dataset cache root (default: per-user cache)")
+def stickers(recipe, output, fmt, paper, cache_dir):
+    """Make the two plaque stickers of RECIPE: a small one for a Black 6 x 6 tile and a large one
+    for a Black 8 x 16 tile, white on black, with the map's color legend and data credit.
+
+    The map is built in the recipe's own arrangement (as `map cells` does); the stickers are the
+    same for A, B and C. Writes nothing but OUTPUT, and nothing at all on an error. Never
+    downloads (build first with `map build --fetch`). Print the PDF at 100% on white sticker
+    paper and cut along the marks.
+
+    \b
+    Examples:
+        lego-image-processor map stickers ocean-sst -o stickers.pdf
+        lego-image-processor map stickers ocean-sst -o stickers-a4.pdf --paper a4
+        lego-image-processor map stickers rainfall -o rainfall-svg --format svg
+        lego-image-processor map stickers my-map.toml -o stickers.json --format json
+    """
+    from ..stickers import (StickerError, render_sticker_json, render_sticker_pdf,
+                            render_sticker_svgs, sticker_set)
+    from ..stickers.compose import COLORS_NOTE, PARTS_HEADING, part_line
+    from ..sheets.model import paper_size
+
+    out = Path(output)
+    if fmt == "svg" and out.exists() and not out.is_dir():
+        raise CommandError(f"{out} is a file; --format svg writes a directory holding "
+                           "sticker-small.svg and sticker-large.svg", 1)
+    r = _load(recipe)
+    try:
+        result = build_map(r, cache_dir=cache_dir, compare_official=False)
+    except DatasetError as exc:
+        raise _dataset_failure(exc)
+    except MapBuildError as exc:
+        raise CommandError(f"Cannot build {r.id}: {exc}", 1)
+    sheet = paper_size(paper or "letter")
+    try:
+        s = sticker_set(result)
+        if fmt == "pdf":
+            files = [(out, render_sticker_pdf(s, paper=sheet.name))]
+        elif fmt == "svg":
+            files = [(out / name, text.encode("utf-8")) for name, text in render_sticker_svgs(s)]
+        else:
+            files = [(out, render_sticker_json(s).encode("utf-8"))]
+    except StickerError as exc:
+        raise CommandError(str(exc), 1)
+    try:
+        if fmt == "svg":
+            out.mkdir(parents=True, exist_ok=True)
+        for path, data in files:
+            path.write_bytes(data)
+    except OSError as exc:
+        raise CommandError(f"Cannot write output: {exc}", 1)
+
+    source = _SOURCE_TEXT.get(result.report.get("arrangement_source", ""), "default")
+    click.echo(f"Recipe: {r.id} - {r.title} (format {r.format}, SHA-256 {r.sha256})")
+    click.echo(f"Legend values from the build hung as {s.arrangement} ({source}); the stickers "
+               "are the same for A, B and C.")
+    click.echo(f"Sticker title: {s.text.title} ({s.text.title_source})")
+    click.echo(f"Sticker line: {s.text.line} ({s.text.line_source})")
+    click.echo(_sticker_line(s.large, s.legend))
+    click.echo(_sticker_line(s.small))
+    click.echo(f"{PARTS_HEADING} (the sticker is printed, not a LEGO part):")
+    for st in (s.large, s.small):
+        head = f"  {st.size.capitalize()}: "
+        for i, part in enumerate(st.plaque.parts):
+            click.echo((head if i == 0 else " " * len(head)) + part_line(part))
+    if paper is not None and fmt != "pdf":
+        click.echo(f"Note: --paper applies to PDF output only; not used with --format {fmt}.")
+    if fmt == "pdf":
+        click.echo(f"Stickers: {out} ({sheet.label}, 1 page, {len(files[0][1]):,} bytes)")
+    elif fmt == "svg":
+        listed = ", ".join(f"{path} ({len(data):,} bytes)" for path, data in files)
+        click.echo(f"Stickers: {listed}")
+    else:
+        click.echo(f"Stickers: {out} (JSON summary, {len(files[0][1]):,} bytes)")
+    click.echo(COLORS_NOTE)
+    echo_citations(_credit_citations(s.credits))
     click.echo(DISCLAIMER)
 
 

@@ -1,7 +1,8 @@
 """The built output as the service sees it: manifest load, start-up check, lookups (FR-018).
 
 This module does not import ``lego_image_processor``: the running service only reads what the
-build step wrote. Not affiliated with or endorsed by The LEGO Group.
+build step wrote. A map's ``stickers`` block (feature 017) is optional, so an older manifest still
+serves. Not affiliated with or endorsed by The LEGO Group.
 """
 
 from __future__ import annotations
@@ -21,6 +22,11 @@ IMAGE_KINDS = ("preview", "thumb")
 DATA_KINDS = ("cells",)   # feature 015: palette chooser data, served inline, never a download
 KINDS = DOWNLOAD_KINDS + IMAGE_KINDS + DATA_KINDS
 ESTIMATE_KINDS = ("full", "one_kit")
+# feature 017: one sticker set per map and template (contracts/web.md "Catalog check"); the kit's
+# template id until feature 016 lists its templates
+STICKER_TEMPLATES = ("kit-31203",)
+STICKER_KINDS = ("stickers-letter", "stickers-a4", "sticker-small", "sticker-large")
+STICKER_IMAGES = ("sticker-small", "sticker-large")     # served inline for <img>, and downloads
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -55,6 +61,51 @@ def _is_bool(v: Any) -> bool:
 
 def _is_text(v: Any) -> bool:
     return isinstance(v, str) and bool(v.strip())
+
+
+def _check_file(root: Path, f: Any, where: str) -> None:
+    """A listed file: inside the root, present, of the recorded size (``where`` names it)."""
+    if not isinstance(f, dict) or not isinstance(f.get("path"), str) or not _is_int(f.get("bytes")):
+        raise CatalogError(f"{where}: must be an object with path and bytes")
+    target = (root / f["path"]).resolve()
+    if root not in target.parents:
+        raise CatalogError(f"{where}: path {f['path']!r} is outside {root}")
+    if not target.is_file():
+        raise CatalogError(f"{where}: missing file {target}")
+    if target.stat().st_size != f["bytes"]:
+        raise CatalogError(f"{where}: {target} has size {target.stat().st_size}, manifest says "
+                           f"{f['bytes']}")
+
+
+def _is_list(v: Any) -> bool:
+    return isinstance(v, list) and bool(v)
+
+
+def check_stickers(root: Path, m: Dict[str, Any]) -> None:
+    """A map's optional ``stickers`` block (feature 017): known templates, the four sticker kinds,
+    each file as a variant file, and the texts the map page shows."""
+    if "stickers" not in m:
+        return
+    blocks = m["stickers"]
+    if not isinstance(blocks, dict):
+        raise CatalogError(f"{m['id']} stickers: must be an object, found {type(blocks).__name__}")
+    for template_id, st in blocks.items():
+        if template_id not in STICKER_TEMPLATES:
+            raise CatalogError(f"{m['id']} stickers: unknown template {template_id!r} (known: "
+                               f"{', '.join(STICKER_TEMPLATES)})")
+        where = f"{m['id']} stickers {template_id}: "
+        _check(st, "files", lambda v: isinstance(v, dict), where, "an object")
+        for kind in st["files"]:
+            if kind not in STICKER_KINDS:
+                raise CatalogError(f"{where}unknown file kind {kind!r}")
+        for kind in STICKER_KINDS:
+            if kind not in st["files"]:
+                raise CatalogError(f"{where}missing file kind {kind!r}")
+            _check_file(root, st["files"][kind], f"{m['id']} stickers {template_id} {kind}")
+        for path in ("title", "line", "alt.small", "alt.large", "notes.printed", "notes.colors"):
+            _check(st, path, _is_text, where, "text")
+        for path in ("legend", "credit", "plaques"):
+            _check(st, path, _is_list, where, "a non-empty list")
 
 
 def check_prices(manifest: Dict[str, Any]) -> None:
@@ -114,10 +165,14 @@ class Catalog:
         self._maps = {m.id: m for m in self.maps}
         self._arr = {a["id"]: a for a in manifest["arrangements"]}
         self._files: Dict[tuple, Path] = {}
+        self._stickers: Dict[tuple, Path] = {}
         for m in self.maps:
             for c, v in m.data["variants"].items():
                 for kind, f in v["files"].items():
                     self._files[(m.id, c, kind)] = root / f["path"]
+            for template_id, st in m.data.get("stickers", {}).items():
+                for kind, f in st["files"].items():
+                    self._stickers[(m.id, template_id, kind)] = root / f["path"]
 
     @property
     def variant_count(self) -> int:
@@ -136,6 +191,18 @@ class Catalog:
         m = self.map(map_id)
         v = m.variant(combination) if m else None
         return v["files"].get(kind) if v else None
+
+    def stickers(self, map_id: str, template_id: str) -> Optional[Dict[str, Any]]:
+        """A map's sticker block for ``template_id`` (feature 017), or None."""
+        m = self.map(map_id)
+        return m.data.get("stickers", {}).get(template_id) if m else None
+
+    def sticker_file(self, map_id: str, template_id: str, kind: str) -> Optional[Path]:
+        return self._stickers.get((map_id, template_id, kind))
+
+    def sticker_entry(self, map_id: str, template_id: str, kind: str) -> Optional[Dict[str, Any]]:
+        st = self.stickers(map_id, template_id)
+        return st["files"].get(kind) if st else None
 
     @classmethod
     def load(cls, root) -> "Catalog":
@@ -174,5 +241,6 @@ class Catalog:
                     if target.stat().st_size != f["bytes"]:
                         raise CatalogError(f"{m['id']} {c} {kind}: {target} has size "
                                            f"{target.stat().st_size}, manifest says {f['bytes']}")
+            check_stickers(root, m)
         check_prices(manifest)
         return cls(root, manifest, raw)

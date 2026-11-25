@@ -1,0 +1,9 @@
+{
+  "fixture": "bricklink-10202.html",
+  "synthetic": true,
+  "note": "Synthetic, not a copy of a catalog page: a few lines in the structure partnumbers.build.parse_bricklink_part reads (title, 'Item No:', the color list of the 'All' tab), with the item name 'Tile 6 x 6 with Bottom Tubes' and a short invented color list that includes Black (BrickLink id 11).",
+  "generator": "hand-written for tests/unit/tools/test_plaque_parts_tool.py (feature 017 T010)",
+  "generated_on": "2026-11-24",
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group.",
+  "sha256": "82bb69d8b4c329aac7ba50f12d1715948c24e34fde916347029a7faf6e12e98a"
+}

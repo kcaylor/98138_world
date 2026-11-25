@@ -158,6 +158,13 @@ def test_every_download(client, manifest):
         assert hashlib.sha256(r.content).hexdigest() == f["sha256"]
         n += 1
     assert n >= 6 * 7
+    # feature 017: each map's four sticker files
+    for m in manifest["maps"]:
+        for kind, f in m["stickers"]["kit-31203"]["files"].items():
+            r = client.get(f"/maps/{m['id']}/stickers/kit-31203/download/{kind}")
+            assert r.status_code == 200, (m["id"], kind)
+            assert r.headers["content-disposition"] == f'attachment; filename="{f["filename"]}"'
+            assert hashlib.sha256(r.content).hexdigest() == f["sha256"]
 
 
 def test_download_contents_parse(client):
@@ -204,6 +211,9 @@ def test_downloads_listed_with_size(client, manifest):
             continue
         assert f'href="/maps/ocean-sst/A/download/{kind}"' in html
         assert escape(f["description"]) in html
+    for kind, f in manifest["maps"][1]["stickers"]["kit-31203"]["files"].items():  # feature 017
+        assert f'href="/maps/ocean-sst/stickers/kit-31203/download/{kind}"' in html
+        assert escape(f["description"]) in html
 
 
 # --- US4: about ----------------------------------------------------------------------------
@@ -213,7 +223,8 @@ def test_about(client):
     for text in ("frames 1·2·3, Europe and Africa in the centre",
                  "frames 3·1·2, America in the centre",
                  "frames 2·3·1, Asia and Australia in the centre",
-                 "pp. 7–8", "cookies", "analytics", REPO):
+                 "pp. 7–8", "cookies", "analytics", REPO,
+                 "Stickers for a plaque"):   # feature 017
         assert text in html, text
 
 

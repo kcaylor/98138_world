@@ -1,0 +1,427 @@
+{
+  "format_version": "1",
+  "source": {
+    "title": "Black tiles and plates for map sticker plaques",
+    "generator": "tools/partcolors plaque-parts",
+    "generated_on": "2026-11-24",
+    "snapshots": [
+      {
+        "id": "rebrickable-elements",
+        "title": "Rebrickable elements.csv (catalog download)",
+        "url": "https://cdn.rebrickable.com/media/downloads/elements.csv.gz",
+        "sha256": "dfc8641d58591c8188fe156a43831a7d774b48e61570d03e79940fefb812cbfc",
+        "accessed": "2026-11-22"
+      },
+      {
+        "id": "rebrickable-colors",
+        "title": "Rebrickable colors.csv (catalog download)",
+        "url": "https://cdn.rebrickable.com/media/downloads/colors.csv.gz",
+        "sha256": "ca59b7368c4ee4abf157c723689957de250e1485d036a2ae8b2b235102c8fe28",
+        "accessed": "2026-11-22"
+      },
+      {
+        "id": "ldraw",
+        "title": "LDraw LDConfig.ldr (update 2026-11-09)",
+        "url": "https://library.ldraw.org/library/official/LDConfig.ldr",
+        "sha256": "fb7c02d8f4fbb49ff6f4f5c85c70ca60b945e80365ca8bd12bea6b70d6d2f96b",
+        "accessed": "2026-11-21"
+      },
+      {
+        "id": "bricklink",
+        "title": "BrickLink Color Guide (archived 2025-10-02)",
+        "url": "http://web.archive.org/web/20251002182704/https://www.bricklink.com/catalogColors.asp",
+        "sha256": "93b28f3a1f6bb668c9f4102edaf3b2e6f500cf90084b087ead3af02c32e9ecda",
+        "accessed": "2026-11-21"
+      },
+      {
+        "id": "bricklink-10202",
+        "title": "BrickLink catalog item 10202, Tile 6 x 6 with Bottom Tubes (Internet Archive copy of 2025-09-03)",
+        "url": "http://web.archive.org/web/20250903205604id_/https://www.bricklink.com/v2/catalog/catalogitem.page?P=10202",
+        "sha256": "0b82595ed2f8e04003d4887f669ba37b02014298acce7cd26fca0dbfa257b564",
+        "accessed": "2026-11-24"
+      },
+      {
+        "id": "bricklink-3958",
+        "title": "BrickLink catalog item 3958, Plate 6 x 6 (Internet Archive copy of 2026-09-12)",
+        "url": "http://web.archive.org/web/20260912195200id_/https://www.bricklink.com/v2/catalog/catalogitem.page?P=3958",
+        "sha256": "5867812587171c85a589f2ba9c2304ea79f28f11ab18f5b77e919d38f35d8264",
+        "accessed": "2026-11-24"
+      },
+      {
+        "id": "bricklink-4974",
+        "title": "BrickLink catalog item 4974, Tile 8 x 16 with Bottom Tubes, Polished Surface (Internet Archive copy of 2026-04-17)",
+        "url": "http://web.archive.org/web/20260417023118id_/https://www.bricklink.com/v2/catalog/catalogitem.page?P=4974",
+        "sha256": "4d07fbb5d5966298013164e86be6105d25e9b20f62c66db359d396ebc250c302",
+        "accessed": "2026-11-24"
+      },
+      {
+        "id": "bricklink-92438",
+        "title": "BrickLink catalog item 92438, Plate 8 x 16 (Internet Archive copy of 2026-09-12)",
+        "url": "http://web.archive.org/web/20260912194401id_/https://www.bricklink.com/v2/catalog/catalogitem.page?P=92438",
+        "sha256": "7ea9bff7c80f6e0d99f3cab3ccc2fe8d26fc4d043508c81ce908bcf1fc27ddf6",
+        "accessed": "2026-11-24"
+      }
+    ],
+    "rules": [
+      "Rebrickable elements.csv lists at least one element of the part in Rebrickable color 0 (Black); the element ID is the lowest whose design_id equals the part number; all are kept.",
+      "Rebrickable colors.csv, LDraw LDConfig.ldr and the BrickLink color guide give the Rebrickable, LEGO and BrickLink names and IDs of Black and its RGB (partcolors join rules 2-4); they equal the lego_black row of part_colors.json.",
+      "The Rebrickable part number equals the part ID (elements.csv).",
+      "LEGO design IDs are the design_id values of the part's Black elements in elements.csv.",
+      "The part ID is the BrickLink item number or one of its alternates (pinned BrickLink page).",
+      "The pinned BrickLink page lists Black (BrickLink id 11) among the item's colors.",
+      "No part is in kit_31203_inventory.json; BrickLink's item name gives the slot (Tile or Plate) and the plaque's dimensions; every plaque's tile and plate have the same studs.",
+      "Every citation id resolves to source.snapshots; SHA-256s are 64 hex characters; dates are YYYY-MM-DD.",
+      "Only the color key lego_black; both disclaimers present."
+    ],
+    "terms": {
+      "text": "Free for personal and commercial use, provided you acknowledge Rebrickable as your data source.",
+      "url": "http://web.archive.org/web/20261029125803id_/https://rebrickable.com/downloads/",
+      "sha256": "1c514a79f8cb70a0faacccf7174ee4329a307a6d91221b8c318b6982a7b91b75",
+      "accessed": "2026-11-22"
+    },
+    "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
+  },
+  "plaques": {
+    "small": {
+      "studs": [
+        6,
+        6
+      ],
+      "tile": "10202",
+      "plate": "3958"
+    },
+    "large": {
+      "studs": [
+        16,
+        8
+      ],
+      "tile": "4974",
+      "plate": "92438"
+    }
+  },
+  "parts": {
+    "10202": {
+      "kind": "tile",
+      "studs": [
+        6,
+        6
+      ],
+      "name": "Tile 6 x 6 with Bottom Tubes",
+      "lego_design_ids": [
+        "10202"
+      ],
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "10202",
+        "alternates": [],
+        "colors": [
+          "Black",
+          "Bright Green",
+          "Bright Light Orange",
+          "Dark Bluish Gray",
+          "Dark Green",
+          "Dark Turquoise",
+          "Green",
+          "Lavender",
+          "Light Bluish Gray",
+          "Light Gray",
+          "Light Nougat",
+          "Red",
+          "Reddish Brown",
+          "Tan",
+          "White",
+          "Yellow"
+        ],
+        "citation": "bricklink-10202"
+      },
+      "rebrickable": {
+        "part_num": "10202",
+        "citation": "rebrickable-elements"
+      },
+      "color": {
+        "key": "lego_black",
+        "element_id": "6155125",
+        "element_ids": [
+          "6155125"
+        ],
+        "lego": {
+          "name": "Black",
+          "id": 26
+        },
+        "bricklink": {
+          "name": "Black",
+          "id": 11
+        },
+        "rebrickable": {
+          "name": "Black",
+          "id": 0
+        },
+        "rgb": [
+          5,
+          19,
+          29
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors",
+          "element": "rebrickable-elements"
+        }
+      }
+    },
+    "3958": {
+      "kind": "plate",
+      "studs": [
+        6,
+        6
+      ],
+      "name": "Plate 6 x 6",
+      "lego_design_ids": [
+        "3958"
+      ],
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "3958",
+        "alternates": [],
+        "colors": [
+          "Aqua",
+          "Black",
+          "Blue",
+          "Bright Green",
+          "Bright Light Blue",
+          "Bright Light Orange",
+          "Bright Light Yellow",
+          "Bright Pink",
+          "Brown",
+          "Dark Azure",
+          "Dark Blue",
+          "Dark Bluish Gray",
+          "Dark Brown",
+          "Dark Gray",
+          "Dark Green",
+          "Dark Orange",
+          "Dark Pink",
+          "Dark Purple",
+          "Dark Red",
+          "Dark Tan",
+          "Dark Turquoise",
+          "Green",
+          "Lavender",
+          "Light Aqua",
+          "Light Bluish Gray",
+          "Light Gray",
+          "Light Nougat",
+          "Lime",
+          "Maersk Blue",
+          "Magenta",
+          "Medium Azure",
+          "Medium Blue",
+          "Medium Green",
+          "Medium Lavender",
+          "Medium Lime",
+          "Medium Nougat",
+          "Medium Orange",
+          "Neon Yellow",
+          "Olive Green",
+          "Orange",
+          "Red",
+          "Reddish Brown",
+          "Sand Green",
+          "Tan",
+          "White",
+          "Yellow",
+          "Trans-Yellow"
+        ],
+        "citation": "bricklink-3958"
+      },
+      "rebrickable": {
+        "part_num": "3958",
+        "citation": "rebrickable-elements"
+      },
+      "color": {
+        "key": "lego_black",
+        "element_id": "395826",
+        "element_ids": [
+          "395826"
+        ],
+        "lego": {
+          "name": "Black",
+          "id": 26
+        },
+        "bricklink": {
+          "name": "Black",
+          "id": 11
+        },
+        "rebrickable": {
+          "name": "Black",
+          "id": 0
+        },
+        "rgb": [
+          5,
+          19,
+          29
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors",
+          "element": "rebrickable-elements"
+        }
+      }
+    },
+    "4974": {
+      "kind": "tile",
+      "studs": [
+        16,
+        8
+      ],
+      "name": "Tile 8 x 16 with Bottom Tubes, Polished Surface",
+      "lego_design_ids": [
+        "4974"
+      ],
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "4974",
+        "alternates": [],
+        "colors": [
+          "Black",
+          "White"
+        ],
+        "citation": "bricklink-4974"
+      },
+      "rebrickable": {
+        "part_num": "4974",
+        "citation": "rebrickable-elements"
+      },
+      "color": {
+        "key": "lego_black",
+        "element_id": "6484420",
+        "element_ids": [
+          "6484420"
+        ],
+        "lego": {
+          "name": "Black",
+          "id": 26
+        },
+        "bricklink": {
+          "name": "Black",
+          "id": 11
+        },
+        "rebrickable": {
+          "name": "Black",
+          "id": 0
+        },
+        "rgb": [
+          5,
+          19,
+          29
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors",
+          "element": "rebrickable-elements"
+        }
+      }
+    },
+    "92438": {
+      "kind": "plate",
+      "studs": [
+        16,
+        8
+      ],
+      "name": "Plate 8 x 16",
+      "lego_design_ids": [
+        "92438"
+      ],
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "92438",
+        "alternates": [],
+        "colors": [
+          "Black",
+          "Blue",
+          "Bright Green",
+          "Bright Light Blue",
+          "Bright Light Orange",
+          "Bright Light Yellow",
+          "Bright Pink",
+          "Clikits Lavender",
+          "Coral",
+          "Dark Azure",
+          "Dark Bluish Gray",
+          "Dark Brown",
+          "Dark Gray",
+          "Dark Green",
+          "Dark Pink",
+          "Dark Tan",
+          "Dark Turquoise",
+          "Green",
+          "Lavender",
+          "Light Aqua",
+          "Light Bluish Gray",
+          "Light Gray",
+          "Light Green",
+          "Light Lime",
+          "Light Yellow",
+          "Lime",
+          "Maersk Blue",
+          "Magenta",
+          "Medium Azure",
+          "Medium Blue",
+          "Medium Green",
+          "Medium Lavender",
+          "Medium Nougat",
+          "Medium Tan",
+          "Olive Green",
+          "Orange",
+          "Pink",
+          "Red",
+          "Reddish Orange",
+          "Sand Blue",
+          "Sand Green",
+          "Tan",
+          "White",
+          "Yellow",
+          "Yellowish Green"
+        ],
+        "citation": "bricklink-92438"
+      },
+      "rebrickable": {
+        "part_num": "92438",
+        "citation": "rebrickable-elements"
+      },
+      "color": {
+        "key": "lego_black",
+        "element_id": "6094066",
+        "element_ids": [
+          "6094066"
+        ],
+        "lego": {
+          "name": "Black",
+          "id": 26
+        },
+        "bricklink": {
+          "name": "Black",
+          "id": 11
+        },
+        "rebrickable": {
+          "name": "Black",
+          "id": 0
+        },
+        "rgb": [
+          5,
+          19,
+          29
+        ],
+        "citations": {
+          "lego": "ldraw",
+          "bricklink": "bricklink",
+          "rebrickable": "rebrickable-colors",
+          "element": "rebrickable-elements"
+        }
+      }
+    }
+  },
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
+}

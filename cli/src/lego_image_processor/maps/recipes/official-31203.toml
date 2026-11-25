@@ -42,3 +42,8 @@ lego_bright_yellowish_green = "lego_bright_yellowish_green"
 lego_medium_azur = "lego_medium_azur"
 lego_bright_green = "lego_bright_green"
 lego_bright_bluish_green = "lego_bright_bluish_green"
+# Map stickers (feature 017): sticker texts approved by the project owner, 2026-11-24
+[sticker]
+title = "World Map, kit 31203 design"
+line = "White land and the kit's ocean pattern in nine tile colors, cell for cell from its building instructions."
+credit = "Design grid from the LEGO 31203 building instructions, extracted by 98138.world."

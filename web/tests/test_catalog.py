@@ -129,3 +129,67 @@ def test_no_prices_at_all_loads(copy):
                 v.pop("estimates")
     _edit(copy, strip)
     assert "prices" not in Catalog.load(copy).manifest
+
+
+# --- feature 017: map stickers (contracts/web.md "Catalog check") ----------------------------
+
+KIT = "kit-31203"
+
+
+def test_loads_stickers(site_dir):
+    cat = Catalog.load(site_dir)
+    p = cat.sticker_file("ocean-sst", KIT, "sticker-large")
+    assert p is not None and p.name == "sticker-large.svg" and p.is_file()
+    assert cat.sticker_entry("ocean-sst", KIT, "stickers-a4")["media_type"] == "application/pdf"
+    assert cat.stickers("ocean-sst", KIT)["title"] == "Ocean temperature"
+    assert cat.sticker_file("ocean-sst", "winkel-tripel", "sticker-large") is None
+    assert cat.sticker_file("ocean-sst", KIT, "layout") is None
+    assert cat.sticker_file("nope", KIT, "sticker-large") is None
+    assert cat.sticker_entry("ocean-sst", KIT, "../../manifest") is None
+    assert cat.stickers("nope", KIT) is None
+
+
+def test_stickers_are_optional(copy):
+    """An older manifest (no sticker blocks, no sticker files) still serves."""
+    def strip(m):
+        for mp in m["maps"]:
+            mp.pop("stickers")
+    _edit(copy, strip)
+    shutil.rmtree(copy / "maps" / "ocean-sst" / "stickers")
+    cat = Catalog.load(copy)
+    assert cat.stickers("ocean-sst", KIT) is None and cat.sticker_file("ocean-sst", KIT, "sticker-small") is None
+
+
+def _sticker_files(m, i=1):
+    return m["maps"][i]["stickers"][KIT]["files"]
+
+
+@pytest.mark.parametrize("edit, match", [
+    (lambda m: m["maps"][1]["stickers"].update({"winkel-tripel": m["maps"][1]["stickers"][KIT]}),
+     r"ocean-sst stickers: unknown template 'winkel-tripel'"),
+    (lambda m: m["maps"][1].update(stickers=[]), r"ocean-sst stickers: must be an object"),
+    (lambda m: _sticker_files(m).update({"sticker-huge": _sticker_files(m)["sticker-large"]}),
+     r"ocean-sst stickers kit-31203: unknown file kind 'sticker-huge'"),
+    (lambda m: _sticker_files(m).pop("stickers-a4"),
+     r"ocean-sst stickers kit-31203: missing file kind 'stickers-a4'"),
+    (lambda m: _sticker_files(m)["sticker-small"].update(path="../../etc/passwd"),
+     r"ocean-sst stickers kit-31203 sticker-small: path .* is outside"),
+    (lambda m: _sticker_files(m)["stickers-letter"].update(bytes=1),
+     r"ocean-sst stickers kit-31203 stickers-letter: .* has size"),
+    (lambda m: m["maps"][1]["stickers"][KIT].pop("alt"), r"ocean-sst stickers kit-31203: alt"),
+    (lambda m: m["maps"][1]["stickers"][KIT].update(title=""), r"ocean-sst stickers kit-31203: title"),
+    (lambda m: m["maps"][1]["stickers"][KIT].update(legend={}), r"ocean-sst stickers kit-31203: legend"),
+    (lambda m: m["maps"][1]["stickers"][KIT].pop("plaques"), r"ocean-sst stickers kit-31203: plaques"),
+    (lambda m: m["maps"][1]["stickers"][KIT]["notes"].pop("colors"),
+     r"ocean-sst stickers kit-31203: notes\.colors"),
+])
+def test_bad_stickers(copy, edit, match):
+    _edit(copy, edit)
+    with pytest.raises(CatalogError, match=match):
+        Catalog.load(copy)
+
+
+def test_missing_sticker_file(copy):
+    (copy / "maps" / "ocean-sst" / "stickers" / KIT / "sticker-large.svg").unlink()
+    with pytest.raises(CatalogError, match=r"ocean-sst stickers kit-31203 sticker-large: missing file"):
+        Catalog.load(copy)

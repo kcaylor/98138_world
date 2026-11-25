@@ -107,8 +107,11 @@ def test_downloads_and_parts_unchanged_by_chooser(client, manifest):
 
     assert "cells" not in DOWNLOAD_KINDS
     html = client.get("/maps/ocean-sst/A").text
-    assert html.count("/download/") == sum(1 for k in DOWNLOAD_KINDS
-                                           if k in manifest["maps"][1]["variants"]["A"]["files"])
+    # feature 017 adds the map's four sticker downloads (/maps/<map>/stickers/<template>/download/)
+    stickers = html.count("/stickers/kit-31203/download/")
+    assert stickers == len(manifest["maps"][1]["stickers"]["kit-31203"]["files"]) == 4
+    assert html.count("/download/") - stickers == sum(1 for k in DOWNLOAD_KINDS
+                                                      if k in manifest["maps"][1]["variants"]["A"]["files"])
 
 
 def test_about_mentions_chooser_and_ice(client):

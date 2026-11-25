@@ -78,3 +78,7 @@ min_steps = 12
 
 [shadow]
 color = "lego_black"
+# Map stickers (feature 017): sticker texts approved by the project owner, 2026-11-24
+[sticker]
+line = "Plant productivity on land (2000-2015) and ocean chlorophyll at sea (2013-2024), with ice in white."
+no_data = { land = "ice", ocean = "sea ice" }

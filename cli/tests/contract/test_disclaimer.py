@@ -157,3 +157,43 @@ def test_parts_estimate_table_and_json_carry_the_disclaimer(runner, tmp_path):
     as_json = runner.invoke(cli, base + ["--format", "json"])
     assert json.loads(as_json.output)["disclaimer"] == DISCLAIMER
     assert json.loads((tmp_path / "e.json").read_text(encoding="utf-8"))["disclaimer"] == DISCLAIMER
+
+
+# --- Feature 017 (T037, FR-026): map stickers ---------------------------------------------------
+
+def test_map_stickers_output_files_and_errors_carry_the_disclaimer(runner, tmp_path,
+                                                                    fixture_registry):
+    import io
+    import xml.etree.ElementTree as ET
+
+    from pypdf import PdfReader
+
+    from lego_image_processor.maps.build import build_map
+    from lego_image_processor.maps.recipe import load_recipe
+    from lego_image_processor.stickers import print_sheet, sticker_set
+
+    missing = runner.invoke(cli, ["map", "stickers", "ocean-sst", "-o", str(tmp_path / "x.pdf")])
+    assert missing.exit_code == 3 and _last_line(missing.output) == DISCLAIMER
+    unknown = runner.invoke(cli, ["map", "stickers", "nope", "-o", str(tmp_path / "x.pdf")])
+    assert unknown.exit_code == 1 and _last_line(unknown.output) == DISCLAIMER
+
+    fixture_registry.place_all()
+    pdf, svg, summary = tmp_path / "s.pdf", tmp_path / "svg", tmp_path / "s.json"
+    for out, fmt in ((pdf, "pdf"), (svg, "svg"), (summary, "json")):
+        result = runner.invoke(cli, ["map", "stickers", "ocean-sst", "-o", str(out), "--format", fmt])
+        assert result.exit_code == 0, result.output
+        assert _last_line(result.output) == DISCLAIMER, fmt
+    assert json.loads(summary.read_text(encoding="utf-8"))["disclaimer"] == DISCLAIMER
+    for name in ("sticker-small.svg", "sticker-large.svg"):
+        root = ET.fromstring((svg / name).read_bytes())
+        assert root.find("{http://www.w3.org/2000/svg}desc").text == DISCLAIMER, name
+    reader = PdfReader(io.BytesIO(pdf.read_bytes()))
+    assert reader.metadata.subject.endswith(DISCLAIMER)
+    assert DISCLAIMER in " ".join(reader.pages[0].extract_text().split())
+
+    s = sticker_set(build_map(load_recipe("ocean-sst"), cache_dir=fixture_registry.cache_dir,
+                              compare_official=False))
+    for sticker in (s.small, s.large):
+        assert " ".join(sticker.block("disclaimer").lines) == DISCLAIMER, sticker.size
+    footer = [t for t in print_sheet(s, "letter").page.items if getattr(t, "tag", "") == "disclaimer"]
+    assert footer[-1].text == DISCLAIMER

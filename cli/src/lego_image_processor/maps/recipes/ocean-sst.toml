@@ -29,3 +29,6 @@ method = "rank-to-supply"
 [ocean.texture]
 kind = "blend"
 width = 0.25
+# Map stickers (feature 017): sticker texts approved by the project owner, 2026-11-24
+[sticker]
+line = "Annual mean sea surface temperature, 1991-2020, cold to warm on the kit's nine tile colors."

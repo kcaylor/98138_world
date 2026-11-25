@@ -14,15 +14,19 @@ from xml.sax.saxutils import escape
 
 from ..kit.source import DISCLAIMER
 from .compose import SheetSet
-from .model import PT_MM, RGB, Circle, Line, Page, Rect, Text
+from .model import PT_MM, RGB, Circle, Item, Line, Page, Rect, Text
 
 ANCHOR = {"left": "start", "center": "middle", "right": "end"}
 FONT = "Helvetica, Arial, sans-serif"
 
 
-def _n(v: float) -> str:
+def svg_number(v: float) -> str:
+    """A length or coordinate with two decimals ("-0.00" written "0.00")."""
     s = f"{v:.2f}"
     return "0.00" if s == "-0.00" else s
+
+
+_n = svg_number
 
 
 def _hex(rgb: Optional[RGB]) -> str:
@@ -44,6 +48,32 @@ def _stroke(rgb: Optional[RGB], w: float) -> str:
     return ' stroke="none"' if rgb is None else f' stroke="{_hex(rgb)}" stroke-width="{_n(w)}"'
 
 
+def item_svg(it: Item, text_length: Optional[float] = None) -> Optional[str]:
+    """One page-model item as one SVG element (None for anything else). The build sheets and the
+    sticker SVGs (feature 017, research R4) write items with this one function. ``text_length``
+    (mm), which the build sheets never pass, adds ``textLength`` and
+    ``lengthAdjust="spacingAndGlyphs"`` to a text so a substitute font keeps the measured
+    width."""
+    if isinstance(it, Circle):
+        return (f'<circle cx="{_n(it.cx)}" cy="{_n(it.cy)}" r="{_n(it.r)}" '
+                f'fill="{_hex(it.fill)}"{_stroke(it.stroke, it.stroke_w)}{_meta(it)}/>')
+    if isinstance(it, Rect):
+        return (f'<rect x="{_n(it.x)}" y="{_n(it.y)}" width="{_n(it.w)}" '
+                f'height="{_n(it.h)}" fill="{_hex(it.fill)}"'
+                f'{_stroke(it.stroke, it.stroke_w)}{_meta(it)}/>')
+    if isinstance(it, Line):
+        return (f'<line x1="{_n(it.x1)}" y1="{_n(it.y1)}" x2="{_n(it.x2)}" '
+                f'y2="{_n(it.y2)}"{_stroke(it.stroke, it.w)}{_meta(it)}/>')
+    if isinstance(it, Text):
+        weight = ' font-weight="bold"' if it.bold else ""
+        length = ("" if text_length is None else
+                  f' textLength="{_n(text_length)}" lengthAdjust="spacingAndGlyphs"')
+        return (f'<text x="{_n(it.x)}" y="{_n(it.y)}" font-size="{_n(it.size_pt * PT_MM)}" '
+                f'text-anchor="{ANCHOR[it.align]}"{weight}{length} fill="{_hex(it.color)}"'
+                f'{_meta(it)}>{escape(it.text)}</text>')
+    return None
+
+
 def page_svg(page: Page, title: str) -> str:
     W, H = page.size.width_mm, page.size.height_mm
     lines = [
@@ -55,21 +85,9 @@ def page_svg(page: Page, title: str) -> str:
         f'<rect x="0" y="0" width="{_n(W)}" height="{_n(H)}" fill="#ffffff"/>',
     ]
     for it in page.items:
-        if isinstance(it, Circle):
-            lines.append(f'<circle cx="{_n(it.cx)}" cy="{_n(it.cy)}" r="{_n(it.r)}" '
-                         f'fill="{_hex(it.fill)}"{_stroke(it.stroke, it.stroke_w)}{_meta(it)}/>')
-        elif isinstance(it, Rect):
-            lines.append(f'<rect x="{_n(it.x)}" y="{_n(it.y)}" width="{_n(it.w)}" '
-                         f'height="{_n(it.h)}" fill="{_hex(it.fill)}"'
-                         f'{_stroke(it.stroke, it.stroke_w)}{_meta(it)}/>')
-        elif isinstance(it, Line):
-            lines.append(f'<line x1="{_n(it.x1)}" y1="{_n(it.y1)}" x2="{_n(it.x2)}" '
-                         f'y2="{_n(it.y2)}"{_stroke(it.stroke, it.w)}{_meta(it)}/>')
-        elif isinstance(it, Text):
-            weight = ' font-weight="bold"' if it.bold else ""
-            lines.append(f'<text x="{_n(it.x)}" y="{_n(it.y)}" font-size="{_n(it.size_pt * PT_MM)}" '
-                         f'text-anchor="{ANCHOR[it.align]}"{weight} fill="{_hex(it.color)}"'
-                         f'{_meta(it)}>{escape(it.text)}</text>')
+        line = item_svg(it)
+        if line is not None:
+            lines.append(line)
     lines.append("</svg>")
     return "\n".join(lines) + "\n"
 

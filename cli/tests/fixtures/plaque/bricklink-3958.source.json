@@ -1,0 +1,9 @@
+{
+  "fixture": "bricklink-3958.html",
+  "synthetic": true,
+  "note": "Synthetic, not a copy of a catalog page: a few lines in the structure partnumbers.build.parse_bricklink_part reads (title, 'Item No:', the color list of the 'All' tab), with the item name 'Plate 6 x 6' and a short invented color list that includes Black (BrickLink id 11).",
+  "generator": "hand-written for tests/unit/tools/test_plaque_parts_tool.py (feature 017 T010)",
+  "generated_on": "2026-11-24",
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group.",
+  "sha256": "20a016b10ef02b0a6c4e2b3021ee421fc58e86a9dac9577a3f7f6d68027e8b9c"
+}

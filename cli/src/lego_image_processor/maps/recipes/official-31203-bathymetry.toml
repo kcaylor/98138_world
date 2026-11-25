@@ -40,3 +40,7 @@ shares = [724, 597, 203, 230, 1019, 1606, 529, 1878]
 [ocean.texture]
 kind = "blend"
 width = 0.25
+# Map stickers (feature 017): sticker texts approved by the project owner, 2026-11-24
+[sticker]
+title = "Kit 31203 look, from bathymetry"
+line = "Ocean depth (ETOPO 2022) ranked into the kit's tile colors in the kit design's proportions, on white land."

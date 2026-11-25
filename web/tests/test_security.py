@@ -13,7 +13,10 @@ SRC = Path(__file__).resolve().parents[1] / "src" / "web98138"
 
 @pytest.mark.parametrize("path", ["/", "/about", "/maps/ocean-sst/A", "/static/style.css",
                                   "/maps/ocean-sst/A/preview.png",
-                                  "/maps/ocean-sst/A/download/layout", "/healthz", "/nope"])
+                                  "/maps/ocean-sst/A/download/layout", "/healthz", "/nope",
+                                  # feature 017: the sticker routes
+                                  "/maps/ocean-sst/stickers/kit-31203/sticker-large.svg",
+                                  "/maps/ocean-sst/stickers/kit-31203/download/stickers-letter"])
 def test_security_headers_no_cookies(client, path):
     r = client.get(path)
     h = r.headers
