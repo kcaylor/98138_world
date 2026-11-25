@@ -2,12 +2,18 @@
    it fetches this map's prebuilt cells.json from the site and recolors the preview in the page.
    No cookies, no storage, no other hosts; the state lives in the address fragment only.
    Preview only: parts lists, prices, build sheets and downloads keep the map's default colors.
+   Template variants (feature 016): margin cells ('M') belong to no layer; they keep the margin
+   color (the ring color on the outline ring) and are drawn as square tiles, as in preview.png;
+   margin cells in LEGO Black (not the ring) are the black background, as preview.png draws them.
    Not affiliated with or endorsed by The LEGO Group. */
 (function (root) {
   'use strict';
   var MAX_CLASSES = 12;
   var LAYERS = ['land', 'ocean'];
   var PART = { land: '6141', ocean: '98138' };
+  var MARGIN_PART = '3070b';                 // feature 016: 1x1 square tile of a template's margin
+  var BACKGROUND = '#000';                   // the canvas behind the studs, as preview.png
+  var BACKGROUND_MARGIN = 'lego_black';      // margin cells in this color are drawn as the background
 
   // ---- pure functions (also run by the web tests under Node) --------------------------------
 
@@ -61,14 +67,26 @@
 
   function sameState(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
 
-  function iceFlags(data) {                   // 1 = land ice, 2 = sea ice
+  function iceFlags(data) {                   // 1 = land ice, 2 = sea ice; never on margin cells
     if (!data._ice) {
       var f = new Uint8Array(data.width * data.height);
-      data.ice.land.forEach(function (i) { f[i] = 1; });
-      data.ice.sea.forEach(function (i) { f[i] = 2; });
+      data.ice.land.forEach(function (i) { if (data.cells.charAt(i) !== 'M') f[i] = 1; });
+      data.ice.sea.forEach(function (i) { if (data.cells.charAt(i) !== 'M') f[i] = 2; });
       data._ice = f;
     }
     return data._ice;
+  }
+
+  function cellPart(k) { return k === 'L' ? PART.land : k === 'M' ? MARGIN_PART : PART.ocean; }
+
+  function marginColor(data, i) {             // the ring color on the outline ring, else the margin's
+    var ring = data.margin.ring;
+    if (!ring) return data.margin.color;
+    if (!data._ring) {
+      data._ring = new Uint8Array(data.width * data.height);
+      ring.cells.forEach(function (j) { data._ring[j] = 1; });
+    }
+    return data._ring[i] ? ring.color : data.margin.color;
   }
 
   function layerClass(data, state, cls, i) {
@@ -81,7 +99,8 @@
     var n = data.width * data.height, out = new Array(n), ice = iceFlags(data);
     for (var i = 0; i < n; i++) {
       var k = data.cells.charAt(i);
-      if (k === 'S') out[i] = state.shadow;
+      if (k === 'M') out[i] = marginColor(data, i);
+      else if (k === 'S') out[i] = state.shadow;
       else if (state.ice === 'white' && ice[i]) out[i] = data.ice.color;
       else {
         var cls = k === 'L' ? 'land' : 'ocean';
@@ -101,6 +120,23 @@
       if (c >= 0) { cells[c]++; total++; }
     }
     return cells.map(function (x) { return { cells: x, share: total ? x / total : 0 }; });
+  }
+
+  function drawStuds(ctx, data, keys, rgbOf, px, diameter) {
+    // round studs on black, as the built preview.png; margin cells as full square tiles, except
+    // Black margin cells (not the ring), which are the background (owner, 2026-11-24)
+    var r = px * diameter / 2;
+    ctx.fillStyle = BACKGROUND;
+    ctx.fillRect(0, 0, data.width * px, data.height * px);
+    for (var i = 0; i < keys.length; i++) {
+      var x = i % data.width, y = (i - x) / data.width, k = data.cells.charAt(i);
+      if (k === 'M' && keys[i] === BACKGROUND_MARGIN && keys[i] === data.margin.color) continue;
+      ctx.fillStyle = 'rgb(' + rgbOf(cellPart(k), keys[i]).join(',') + ')';
+      if (k === 'M') { ctx.fillRect(x * px, y * px, px, px); continue; }
+      ctx.beginPath();
+      ctx.arc((x + 0.5) * px, (y + 0.5) * px, r, 0, 2 * Math.PI);
+      ctx.fill();
+    }
   }
 
   function encodeState(data, state) {
@@ -141,7 +177,7 @@
 
   var core = { classOf: classOf, equalShareBounds: equalShareBounds, spreadColors: spreadColors,
     validBounds: validBounds, defaultState: defaultState, cellColors: cellColors,
-    classShares: classShares, encodeState: encodeState, decodeState: decodeState };
+    classShares: classShares, encodeState: encodeState, decodeState: decodeState, drawStuds: drawStuds };
   if (typeof module !== 'undefined' && module.exports) { module.exports = core; return; }
 
   // ---- the page -------------------------------------------------------------------------------
@@ -325,17 +361,7 @@
   }
 
   function draw() {
-    var keys = cellColors(data, state), ctx = canvas.getContext('2d');
-    var r = STUD_PX * STUD_DIAMETER / 2;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    for (var i = 0; i < keys.length; i++) {
-      var x = i % data.width, y = (i - x) / data.width;
-      ctx.fillStyle = 'rgb(' + rgbOf(data.cells.charAt(i) === 'L' ? '6141' : '98138', keys[i]).join(',') + ')';
-      ctx.beginPath();
-      ctx.arc((x + 0.5) * STUD_PX, (y + 0.5) * STUD_PX, r, 0, 2 * Math.PI);
-      ctx.fill();
-    }
+    drawStuds(canvas.getContext('2d'), data, cellColors(data, state), rgbOf, STUD_PX, STUD_DIAMETER);
   }
 
   function markUsed() {
@@ -395,7 +421,8 @@
     var nLand = data.ice.land.length, nSea = data.ice.sea.filter(function (i) { return data.cells.charAt(i) === 'O'; }).length;
     section.querySelector('.pc-ice-note').textContent = 'Land ice: ' + nLand + ' plates (Antarctica, Greenland)' +
       (data.layers.land.role === 'background' ? ', already the land color here' : '') + '; sea ice: ' + nSea +
-      ' tiles. The land shadow keeps its color. Shares count only studs that show data.';
+      ' tiles. The land shadow keeps its color. Shares count only studs that show data.' +
+      (data.margin ? ' The margin\'s square tiles (part ' + MARGIN_PART + ') keep their color.' : '');
     var radios = section.querySelectorAll('input[name="pc-ice"]');
     for (var i = 0; i < radios.length; i++) {
       radios[i].checked = radios[i].value === state.ice;

@@ -7,6 +7,10 @@ layout's 10 lots (White plate, the kit's 9 tile colors) and the land-elevation p
 Dark Brown (LEGO 308), so the tests see a missing lot. One tile lot (Medium Azur) has no sales and
 is priced from stock. IDs come from the cited tables. Output is written with ``snapshot_to_json``,
 so rerunning gives identical bytes.
+
+Feature 016 (research R15) adds a second fixture, ``bricklink_price_guide_3070b.json``: the same
+lots plus one 1x1 square tile lot (3070b Black, the default margin color), so a Winkel tripel
+estimate can be complete; the first fixture is unchanged, so its Winkel estimates stay incomplete.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -18,13 +22,14 @@ import json
 from pathlib import Path
 
 from lego_image_processor import __version__
-from lego_image_processor.prices.lots import lot_ref
+from lego_image_processor.prices.lots import PART_ORDER, lot_ref
 from lego_image_processor.prices.snapshot import parse_snapshot, snapshot_to_json
 from lego_image_processor.prices.wording import (ATTRIBUTION, DISCLAIMER, ESTIMATE_NOTE,
                                                  SOURCE_PUBLISHER, SOURCE_TITLE, SOURCE_URL)
 
 DEFAULT_OUT = Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "prices"
 NAME = "bricklink_price_guide.json"
+NAME_3070B = "bricklink_price_guide_3070b.json"
 
 # (part, color key, sold (qty_avg, avg, min, max, sales, pieces) or None, stock (...) or None)
 LOTS = [
@@ -65,6 +70,11 @@ LOTS = [
     ("98138", "lego_vibrant_coral", ("0.0712", "0.0950", "0.0250", "0.7000", 190, 12000),
      ("0.0800", "0.1100", "0.0250", "1.3000", 430, 51000)),
 ]
+# Feature 016: the margin's default color on the 1x1 square tile (second fixture only).
+LOTS_3070B = [
+    ("3070b", "lego_black", ("0.0520", "0.0710", "0.0200", "0.6000", 950, 210000),
+     ("0.0600", "0.0850", "0.0200", "1.5000", 2400, 1500000)),
+]
 
 STARTED, FINISHED = "2026-12-01T18:02:10Z", "2026-12-01T18:03:05Z"
 
@@ -76,9 +86,9 @@ def _figures(t):
     return dict(zip(keys, t))
 
 
-def snapshot_data() -> dict:
+def snapshot_data(lot_rows=LOTS) -> dict:
     lots = []
-    for i, (part, key, sold, stock) in enumerate(LOTS):
+    for i, (part, key, sold, stock) in enumerate(lot_rows):
         ref = lot_ref(part, key)
         lots.append({
             "part_id": ref.part_id, "lego_color_id": ref.lego_color_id, "color_key": ref.color_key,
@@ -87,7 +97,7 @@ def snapshot_data() -> dict:
                           "color_id": ref.bricklink_color_id, "color_name": ref.bricklink_color_name},
             "retrieved_at": f"2026-12-01T18:02:{12 + 2 * i:02d}Z",
             "sold": _figures(sold), "stock": _figures(stock), "error": None})
-    lots.sort(key=lambda l: (0 if l["part_id"] == "6141" else 1, l["lego_color_id"]))
+    lots.sort(key=lambda l: (PART_ORDER[l["part_id"]], l["lego_color_id"]))
     return {
         "format_version": "1",
         "source": {
@@ -119,22 +129,31 @@ def snapshot_data() -> dict:
     }
 
 
-def write(out: Path) -> None:
-    out.mkdir(parents=True, exist_ok=True)
-    text = snapshot_to_json(parse_snapshot(snapshot_data()))
-    (out / NAME).write_bytes(text.encode("utf-8"))
+LOTS_TEXT = ("official 31203 layout's 10 lots; land-elevation plate colors except Dark Brown "
+             "(LEGO 308); Medium Azur tile priced from stock only")
+
+
+def _write_one(out: Path, name: str, lot_rows, lots_text: str) -> None:
+    text = snapshot_to_json(parse_snapshot(snapshot_data(lot_rows)))
+    (out / name).write_bytes(text.encode("utf-8"))
     record = {
-        "fixture": NAME,
+        "fixture": name,
         "synthetic": True,
         "note": "Synthetic values for tests; not BrickLink data.",
-        "lots": ("official 31203 layout's 10 lots; land-elevation plate colors except Dark Brown "
-                 "(LEGO 308); Medium Azur tile priced from stock only"),
+        "lots": lots_text,
         "generator": "tools/fixtures011/make_price_fixture.py",
         "disclaimer": DISCLAIMER,
         "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
     }
-    (out / "bricklink_price_guide.source.json").write_text(
+    (out / name.replace(".json", ".source.json")).write_text(
         json.dumps(record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def write(out: Path) -> None:
+    out.mkdir(parents=True, exist_ok=True)
+    _write_one(out, NAME, LOTS, LOTS_TEXT)
+    _write_one(out, NAME_3070B, LOTS + LOTS_3070B,
+               LOTS_TEXT + "; plus 1x1 square tile 3070b Black (feature 016, the default margin color)")
 
 
 def main() -> None:

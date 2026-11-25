@@ -7,6 +7,11 @@ layer's cells not yet taken (by the shadow, a no-data rule or an earlier overrid
 - dataset: the mean of the dataset's valid values in the cell is at least ``min_value``, or the
   cell has no valid value and its centre lies poleward of ``unobserved_lat``.
 
+Feature 016 (FR-008, spec Edge Cases): on a non-kit template the "cell centre" is each stud's own
+stored location (``reproject.cell_centres``) and the dataset is binned into studs by the template's
+forward formula (``reproject.cell_means``), so the same place gets the same rule on every template.
+Margin studs have no location and are never in a layer's mask.
+
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -43,6 +48,7 @@ def override_cells(overrides: Sequence[Override], mask: np.ndarray, taken: np.nd
     mask = np.asarray(mask, dtype=bool)
     free = mask & ~np.asarray(taken, dtype=bool)
     lat, lon = cell_centres(projection)
+    free &= np.isfinite(lat) & np.isfinite(lon)  # feature 016: a template's margin studs (no location)
     out = []
     for o in overrides:
         if o.region is not None:

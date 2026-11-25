@@ -14,8 +14,16 @@ rolled to the board as hung:
 
 The map pages' palette chooser uses them to show ice-covered regions as White ice or with the
 map's data; maps and layouts never read them. The maintainer tool ``python -m kit31203 ice-mask``
-regenerates the file and ``--check`` verifies it. Not affiliated with or endorsed by The LEGO
-Group.
+regenerates the file and ``--check`` verifies it.
+
+Feature 016 (FR-020a/b; research R18; contracts/template-file.md "Ice file"): a non-kit template
+has its own ice regions, ``data/templates/<id>-ice.json`` beside its template file, made with the
+same rules at the template's stud locations by ``python -m maptemplates ice-mask ID`` (board
+coordinates; the template has one arrangement, A). ``load_template_ice(template)`` reads it for
+``map cells`` and refuses a file made for another layout: its ``source.template_layout_sha256``
+must equal the template's layout digest, which leaves the confirmation out, so confirming the
+template keeps the file valid. For the kit it returns the packaged ``kit_31203_ice.json``.
+Map builds never read either file. Not affiliated with or endorsed by The LEGO Group.
 """
 
 from __future__ import annotations
@@ -163,3 +171,98 @@ def _load(path: Path) -> IceRegions:
 def load_ice_regions(path: Optional[Path] = None) -> IceRegions:
     """The packaged ice regions (kit coordinates)."""
     return _load(Path(path) if path else ICE_PATH)
+
+
+# --- Feature 016: a template's ice regions (data-model.md Template ice regions) -------------
+
+TEMPLATE_ICE_SUFFIX = "-ice.json"
+TEMPLATE_COORDINATES = "board, row-major index = row * {width} + column"
+
+
+class TemplateIceError(ValueError):
+    """A template's ice file is missing, broken or made for another layout (names the file)."""
+
+
+def template_ice_path(template) -> Path:
+    """``<id>-ice.json`` beside the template's file (``TEMPLATE_DIR`` for a template without one)."""
+    if template.path is not None:
+        return Path(template.path).with_name(f"{template.id}{TEMPLATE_ICE_SUFFIX}")
+    from .. import templates
+
+    return Path(templates.TEMPLATE_DIR) / f"{template.id}{TEMPLATE_ICE_SUFFIX}"
+
+
+def _remake(template_id: str) -> str:
+    return f"make it with: PYTHONPATH=tools python -m maptemplates ice-mask {template_id} (from cli/)"
+
+
+def parse_template_ice(data: Dict[str, Any], template, filename: Optional[str] = None) -> IceRegions:
+    """The ice regions of ``data`` (an ice file's JSON) on ``template``'s board. Raises
+    ``TemplateIceError`` naming the file and the rule broken."""
+    name = filename or f"{template.id}{TEMPLATE_ICE_SUFFIX}"
+
+    def fail(message: str):
+        raise TemplateIceError(f"{name}: {message}")
+
+    if not isinstance(data, dict):
+        fail("must be a JSON object")
+    if data.get("format_version") != FORMAT_VERSION:
+        fail(f"format_version must be {FORMAT_VERSION!r}")
+    if data.get("template_id") != template.id:
+        fail(f"template_id is {data.get('template_id')!r}, not the template {template.id!r}")
+    src = data.get("source")
+    if not isinstance(src, dict) or src.get("disclaimer") != DISCLAIMER:
+        fail("source.disclaimer is required")
+    recorded = src.get("template_layout_sha256")
+    if recorded != template.layout_sha256:
+        fail(f"source.template_layout_sha256 {recorded!r} is not the layout of template {template.id} "
+             f"({template.layout_sha256}): the file was made for another layout; {_remake(template.id)}")
+    grid = data.get("grid") or {}
+    if (grid.get("width"), grid.get("height")) != (template.width, template.height):
+        fail(f"grid must be {template.width} x {template.height}")
+    size = template.width * template.height
+    masks = {}
+    for block, want, cls in (("land_ice", template.land, "land"), ("sea_ice", template.ocean, "ocean")):
+        b = data.get(block) or {}
+        cells = b.get("cells")
+        if not isinstance(cells, list) or not all(isinstance(i, int) and not isinstance(i, bool) for i in cells):
+            fail(f"{block}.cells must be a list of board indices")
+        if b.get("count") != len(cells):
+            fail(f"{block}.count must equal the number of cells")
+        idx = np.asarray(cells, dtype=int)
+        if idx.size and (idx.min() < 0 or idx.max() >= size):
+            fail(f"{block} has a cell outside the {template.width} x {template.height} board")
+        m = np.zeros(size, dtype=bool)
+        m[idx] = True
+        m = m.reshape(template.height, template.width)
+        if (m & ~np.asarray(want, dtype=bool)).any():
+            bad = int(np.flatnonzero((m & ~np.asarray(want, dtype=bool)).ravel())[0])
+            fail(f"{block} has cells that are not {cls} studs of the template (first: row {bad // template.width}, "
+                 f"column {bad % template.width})")
+        masks[block] = m
+    return IceRegions(land=masks["land_ice"], sea=masks["sea_ice"], source=dict(src))
+
+
+@lru_cache(maxsize=16)
+def _read_template_ice(path: str, mtime_ns: int, size: int) -> Dict[str, Any]:
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def load_template_ice(template) -> IceRegions:
+    """The ice regions of ``template`` (board coordinates): the packaged kit file for
+    ``kit-31203``; for any other template its ``<id>-ice.json``, which must record the template's
+    layout digest (``TemplateIceError`` otherwise, or when the file is missing or broken)."""
+    if template.is_kit:
+        return load_ice_regions()
+    path = template_ice_path(template)
+    try:
+        st = path.stat()
+    except OSError:
+        raise TemplateIceError(f"{path.name}: template {template.id} has no ice regions file ({path}); "
+                               f"{_remake(template.id)}") from None
+    try:
+        data = _read_template_ice(str(path), st.st_mtime_ns, st.st_size)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise TemplateIceError(f"{path.name}: cannot read it ({exc})") from exc
+    return parse_template_ice(data, template, path.name)

@@ -112,9 +112,10 @@ def _previous_snapshot(compare: Optional[Path], output: Path):
 @click.option("-o", "--output", required=True, type=click.Path(dir_okay=False, path_type=Path),
               help="Snapshot to write (from cli/: src/lego_image_processor/data/bricklink_price_guide.json)")
 @click.option("--all-colors", is_flag=True,
-              help="Every cited plate and tile color (84 lots) instead of the bundled recipes' lots")
+              help="Every cited plate, round tile and square tile color (132 lots) instead of the "
+                   "bundled recipes' lots")
 @click.option("--lot", "lot_specs", multiple=True, metavar="PART:LEGO_COLOR_ID",
-              help="Fetch only this lot (repeatable), for example 98138:140")
+              help="Fetch only this lot (repeatable), for example 98138:140 or 3070b:26")
 @click.option("--resume", is_flag=True, help="Continue a stopped fetch from <output stem>.progress.json")
 @click.option("--write-partial", is_flag=True,
               help="On a stop, also write the snapshot (complete: false) from the lots fetched")

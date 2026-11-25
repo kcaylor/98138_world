@@ -52,3 +52,26 @@ def test_json_shape_and_order(official_grid):
         assert keys == sorted(keys) and all(v > 0 for v in s["counts"].values())
     assert "generated" not in text and text.endswith("\n")
     assert sc.to_json() == text
+
+
+# --- a template layout (feature 016 T066; data-model.md SectionCounts.template) -----------------
+
+def test_square_tiles_are_counted_per_section_and_json_names_the_template(confirmed_winkel):
+    from ...winkel_layouts import winkel_grid
+    grid = winkel_grid(confirmed_winkel)
+    sc = section_counts(grid, layout_path="w.json")
+    assert len(sc.sections) == 40 and all(s.total == 256 for s in sc.sections)
+    sq = next(e for e in sc.legend if e.lot.part_id == "3070b")
+    assert sum(s.counts.get(sq.number, 0) for s in sc.sections) == confirmed_winkel.counts["margin"]
+    a1 = next(s for s in sc.sections if s.section.label == "A1")
+    assert a1.counts[sq.number] == int(confirmed_winkel.margin[0:16, 0:16].sum())
+    d = json.loads(sc.to_json())
+    assert list(d) == ["format_version", "kit", "arrangement", "template", "layout", "legend",
+                       "sections", "disclaimer"]
+    assert d["template"] == {"id": "winkel-tripel", "title": confirmed_winkel.title}
+    row = next(r for r in d["legend"] if r["part_id"] == "3070b")
+    assert row["part_type"] == "square_tile" and row["total"] == confirmed_winkel.counts["margin"]
+
+
+def test_kit_counts_have_no_template(official_grid):
+    assert "template" not in json.loads(section_counts(official_grid).to_json())

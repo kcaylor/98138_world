@@ -17,9 +17,10 @@ from ..datasets.cache import DatasetError, fetch, is_cached
 from ..kit.source import DISCLAIMER
 from ..maps.build import build_map, missing_datasets
 from ..maps.classify import MapBuildError
+from ..maps.margin import MarginError, MarginTreatment, resolve_margin
 from ..maps.recipe import Recipe, RecipeError, bundled_recipes, load_recipe
 from ..maps.suitability import extra_tiles
-from .options import arrangement_option
+from .options import arrangement_option, template_options
 
 
 class CommandError(click.ClickException):
@@ -64,6 +65,46 @@ def arrangement_line(report: Dict[str, Any], arrangement) -> str:
     """``Arrangement: B (...) - from the recipe`` (feature 009, FR-012)."""
     source = _SOURCE_TEXT.get(report.get("arrangement_source", ""), "")
     return f"Arrangement: {arrangement.describe()}" + (f" - {source}" if source else "")
+
+
+_TEMPLATE_SOURCE_TEXT = {"recipe": "from the recipe", "option": "from --template", "default": "default"}
+KIT_MARGIN_NOTE = ("Note: margin settings are not used on the kit template kit-31203 (it has no margin); "
+                   "they apply to templates with a margin, such as winkel-tripel.")
+
+
+def template_lines(result) -> List[str]:
+    """``Template: ...`` and ``Margin: ...`` for a non-kit build (feature 016, contracts/cli.md);
+    nothing for the kit, whose output stays as it was."""
+    t = result.template
+    if t is None or t.is_kit:
+        return []
+    report = result.report
+    source = _TEMPLATE_SOURCE_TEXT.get(report.get("template_source", ""), "")
+    margin = report["margin"]
+    counts = report["template"]["counts"]
+    ring = f"ring {counts['ring']:,} {margin['ring']}" if margin["ring"] else "no ring"
+    return [f"Template: {t.id} ({t.title})" + (f" - {source}" if source else ""),
+            f"Margin: {counts['margin']:,} square tiles (part {margin['part_id']}): {margin['color']}; {ring}"]
+
+
+def resolve_margin_options(recipe: Recipe, margin_color: Optional[str],
+                           ring_color: Optional[str]) -> Optional[MarginTreatment]:
+    """The recipe's ``[margin]`` overridden by ``--margin-color``/``--ring-color`` (exit 1 on a bad
+    color); None when neither the recipe nor an option sets one (feature 016)."""
+    if recipe.margin is None and margin_color is None and ring_color is None:
+        return None
+    try:
+        return resolve_margin(recipe.margin, margin_color, ring_color)
+    except MarginError as exc:
+        raise CommandError(str(exc), 1)
+
+
+def echo_template(result, margin: Optional[MarginTreatment], echo=click.echo) -> None:
+    lines = template_lines(result)
+    for line in lines:
+        echo(line)
+    if not lines and margin is not None:
+        echo(KIT_MARGIN_NOTE)
 
 
 def layer_units(recipe: Recipe) -> Dict[str, str]:
@@ -211,7 +252,8 @@ def _dataset_failure(exc: DatasetError) -> CommandError:
 
 @click.group(name="map")
 def map_group() -> None:
-    """Build maps from recipes: a land layer and an ocean layer on the kit 31203 template."""
+    """Build maps from recipes: a land layer and an ocean layer on the kit 31203 template or a
+    confirmed map template (`template list`)."""
 
 
 @map_group.command()
@@ -227,8 +269,10 @@ def map_group() -> None:
 @click.option("--compare-official", is_flag=True, default=None,
               help="Print cell agreement with the official design (always on for official-31203*)")
 @arrangement_option(default=None)
+@template_options
 @click.option("--quiet", "-q", is_flag=True, help="Suppress output")
-def build(recipe, output, preview, preview_style, report_path, cache_dir, do_fetch, compare_official, arrangement, quiet):
+def build(recipe, output, preview, preview_style, report_path, cache_dir, do_fetch, compare_official, arrangement,
+          template_id, margin_color, ring_color, quiet):
     """Build RECIPE (a recipe file or a bundled recipe id) into a schema 2.0 layout.
 
     \b
@@ -237,9 +281,11 @@ def build(recipe, output, preview, preview_style, report_path, cache_dir, do_fet
         lego-image-processor map build ocean-sst -o sst.json --fetch
         lego-image-processor map build land-elevation --arrangement B -o elev-B.json
         lego-image-processor map build ocean-el-nino -o el-nino.json   # hung as B (recipe)
+        lego-image-processor map build ocean-sst --template winkel-tripel -o w.json --preview w.png
     """
     echo = (lambda *a, **k: None) if quiet else click.echo
     r = _load(recipe)
+    margin = resolve_margin_options(r, margin_color, ring_color)
     if do_fetch:
         for entry in missing_datasets(r, cache_dir):
             echo(f"Fetching {entry.id} ({entry.size:,} bytes) from {entry.url}")
@@ -251,13 +297,14 @@ def build(recipe, output, preview, preview_style, report_path, cache_dir, do_fet
             echo(f"Fetched {entry.id}: {path} ({what} verified)")
     try:
         result = build_map(r, cache_dir=cache_dir, compare_official=compare_official or None,
-                           arrangement=arrangement)
+                           arrangement=arrangement, template=template_id, margin=margin)
     except DatasetError as exc:
         raise _dataset_failure(exc)
     except MapBuildError as exc:
         raise CommandError(f"Cannot build {r.id}: {exc}", 1)
     echo(f"Recipe: {r.id} - {r.title} (format {r.format}, SHA-256 {r.sha256})")
     echo(arrangement_line(result.report, result.arrangement))
+    echo_template(result, margin, echo)
     echo_report(result.report, echo, layer_units(r))
     if result.agreement:
         echo_agreement(result.agreement, echo)
@@ -270,8 +317,11 @@ def build(recipe, output, preview, preview_style, report_path, cache_dir, do_fet
             _write_json(report_path, result.report)
     except OSError as exc:
         raise CommandError(f"Cannot write output: {exc}", 1)
+    margin_tiles = (f", {result.layout.margin_positions:,} margin tiles"
+                    if result.layout.template is not None else "")  # feature 016: non-kit layouts only
     echo(f"Layout: {output} ({result.layout.total_positions:,} positions, "
-         f"{result.layout.land_positions:,} land plates, {result.layout.ocean_positions:,} ocean tiles)")
+         f"{result.layout.land_positions:,} land plates, {result.layout.ocean_positions:,} ocean tiles"
+         f"{margin_tiles})")
     if preview:
         echo(f"Preview: {preview}")
     if report_path:
@@ -285,17 +335,21 @@ def build(recipe, output, preview, preview_style, report_path, cache_dir, do_fet
 @click.option("--report", "report_path", type=click.Path(dir_okay=False), help="Write the report (JSON)")
 @click.option("--cache-dir", type=click.Path(file_okay=False), help="Dataset cache root (default: per-user cache)")
 @arrangement_option(default=None)
-def check(recipe, report_path, cache_dir, arrangement):
+@template_options
+def check(recipe, report_path, cache_dir, arrangement, template_id, margin_color, ring_color):
     """Run the suitability check on RECIPE without writing a layout (exit 0 even with warnings)."""
     r = _load(recipe)
+    margin = resolve_margin_options(r, margin_color, ring_color)
     try:
-        result = build_map(r, cache_dir=cache_dir, compare_official=False, arrangement=arrangement)
+        result = build_map(r, cache_dir=cache_dir, compare_official=False, arrangement=arrangement,
+                           template=template_id, margin=margin)
     except DatasetError as exc:
         raise _dataset_failure(exc)
     except MapBuildError as exc:
         raise CommandError(f"Cannot build {r.id}: {exc}", 1)
     click.echo(f"Suitability check: {r.id} - {r.title}")
     click.echo(arrangement_line(result.report, result.arrangement))
+    echo_template(result, margin)
     echo_report(result.report, units=layer_units(r))
     if report_path:
         _write_json(report_path, result.report)
@@ -309,30 +363,41 @@ def check(recipe, report_path, cache_dir, arrangement):
 @click.option("--output", "-o", required=True, type=click.Path(dir_okay=False), help="JSON file to write")
 @click.option("--cache-dir", type=click.Path(file_okay=False), help="Dataset cache root (default: per-user cache)")
 @arrangement_option(default=None)
-def cells(recipe, output, cache_dir, arrangement):
+@template_options
+def cells(recipe, output, cache_dir, arrangement, template_id, margin_color, ring_color):
     """Write RECIPE's per-cell classes, values, shadow and ice regions for recoloring (JSON).
 
     The file feeds the web site's palette chooser (feature 015): each layer's built class and
     data value per cell, default class bounds, the land shadow, the ice-covered cells and the
-    cited colors of both parts with CIE L*. It is a preview aid only: layouts, parts lists,
-    prices and build sheets do not use it. Never downloads (build first with `map build --fetch`).
+    cited colors of both parts with CIE L*. On a map template with a margin (`--template`) it
+    also marks the margin cells (M) and gives the margin and ring colors and the square tile's
+    colors. It is a preview aid only: layouts, parts lists, prices and build sheets do not use
+    it. Never downloads (build first with `map build --fetch`).
 
     \b
-    Example:
+    Examples:
         lego-image-processor map cells land-elevation -o cells.json --arrangement B
+        lego-image-processor map cells ocean-sst --template winkel-tripel -o cells.json
     """
     from ..maps.cells import map_cells
+    from ..maps.ice import TemplateIceError, template_ice_path
 
     r = _load(recipe)
+    margin = resolve_margin_options(r, margin_color, ring_color)
     try:
-        result = build_map(r, cache_dir=cache_dir, compare_official=False, arrangement=arrangement)
+        result = build_map(r, cache_dir=cache_dir, compare_official=False, arrangement=arrangement,
+                           template=template_id, margin=margin)
     except DatasetError as exc:
         raise _dataset_failure(exc)
     except MapBuildError as exc:
         raise CommandError(f"Cannot build {r.id}: {exc}", 1)
-    data = map_cells(result)
+    try:
+        data = map_cells(result)
+    except TemplateIceError as exc:
+        raise CommandError(f"Cannot write the cells of {r.id}: {exc}", 1)
     click.echo(f"Recipe: {r.id} - {r.title} (format {r.format}, SHA-256 {r.sha256})")
     click.echo(arrangement_line(result.report, result.arrangement))
+    echo_template(result, margin)
     for cls in ("land", "ocean"):
         layer = data["layers"][cls]
         head = f"{cls.capitalize()} layer: {layer['role']}"
@@ -348,8 +413,10 @@ def cells(recipe, output, cache_dir, arrangement):
     sh = data["shadow"]
     if sh["enabled"]:
         click.echo(f"Land shadow: {sh['cells']:,} cells of {sh['color']}")
+    ice_file = ("kit_31203_ice.json, as hung" if "template" not in data   # feature 016: a template's own file
+                else template_ice_path(result.template).name)
     click.echo(f"Ice regions: {len(data['ice']['land']):,} land-ice cells, "
-               f"{len(data['ice']['sea']):,} sea-ice cells (kit_31203_ice.json, as hung)")
+               f"{len(data['ice']['sea']):,} sea-ice cells ({ice_file})")
     try:
         text = json.dumps(data, ensure_ascii=False, separators=(",", ":")) + "\n"
         Path(output).write_text(text, encoding="utf-8")

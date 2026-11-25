@@ -10,6 +10,10 @@ Two steps, both in kit coordinates (combination A), like the rest of the per-cel
    share of the cell's class pixels that had no value and lie poleward of ``min_lat`` exceeds
    ``min_share``; cells with no class pixel take the nearest cell's share, as values do).
 
+Feature 016 (FR-008, spec Edge Cases): on a non-kit template the latitudes are each stud's own
+stored location and source pixels are binned by the template's forward formula
+(``reproject.source_cells``), so the same place gets the same rule on every template.
+
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -23,7 +27,7 @@ import numpy as np
 from ..datasets.grid import SourceGrid
 from .projection import KitProjection
 from .recipe import NoData
-from .reproject import LayerField, reproject_layer
+from .reproject import LayerField, _is_template, reproject_layer, source_cells
 
 
 def class_pixels(grid: SourceGrid, cls: str) -> np.ndarray:
@@ -53,7 +57,10 @@ def apply_value(grid: SourceGrid, no_data: Optional[NoData], cls: str, transform
 
 
 def cell_latitudes(projection: KitProjection) -> np.ndarray:
-    """|latitude| of each kit cell centre (80 x 128)."""
+    """|latitude| of each kit cell centre (80 x 128); on a template, of each stud's location (NaN
+    on margin studs, which belong to no layer)."""
+    if _is_template(projection):
+        return projection.abs_lat()
     lat = np.array([abs(projection.cell_center(r, 0)[0]) for r in range(projection.height)])
     return np.repeat(lat[:, None], projection.width, axis=1)
 
@@ -61,6 +68,12 @@ def cell_latitudes(projection: KitProjection) -> np.ndarray:
 def cell_max(grid: SourceGrid, values: np.ndarray, where: np.ndarray, projection: KitProjection) -> np.ndarray:
     """Per kit cell, the largest of ``values`` over the source pixels in ``where`` (0 if none)."""
     H, W = projection.height, projection.width
+    if _is_template(projection):  # feature 016: pixels binned into studs by the forward formula
+        cell = source_cells(grid, projection)
+        ok = (cell >= 0) & where
+        out = np.zeros(H * W)
+        np.maximum.at(out, cell[ok], values[ok].astype(float))
+        return out.reshape(H, W)
     rows = projection.rows_for_lat(grid.lat)
     cols = projection.cols_for_lon(grid.lon)
     cell = rows[:, None] * W + cols[None, :]

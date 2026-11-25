@@ -3,7 +3,9 @@
 A lot is identified by (part ID, LEGO color ID) and is built only from the cited tables
 (``part_colors.json``, ``part_numbers.json``), never typed in. The default lot set is every color
 the bundled recipes declare (land colors on plate 6141, ocean colors and the shadow color on tile
-98138); arrangements move whole frames and never change colors, so it covers A, B and C.
+98138, and the margin colors on the 1x1 square tile 3070b that a non-kit template uses, feature
+016); arrangements move whole frames and never change colors, so it covers A, B and C. BrickLink
+files the square tile as item 3070 (``part_numbers.json``), so its lots are fetched by that number.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -16,9 +18,11 @@ from typing import Dict, Iterable, Optional, Sequence, Tuple
 from ..kit.part_colors import PartColor, load_part_colors
 from ..kit.part_numbers import load_part_numbers
 
-PART_ORDER = {"6141": 0, "98138": 1}
-PART_TYPE = {"6141": "plate", "98138": "tile"}
-_LOT_RE = re.compile(r"^(\d+):(\d+)$")
+PART_ORDER = {"6141": 0, "98138": 1, "3070b": 2}
+PART_TYPE = {"6141": "plate", "98138": "tile", "3070b": "square_tile"}
+PART_NAMES = "6141, 98138 or 3070b"
+# A part ID may end in one lowercase letter (3070b, feature 016); parse_lot still checks PART_ORDER.
+_LOT_RE = re.compile(r"^(\d+[a-z]?):(\d+)$")
 
 
 @dataclass(frozen=True)
@@ -67,11 +71,11 @@ def _from_row(part_id: str, row: PartColor) -> LotRef:
 
 
 def lot_ref(part_id: str, color_key: str) -> LotRef:
-    """The cited lot for ``part_id`` (6141 or 98138) in ``color_key``; ``ValueError`` if none."""
+    """The cited lot for ``part_id`` (6141, 98138 or 3070b) in ``color_key``; ``ValueError`` if none."""
     try:
         row = load_part_colors().get(str(part_id), color_key)
     except KeyError:
-        raise ValueError(f"part {part_id!r} is not a map part (6141 or 98138)")
+        raise ValueError(f"part {part_id!r} is not a map part ({PART_NAMES})")
     if row is None:
         raise ValueError(f"no cited color {color_key!r} for part {part_id}")
     return _from_row(str(part_id), row)
@@ -94,7 +98,13 @@ def sort_lots(lots: Iterable[LotRef]) -> Tuple[LotRef, ...]:
 
 
 def recipe_lots(recipes: Optional[Sequence] = None) -> Tuple[LotRef, ...]:
-    """Every lot the recipes declare (default: all bundled recipes), sorted and unique."""
+    """Every lot the recipes declare (default: all bundled recipes), sorted and unique.
+
+    Each recipe also adds its margin colors on the square tile (its ``[margin]`` table, else the
+    default Black with no ring; feature 016, data-model.md PriceLot.recipe_lots), so a fetch covers
+    the recipe's builds on a non-kit template as well."""
+    from ..maps.margin import MARGIN_PART_ID, MarginTreatment
+
     if recipes is None:
         recipes = bundled_recipe_objects()
     out = []
@@ -103,6 +113,8 @@ def recipe_lots(recipes: Optional[Sequence] = None) -> Tuple[LotRef, ...]:
         out += [lot_ref(r.ocean.part_id, k) for k in r.ocean.colors]
         if r.shadow.enabled:
             out.append(lot_ref(r.ocean.part_id, r.shadow.color))
+        margin = getattr(r, "margin", None) or MarginTreatment()
+        out += [lot_ref(MARGIN_PART_ID, k) for k in (margin.color, margin.ring) if k]
     return sort_lots(out)
 
 
@@ -112,20 +124,21 @@ def bundled_recipe_objects():
 
 
 def all_cited_lots() -> Tuple[LotRef, ...]:
-    """Every cited color of both map parts (84 today)."""
+    """Every cited color of the map parts (6141, 98138 and, since feature 016, 3070b)."""
     table = load_part_colors()
     return sort_lots(_from_row(part_id, row) for part_id in PART_ORDER for row in table.for_part(part_id))
 
 
 def parse_lot(text: str) -> LotRef:
-    """``PART:LEGO_COLOR_ID`` (for example ``98138:140``) to a cited lot; ``ValueError`` if not cited."""
+    """``PART:LEGO_COLOR_ID`` (for example ``98138:140`` or ``3070b:26``) to a cited lot;
+    ``ValueError`` if not cited."""
     s = str(text).strip()
     m = _LOT_RE.match(s)
     if not m:
         raise ValueError(f"lot {s!r} is not PART:LEGO_COLOR_ID (for example 98138:140)")
     part_id, lego_id = m.group(1), int(m.group(2))
     if part_id not in PART_ORDER:
-        raise ValueError(f"lot {s!r}: part {part_id} is not a map part (6141 or 98138)")
+        raise ValueError(f"lot {s!r}: part {part_id} is not a map part ({PART_NAMES})")
     lot = lot_ref_by_lego_id(part_id, lego_id)
     if lot is None:
         raise ValueError(f"lot {s!r}: no cited color with LEGO ID {lego_id} for part {part_id}")

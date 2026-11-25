@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from io import StringIO
 from typing import Dict, List, Any, Optional
 
-from .position import LAND_PART_TYPE, OCEAN_PART_TYPE, PositionPlacement
+from .position import LAND_PART_TYPE, MARGIN_PART_TYPE, OCEAN_PART_TYPE, PositionPlacement
 
 CURRENT_SCHEMA_VERSION = "2.0"
 DISCLAIMER = "Not affiliated with or endorsed by The LEGO Group."
@@ -45,6 +45,8 @@ class LayoutStatistics:
         color_frequency_by_part_type: Color frequency split by part type
         most_common_color: Color with highest frequency
         coverage_percentage: Percentage of grid filled (100.0 for valid layouts)
+        margin_tile_count: Square tiles of a non-kit template's margin (feature 016); None (and
+            not written) for kit layouts
     """
 
     total_tile_count: int
@@ -55,6 +57,7 @@ class LayoutStatistics:
     color_frequency_by_part_type: Dict[str, Dict[str, int]]
     most_common_color: Dict[str, Any]
     coverage_percentage: float
+    margin_tile_count: Optional[int] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert statistics to dictionary.
@@ -62,7 +65,7 @@ class LayoutStatistics:
         Returns:
             Dictionary with all statistics.
         """
-        return {
+        out = {
             "total_tile_count": self.total_tile_count,
             "land_plate_count": self.land_plate_count,
             "ocean_tile_count": self.ocean_tile_count,
@@ -72,6 +75,13 @@ class LayoutStatistics:
             "most_common_color": self.most_common_color,
             "coverage_percentage": self.coverage_percentage
         }
+        if self.margin_tile_count is None:
+            return out
+        # feature 016, non-kit layouts only: the margin count follows the ocean count
+        keys = list(out)
+        keys.insert(keys.index("ocean_tile_count") + 1, "margin_tile_count")
+        out["margin_tile_count"] = self.margin_tile_count
+        return {k: out[k] for k in keys}
 
 
 class PositionPlacementGrid:
@@ -104,6 +114,7 @@ class PositionPlacementGrid:
         schema_version: str = CURRENT_SCHEMA_VERSION,
         map_metadata: Optional[Dict[str, Any]] = None,
         arrangement: Optional[Dict[str, Any]] = None,
+        template: Optional[Dict[str, Any]] = None,
     ):
         """Initialize position placement grid.
 
@@ -116,6 +127,8 @@ class PositionPlacementGrid:
             schema_version: Schema version
             map_metadata: Optional map provenance written as ``metadata.map`` (feature 004)
             arrangement: Optional ``metadata.arrangement`` record (feature 007); None means A
+            template: Optional ``metadata.template`` record (feature 016); None means the kit
+                template, and no template, margin or square-tile keys are written
         """
         self._width = width
         self._height = height
@@ -125,6 +138,7 @@ class PositionPlacementGrid:
         self._coordinate_system = "top_left_origin"
         self._map_metadata = map_metadata
         self._arrangement = arrangement
+        self._template = template
 
         if generated_at is None:
             self._generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -143,6 +157,7 @@ class PositionPlacementGrid:
         """Compute land/ocean/color counts from positions."""
         self._land_positions = sum(1 for p in self._positions if p.part_type == LAND_PART_TYPE)
         self._ocean_positions = sum(1 for p in self._positions if p.part_type == OCEAN_PART_TYPE)
+        self._margin_positions = sum(1 for p in self._positions if p.part_type == MARGIN_PART_TYPE)
         self._unique_colors = len(set(p.color_id for p in self._positions)) if self._positions else 0
 
     @property
@@ -169,6 +184,11 @@ class PositionPlacementGrid:
     def ocean_positions(self) -> int:
         """Count of ocean positions (flat tiles)."""
         return self._ocean_positions
+
+    @property
+    def margin_positions(self) -> int:
+        """Count of margin positions (1x1 square tiles, part 3070b; 0 on the kit template)."""
+        return self._margin_positions
 
     @property
     def unique_colors(self) -> int:
@@ -206,6 +226,11 @@ class PositionPlacementGrid:
         return self._arrangement
 
     @property
+    def template(self) -> Optional[Dict[str, Any]]:
+        """The ``metadata.template`` record (feature 016); None for the kit template."""
+        return self._template
+
+    @property
     def positions(self) -> List[PositionPlacement]:
         """List of all position placements (copy)."""
         return list(self._positions)
@@ -238,16 +263,21 @@ class PositionPlacementGrid:
         Returns:
             LayoutStatistics with composition information
         """
+        on_template = self._template is not None  # feature 016: margin counts for non-kit layouts only
         if not self._positions:
+            by_type = {LAND_PART_TYPE: {}, OCEAN_PART_TYPE: {}}
+            if on_template:
+                by_type[MARGIN_PART_TYPE] = {}
             return LayoutStatistics(
                 total_tile_count=0,
                 land_plate_count=0,
                 ocean_tile_count=0,
                 unique_colors=0,
                 color_frequency={},
-                color_frequency_by_part_type={LAND_PART_TYPE: {}, OCEAN_PART_TYPE: {}},
+                color_frequency_by_part_type=by_type,
                 most_common_color={},
-                coverage_percentage=0.0
+                coverage_percentage=0.0,
+                margin_tile_count=0 if on_template else None
             )
 
         # Count colors
@@ -271,18 +301,24 @@ class PositionPlacementGrid:
         expected_positions = self._width * self._height
         coverage = (len(self._positions) / expected_positions * 100.0) if expected_positions > 0 else 0.0
 
+        by_type = {
+            LAND_PART_TYPE: dict(plate_colors),
+            OCEAN_PART_TYPE: dict(tile_colors)
+        }
+        if on_template:
+            by_type[MARGIN_PART_TYPE] = dict(Counter(p.color_id for p in self._positions
+                                                     if p.part_type == MARGIN_PART_TYPE))
+
         return LayoutStatistics(
             total_tile_count=len(self._positions),
             land_plate_count=self._land_positions,
             ocean_tile_count=self._ocean_positions,
             unique_colors=self._unique_colors,
             color_frequency=color_frequency,
-            color_frequency_by_part_type={
-                LAND_PART_TYPE: dict(plate_colors),
-                OCEAN_PART_TYPE: dict(tile_colors)
-            },
+            color_frequency_by_part_type=by_type,
             most_common_color=most_common_color,
-            coverage_percentage=coverage
+            coverage_percentage=coverage,
+            margin_tile_count=self._margin_positions if on_template else None
         )
 
     def to_json(self, indent: int = 2) -> str:
@@ -311,10 +347,18 @@ class PositionPlacementGrid:
             "positions": [p.to_dict() for p in self._positions],
             "statistics": self.compute_statistics().to_dict()
         }
+        if self._template is not None:  # feature 016: the margin count follows the ocean count
+            meta = data["metadata"]
+            keys = list(meta)
+            keys.insert(keys.index("ocean_positions") + 1, "margin_positions")
+            meta["margin_positions"] = self._margin_positions
+            data["metadata"] = {k: meta[k] for k in keys}
         if self._map_metadata is not None:
             data["metadata"]["map"] = self._map_metadata
         if self._arrangement is not None:
             data["metadata"]["arrangement"] = self._arrangement
+        if self._template is not None:
+            data["metadata"]["template"] = self._template
         return json.dumps(data, indent=indent)
 
     def to_csv(self) -> str:
@@ -374,4 +418,5 @@ class PositionPlacementGrid:
             schema_version=metadata["schema_version"],
             map_metadata=metadata.get("map"),
             arrangement=metadata.get("arrangement"),
+            template=metadata.get("template"),
         )

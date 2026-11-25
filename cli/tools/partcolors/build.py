@@ -13,7 +13,12 @@ Join rules (a row is kept only when every rule holds; otherwise it is excluded a
 4. The BrickLink color guide lists a color whose name equals the Rebrickable name exactly; its
    BrickLink id is used.
 5. The color is listed, with the same BrickLink id, on BrickLink's pinned catalog page for the part
-   (item 4073 for the plate, 98138 for the tile; feature 005).
+   (item 4073 for the plate, 98138 for the tile; feature 005; item 3070 for the 3070b square tile,
+   feature 016).
+
+Feature 016 adds part 3070b, the 1x1 square tile of template margins (research R10). It is not in
+the kit: every 3070b row has ``in_kit: false`` and the kit-color rules (kit rows copied from
+``kit_colors.json``, no kit color missing) apply to the kit's two parts only.
 
 Every color Rebrickable lists for the part is tried (feature 005, Q3); rows that fail a rule are
 excluded and reported. Rebrickable's terms (archived downloads page) are recorded in
@@ -79,13 +84,22 @@ SNAPSHOTS: Tuple[Dict[str, str], ...] = (
      "url": "http://web.archive.org/web/20261029125803id_/https://rebrickable.com/downloads/",
      "sha256": "1c514a79f8cb70a0faacccf7174ee4329a307a6d91221b8c318b6982a7b91b75",
      "accessed": "2026-11-22"},
+    # Feature 016: BrickLink's page for the 3070b square tile (item 3070, 3070b an alternate), rule 5;
+    # shared with the partnumbers tool. Appended so the earlier snapshots and citations keep their order.
+    {"id": "bricklink-3070", "file": "../partnumbers/bricklink-3070.html",
+     "title": "BrickLink catalog item 3070, Tile 1 x 1 (Internet Archive copy of 2026-01-01)",
+     "url": "http://web.archive.org/web/20260101103331id_/https://www.bricklink.com/v2/catalog/catalogitem.page?P=3070",
+     "sha256": "946c7d105215f2123a79fe8d23f2c0f4ce8de846fdfebad725c9177f936b7c2d",
+     "accessed": "2026-11-23"},
 )
-BRICKLINK_PART_PAGE = {"6141": "bricklink-4073", "98138": "bricklink-98138"}
+BRICKLINK_PART_PAGE = {"6141": "bricklink-4073", "98138": "bricklink-98138", "3070b": "bricklink-3070"}
 TERMS_TEXT = ("Free for personal and commercial use, provided you acknowledge Rebrickable as your "
               "data source.")
 ACKNOWLEDGEMENT = "Catalog data: Rebrickable (rebrickable.com)."
 
-PARTS = ("6141", "98138")
+PARTS = ("6141", "98138", "3070b")
+KIT_PARTS = ("6141", "98138")  # kit rows and the "kit colors missing" rule: these parts only
+ROLE_FOR_PART = {"6141": "land", "98138": "ocean"}
 # Feature 004 used a hand-reviewed list of Rebrickable color ids (research R9 of 004). Feature 005
 # (Q3) tries every color listed for the part; ``reviewed`` remains for tests and comparisons.
 REVIEWED_004: Dict[str, Tuple[int, ...]] = {
@@ -100,6 +114,10 @@ PART_NUMBERS = {
     "98138": "Rebrickable elements.csv files the 1x1 round tile under part_num 98138 (design_id "
              "35381 for newer elements); BrickLink item 98138 (pinned page bricklink-98138). "
              "Marketplace numbers: part_numbers.json.",
+    "3070b": "Rebrickable elements.csv files the 1x1 square tile with groove under part_num 3070b "
+             "(design_id 3070); BrickLink files it as item 3070 with 3070b as an alternate number "
+             "(pinned BrickLink catalog page bricklink-3070). Not in kit 31203. Marketplace "
+             "numbers: part_numbers.json.",
 }
 
 
@@ -113,6 +131,8 @@ JOIN_RULES = (
     "BrickLink's pinned catalog page for the part (4073 plate, 98138 tile) lists the color with the "
     "same BrickLink id.",
     "Kit colors are copied from kit_colors.json, the authority for them.",
+    "The 3070b square tile is not in the kit: rule 5 uses BrickLink's pinned page for item 3070 "
+    "(3070b is an alternate there), every row is in_kit false and no kit color is required.",
 )
 
 
@@ -209,17 +229,19 @@ def check_terms(html: str, text: str = TERMS_TEXT) -> None:
 
 def build(snap: Mapping[str, bytes], kit_colors: Mapping[str, Any], generated_on: str,
           reviewed: Optional[Mapping[str, Sequence[int]]] = None,
-          snapshots: Sequence[Mapping[str, str]] = SNAPSHOTS) -> BuildResult:
-    """Join the snapshots. ``reviewed`` limits the colors tried per part (default: every color
-    Rebrickable lists for the part)."""
+          snapshots: Sequence[Mapping[str, str]] = SNAPSHOTS,
+          parts: Sequence[str] = PARTS) -> BuildResult:
+    """Join the snapshots for ``parts`` (default: every map part, in ``PARTS`` order).
+    ``reviewed`` limits the colors tried per part; a part it does not name tries every color
+    Rebrickable lists for it (the default for every part)."""
     rb = parse_rebrickable_colors(snap["rebrickable-colors"].decode("utf-8"))
-    elements = parse_elements(snap["rebrickable-elements"].decode("utf-8"), list(PARTS))
-    if reviewed is None:
-        reviewed = {p: tuple(sorted({c for (q, c) in elements if q == p})) for p in PARTS}
+    elements = parse_elements(snap["rebrickable-elements"].decode("utf-8"), list(parts))
+    listed = {p: tuple(sorted({c for (q, c) in elements if q == p})) for p in parts}
+    reviewed = {p: tuple((reviewed or {}).get(p, listed[p])) for p in parts}
     ld = parse_ldconfig(snap["ldraw"].decode("utf-8", "replace"))
     bl = parse_bricklink(snap["bricklink"].decode("latin-1"))
     part_page = {p: dict((n, i) for i, n in parse_bricklink_part(
-        snap[BRICKLINK_PART_PAGE[p]].decode("utf-8", "replace"))["colors"]) for p in PARTS}
+        snap[BRICKLINK_PART_PAGE[p]].decode("utf-8", "replace"))["colors"]) for p in parts}
     terms_page = next(s for s in snapshots if s["id"] == "rebrickable-terms")
     check_terms(snap["rebrickable-terms"].decode("utf-8", "replace"))
     kit_src = kit_colors["source"]
@@ -234,13 +256,13 @@ def build(snap: Mapping[str, bytes], kit_colors: Mapping[str, Any], generated_on
         if cid not in known:
             citations.append({"id": cid, "title": s["title"], "url": s["url"], "accessed": s["accessed"]})
             known.add(cid)
-    role_for = {"6141": "land", "98138": "ocean"}
-    parts: Dict[str, List[Dict[str, Any]]] = {}
+    table: Dict[str, List[Dict[str, Any]]] = {}
     excluded: List[Dict[str, Any]] = []
     kit_notes: List[str] = []
     for part, rb_ids in reviewed.items():
         rows: List[Dict[str, Any]] = []
-        kit_rows = [c for c in kit_colors["colors"] if c["role"] == role_for[part]]
+        kit_rows = ([c for c in kit_colors["colors"] if c["role"] == ROLE_FOR_PART[part]]
+                    if part in KIT_PARTS else [])
         kit_rb = {c["rebrickable"]["id"] for c in kit_rows}
         for c in kit_rows:
             row = {k: c[k] for k in ("key", "element_id", "lego", "bricklink", "rebrickable", "rgb", "citations")}
@@ -301,24 +323,25 @@ def build(snap: Mapping[str, bytes], kit_colors: Mapping[str, Any], generated_on
                               "element": "rebrickable-elements"},
                 "element_ids": ids, "in_kit": False, "notes": "",
             })
-        parts[part] = rows + extra
+        table[part] = rows + extra
     data = {
         "format_version": "1",
         "source": {
-            "title": "Colors in which the kit's map parts (6141 plate, 98138 tile) are made",
+            "title": "Colors in which the map parts are made (the kit's 6141 plate and 98138 tile; "
+                     "the 3070b square tile of template margins)",
             "generator": "tools/partcolors build",
             "generated_on": generated_on,
             "snapshots": [{k: s[k] for k in ("id", "title", "url", "sha256", "accessed")} for s in snapshots],
             "citations": citations,
             "join_rules": list(JOIN_RULES),
-            "part_numbers": dict(PART_NUMBERS),
+            "part_numbers": {p: PART_NUMBERS[p] for p in parts},
             "terms": {"text": TERMS_TEXT, "url": terms_page["url"], "sha256": terms_page["sha256"],
                       "accessed": terms_page["accessed"]},
             "acknowledgement": ACKNOWLEDGEMENT,
             "excluded": excluded,
             "disclaimer": DISCLAIMER,
         },
-        "parts": parts,
+        "parts": table,
     }
     return BuildResult(data=data, excluded=excluded, kit_notes=kit_notes)
 

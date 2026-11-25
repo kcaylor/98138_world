@@ -106,3 +106,46 @@ def test_terms_are_required(raw):
     bad["source"].pop("terms")
     with pytest.raises(ValueError, match="terms"):
         parse_part_colors(bad)
+
+
+# --- feature 016 (T014): the 1x1 square tile 3070b, not in the kit (research R10) ---------------
+
+def test_parts_are_exactly_the_kit_parts_and_the_square_tile(raw):
+    from lego_image_processor.kit.part_colors import KIT_PARTS, PARTS
+    assert PARTS == ("6141", "98138", "3070b") and KIT_PARTS == ("6141", "98138")
+    assert list(load_part_colors().parts) == ["6141", "98138", "3070b"]
+    missing = copy.deepcopy(raw)
+    missing["parts"].pop("3070b")
+    with pytest.raises(ValueError, match="exactly"):
+        parse_part_colors(missing)
+    extra = copy.deepcopy(raw)
+    extra["parts"]["3001"] = extra["parts"]["3070b"]
+    with pytest.raises(ValueError, match="exactly"):
+        parse_part_colors(extra)
+
+
+def test_square_tile_colors():
+    t = load_part_colors()
+    rows = t.for_part("3070b")
+    assert rows == tuple(colors_for_part("3070b"))
+    assert rows and not any(c.in_kit for c in rows)
+    black = t.get("3070b", "lego_black")
+    assert black is not None and black.lego.name == "Black" and black.bricklink.name == "Black"
+    assert black.part_id == "3070b" and black.element_id.isdigit()
+
+
+def test_square_tile_row_cannot_be_in_kit(raw):
+    data = copy.deepcopy(raw)
+    data["parts"]["3070b"][0]["in_kit"] = True
+    with pytest.raises(ValueError, match="3070b"):
+        parse_part_colors(data)
+
+
+def test_kit_blocks_and_citations_equal_the_golden_digests():
+    """SC-001: the 6141 and 98138 blocks and their citations are those of commit 6038d9c (as af3ce57)."""
+    from pathlib import Path
+
+    from maptemplates.golden import reference_digests
+    golden = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "golden" /
+                         "kit_outputs.json").read_text(encoding="utf-8"))
+    assert reference_digests() == golden["reference_data"]

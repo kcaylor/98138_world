@@ -1,0 +1,23 @@
+{
+  "fixture": "kit_owned_csv.json",
+  "what": "Exit codes, stdout, stderr and written files of `parts list` and `parts export` on the official 31203 design layout (a kit layout, no square tiles) with Rebrickable --owned and --missing CSVs that list part 3070b and its other catalog numbers (3070, 30039, 35403, 39727, 53836, 112412), a 3070b element and a BrickLink number of a kit part. Taken from an unmodified checkout of main at commit 6038d9c, before feature 016, where those 3070b rows are ignored and counted as rows for other parts (feature 016 T110; SC-001, FR-014). Compared by tests/contract/test_kit_owned_csv.py. Never regenerated from feature 016 code.",
+  "generator": "git archive 6038d9c cli | tar -x -C <checkout>; copy this feature's cli/tests/kit_owned_csv.py to <checkout>/cli/tests/; then from <checkout>/cli: PYTHONPATH=<checkout>/cli/src python tests/kit_owned_csv.py --out kit_owned_csv.json (Python of this feature's cli/.venv, checked to import lego_image_processor from <checkout>/cli/src; run twice, byte-identical)",
+  "harness": {
+    "path": "cli/tests/kit_owned_csv.py",
+    "sha256": "88792bfb7c9082b195d002fcb241a2bee7a42bf358ae47c1c8b875bf8f9bc326"
+  },
+  "code": {
+    "commit": "6038d9c",
+    "note": "library code of commit 6038d9c, unmodified (a git archive export; only the harness file was added to it)"
+  },
+  "generated_on": "2026-11-23",
+  "python": "3.11.13",
+  "libraries": {
+    "click": "8.5.1",
+    "numpy": "1.26.4",
+    "Pillow": "10.4.0"
+  },
+  "license": "Derived from the project's own outputs and its packaged reference data.",
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group.",
+  "sha256": "cf50fd1061c9fb3357b25bd4de3defa24e32fc5843f569ecfd7529fd0b7a5f78"
+}

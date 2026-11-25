@@ -108,3 +108,26 @@ def test_runs_under_the_socket_guard(snapshot):
     finally:
         s.close()
     assert estimate_layout(load_official_design().to_layout(), snapshot, as_of=AS_OF).estimates["full"].complete
+
+
+# --- a map on the Winkel tripel template (feature 016 T064) --------------------------------------
+
+def test_winkel_fixture_build(confirmed_winkel, fixture_registry, snapshot):
+    from ..unit.prices.conftest import FIXTURE_DIR
+    fixture_registry.place_all()
+    grid = build_map(load_recipe("ocean-sst"), template="winkel-tripel").layout
+    n = confirmed_winkel.counts["margin"]
+    r = estimate_layout(grid, snapshot, as_of=AS_OF)
+    full = r.estimates["full"]
+    assert not full.complete and full.pieces == 10240
+    assert [(l.lot.part_id, l.quantity, l.reason) for l in full.unpriced_lines] == \
+        [("3070b", n, REASON_NOT_IN_SNAPSHOT)]
+    one = r.estimates["one_kit"]
+    assert [(l.lot.part_id, l.quantity) for l in one.unpriced_lines] == [("3070b", n)]
+    complete = estimate_layout(grid, load_snapshot(FIXTURE_DIR / "bricklink_price_guide_3070b.json"),
+                               as_of=AS_OF)
+    assert complete.estimates["full"].complete and complete.estimates["one_kit"].complete
+    # plates and round tiles are priced the same with either snapshot
+    same = {(l.lot.part_id, l.lot.color_key): l.line for l in full.lines if l.lot.part_id != "3070b"}
+    assert same == {(l.lot.part_id, l.lot.color_key): l.line
+                    for l in complete.estimates["full"].lines if l.lot.part_id != "3070b"}

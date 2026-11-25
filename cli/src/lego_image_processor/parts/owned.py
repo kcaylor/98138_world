@@ -4,8 +4,11 @@ Loose (``--owned``) and missing (``--missing``) parts are read from Rebrickable'
 CSV (help page "Importing Parts"): ``Part,Color,Quantity`` with Rebrickable part and color numbers,
 or ``Element,Quantity``. Headers are case-insensitive and in any order; extra columns (for example
 Rebrickable's ``Is Spare``) are ignored; a BOM and CRLF line endings are accepted; blank lines are
-skipped and duplicate rows are summed. Rows for parts other than the two map parts are ignored and
-counted, so a full set inventory export can be passed in.
+skipped and duplicate rows are summed. Rows for parts other than the layout's map parts are
+ignored and counted, so a full set inventory export can be passed in. The map parts are the kit's
+two, 6141 and 98138, plus the 1x1 square tile 3070b on a layout that has square tiles (a non-kit
+template's margin, feature 016; ``partslist.owned_parts``). On a kit layout a 3070b row, or a row
+with one of 3070b's other catalog numbers, is therefore ignored and counted, as before feature 016.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -18,10 +21,10 @@ from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 from fractions import Fraction
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 from ..kit.part_colors import PartColorTable, load_part_colors
-from ..kit.part_numbers import PartNumberTable, load_part_numbers
+from ..kit.part_numbers import KIT_PARTS, PartNumberTable, load_part_numbers
 
 LotKey = Tuple[str, str]  # (project part ID, color key)
 
@@ -105,10 +108,16 @@ def _quantity(text: str, path, line) -> int:
 
 def parse_owned_text(text: str, path: Union[str, Path] = "<owned>",
                      part_colors: Optional[PartColorTable] = None,
-                     part_numbers: Optional[PartNumberTable] = None) -> Tuple[Dict[LotKey, int], int]:
-    """Quantities per (part, color key) and the number of ignored rows (non-map parts)."""
+                     part_numbers: Optional[PartNumberTable] = None,
+                     parts: Optional[Sequence[str]] = None) -> Tuple[Dict[LotKey, int], int]:
+    """Quantities per (part, color key) and the number of ignored rows (non-map parts).
+
+    ``parts`` are the map parts to read (``partslist.owned_parts(grid)`` for a layout); rows for
+    any other part are ignored and counted. The default is the kit's two parts (6141, 98138).
+    """
     part_colors = part_colors or load_part_colors()
     part_numbers = part_numbers or load_part_numbers()
+    wanted = frozenset(KIT_PARTS if parts is None else parts)
     if text.startswith("﻿"):
         text = text[1:]
     reader = csv.reader(io.StringIO(text, newline=""))
@@ -129,15 +138,24 @@ def parse_owned_text(text: str, path: Union[str, Path] = "<owned>",
     else:
         raise OwnedFileError(path, hline, f"header {','.join(header)!r} not recognised: expected "
                                           "'Part,Color,Quantity' or 'Element,Quantity' (Rebrickable import CSV)")
-    rebrickable_part = {part_numbers.get(p).rebrickable_part_num: p for p in part_numbers.parts}
+    unknown = sorted(wanted - set(part_numbers.parts))
+    if unknown:
+        raise ValueError(f"not a map part: {', '.join(unknown)}")
+    rebrickable_part = {part_numbers.get(p).rebrickable_part_num: p for p in part_numbers.parts
+                        if p in wanted}
     other_numbers = {}
     for p, n in part_numbers.parts.items():
+        if p not in wanted:
+            continue
         for alt in (n.bricklink_item_no,) + n.bricklink_alternates + n.lego_design_ids:
             if alt not in rebrickable_part:
                 other_numbers[alt] = p
-    by_color = {p: {c.rebrickable.id: c.key for c in part_colors.for_part(p)} for p in part_colors.parts}
+    by_color = {p: {c.rebrickable.id: c.key for c in part_colors.for_part(p)} for p in part_colors.parts
+                if p in wanted}
     by_element = {}
     for p in part_colors.parts:
+        if p not in wanted:
+            continue
         for c in part_colors.for_part(p):
             for e in (c.element_id,) + tuple(c.element_ids):
                 by_element[e] = (p, c.key)
@@ -178,7 +196,9 @@ def parse_owned_text(text: str, path: Union[str, Path] = "<owned>",
 
 
 def parse_owned_csv(path: Union[str, Path], part_colors: Optional[PartColorTable] = None,
-                    part_numbers: Optional[PartNumberTable] = None) -> OwnedFile:
+                    part_numbers: Optional[PartNumberTable] = None,
+                    parts: Optional[Sequence[str]] = None) -> OwnedFile:
+    """An owned or missing file read for ``parts`` (see ``parse_owned_text``)."""
     p = Path(path)
     try:
         raw = p.read_bytes()
@@ -188,6 +208,6 @@ def parse_owned_csv(path: Union[str, Path], part_colors: Optional[PartColorTable
         text = raw.decode("utf-8")
     except UnicodeDecodeError:
         raise OwnedFileError(path, None, "file is not UTF-8 text")
-    quantities, ignored = parse_owned_text(text, path, part_colors, part_numbers)
+    quantities, ignored = parse_owned_text(text, path, part_colors, part_numbers, parts)
     return OwnedFile(path=str(path), sha256=hashlib.sha256(raw).hexdigest(),
                      quantities=quantities, ignored_rows=ignored)

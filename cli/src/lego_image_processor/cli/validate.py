@@ -30,7 +30,9 @@ def validate(layout_file: str, kit: str, output: str) -> None:
 
     Checks if a layout can be built with the parts of kit 31203: land uses the 1x1 round plate
     (6141) in White, ocean the 1x1 round tile (98138) in 9 colors, with quantities from the
-    instructions' parts inventory (page 159). Layouts must use schema 2.0.
+    instructions' parts inventory (page 159). Layouts must use schema 2.0. A layout on a non-kit
+    template (map build --template) is checked against that template's classes, and its margin's
+    1x1 square tiles (3070b), which no kit has, are reported as beyond the kit.
     Not affiliated with or endorsed by The LEGO Group.
 
     \b
@@ -70,9 +72,16 @@ def validate(layout_file: str, kit: str, output: str) -> None:
         click.echo(f"  Total positions: {layout.total_positions:,}")
         click.echo(f"  Land plates: {layout.land_positions:,}")
         click.echo(f"  Ocean tiles: {layout.ocean_positions:,}")
+        template_rec = layout.template  # feature 016: None on the kit template
+        if template_rec is not None:
+            click.echo(f"  Margin square tiles: {layout.margin_positions:,}")
         click.echo(f"  Unique colors: {layout.unique_colors}")
         from ..layout.arrangement import arrangement_of
         click.echo(f"  Arrangement: {arrangement_of(layout).describe()}")
+        if template_rec is not None:
+            from ..templates import REHANG_RULE
+            click.echo(f"  Template: {template_rec.get('id')} ({template_rec.get('title')}); arrangement A "
+                       f"only ({REHANG_RULE})")
         click.echo()
 
         # Load kit specification
@@ -99,6 +108,7 @@ def validate(layout_file: str, kit: str, output: str) -> None:
 
         plate_unavailable = [v for v in color_unavailable if v.part_type == "plate"]
         tile_unavailable = [v for v in color_unavailable if v.part_type == "tile"]
+        square_unavailable = [v for v in color_unavailable if v.part_type == "square_tile"]
 
         # Show plate (land) validation
         if layout.land_positions > 0:
@@ -118,13 +128,30 @@ def validate(layout_file: str, kit: str, output: str) -> None:
             else:
                 click.echo(click.style("    ✓ All tile colors available in kit", fg="green"))
 
-        # Land/sea mask under the layout's arrangement (feature 007)
-        click.echo(f"  Checking land/sea mask (arrangement {report.arrangement})...")
-        if mask_mismatch:
-            click.echo(click.style(f"    ✗ {mask_mismatch[0].positions_required:,} positions do not match "
-                                   f"the kit mask in arrangement {report.arrangement}", fg="red"))
+        # Square tiles of a non-kit template's margin (feature 016): never in the kit
+        if square_unavailable:
+            click.echo(f"  Checking square tile colors ({len(square_unavailable)} colors)...")
+            click.echo(click.style(f"    ✗ {len(square_unavailable)} square tile colors unavailable in kit "
+                                   "(no kit has part 3070b)", fg="red"))
+
+        if report.template is None:
+            # Land/sea mask under the layout's arrangement (feature 007)
+            click.echo(f"  Checking land/sea mask (arrangement {report.arrangement})...")
+            if mask_mismatch:
+                click.echo(click.style(f"    ✗ {mask_mismatch[0].positions_required:,} positions do not match "
+                                       f"the kit mask in arrangement {report.arrangement}", fg="red"))
+            else:
+                click.echo(click.style("    ✓ Plates on land and tiles on ocean", fg="green"))
         else:
-            click.echo(click.style("    ✓ Plates on land and tiles on ocean", fg="green"))
+            # The layout's own template (feature 016, FR-016)
+            tid = report.template["id"]
+            click.echo(f"  Checking template classes ({tid})...")
+            if mask_mismatch:
+                click.echo(click.style(f"    ✗ {mask_mismatch[0].positions_required:,} positions do not match "
+                                       f"template {tid}", fg="red"))
+            else:
+                click.echo(click.style("    ✓ Plates on land, tiles on ocean and square tiles on the margin",
+                                       fg="green"))
 
         # Show quantity validation
         click.echo("  Checking color quantities...")
@@ -163,9 +190,13 @@ def validate(layout_file: str, kit: str, output: str) -> None:
                               f"(ΔE00 {v.suggested_alternative.color_distance:.1f})")
 
             for v in mask_mismatch:
-                click.echo(f"\n  Mask Mismatch (arrangement {v.arrangement}): {v.positions_required:,} positions")
+                if v.template is None:
+                    click.echo(f"\n  Mask Mismatch (arrangement {v.arrangement}): {v.positions_required:,} positions")
+                else:
+                    click.echo(f"\n  Mask Mismatch (template {v.template}): {v.positions_required:,} positions")
+                expects = "kit mask" if v.template is None else f"template {v.template}"
                 for e in v.examples[:3]:
-                    click.echo(f"    ({e['x']}, {e['y']}): {e['part_type']}, kit mask expects {e['expected']}")
+                    click.echo(f"    ({e['x']}, {e['y']}): {e['part_type']}, {expects} expects {e['expected']}")
 
             for v in quantity_exceeded:
                 click.echo(f"\n  Quantity Exceeded: {v.color_name} ({v.color_id})")

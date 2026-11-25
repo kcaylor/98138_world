@@ -68,6 +68,77 @@ def test_every_data_file_source_has_disclaimer(path):
     assert data["source"]["disclaimer"] == DISCLAIMER
 
 
+# Feature 016 (FR-022): template files (data/templates/<id>.json) carry the disclaimer in their
+# source block and at the top level; their ice files (<id>-ice.json) in their source block.
+@pytest.mark.parametrize("path", sorted((DATA_DIR / "templates").glob("*.json")), ids=lambda p: p.name)
+def test_every_template_data_file_has_disclaimer(path):
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    assert data["source"]["disclaimer"] == DISCLAIMER
+    if not path.stem.endswith("-ice"):
+        assert data["disclaimer"] == DISCLAIMER
+
+
+def test_template_data_files_exist():
+    assert (DATA_DIR / "templates" / "winkel-tripel.json").is_file()
+    assert (DATA_DIR / "templates" / "winkel-tripel-ice.json").is_file()
+
+
+# Feature 016 (T103, FR-022) audit. Covered elsewhere: every `template` error and the `--format
+# json` key order (test_template_contract.py); `maptemplates` output, the review sheet's text and
+# the candidate file (unit/tools/test_maptemplates.py, test_maptemplates_ice.py,
+# test_kit_golden.py); `map build|check|cells --template` errors (test_map_template_contract.py);
+# every sheet page (integration/test_sheets_winkel.py); the web pages (web/tests/test_routes.py,
+# test_templates.py). Here: the `template` group and every file written for a Winkel map.
+
+@pytest.mark.parametrize("command", [
+    ["template", "list"], ["template", "show", "winkel-tripel"], ["template", "show", "kit-31203"],
+    ["template", "locate", "winkel-tripel", "48.86", "2.35"],
+    ["template", "locate", "winkel-tripel", "--stud", "0", "0"],
+])
+def test_template_commands(runner, command):
+    result = runner.invoke(cli, command)
+    assert result.exit_code == 0, result.output
+    assert _last_line(result.output) == DISCLAIMER
+    if command[1] in ("list", "show"):
+        as_json = runner.invoke(cli, command + ["--format", "json"])
+        assert as_json.exit_code == 0, as_json.output
+        assert json.loads(as_json.output)["disclaimer"] == DISCLAIMER
+
+
+def test_winkel_outputs_carry_the_disclaimer(runner, tmp_path, fixture_registry, confirmed_winkel):
+    fixture_registry.place_all()
+    prices = Path(__file__).resolve().parents[1] / "fixtures" / "prices" / "bricklink_price_guide_3070b.json"
+    w = tmp_path / "w.json"
+    files = {name: tmp_path / name for name in ("r.json", "cells.json", "pl.json", "e.json",
+                                                "counts.json", "v.json")}
+    commands = [
+        ["map", "build", "ocean-sst", "--template", "winkel-tripel", "-o", str(w),
+         "--report", str(files["r.json"]), "--preview", str(tmp_path / "w.png")],
+        ["map", "check", "ocean-sst", "--template", "winkel-tripel"],
+        ["map", "cells", "ocean-sst", "--template", "winkel-tripel", "-o", str(files["cells.json"])],
+        ["parts", "list", str(w), "--kits", "1"],
+        ["parts", "list", str(w), "-o", str(files["pl.json"])],
+        ["parts", "export", str(w), "--kits", "1", "--bricklink", str(tmp_path / "w.xml"),
+         "--rebrickable", str(tmp_path / "w.csv")],
+        ["parts", "estimate", str(w), "--prices", str(prices), "--as-of", "2026-12-05",
+         "-o", str(files["e.json"])],
+        ["sheets", "build", str(w), "-o", str(tmp_path / "svg"), "--format", "svg", "--sections", "A1"],
+        ["sheets", "counts", str(w), "-o", str(files["counts.json"])],
+        ["validate", str(w), "-o", str(files["v.json"])],
+    ]
+    for command in commands:
+        result = runner.invoke(cli, command)
+        assert result.exit_code == 0, (command, result.output)
+        assert _last_line(result.output) == DISCLAIMER, command
+    meta = json.loads(w.read_text(encoding="utf-8"))["metadata"]
+    assert meta["template"]["id"] == "winkel-tripel"
+    assert meta["disclaimer"] == DISCLAIMER and meta["map"]["disclaimer"] == DISCLAIMER
+    for name, path in files.items():
+        assert json.loads(path.read_text(encoding="utf-8"))["disclaimer"] == DISCLAIMER, name
+    pages = sorted((tmp_path / "svg").glob("*.svg"))
+    assert pages and all(DISCLAIMER in p.read_text(encoding="utf-8") for p in pages)
+
+
 # --- Feature 004 commands (FR-023) ------------------------------------------------------------
 
 @pytest.mark.parametrize("command", [

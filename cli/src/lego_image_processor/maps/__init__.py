@@ -3,8 +3,10 @@
 Not affiliated with or endorsed by The LEGO Group.
 """
 
-from .build import MapResult, agreement_with_official, build_map, check_recipe, missing_datasets
+from .build import (MapResult, agreement_with_official, build_map, check_recipe, missing_datasets,
+                    resolve_template)
 from .classify import ClassResult, MapBuildError, classify
+from .margin import MarginError, MarginTreatment, resolve_margin  # feature 016
 from .preview import write_preview
 from .projection import KitProjection, load_kit_projection
 from .recipe import (Classification, Layer, Recipe, RecipeError, Texture, bundled_recipes, load_recipe,
@@ -22,4 +24,5 @@ __all__ = [
     "fill_halo", "shadow_mask",
     "THRESHOLDS", "layer_report", "check_recipe", "MapResult", "build_map", "missing_datasets",
     "write_preview", "agreement_with_official",
+    "resolve_template", "MarginTreatment", "MarginError", "resolve_margin",
 ]

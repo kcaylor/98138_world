@@ -1,0 +1,28 @@
+{
+  "fixture": "kit_outputs.json",
+  "what": "Digests of every kit 31203 output: the 8 bundled recipes x combinations A, B, C built from the dataset fixtures (tests/fixtures/datasets) through the CLI commands, taken from an unmodified checkout of main at commit 6038d9c, without any feature 016 production change (research R9, SC-001). Compared by tests/integration/test_kit_outputs_unchanged.py. Re-based once, on 2026-11-23, when main moved from af3ce57 to 6038d9c (round studs on black for map previews): only the 24 preview.png digests changed. Never regenerated from feature 016 code.",
+  "generator": "PYTHONPATH=<checkout>/cli/src:<checkout>/cli/tools python -m maptemplates kit-golden --fixtures --out tests/fixtures/golden/kit_outputs.json (run from cli/ of a checkout of 6038d9c with this feature's cli/tools/maptemplates and cli/tools/fixtures004/registry.py copied in)",
+  "code": {
+    "commit": "6038d9c",
+    "note": "library and web code of commit 6038d9c, unmodified (a separate git worktree; only the harness files were added to it)",
+    "previous": {
+      "commit": "af3ce57",
+      "sha256": "86ba7ab3b2c623ff916318232b8a2e41adb560d5719c6f626a6800aef21cf828"
+    }
+  },
+  "generated_on": "2026-11-23",
+  "python": "3.11.13",
+  "libraries": {
+    "lego-image-processor": "0.1.0",
+    "numpy": "1.26.4",
+    "Pillow": "10.4.0",
+    "scipy": "1.17.1",
+    "scikit-image": "0.21.0",
+    "reportlab": "5.1.0",
+    "h5py": "3.16.0",
+    "click": "8.5.1"
+  },
+  "license": "Derived from the project's own outputs; the dataset fixtures keep their sources' licenses (see each tests/fixtures/datasets/*.source.json).",
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group.",
+  "sha256": "8a865bb3249c971dd65e32e9537053a4cd2a743780de83daa7b6bec237ed657d"
+}

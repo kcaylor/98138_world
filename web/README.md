@@ -3,17 +3,29 @@
 Pick one of the eight bundled maps and a frame combination (A, B, C), see the stud preview, and
 download everything to build it: layout JSON, parts lists (full and topped up from one 31203 kit),
 BrickLink wanted list, Rebrickable CSV and build-sheet PDFs (US Letter and A4). Feature 008; see
-`specs/008-web-app/`.
+`specs/008-web-app/`. Five maps also come in a Winkel tripel version, a curved map on the same
+board, on the template the project owner confirmed on 2026-11-24 (feature 016,
+`specs/016-map-templates/`).
 
 Not affiliated with or endorsed by The LEGO Group.
 
 ## How it works
 
 - **Build step** (`python -m web98138.prebuild --out DIR [--fetch] [--maps ...] [--combinations ...]
-  [--cache-dir ...]`): calls the CLI library (`lego_image_processor`, in `../cli`) for every map ×
-  combination and writes the files plus `manifest.json` (size, SHA-256, content type of every
-  file; tool, recipe and dataset versions; the data shown on the pages). Only `--fetch` uses the
-  network, to download missing pinned datasets.
+  [--cache-dir ...] [--templates ...]`): calls the CLI library (`lego_image_processor`, in `../cli`)
+  for every map × combination and writes the files plus `manifest.json` (size, SHA-256, content
+  type of every file; tool, recipe and dataset versions; the data shown on the pages). Only
+  `--fetch` uses the network, to download missing pinned datasets.
+- **Template variants** (feature 016): `--templates LIST` names the templates to build beside the
+  kit (`winkel-tripel`), `--templates none` builds the kit only, and the default builds every
+  template the project owner has confirmed. A map gets a template variant only when the library
+  says it can be built on that template: on Winkel tripel `official-31203-bathymetry`,
+  `ocean-sst`, `land-elevation`, `living-planet` and `rainfall`, not `official-31203` (LEGO's design
+  on the kit grid) or the ENSO pair (hung as B). Its files go to `maps/<map>/<template-id>/`, and
+  the manifest lists them in `templates` and `maps[].template_variants`. An unconfirmed template
+  gives no variants and one note line. The committed `winkel-tripel` was confirmed by the project
+  owner on 2026-11-24, so the site builds 29 variants: the 24 kit variants and 5 Winkel versions.
+  Kit variants and their files do not change.
 - **Service** (`web98138.app`, FastAPI + Jinja2): checks the output at start-up and serves pages and
   files from it. It never imports the CLI library, builds maps or downloads data. Every page works
   without JavaScript; map pages load one hand-written first-party script, `static/palette.js`
@@ -21,10 +33,13 @@ Not affiliated with or endorsed by The LEGO Group.
   `cells.json` in the browser (preview only). No cookies, no storage, nothing loaded from other
   sites.
 
-Routes: `/`, `/about`, `/maps/<map>/<A|B|C>`, `.../preview.png`, `.../thumb.png`, `.../cells.json`,
+Routes: `/`, `/about`, `/maps/<map>/<A|B|C|template-id>`, `.../preview.png`, `.../thumb.png`, `.../cells.json`,
 `.../download/<kind>` (`layout`, `parts`, `parts-1kit`, `bricklink`, `rebrickable`,
 `bricklink-1kit`, `rebrickable-1kit`, `sheets-letter`, `sheets-a4`), `/manifest.json`, `/healthz`,
-`/robots.txt`. Contract: `specs/008-web-app/contracts/routes.md`.
+`/robots.txt`. Contract: `specs/008-web-app/contracts/routes.md`; template variants:
+`specs/016-map-templates/contracts/web.md`. A template page (for example
+`/maps/ocean-sst/winkel-tripel`) says its frames cannot be re-hung and that square tiles fill the
+margin, and offers the same nine downloads.
 
 ## Develop
 

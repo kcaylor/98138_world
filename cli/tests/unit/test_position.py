@@ -73,7 +73,7 @@ class TestPositionPlacement:
 
     def test_invalid_part_type(self):
         """Test that invalid part_type raises ValueError."""
-        with pytest.raises(ValueError, match="part_type must be 'plate' or 'tile'"):
+        with pytest.raises(ValueError, match="part_type must be 'plate', 'tile' or 'square_tile'"):
             PositionPlacement(
                 x=0,
                 y=0,
@@ -86,7 +86,7 @@ class TestPositionPlacement:
 
     def test_invalid_lego_part_id(self):
         """Test that invalid lego_part_id raises ValueError."""
-        with pytest.raises(ValueError, match="lego_part_id must be '6141' or '98138'"):
+        with pytest.raises(ValueError, match="lego_part_id must be '6141', '98138' or '3070b'"):
             PositionPlacement(
                 x=0,
                 y=0,
@@ -226,3 +226,28 @@ class TestLandPartCorrection:
         assert position.LAND_PART_ID == "6141"
         assert position.OCEAN_PART_TYPE == "tile"
         assert position.OCEAN_PART_ID == "98138"
+
+
+class TestSquareTile:
+    """Feature 016 (T052; FR-009, FR-010; research R11): margin studs of a non-kit template are the
+    1x1 square tile, part type ``square_tile``, LEGO part 3070b."""
+
+    def test_constants(self):
+        from lego_image_processor.layout import position
+        assert position.MARGIN_PART_TYPE == "square_tile"
+        assert position.MARGIN_PART_ID == "3070b"
+        assert position.PART_ID_FOR_TYPE == {"plate": "6141", "tile": "98138", "square_tile": "3070b"}
+
+    def test_create_and_round_trip(self):
+        pos = PositionPlacement(x=0, y=0, color_id="lego_black", color_name="Black", lego_color_code="26",
+                                part_type="square_tile", lego_part_id="3070b")
+        assert PositionPlacement.from_dict(pos.to_dict()) == pos
+        assert pos.to_dict()["part_type"] == "square_tile" and pos.to_dict()["lego_part_id"] == "3070b"
+
+    @pytest.mark.parametrize("part_type,part_id", [("square_tile", "98138"), ("square_tile", "6141"),
+                                                   ("tile", "3070b"), ("plate", "3070b"),
+                                                   ("square_tile", "3070")])
+    def test_pairings_rejected(self, part_type, part_id):
+        with pytest.raises(ValueError):
+            PositionPlacement(x=0, y=0, color_id="lego_black", color_name="Black", lego_color_code="26",
+                              part_type=part_type, lego_part_id=part_id)
