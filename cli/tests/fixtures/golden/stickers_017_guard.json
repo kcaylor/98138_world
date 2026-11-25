@@ -1,0 +1,560 @@
+{
+  "format_version": "1",
+  "title": "Digests of every kit 31203 output before feature 017 (research R13 G3, FR-017, SC-006)",
+  "generator": "cli/tests/integration/test_stickers_outputs_unchanged.py::test_guard_golden with STICKERS_017_GUARD_WRITE=1",
+  "inputs": {
+    "datasets": "fixtures (tests/fixtures/datasets, via the fixture_registry fixture)",
+    "generated_at": "2026-01-01T00:00:00Z",
+    "as_of": "2026-12-05",
+    "prices": {"file": "bricklink_price_guide.json", "sha256": "38f9aea806e94683529a8be9b80d63f6f275448659c836d890cf376beaca9f35"},
+    "recipes": {"land-elevation": "659b67ad222c6fae15e514ba35d6e256297055b82588c4e3dabd3546bbf9c2e5", "living-planet": "cf7a805b65f751299545181a025cd3096a6a2466508e3e8cbe7575c8babf0dfc", "ocean-el-nino": "0095a9da442d29b04dde0b9df467efc812c9a6ea952e165c1b44d91c7d5f98cd", "ocean-la-nina": "973535a1c1487ed071c0b70a9a4bf1f55196bd50614ffed50bebeeb3ff3eeec8", "ocean-sst": "d7aaececf7f444b37f7cbca3a92ff8aedef735b770f58be2b87e3b1d9a0d6ddb", "official-31203": "e08f4d1747cab16a58d45c8dbb94dfe0725cf7f0ad558cb26e10f7f9aba764f7", "official-31203-bathymetry": "f7412b1c05148e7ca253913fc940a18d835ddec1c1f7eeaaee664ee13fd9b97e", "rainfall": "0fdc586705803f3ff6522d30e999a317dd7fb8cfa2d83b039c57d0921b7cfa5a"},
+    "combinations": [
+      "A",
+      "B",
+      "C"
+    ],
+    "sheets": {
+      "recipes": [
+        "land-elevation",
+        "ocean-sst"
+      ],
+      "combination": "A",
+      "paper": "letter"
+    },
+    "layout_path": "<recipe>/<combination>/layout.json"
+  },
+  "datasets": [
+    {"id": "ersst-v5-1988-12", "version": "v5-1988-12", "kind": "download", "sha256": "69e684c3c13297f9a42bbb54f27928215be8e950207860d872759b9e5fc2a077"},
+    {"id": "ersst-v5-1997-12", "version": "v5-1997-12", "kind": "download", "sha256": "a5a6fe0f0c25ef74af04183e4ced7b9427f9a0714bc8a14108eac4e9726e3185"},
+    {"id": "ersst-v5-ltm-1991-2020", "version": "v5-ltm-1991-2020", "kind": "download", "sha256": "2df9749266bd90eeef9e232eb3570ddd89e292a4a95f543c8825873f758c47dc"},
+    {"id": "etopo2022-surface-10m", "version": "2022-v1-60s-stride10", "kind": "download", "sha256": "cafe1b6a0332f1e75015107f72f36f976476810207532f3f14b6f0bf853cc2ca"},
+    {"id": "gpcp-v23-ltm-1991-2020", "version": "v2.3-ltm-1991-2020", "kind": "download", "sha256": "560fc28dc0a67277d7442d7b059dcb47efaf93815f5ae9fefe2315ba871abd27"},
+    {"id": "kit31203-design", "version": "003", "kind": "packaged"},
+    {"id": "mod17a3-npp-mean-2000-2015", "version": "c55-mean-2000-2015", "kind": "download", "sha256": "d7b5e71f9bc7733e7408370dc1098bbdf71256b0ebfa8ac31f759655bfa4d331"},
+    {"id": "modis-aqua-chla-2013-2024", "version": "r2022.0-2013-01-2024-12-stride12", "kind": "download", "content_sha256": "420d634f6dea4e70dd10470f90c51e184d6b871c676dae24aaf4182e5e10d198"},
+    {"id": "nsidc-cdr-v6-seaice-minimum-1991-2020", "version": "v06r00-sep-n-feb-s-1991-2020", "kind": "download", "files_sha256": "4a8cce3450af09b04ee7a564d3766294db60edb7bd20bcb92c39cd1ee9565259"}
+  ],
+  "variants": [
+    {
+      "recipe": "land-elevation",
+      "combination": "A",
+      "outputs": {
+        "layout.json": {"bytes": 2199419, "sha256": "e1de9eac33352d48509818780f5cf95051c0ec0219e042550a300a357e3d9a3a"},
+        "report.json": {"bytes": 8871, "sha256": "65d685bed4142715fe72c82c2e66d6095587d7b42376dd1c002071a2358a8673"},
+        "preview.png": {"bytes": 64120, "sha256": "71531312bafcf8118a04123d628fb4b16e09e38fdd6188ec1698dbeaa9aabd16", "pixels": "2d2f9b2333aba3a32e82624819c5ed37a20ebe603a5e611a77e72f903281c1ed"},
+        "cells.json": {"bytes": 134170, "sha256": "e739544e3e05e640d8bcf19dd21fdc5d633f5ce8036e332ab9c1e67311b682a0"},
+        "parts.json": {"bytes": 18192, "sha256": "0a49cd7892bccad1acc58e94d751ae82892ad7e11fbccc718a70b2c4e038e448"},
+        "bricklink.xml": {"bytes": 1577, "sha256": "f3f39d68eb4e3d7d90977001115ecb6a29edbc7b0db38cf7ae45320e6e6f7330"},
+        "rebrickable.csv": {"bytes": 182, "sha256": "da0376f758a9a75dfd2e3cca78f9895a40c10f4a3a12fcc6956132e78548a138"},
+        "parts-1kit.json": {"bytes": 18255, "sha256": "1b843ab69ec63d12a9bf6bb72ec8ad9adbf785a66fadc322ed2e9360dcd4b025"},
+        "bricklink-1kit.xml": {"bytes": 1217, "sha256": "696b6a775a4dc3afd79baf5a760c04a180a7e6099100c6fff198023f8f705b21"},
+        "rebrickable-1kit.csv": {"bytes": 141, "sha256": "79431ba5d9d7dd8dbc5c97abd11b732b1f34ba32610bff9e3c5385de0a5d21c5"},
+        "estimate.json": {"bytes": 22075, "sha256": "63fe5badba2bd6a5409473ac03ee0b76f4ae2ca569a4465160875f68533b074a"},
+        "counts.json": {"bytes": 18672, "sha256": "0dc581f4e5ed0703ac50c1feb63bfe4e9c7905a33a272e62b9a56047e15e89a0"},
+        "sheets-letter.pdf": {"bytes": 1946617, "sha256": "1594fd331d3ed7ac605c13b5970a9060f9ece69aaa0b69f206b6d763b6bbfa07"},
+        "sheets-letter.svg": {"pages": 42, "bytes": 5513004, "sha256": "4cbaff9720fd82fe2602709c34e740c6ac750195886bb6d4f452354a10bfa059"},
+        "sheets-letter.svg/page-01.svg": {"bytes": 1241245, "sha256": "d0bb20e714577ca54e2398a518e8c72d60e6b8c5146a6587f66008ce38e4c876"},
+        "sheets-letter.svg/page-02.svg": {"bytes": 16825, "sha256": "e75782111b79c6451be539a300fcc2e4c2beb57b096259ee0e29fde9d0f50e0d"},
+        "sheets-letter.svg/page-03.svg": {"bytes": 105797, "sha256": "36916d54a5bb4016626225b17a8541294652ab8379f65cc98b630e103dd25e73"},
+        "sheets-letter.svg/page-04.svg": {"bytes": 98261, "sha256": "b5845ca1054f9f1b766e01d693bc858514eb84f60864af3f882f358e11922692"},
+        "sheets-letter.svg/page-05.svg": {"bytes": 93374, "sha256": "28e1d2f8937b9a5e8a35b345c52403d27b8a8bce55bb6bfa4ff99f3db9a9e761"},
+        "sheets-letter.svg/page-06.svg": {"bytes": 91535, "sha256": "f52fdda300cb6bf1a9158b1874fa33f9f12a53e55bba0d56e9316122a827295c"},
+        "sheets-letter.svg/page-07.svg": {"bytes": 102326, "sha256": "a5c5fe2b1b9ec8a432578cf3946063f3f23168aab74a8ea7a11d6b7ab910c2a0"},
+        "sheets-letter.svg/page-08.svg": {"bytes": 108583, "sha256": "b9f13202bfbb34e7da696ff8fd977635329b1a2c6e10d32147a8333afc53c00f"},
+        "sheets-letter.svg/page-09.svg": {"bytes": 123521, "sha256": "cc2806caeb1cd6d2c7a2cd0a119c40348174bfb6edbaaa112a34a6e1d889ec1f"},
+        "sheets-letter.svg/page-10.svg": {"bytes": 100132, "sha256": "8a72f90f9e49bdb95f2098697239e2a163613169d54569fa56990cfcde34013d"},
+        "sheets-letter.svg/page-11.svg": {"bytes": 92402, "sha256": "5f147bc117e7e3b4e4e63775dfbe0c8a3879347c3daa8115e098d0d38c6507f9"},
+        "sheets-letter.svg/page-12.svg": {"bytes": 106001, "sha256": "a289758923fd92e810c940228a36acd7df15b2ac338b5154c7b28430fca7a8fa"},
+        "sheets-letter.svg/page-13.svg": {"bytes": 111827, "sha256": "c04595ec3bcb77de7b4bcbd45a2c21f94c94e7121bfa9973c7afaf157b3f2d17"},
+        "sheets-letter.svg/page-14.svg": {"bytes": 101810, "sha256": "949fc273e347072a332eb5f387f7bc814923619653bcd9b5f7fd6d311e71373c"},
+        "sheets-letter.svg/page-15.svg": {"bytes": 115819, "sha256": "70696c5d7b4474db04d09159c1b6c9c2565644b5fd98674d18d6a744a98c86b0"},
+        "sheets-letter.svg/page-16.svg": {"bytes": 112528, "sha256": "0f5e72d696ef34f369a4071e9ac2b883efbf56241ab40d6b9d50b09a26aadedb"},
+        "sheets-letter.svg/page-17.svg": {"bytes": 103688, "sha256": "b043e616f0a413024e6c98c65a65d70793f02c9436d8624bbdced42a4a23d359"},
+        "sheets-letter.svg/page-18.svg": {"bytes": 102982, "sha256": "55617d6cf292c009a243d52cf10bc7dbdd6480f815ea8b122f317bc51e308031"},
+        "sheets-letter.svg/page-19.svg": {"bytes": 108891, "sha256": "f5410ac3f0119c1356593fd0c8cf44ccf8df00c1a8468ff9bffe65086fcd414d"},
+        "sheets-letter.svg/page-20.svg": {"bytes": 104115, "sha256": "46c67d047248d9538f73dd2db35569c1cc7592ed8f4e0f6743b2f5eebc5b6180"},
+        "sheets-letter.svg/page-21.svg": {"bytes": 92415, "sha256": "e066f8e75187bc654597a32072957ed1bdf341dab59572d2f4de1414187c64b2"},
+        "sheets-letter.svg/page-22.svg": {"bytes": 108324, "sha256": "845332ec8b3c42273c4097141625b751ae87a05d7f86a0fd699bbbf68a9af983"},
+        "sheets-letter.svg/page-23.svg": {"bytes": 105701, "sha256": "d193b789db18bbcf3a22d6499d2617f9963d9b64e3124b1349e6bf4368bc8fea"},
+        "sheets-letter.svg/page-24.svg": {"bytes": 122340, "sha256": "b0c964576f7f5ba8a126b336f433cf406a4fc53756da68efae346a2977f653a2"},
+        "sheets-letter.svg/page-25.svg": {"bytes": 121239, "sha256": "927a760b0c703e760b8067486351a6fe424f3c2d8a4b9db8f2c2a4faa917643d"},
+        "sheets-letter.svg/page-26.svg": {"bytes": 105581, "sha256": "7b706255ae68a9b800f198d174c6b959b156cfc4fd72e5973eda28ead6877f99"},
+        "sheets-letter.svg/page-27.svg": {"bytes": 111577, "sha256": "3616bfcbdf74895ec67ed9f3dee06b80ed703f466c2a81256ea86acc8e274b70"},
+        "sheets-letter.svg/page-28.svg": {"bytes": 109768, "sha256": "5ccbc0a4b4e16e95d338730c9a2658868b59316f9c3ca8746425cc4b59b1c8ff"},
+        "sheets-letter.svg/page-29.svg": {"bytes": 130119, "sha256": "78ed6b1f2551782360f547e43eb278d2ade6c92f617f752f4309842a41e0f2c1"},
+        "sheets-letter.svg/page-30.svg": {"bytes": 100981, "sha256": "91c976d0f41f555ecad6f62b7057ce93b0e00926bd3b5e888c2f0dec2456c7f5"},
+        "sheets-letter.svg/page-31.svg": {"bytes": 93721, "sha256": "188813c72fa5509f3db42df67211654bcfb632dcc904e76825a2b752f1b8aa3c"},
+        "sheets-letter.svg/page-32.svg": {"bytes": 111817, "sha256": "abedca8df478c4544c8b7933f0037d25d575ebfdf87ea5b00586e02a9204d8b0"},
+        "sheets-letter.svg/page-33.svg": {"bytes": 111285, "sha256": "2c6be8eecf9671f600ada25b40e716a5ae0d89618d4eec714b7e4347ca09638d"},
+        "sheets-letter.svg/page-34.svg": {"bytes": 121159, "sha256": "745e5c54b776c155add25ebc6300b25496a561d7523ac1e56a9d2d688e0c1665"},
+        "sheets-letter.svg/page-35.svg": {"bytes": 104569, "sha256": "918e1d89e4f32a2736a0c1b0e1470072e4b924fbb62df7670411757df5600ebd"},
+        "sheets-letter.svg/page-36.svg": {"bytes": 107631, "sha256": "02de9c4e90ed67304010ccacec8ab0d0960caea8df2b661c8317b0d8e413a4a1"},
+        "sheets-letter.svg/page-37.svg": {"bytes": 112785, "sha256": "1c50469e75daea789b99ec8f69e17a40dce26c4f5d15c36501d400f25b4abf64"},
+        "sheets-letter.svg/page-38.svg": {"bytes": 104310, "sha256": "738afad50f8c2d51bd6878763826899b001082bf1042ca301afb9e2849353611"},
+        "sheets-letter.svg/page-39.svg": {"bytes": 96832, "sha256": "2cb32ad824b96de8603d3341acc4d7964e2e7f9d81529b9958da7a184ff45a6a"},
+        "sheets-letter.svg/page-40.svg": {"bytes": 94507, "sha256": "65fb1ce48adf5e292d5c0952eb6ff7565b84eb692874248c452b055b88df37db"},
+        "sheets-letter.svg/page-41.svg": {"bytes": 99755, "sha256": "df9f29517b869b1c7dcc3b4d0e60979d7aa4d51d529ca53ac3fdf012019386e2"},
+        "sheets-letter.svg/page-42.svg": {"bytes": 104926, "sha256": "c5ff407f67e3ffc37efaa54350ef77837ee5454aaabddbd61502e9edf31bdcc0"}
+      }
+    },
+    {
+      "recipe": "land-elevation",
+      "combination": "B",
+      "outputs": {
+        "layout.json": {"bytes": 2199329, "sha256": "f97065a79b51d56fcb0439db7488b36b99d18a38bac2c55c2ecfec46e48e4505"},
+        "report.json": {"bytes": 8857, "sha256": "7a9f388b4a46654b57ee798553162ef395aaa997a1ba404aab872bd0662e0a93"},
+        "preview.png": {"bytes": 63997, "sha256": "bc1ee2b1b2a25a11b6498ddb090b1117e27436f560fcdad05788b51c13114dc6", "pixels": "7ac89d98ac6d6ac1151d00492bd6918bd4f5d50b4de9cede7c7a6225d4aa24df"},
+        "cells.json": {"bytes": 134171, "sha256": "dc91cb1259aba450c00bdf8279c6ca5fa58579c2fe98fe052ce9381a7ee6a15d"},
+        "parts.json": {"bytes": 18187, "sha256": "6750e2fcd4355cddbe24b40bd9cf5cc12ce24deda8b6133838aac69af13b8d61"},
+        "bricklink.xml": {"bytes": 1577, "sha256": "49e49799ceb287b3304633f2f19f16ab9caceee7e6490557ddb93cf6ff98f1d0"},
+        "rebrickable.csv": {"bytes": 182, "sha256": "bb05096e52cdf2151f8a9eb4689d3c9f4f4ca7f067da590c9206926d4cbccd0b"},
+        "parts-1kit.json": {"bytes": 18250, "sha256": "8c62e5abd8a847e4b4aabd784793fa2ae9e86474a7b3458e60d40785943a6f0f"},
+        "bricklink-1kit.xml": {"bytes": 1217, "sha256": "11a48657048d47dc39f378cd4c54f90df3901e00f5da107f8cc7e8e227f46dba"},
+        "rebrickable-1kit.csv": {"bytes": 141, "sha256": "cf077145214ef084944e1d9f5e2f748950bb7df785cb939aee389b49b4526971"},
+        "estimate.json": {"bytes": 22070, "sha256": "aec0dcb7f2a4cf84648b15c66f4935d318a592011e855365f82d66d79fb131e7"},
+        "counts.json": {"bytes": 18671, "sha256": "959b791d1bdd5d35512a01ea685482e88f8869635893678dfff3351f3ced4666"}
+      }
+    },
+    {
+      "recipe": "land-elevation",
+      "combination": "C",
+      "outputs": {
+        "layout.json": {"bytes": 2199413, "sha256": "458d7273cceec740b52a6d1f93dcf929646a7f066c3b4b6244aae04139fc26b4"},
+        "report.json": {"bytes": 8875, "sha256": "5505a7756010353af48314d88ba5d8d1a4a3974d379f36af1c2428eab93f399b"},
+        "preview.png": {"bytes": 64032, "sha256": "61ff8382f96f0e353c9b3985fb11b40095a08b970e34ca64e5e0155137555bd1", "pixels": "40e32ebd03d30fbb2bc48db31a8b94e7ed9642c975a9ad9dc7877b33237e4b4f"},
+        "cells.json": {"bytes": 134172, "sha256": "1ed3ff72dc141fba4037a5a32f267671f9269fea04ee8bed5353a96975b3f18f"},
+        "parts.json": {"bytes": 18193, "sha256": "263f603fa4fc1e5037aed9bcfb33a22e2b7889035f3e46b723348491d3ceb7a5"},
+        "bricklink.xml": {"bytes": 1577, "sha256": "a8782cb51f7ede4e737375f920bd82478e820516263a442425898cfc59d6ab42"},
+        "rebrickable.csv": {"bytes": 182, "sha256": "dfec985da91693a4fde8b0aae3ef6e26650d79cef6c4b99123fccf67b4e4c405"},
+        "parts-1kit.json": {"bytes": 18256, "sha256": "7074788d9c52d815aad678cf9d19b9865236364a7ac1207253f47d347ec69e02"},
+        "bricklink-1kit.xml": {"bytes": 1217, "sha256": "25d9200156f7278401c4ffe98b2556cf91fd476ab1a43d099a8b3a1974b6cc48"},
+        "rebrickable-1kit.csv": {"bytes": 141, "sha256": "8a2061c95eff66a940678eab083fa1415d9f19cae1eaa63f72a48adc434b72df"},
+        "estimate.json": {"bytes": 22076, "sha256": "6de83104ff6fa880450549e8f4c9fbebf5977083516cc3161627fc87944b1abc"},
+        "counts.json": {"bytes": 18670, "sha256": "6f639d4501126594b33f061c6d226c1fcc774408492318c8f914c2ffaa3e1de7"}
+      }
+    },
+    {
+      "recipe": "living-planet",
+      "combination": "A",
+      "outputs": {
+        "layout.json": {"bytes": 2077098, "sha256": "dece555faf78a9161a1070723c2119424a1f769accce8b9c42873a6920b1785d"},
+        "report.json": {"bytes": 14355, "sha256": "f4bb89504520d254fc07e368d38941e8edfd7e47b1dbc012026492793c974caa"},
+        "preview.png": {"bytes": 53862, "sha256": "1e25c7a53703b3d2f7c5067dba8d6abfa2851648f06781a6353bad7d443edd6a", "pixels": "a0915c3c2f243756d905e7253fd76465eee9823b77af4f0d60adf00c65260506"},
+        "cells.json": {"bytes": 207836, "sha256": "1b346acd2dc52d8c244185cb255815d58bee91405c73bb095e3a8ded0db15193"},
+        "parts.json": {"bytes": 19666, "sha256": "bb3e0572961e1cbc9a93e6cbc930c6d7d23b968d150c5e411df94515ebe0ccbb"},
+        "bricklink.xml": {"bytes": 1699, "sha256": "8041e136c911fa06a063f9e12cb58dd0127eb932c0e95a984af9a50888d4f9d6"},
+        "rebrickable.csv": {"bytes": 199, "sha256": "3b18914cd0f43c2e1dcf320960a1217c7246927f69c04ad718eb0fc3460649a4"},
+        "parts-1kit.json": {"bytes": 19733, "sha256": "e22a8ae695b040e6700ac8a080bdb0903f282166c84f2c7a1f8af018506b95f4"},
+        "bricklink-1kit.xml": {"bytes": 1339, "sha256": "50779ed1c019d89725640a8d91d3e9423429ce00f4214f3d33fc353d01fc8b24"},
+        "rebrickable-1kit.csv": {"bytes": 160, "sha256": "e3aff0367bee4a099497b0b72b87972e7e38fbae36c647544806794bf2701915"},
+        "estimate.json": {"bytes": 24053, "sha256": "0901108dc3d12332d9a8af16c1149bc489bf8363bc08123dd1aac212b05c8009"},
+        "counts.json": {"bytes": 18630, "sha256": "0533bbce33b2404852754122e43f797871cac579d4b101ba84c300201a4896b8"}
+      }
+    },
+    {
+      "recipe": "living-planet",
+      "combination": "B",
+      "outputs": {
+        "layout.json": {"bytes": 2077106, "sha256": "0576e3b28cab965edb8cf3d16141b06826d50fd7b7a0b359c22d9464daad0c95"},
+        "report.json": {"bytes": 14341, "sha256": "8982c4cf30921f9bdfac3c95dcfef3cf951af81f2bd24bcd84c63a314ac1e137"},
+        "preview.png": {"bytes": 53865, "sha256": "fddb1dc178cc0fc34db7f5a7bd03832ebb84e464abb3032f15fc785ade0b702f", "pixels": "b84a99e9b725bc7b580824c2f7cbead2c1d7d8c1fe584b81a7873652f6fe51ec"},
+        "cells.json": {"bytes": 207858, "sha256": "5c552db7b16754b9fb84c32525b2c6bf1b4c2db63b112f0525967ad228a066c4"},
+        "parts.json": {"bytes": 19661, "sha256": "7b1dfa6f5a623ea14d8d5a68a454675a17a389fe12a2e9b43d73f100d1389f0a"},
+        "bricklink.xml": {"bytes": 1699, "sha256": "5407e9aeffa83aad6f86e4ea4beb6d5979b02ce9e1ad6be8279ec653b64f6bae"},
+        "rebrickable.csv": {"bytes": 199, "sha256": "c3dc5bb7437a68f5388689d3bb9638fdb8706c78b863856b84053a663efde7a3"},
+        "parts-1kit.json": {"bytes": 19728, "sha256": "d5db6167d89f7dfced70904161ce1668c1e4633b6d0bb7ae459aa67b33ade17b"},
+        "bricklink-1kit.xml": {"bytes": 1339, "sha256": "5653c178bf197fe44faa80008b5242beefeeaec907873c85217462db192c4201"},
+        "rebrickable-1kit.csv": {"bytes": 160, "sha256": "2cfd6264a143aefab1d66aa4a55b47b419190596b399d7cfb5d49e1a845ae4ec"},
+        "estimate.json": {"bytes": 24048, "sha256": "3b375d9941dc2e8d0c3df5652600fb1d67fb45a31e3b3d9e32c2dc638f34ad75"},
+        "counts.json": {"bytes": 18630, "sha256": "17c94d0c9c781b3f064bee3ec863b5915c3f2b45fc7e66458c8374a72447300a"}
+      }
+    },
+    {
+      "recipe": "living-planet",
+      "combination": "C",
+      "outputs": {
+        "layout.json": {"bytes": 2077118, "sha256": "f22932b7f8de0d998b4597909f7942bd6bee45db04820d37f2134d7cf533624c"},
+        "report.json": {"bytes": 14359, "sha256": "8adb0c5c25deb73881463ae9a4672aacba44954b4caba02dab58b75a17563acb"},
+        "preview.png": {"bytes": 53798, "sha256": "1b4b715954ba966c558dbccc8e3ccf4a039e8a4f21a233ed0f910477bf3a04ca", "pixels": "c25f541e35dc5ebeb7d69253933a62298d79a35b580586e4cb99a79a5e3b8e09"},
+        "cells.json": {"bytes": 207863, "sha256": "6cc892682a496f5faff15272a2204c415fb3ab286bb988d18580552734590ad8"},
+        "parts.json": {"bytes": 19667, "sha256": "a237d78097a71ed4c8765b2950dbc2ff90bbd3a38cea520abcb685cadded5372"},
+        "bricklink.xml": {"bytes": 1699, "sha256": "49fb96ae26330ddd41a9c14a55fe1ec75a8f23452adef3be29933a27906a1f8f"},
+        "rebrickable.csv": {"bytes": 199, "sha256": "3c29b5c95c70be5e1fee02c9f277b3d7275da23a2b4712c0f099320d73d7e3c8"},
+        "parts-1kit.json": {"bytes": 19734, "sha256": "821e51fa578359e60a6b61c739a4112b4bece28fc60e5dc2bae7201b426468a5"},
+        "bricklink-1kit.xml": {"bytes": 1339, "sha256": "4e7acb0a3740fdded4160b8075e98b3ee7327d7a85a08d88c8fc41d979ac4e0c"},
+        "rebrickable-1kit.csv": {"bytes": 160, "sha256": "db94aa8e72ce6206f787b82a691e91df91b22a1b3ca75a1be1491bb31e7217b5"},
+        "estimate.json": {"bytes": 24054, "sha256": "e0a1a9b1bf66f607562c7d3e44266b0bca5100bccf838c5316db9291510c7d5e"},
+        "counts.json": {"bytes": 18630, "sha256": "fec4ea0ae86a01d807cfbd5a1bc758a3e49483ac7358c916de66856c47609a0f"}
+      }
+    },
+    {
+      "recipe": "ocean-el-nino",
+      "combination": "A",
+      "outputs": {
+        "layout.json": {"bytes": 2133853, "sha256": "69b92039f2163809faaf4e39e5d3dfea0a543d7b18198479bab70d3ccf8cf52a"},
+        "report.json": {"bytes": 8201, "sha256": "ba8bc1348cec76a402b9495ad6fc76216c4c319ca90445cd445050a5d474a7a0"},
+        "preview.png": {"bytes": 52488, "sha256": "1577cae1718fcbb1fa213a2b8e3908b5ec05df2c441eafae3b900c2dc7c974ef", "pixels": "d13ff4bb7605b8e85e7532e45668c55e8a4c06d36ed88daa6dc575f9aa61f186"},
+        "cells.json": {"bytes": 138217, "sha256": "661b7939f10a04a058f980a1f40fa37d7678246389a3b940d8884828607ce420"},
+        "parts.json": {"bytes": 15987, "sha256": "418b3680fb477c31e8aa87710a9cb90113223cad4cfa6a8370385deecccc7744"},
+        "bricklink.xml": {"bytes": 1226, "sha256": "f3977531c3a0a4f81b6da0e71a9a2247c3e42fd10a826c28ce91c01676e2c77b"},
+        "rebrickable.csv": {"bytes": 155, "sha256": "659721de7807231be785da03a0643ba16fc737fecff47f9f2790ab3e47236db5"},
+        "parts-1kit.json": {"bytes": 16047, "sha256": "43024d023e98595b5618d1c005460f4b1ca4f785a571f70c5266d0f4f3a64789"},
+        "bricklink-1kit.xml": {"bytes": 501, "sha256": "c54c203327852a2bbdd839822cdd620dd429dff22d4e03ab5e9bd57ce860a6fd"},
+        "rebrickable-1kit.csv": {"bytes": 70, "sha256": "5b2b62a6ae12b7b8ca97735cccb35b37d2d8dbb75dc7aecba52eb1d53ae6fb18"},
+        "estimate.json": {"bytes": 15117, "sha256": "2db890db258de03e734f43c2a19f557ca7f8a1295c6f8feebf6aab8eddc1e455"},
+        "counts.json": {"bytes": 17558, "sha256": "f92f8ca917c9397572e2a0f1314caf519820df2e0416058596242c8da1c049db"}
+      }
+    },
+    {
+      "recipe": "ocean-el-nino",
+      "combination": "B",
+      "outputs": {
+        "layout.json": {"bytes": 2133859, "sha256": "c926d89629995e69a589d0454b08e10643578f2189ddae4b3cccd2bdf9d5eeea"},
+        "report.json": {"bytes": 8192, "sha256": "c6b830c25b06dd29b89907244b823238df37710356ab37a3629bda963c79f5c6"},
+        "preview.png": {"bytes": 52411, "sha256": "41b8ee64eb206b94b2a9acd0b78cc3d059e0a27b9d1127bce8eeff3fcb50eb47", "pixels": "e534dda657c229cc0111beefa20e1af68a237b3545c3f7159d4d63cebce0b939"},
+        "cells.json": {"bytes": 138226, "sha256": "c2d31f930fedd0cc0275b1127508c4c5d755a2da27a0539bebcff97747700abb"},
+        "parts.json": {"bytes": 15986, "sha256": "53bf5a61848dcc0792025e06b4a430549adb9966de6b009d9a3f418623cae4c0"},
+        "bricklink.xml": {"bytes": 1227, "sha256": "72d0ee5785e31205f4bef833c37f7f67a4b9eac6f4cf4126778c74566e2daa02"},
+        "rebrickable.csv": {"bytes": 156, "sha256": "38ccbd4c25fa0b264dafbe69773bc651286f8ba3aefcc1d66cf839056b9795f3"},
+        "parts-1kit.json": {"bytes": 16044, "sha256": "df2db0a10c6f4a3abe737fba4d79a9d62ee2e45537f096e35b49980d95873e97"},
+        "bricklink-1kit.xml": {"bytes": 501, "sha256": "18cc6fac767b4ca87872ab99959790c9f344427d8f02358eb5b7f12796db292a"},
+        "rebrickable-1kit.csv": {"bytes": 70, "sha256": "d4950fadd55964497427fed647709518d5a44554cd7f09b8b87a2dfd904470f7"},
+        "estimate.json": {"bytes": 15113, "sha256": "9eaf191ae285fbf72b90aff0f91e61c41f94af62ae4694ac58244d45712d0589"},
+        "counts.json": {"bytes": 17559, "sha256": "ad10daaff3846ccff76f5b67ac4bf04a3966fee694786b9d4c59763ee55b9a79"}
+      }
+    },
+    {
+      "recipe": "ocean-el-nino",
+      "combination": "C",
+      "outputs": {
+        "layout.json": {"bytes": 2133925, "sha256": "c7aea64d74035926f502e757f7c00304f9b184f4c8fd6271096b62dd39bcefda"},
+        "report.json": {"bytes": 8206, "sha256": "dc396adc476592d0821e3b118c4026a937da117868b2c29f1b874ced38a49c02"},
+        "preview.png": {"bytes": 52349, "sha256": "cf067afa65512eaa710933a9eed36fba225dd02b5b743a21b8e89a0d5acfae87", "pixels": "7550bd42a0800a8b38c39738dc9140f7b4c9576d85c09d96e5bd46d8aa1c7e6b"},
+        "cells.json": {"bytes": 138220, "sha256": "76b0cfb27a509ffb09e2ec2600d46d6e2aa0ccac957d2f4cf47bea641fa36c8b"},
+        "parts.json": {"bytes": 15988, "sha256": "52387fb6c0e99b27fead35cc7a36e159f18a469f45c523ed6fb6ec98414752e6"},
+        "bricklink.xml": {"bytes": 1226, "sha256": "45a1ad73919acf57db7d644adccf0401008989079bdcb2aa0f5436c431b23f46"},
+        "rebrickable.csv": {"bytes": 155, "sha256": "845820a766a2ac4be09dfd9ad7085f5e5398244312ee8edd08c26889e7e5df5d"},
+        "parts-1kit.json": {"bytes": 16048, "sha256": "0900814bb13f63d27c756eee353bedf48981b8e3056a5b8b0a012ec58617675f"},
+        "bricklink-1kit.xml": {"bytes": 501, "sha256": "0234976af8542e65a1c6c68904d77ce264b71e0ac126e4a7387c2752cd71f7fb"},
+        "rebrickable-1kit.csv": {"bytes": 70, "sha256": "fdf075ebe4a387184b1e24313dd6fbcd34f0808883a5c97083fb3326e80b76ab"},
+        "estimate.json": {"bytes": 15118, "sha256": "6ac8d0ba8b083ab4a2694ae435d2c3bbb3a7c3abee55339e565cc8e1f725b58a"},
+        "counts.json": {"bytes": 17558, "sha256": "849ac586deb5abaa0bc519691bbe93806a34a4433b4fdacb5634334abac28d29"}
+      }
+    },
+    {
+      "recipe": "ocean-la-nina",
+      "combination": "A",
+      "outputs": {
+        "layout.json": {"bytes": 2137047, "sha256": "2fd22c62a7115af7be2e655cad2d9af26398a34a2575e6142793bae15e0bf551"},
+        "report.json": {"bytes": 8267, "sha256": "19426d4910985cf8f8cc13f7c0d4591bdada623015fead1b908ab26005713d12"},
+        "preview.png": {"bytes": 52909, "sha256": "ddc4de719364071c919cd734a43686998dbe1908f4e9c70466ff186b29014fc0", "pixels": "b98e1d99980ff7b932c84bf016e9e25a0a7e26e0abf58145a8e1f94862db60f2"},
+        "cells.json": {"bytes": 138896, "sha256": "d429ce3dfb7de5619ca13573d2210e8291b30308f8f7ccc1c78e85eae8cc25cb"},
+        "parts.json": {"bytes": 15987, "sha256": "90ac3e7e432141f49c8a743371aed958261889e7a986a5999f307fbef60bdac7"},
+        "bricklink.xml": {"bytes": 1226, "sha256": "27f63fa2fea0b95561898be1794f71320f2398e82024090a73f4ae0ce6f3abb6"},
+        "rebrickable.csv": {"bytes": 155, "sha256": "eb1bd059678ea85227c8c7e0ddb69f6246f325d6716fbaf26318e4c34d98db3d"},
+        "parts-1kit.json": {"bytes": 16051, "sha256": "b18750b12654ed6435dc4e6a3daf79279b7d42706254a28b92a7bd969579ce9a"},
+        "bricklink-1kit.xml": {"bytes": 620, "sha256": "a4f7049dbd835c7db0d3dca1dbb8b4cbc145b4a40db9f2f80aef0d23e136e121"},
+        "rebrickable-1kit.csv": {"bytes": 83, "sha256": "01330a5b8f12f386341b133525bf0d2a9bc1a4021d3e6e8cde57fc442c3bae78"},
+        "estimate.json": {"bytes": 15892, "sha256": "f492dc42b3fa0215947b72c5529ab9356dbf1007cd01cc0c849b7b796bf10337"},
+        "counts.json": {"bytes": 17350, "sha256": "b18fe945433e4afeed1dcb90fa39d904504060c2e97fb35d11d7311457b4249e"}
+      }
+    },
+    {
+      "recipe": "ocean-la-nina",
+      "combination": "B",
+      "outputs": {
+        "layout.json": {"bytes": 2137087, "sha256": "e4ba77e53277d5ea046bbc4f78385806bb2d8d8e20e013c09ec2eff8e77721cd"},
+        "report.json": {"bytes": 8252, "sha256": "c785714356f3e04a4e87a059ee7edef0bf63dcc49f84e93a74106a8727eeab86"},
+        "preview.png": {"bytes": 52918, "sha256": "e4dac4737fea0f5d4c2c0429d19ae24e89cbc34c4753ec10fc5d87fdc314efc6", "pixels": "2a48fbd1ecf63a15a19275b5495a5cdfd262e06374200cd09efa79498b95dc9e"},
+        "cells.json": {"bytes": 138909, "sha256": "9e0f81423e3c22c1977aac3c4de463c210516f43458260dc6358c4aa39f00b8c"},
+        "parts.json": {"bytes": 15982, "sha256": "260ad774d7f7abbc5bf182b8da4ecc8a1640824ebe9dfcbc80f66676cff60322"},
+        "bricklink.xml": {"bytes": 1226, "sha256": "c4b05a602984064a5e5b705082e413ec44c37f904ff47c8be73aa6f8e74040a5"},
+        "rebrickable.csv": {"bytes": 155, "sha256": "3e884a322546348753d605b5c569de8797a886e0e639612770f1ecf21e8d66a9"},
+        "parts-1kit.json": {"bytes": 16046, "sha256": "5b9889a553535814f8e6027987535f6700b4edb89ec79dd5b5243766367541c0"},
+        "bricklink-1kit.xml": {"bytes": 620, "sha256": "c306daa85387d9927c655e718340e5658718898e7430bedfee23e55a67b9064c"},
+        "rebrickable-1kit.csv": {"bytes": 83, "sha256": "36663807461c44a8037e66aa22233699a515b99b329d560a8fa0b0ad2d9e1c51"},
+        "estimate.json": {"bytes": 15887, "sha256": "4e1899917c99d0dfc1c32b06377294182e48d3a265f44357f6e71d542a3ada96"},
+        "counts.json": {"bytes": 17350, "sha256": "187272c3a44d420f063b69cb87409cf8b005ebca672f81482209d0045566ed88"}
+      }
+    },
+    {
+      "recipe": "ocean-la-nina",
+      "combination": "C",
+      "outputs": {
+        "layout.json": {"bytes": 2137104, "sha256": "35439027621af0f8d6e43e1002b6736d7e499918a6491b79dc1f2fc46bcd1b2e"},
+        "report.json": {"bytes": 8270, "sha256": "d6b86f2cc1be7c9694272b882062802bf6d54b47659d76705963ecb761a021cb"},
+        "preview.png": {"bytes": 52806, "sha256": "905d2ab36fef010d696a57689619dc6bfed86cca217388ff74d253331c8a3996", "pixels": "67c36367b29789c99a2a1bb62122a6d448c0c96624968633a2af039bd1e076ef"},
+        "cells.json": {"bytes": 138901, "sha256": "595daa57d1ef716373fbdf938c221117580a28bc2a764c2460c2404d24634e26"},
+        "parts.json": {"bytes": 15988, "sha256": "685f6ea681ba4c844f5bccecbd3a939d60f9524645129fabd412b9c28e5599aa"},
+        "bricklink.xml": {"bytes": 1226, "sha256": "9a0cddcff51688cf7b89012c459a31954f394bc1cd4784e4aedd636de230017c"},
+        "rebrickable.csv": {"bytes": 155, "sha256": "3026e142bdef2ff9564de7477b7b77eaa54ed65a0266a4e4f90a10444561da2e"},
+        "parts-1kit.json": {"bytes": 16052, "sha256": "da1a41123978b1fb61d04b53ac7d296cedb78cf0c6f5b01792947c33fd2a99ad"},
+        "bricklink-1kit.xml": {"bytes": 620, "sha256": "a6093e7c86a35aa6e9448efb26155e383db320103c1a63ce6a757a7265bf3633"},
+        "rebrickable-1kit.csv": {"bytes": 83, "sha256": "b3949a061cc013f998e4822a8e4d3c820ff65bea788c5b27fb657e0e95228f6a"},
+        "estimate.json": {"bytes": 15893, "sha256": "98ed28462dc0b965c716dc5c9c36f2db7e4c0b3cdfff4030cac44beebbaf287a"},
+        "counts.json": {"bytes": 17351, "sha256": "6fe4d9dea46ae7441be533d920e357bcbbb065aea4db969a2bb5fb837ee63000"}
+      }
+    },
+    {
+      "recipe": "ocean-sst",
+      "combination": "A",
+      "outputs": {
+        "layout.json": {"bytes": 2124040, "sha256": "36086e3b9b932563d6e007eb5f777f1bd0c53517b5e9bf43f6c18699e732d684"},
+        "report.json": {"bytes": 7466, "sha256": "cba8e8f22c9eae3400ffb34fea2a14d1400c448fdb8a0b9b1f760ecc3088d4ae"},
+        "preview.png": {"bytes": 34171, "sha256": "660e8a98810a8febaf344ca1efc6ed484811e387ad875557107ecdd4214869b9", "pixels": "d3be18ae8a34d054546c7e08a52cb899c14e8f27aa0854373f32ffd3ac57f15b"},
+        "cells.json": {"bytes": 141484, "sha256": "3fe8799ed2b771a6d270bf029c99df40ef52f514e971cfbe05d31e5dea2242ce"},
+        "parts.json": {"bytes": 15783, "sha256": "c9cedad0b536f70954bb8f7306b3b7e68c9d80fba68a8b760e902e2673dc425d"},
+        "bricklink.xml": {"bytes": 1227, "sha256": "5328eb8f4c63c9812751a0faeab0604e0351941c6557bbdfe86a59f00b91fdde"},
+        "rebrickable.csv": {"bytes": 156, "sha256": "b66f99f9f5a89006a39719492aada449979bc61c08d98bc2d93cd48a62038275"},
+        "parts-1kit.json": {"bytes": 15834, "sha256": "fa3298b6f48795ff112d5b3fa70a558273190e231469606166ed94a6d1e0e604"},
+        "bricklink-1kit.xml": null,
+        "rebrickable-1kit.csv": null,
+        "estimate.json": {"bytes": 11774, "sha256": "e815b88fd3e9415efdeedbc4da65f58662573029c44cca38743de37cdaf01aac"},
+        "counts.json": {"bytes": 15979, "sha256": "2fdb64985c14df92978f57d1a5da7263b23fceca54ffb1b6094080e53ca74496"},
+        "sheets-letter.pdf": {"bytes": 1894167, "sha256": "bf5c88e7aabcba3b7bd67dfb8d2fbf3342a382265c13fefdd5a0b24d82b73085"},
+        "sheets-letter.svg": {"pages": 42, "bytes": 5407325, "sha256": "27ddb7a4dd22dc019f7d9579e47ba755881ed894971c999b1446a5df0d0890ef"},
+        "sheets-letter.svg/page-01.svg": {"bytes": 1241515, "sha256": "08fadf379457b0714249788d004a11f964620bd6b46a34615a165fd6f41c8f36"},
+        "sheets-letter.svg/page-02.svg": {"bytes": 13161, "sha256": "e17270d8cd4cc58b640a7a9d217ae5e7512af68853aae0f18c81e157b9d69319"},
+        "sheets-letter.svg/page-03.svg": {"bytes": 101484, "sha256": "2e5f665e72357e23d5ec73097ab73b6aa82a6a7a60c742ab6fe87af121ca93dd"},
+        "sheets-letter.svg/page-04.svg": {"bytes": 95578, "sha256": "13ccfc7d36cae5dfc5f23450b693f63e76c1c5f7c0e22cabac85542e1486e3f6"},
+        "sheets-letter.svg/page-05.svg": {"bytes": 94545, "sha256": "107abe73363d0460736bd07ec86b17ce8baeeafc3ba63d2daf7d2a88449982cd"},
+        "sheets-letter.svg/page-06.svg": {"bytes": 94260, "sha256": "4c5648911d709060293ec9a7debdc670d794ccd9efb4842942454241b07a69ea"},
+        "sheets-letter.svg/page-07.svg": {"bytes": 97868, "sha256": "bb7448c33f855ff4ed88a98ea097b190a8063c68a82cc61ed8111e69767c8986"},
+        "sheets-letter.svg/page-08.svg": {"bytes": 105665, "sha256": "215763a56e1f96103376424a4045d410984b130df4f352d9e809630483f9bed2"},
+        "sheets-letter.svg/page-09.svg": {"bytes": 120405, "sha256": "953b77dd3f02a4152d706e38a7d64dbe8c781382e84868526a9a47d8d0b618e2"},
+        "sheets-letter.svg/page-10.svg": {"bytes": 97423, "sha256": "3c7e01c59c707336a9230eab1424b6687d1aa969f62fa8a738a7fde7854d358b"},
+        "sheets-letter.svg/page-11.svg": {"bytes": 93497, "sha256": "617ecec68e07e04b6972d38d3d24b39e8fd4b7651f77bafbf1cf9736536176b1"},
+        "sheets-letter.svg/page-12.svg": {"bytes": 101676, "sha256": "ecc38e1e9b20a2b3c0eef2c7882190664863b0d8f46968825d763537abdb1efa"},
+        "sheets-letter.svg/page-13.svg": {"bytes": 105655, "sha256": "5d4bd83b84ccd7718a3dd01503f466761bce7132466a56b94feabd12aef5088a"},
+        "sheets-letter.svg/page-14.svg": {"bytes": 101043, "sha256": "2e804008be4b772b1c825a3035b01cb8b7619ac8a27670e0295f582d25660aba"},
+        "sheets-letter.svg/page-15.svg": {"bytes": 112104, "sha256": "c913fe54b83dfc3db200f1b9172c7445b03848406046efd6c1f40b4d529ae8c0"},
+        "sheets-letter.svg/page-16.svg": {"bytes": 108501, "sha256": "46850a870614d8934a10922d7c6f158b0d061c2ac377dd66d5322ddf60c88b15"},
+        "sheets-letter.svg/page-17.svg": {"bytes": 99888, "sha256": "1ac05af53aa21b3dba63dfee087e6611b0b75b6436727134ee283c15df9988c9"},
+        "sheets-letter.svg/page-18.svg": {"bytes": 97859, "sha256": "5db28f42e6c710bc8617ce23099b952938d24ab761efd5541b2711331b08fe72"},
+        "sheets-letter.svg/page-19.svg": {"bytes": 106359, "sha256": "a383c7cf9bd02001f2629fdc3cd5bb5006632e0d18870c279b2f3e0f7a846b29"},
+        "sheets-letter.svg/page-20.svg": {"bytes": 103401, "sha256": "a49e9c8f2491ab097e8980b66c4784e37ec661ea173d620e525aa405eae29222"},
+        "sheets-letter.svg/page-21.svg": {"bytes": 93511, "sha256": "bcb12f79fec8d1fbf27aa494be5cc8d5e22480185a8cfd6930060a405ab242dc"},
+        "sheets-letter.svg/page-22.svg": {"bytes": 102079, "sha256": "673d15430cf87f59f9978a8b98176487a0be1fe12fcd15f69a5da0d55d1f2a19"},
+        "sheets-letter.svg/page-23.svg": {"bytes": 103922, "sha256": "7babe72334a4fe1ffec0975381013b705906504d09678398a024590a4017393e"},
+        "sheets-letter.svg/page-24.svg": {"bytes": 119787, "sha256": "d141adb9f87f4f74621af40f24346af135642434298accaa166cb0121514c894"},
+        "sheets-letter.svg/page-25.svg": {"bytes": 118198, "sha256": "28b5bc5feea50c120b5823c2b36a2c4a3a2605411b7fef7aabbbc888f333251c"},
+        "sheets-letter.svg/page-26.svg": {"bytes": 103364, "sha256": "abb65c910f089b823a940bdb57eb4e203d940a165f480f882f70f6ae082d5e52"},
+        "sheets-letter.svg/page-27.svg": {"bytes": 106061, "sha256": "d9bbd2d6039774d144ef34f98a96ce830a80066db400e58d3de029bc9d072f6b"},
+        "sheets-letter.svg/page-28.svg": {"bytes": 106867, "sha256": "4f5987bcea7ef5f37ec19b971db06bb5adf76a85832bb53c122f75d56d8e8cbf"},
+        "sheets-letter.svg/page-29.svg": {"bytes": 124723, "sha256": "e5ee02a9abbd24437520c8e5ac577345d6879d7a857f6da16f0bccf4befa2bda"},
+        "sheets-letter.svg/page-30.svg": {"bytes": 98755, "sha256": "cdebbe91fc154654172f46a842355702cef940cdc7f9a2b376e6e0174bb17f90"},
+        "sheets-letter.svg/page-31.svg": {"bytes": 95339, "sha256": "e505d54ba61f0f4f9b3a9de837891277a1a095d0629566a2b9ddd4ba16316137"},
+        "sheets-letter.svg/page-32.svg": {"bytes": 106960, "sha256": "99ca1d7d9650b2225286122c9a1a22cce51789440af00da44c838d4e0e82f681"},
+        "sheets-letter.svg/page-33.svg": {"bytes": 107721, "sha256": "6ded0965dceb169dc0ef4ae6aec6de032b5920e649b3fbd95ee346e685b9dab6"},
+        "sheets-letter.svg/page-34.svg": {"bytes": 116656, "sha256": "86856aa029143a196fc42c8edfd7fe3a4d66ce7759881dccae35a92a4d838ec8"},
+        "sheets-letter.svg/page-35.svg": {"bytes": 102870, "sha256": "269b64a83b61b7407a828d59f4f238b100d32a4236279b9476052a554a462bd2"},
+        "sheets-letter.svg/page-36.svg": {"bytes": 108022, "sha256": "f4e342b1c974d5b5c85dd7ab422605ee6aa5999ba9b79be0b073d96c92843788"},
+        "sheets-letter.svg/page-37.svg": {"bytes": 108600, "sha256": "0432fb121ef56b08f60a70f3a782958f1168130b960fce4b3e6c3f4ad1296bef"},
+        "sheets-letter.svg/page-38.svg": {"bytes": 100647, "sha256": "92f00610ebefd458592c59c3a312f7b0a1aea50402ae4ae74ba0138a044b1b24"},
+        "sheets-letter.svg/page-39.svg": {"bytes": 95978, "sha256": "a742647bf26a389cdc73db8ae9fbe7361ad040e6f60b029e878e3c39823720b8"},
+        "sheets-letter.svg/page-40.svg": {"bytes": 94875, "sha256": "1f851f38936c760ac4276168077ffc9918010b9d68f119d4449d87b17cc9eae0"},
+        "sheets-letter.svg/page-41.svg": {"bytes": 100042, "sha256": "f82f23bd450aa8ef19307328b8c9d21182c46c5dd438095a6ed2074dd0e05e2e"},
+        "sheets-letter.svg/page-42.svg": {"bytes": 100461, "sha256": "ad2818a3a806d4fe255bc1fcb0b056aa80952e50a37eca6296d88bf5c99d2280"}
+      }
+    },
+    {
+      "recipe": "ocean-sst",
+      "combination": "B",
+      "outputs": {
+        "layout.json": {"bytes": 2124026, "sha256": "544b87f09bb05b35215bfe4e38745b26caa0428899688cddb26c93caf665ddbe"},
+        "report.json": {"bytes": 7451, "sha256": "d9be045c4c1c99f962ec3056730e0766ce92cd06249ba97cceba25bac9ef32f0"},
+        "preview.png": {"bytes": 34057, "sha256": "0769298d65f98cedf8200d8e15ad39ebb45dcdf9cda360ad62a278d16962a5e3", "pixels": "a286a93fac0cef0c845af5ad6c6efd7c00036cc892fdcc254cb320e13911b447"},
+        "cells.json": {"bytes": 141499, "sha256": "789d759d546886c9008c525a9a93622477cc925ad323dd652c3a17ff0eb6b43c"},
+        "parts.json": {"bytes": 15778, "sha256": "f94122998df8730bbefa2163a133816a4e530fb845ce276543c799d20222a2d8"},
+        "bricklink.xml": {"bytes": 1227, "sha256": "5328eb8f4c63c9812751a0faeab0604e0351941c6557bbdfe86a59f00b91fdde"},
+        "rebrickable.csv": {"bytes": 156, "sha256": "b66f99f9f5a89006a39719492aada449979bc61c08d98bc2d93cd48a62038275"},
+        "parts-1kit.json": {"bytes": 15829, "sha256": "0c278549c0e2490f62ab06003fc9f3f98829c0051f10db74feab19403df38e5f"},
+        "bricklink-1kit.xml": null,
+        "rebrickable-1kit.csv": null,
+        "estimate.json": {"bytes": 11769, "sha256": "7c144c7cf9a880b6af16cd4247f6412abb3b15450d7fbbbff0d086e6bdf9be74"},
+        "counts.json": {"bytes": 15965, "sha256": "fe841705947d6756adbb1c1835a15977c7de3ea8d05c5315eb71fbf1bbf79dc9"}
+      }
+    },
+    {
+      "recipe": "ocean-sst",
+      "combination": "C",
+      "outputs": {
+        "layout.json": {"bytes": 2124044, "sha256": "7d16ef4347bd6071d33ca632a7e423d10552429dce2ac2712842ee043d7bbcb0"},
+        "report.json": {"bytes": 7470, "sha256": "61c57f60c3b8bb96889842f2dbe0ae40150925f5420f48a7443f3414b99e39ce"},
+        "preview.png": {"bytes": 33801, "sha256": "9e9d1018b0b891f821b6e4c5e449ba5039810c2e6872217e9938679f2c6adfeb", "pixels": "9365c670a8306fd8918a950f63b724f487cb4114fcebda0720aee82afdb6e548"},
+        "cells.json": {"bytes": 141494, "sha256": "801c875f6e9f98d87d8553f9dc76ee023ee3ef00a51d3f6e8597fc7937a916d6"},
+        "parts.json": {"bytes": 15784, "sha256": "c94185cfe623645e4769ef8c9a242ceb68474fbff581a66bfc83f25fee1b0c8b"},
+        "bricklink.xml": {"bytes": 1227, "sha256": "5328eb8f4c63c9812751a0faeab0604e0351941c6557bbdfe86a59f00b91fdde"},
+        "rebrickable.csv": {"bytes": 156, "sha256": "b66f99f9f5a89006a39719492aada449979bc61c08d98bc2d93cd48a62038275"},
+        "parts-1kit.json": {"bytes": 15835, "sha256": "0084349fdd15f620796a743ac701d0377d195c210d99b05eb26301df7ae942f1"},
+        "bricklink-1kit.xml": null,
+        "rebrickable-1kit.csv": null,
+        "estimate.json": {"bytes": 11775, "sha256": "de85da6819f0d99513aac8bda9e0abdd2f1e02d0598dcdb920c57834e9a3f5cd"},
+        "counts.json": {"bytes": 15995, "sha256": "4a70121cb680addc7182e309f6e40a2a2d8d99d9d0d1b899fa84228c8a446142"}
+      }
+    },
+    {
+      "recipe": "official-31203",
+      "combination": "A",
+      "outputs": {
+        "layout.json": {"bytes": 2127768, "sha256": "4041fd4cfe4eaaec4d4c78751d70b9211f49e2e448ed11b66c4d7d844a833248"},
+        "report.json": {"bytes": 5814, "sha256": "f2e269c13748be778c37f534e656a9d7a83fbbbf1e6735f2b1bff140e15479d6"},
+        "preview.png": {"bytes": 93122, "sha256": "08ef2dbcb93c830498354940a22509c21b340feb18284481edea8dd84c7776ed", "pixels": "4142ab0f90b2b72b8c86ea6f1547d52e47be8adceffd928e2b92821b9d647beb"},
+        "cells.json": {"bytes": 84647, "sha256": "307182fd3a2549593e196b8ec21dcfa271ae12a8ad700f1c86e0d16a940ddca3"},
+        "parts.json": {"bytes": 15743, "sha256": "b9eb598bfc6858045c85e6eb888a0be5b0d97d65598939593eaa9c4e10a0adc5"},
+        "bricklink.xml": {"bytes": 1228, "sha256": "fea9a4b1f549f7acc56dd2fed6a46e8c11559182bbd59df9c60f23340acc9b7e"},
+        "rebrickable.csv": {"bytes": 157, "sha256": "db415ad50881a4f771113e01b0ed82c31a9b7d67f5c47dea42c6ee18360ad9b0"},
+        "parts-1kit.json": {"bytes": 15782, "sha256": "58358a30b1d90a826bd46647a8986436321f62ef7269e7cb151289c91a64c11c"},
+        "bricklink-1kit.xml": null,
+        "rebrickable-1kit.csv": null,
+        "estimate.json": {"bytes": 11730, "sha256": "fb7314841c6f17c291950d1da80662b6e7dab8f214d31192c99d71cacb6d1360"},
+        "counts.json": {"bytes": 18534, "sha256": "7c9f87f9cdfd198bce2ea147d382bc6c78546224029a4c45e8b41cfbe1674683"}
+      }
+    },
+    {
+      "recipe": "official-31203",
+      "combination": "B",
+      "outputs": {
+        "layout.json": {"bytes": 2127754, "sha256": "2ba109bc5be432ed5700f14389195c64d3a54dd04a013de0353378812ca8e5d1"},
+        "report.json": {"bytes": 5800, "sha256": "ab545916ccb58af36de9b878ddb83d617ba061208ba46b66aff159f23d2fef70"},
+        "preview.png": {"bytes": 92936, "sha256": "2a42dd96e2491e529fe4e9166de5ae771f32798f94fdaf62b944d74cd687ce6c", "pixels": "4d98d99f4d914dc7633f69e41127e88c202e52c14b0fdb2e2acc17b1d2f5358e"},
+        "cells.json": {"bytes": 84650, "sha256": "0194bae8931077bbbf7f230e88c170cda463e509781f4ca51d037267146c5628"},
+        "parts.json": {"bytes": 15738, "sha256": "95103176949d5ffa52d371139b9eee6f36788049810ec8c5586251430d106ec0"},
+        "bricklink.xml": {"bytes": 1228, "sha256": "fea9a4b1f549f7acc56dd2fed6a46e8c11559182bbd59df9c60f23340acc9b7e"},
+        "rebrickable.csv": {"bytes": 157, "sha256": "db415ad50881a4f771113e01b0ed82c31a9b7d67f5c47dea42c6ee18360ad9b0"},
+        "parts-1kit.json": {"bytes": 15777, "sha256": "437ee2d2708e00420fd1aff492328247904ae52daf7403c842eb99d1cd837288"},
+        "bricklink-1kit.xml": null,
+        "rebrickable-1kit.csv": null,
+        "estimate.json": {"bytes": 11725, "sha256": "aaa5df6a77e671c8fa1e82b9cb4cad8d6237b9c7b1e3e80f4b656536a143c226"},
+        "counts.json": {"bytes": 18534, "sha256": "055f9820b3b6e0c6835ddbe547ba4a70e261f7712c9825d20d3292e5b958cde2"}
+      }
+    },
+    {
+      "recipe": "official-31203",
+      "combination": "C",
+      "outputs": {
+        "layout.json": {"bytes": 2127772, "sha256": "4f8acbeb773ef87ce3d1af408614dec1d726b1d51aa59946ba81614d1f1749d6"},
+        "report.json": {"bytes": 5818, "sha256": "62e44cc8aa11891d0e4ca7f3afd1c372bd841c911a58fc06175632b15d7a4d9d"},
+        "preview.png": {"bytes": 92941, "sha256": "b2d0f6c5b4a07066b2e6de6f72dc0fa05dfffe6d633d0247b8cce6a9600b57c8", "pixels": "d27ee51dcab179adebf8397123568821b51f14cb28c75200a59b7cc1104b6ec1"},
+        "cells.json": {"bytes": 84652, "sha256": "dcdbf5b53cf379e0f111daaaf9f8c54bd22ae4617851318d272b2bec6dea7e82"},
+        "parts.json": {"bytes": 15744, "sha256": "ab0b186b5ea3dbc5c71b8328ec6d99b98c305d6b121accfcea94f5c825847cde"},
+        "bricklink.xml": {"bytes": 1228, "sha256": "fea9a4b1f549f7acc56dd2fed6a46e8c11559182bbd59df9c60f23340acc9b7e"},
+        "rebrickable.csv": {"bytes": 157, "sha256": "db415ad50881a4f771113e01b0ed82c31a9b7d67f5c47dea42c6ee18360ad9b0"},
+        "parts-1kit.json": {"bytes": 15783, "sha256": "e505db2a44af71bb9e8b6ca8cdae2ce3a670b2b184568985d53ce04bea51f294"},
+        "bricklink-1kit.xml": null,
+        "rebrickable-1kit.csv": null,
+        "estimate.json": {"bytes": 11731, "sha256": "f9a5890c31a54b31af2cd02c4309b5aa5cdb7c302bcbb6d74cfaf47278a48c83"},
+        "counts.json": {"bytes": 18534, "sha256": "3795df1c3f355408f0fb773a369f8fee821ff02b4fe0877f29fa50fe18f75a09"}
+      }
+    },
+    {
+      "recipe": "official-31203-bathymetry",
+      "combination": "A",
+      "outputs": {
+        "layout.json": {"bytes": 2128035, "sha256": "cb19223d88b61c275ff2a03a195180349106a73321cf4494bd92cd2eb9543664"},
+        "report.json": {"bytes": 7160, "sha256": "2dffa8f5996bfc1ff345c116f8c1562bf788933d67f37c28c747f7a034845c16"},
+        "preview.png": {"bytes": 66643, "sha256": "533f2416df4f34f6279f5896df705fe6a9dc93357660b982086c9da8f590a9a1", "pixels": "1da004d6aa5675964137c323a94023d3c29aaeb3a6702ddec02ab96352e38283"},
+        "cells.json": {"bytes": 136024, "sha256": "beae7acf3242cf5cc02709b3340c6b275a60780fa08c896a61edec375a2be107"},
+        "parts.json": {"bytes": 15667, "sha256": "31b8a52cc0d6ec22332bf746e326499639cbac2e8078bb69386b09675137e357"},
+        "bricklink.xml": {"bytes": 1228, "sha256": "fea9a4b1f549f7acc56dd2fed6a46e8c11559182bbd59df9c60f23340acc9b7e"},
+        "rebrickable.csv": {"bytes": 157, "sha256": "db415ad50881a4f771113e01b0ed82c31a9b7d67f5c47dea42c6ee18360ad9b0"},
+        "parts-1kit.json": {"bytes": 15706, "sha256": "78b3111f2346fd07d0760ee854a5bb6e8a0841e290dd0e298723315ddc4e417d"},
+        "bricklink-1kit.xml": null,
+        "rebrickable-1kit.csv": null,
+        "estimate.json": {"bytes": 11654, "sha256": "f869002a4763b734be6f1f34aceb2322fb778e3a3d9872c4a2dd3edba9902032"},
+        "counts.json": {"bytes": 18029, "sha256": "9ace7dbce5ff44898f67db6e9641741af366f3f898cddb01d2a69b0b291c8992"}
+      }
+    },
+    {
+      "recipe": "official-31203-bathymetry",
+      "combination": "B",
+      "outputs": {
+        "layout.json": {"bytes": 2128041, "sha256": "aaab060b562da86429dde17f06e13d8a0b219828288d0d8602c613dec15567c1"},
+        "report.json": {"bytes": 7147, "sha256": "dcd25fd47db2d726527d8b43378dc0fc59b502f69844ea5c84815793abe28941"},
+        "preview.png": {"bytes": 66034, "sha256": "922ec5b3edaf64e4d13a4276ccadd356ac454d5ab45c016e67141cf14018cb14", "pixels": "a7fdfd610ea5aff9d440b5572e1c1ca7a0fb5b9cdde54c97679b28f4d7f45702"},
+        "cells.json": {"bytes": 136025, "sha256": "92a1ac189f61286fe5d287a9c3ba5b3e1eaf13e7331513842d52614e373f38a0"},
+        "parts.json": {"bytes": 15662, "sha256": "76e07a2062cbd2326e7f5d4fae2926e82477d510b34205c35bb9624087c2885c"},
+        "bricklink.xml": {"bytes": 1228, "sha256": "71a000a7f5a0db4913a06aa27f93776c86300c4c05fd35bc1870231856f77141"},
+        "rebrickable.csv": {"bytes": 157, "sha256": "7b477bd92c8e18be38ec3ed137540cf09af245f1d92f0298aac276d83e774d48"},
+        "parts-1kit.json": {"bytes": 15701, "sha256": "3def6ef7da533356cb48eedb8f9044c63aead53e2f63a748d9afb5335574f4f4"},
+        "bricklink-1kit.xml": null,
+        "rebrickable-1kit.csv": null,
+        "estimate.json": {"bytes": 11649, "sha256": "d93ba724a5f3b140e42750eefc6417701ccc71b0e0aff63727912408d8d261f4"},
+        "counts.json": {"bytes": 18086, "sha256": "5c9d2714ddfc1c3ba1979f957c402933ab375ac3b7b5900a7430b15171a71b42"}
+      }
+    },
+    {
+      "recipe": "official-31203-bathymetry",
+      "combination": "C",
+      "outputs": {
+        "layout.json": {"bytes": 2128083, "sha256": "e15091f46b54ebc04678bcc11d8ca02018887e05cdbbfcd9b77f0e74db90fc76"},
+        "report.json": {"bytes": 7163, "sha256": "bb9cd7acb8aded4fd882a3169b03a67a0b70b115cea724bd9358039ba711c34d"},
+        "preview.png": {"bytes": 66792, "sha256": "319bd49436ac770ea4f088cab2350f18e59dc10e4fa35ff08eda801fcfdab5de", "pixels": "371f2f49f3a962e5abddd2b4fecd0f97db7eef86a0417df7c850370603cdb4e7"},
+        "cells.json": {"bytes": 136026, "sha256": "84bfae4da28fa6f70732548ec1b87096dfe181f0f3d88eeda84c574d64c3fe40"},
+        "parts.json": {"bytes": 15668, "sha256": "5b6b3288e48b612a3469ab6e434373b69a87925d2e2ddf5e3bdf836b10f117a9"},
+        "bricklink.xml": {"bytes": 1228, "sha256": "7dcb212a2f428428f4931ff69d5278d7877da921c2f7be9438e897fd37619388"},
+        "rebrickable.csv": {"bytes": 157, "sha256": "3b5d78a7dbbcfdf643ce9139c9f281e62949e06239c81ec9843e6fe11c5afb44"},
+        "parts-1kit.json": {"bytes": 15707, "sha256": "c3569dd7f00a5a5982034c86ec304e37b539ea114e65ca3ea767eced70e21df4"},
+        "bricklink-1kit.xml": null,
+        "rebrickable-1kit.csv": null,
+        "estimate.json": {"bytes": 11655, "sha256": "782ea565d32bcec0870063e05502ea5dcccd332ebff704514850e09034ed2e9d"},
+        "counts.json": {"bytes": 18066, "sha256": "ba54f46cd682442457d18cb300886495c97def553da2bf9c0487fd0a5dfece48"}
+      }
+    },
+    {
+      "recipe": "rainfall",
+      "combination": "A",
+      "outputs": {
+        "layout.json": {"bytes": 2085591, "sha256": "da71eabfeb3ab522b9c78b732094a10ef6b35034db0e201b15b5b3b2521ad460"},
+        "report.json": {"bytes": 13361, "sha256": "238704ff5cd189aead2f81a1cd02ffc20095d746f32a2ad0e4e124033c5a6409"},
+        "preview.png": {"bytes": 43704, "sha256": "45444dfbf40b076728b8c94b2bda0b407315c52dad4fde95d430d2ae2f6ac162", "pixels": "3b1d1828e9114bdf67d94b7e82dd7babe8ce5b95b857b1025aecbee5c5405caf"},
+        "cells.json": {"bytes": 189673, "sha256": "f8ecdcc96217d0692195497d2a27e23f94c791cdf74ffef551dd65e170e78666"},
+        "parts.json": {"bytes": 18987, "sha256": "ee5fd83f57b94a6c71b3e876f6820d0c044ce8731e46efc1837b2cbc8079f09e"},
+        "bricklink.xml": {"bytes": 1698, "sha256": "b044c86a8a9dd3bf0dc426e7a1cb93600861e115f2d07b2a16db8eb79df64a64"},
+        "rebrickable.csv": {"bytes": 199, "sha256": "c69c700993a76173117a0b8e2802f26d431f2ee98c569cb8614e2d336227d64c"},
+        "parts-1kit.json": {"bytes": 19053, "sha256": "db28c550a68c29eb2d0afd3ca6f746430da11ebd4fde7b49d58f7cbf0ea22012"},
+        "bricklink-1kit.xml": {"bytes": 1459, "sha256": "69b239406025729ed104e9b50e391669285faf933d806bb2550861701a9ab8b1"},
+        "rebrickable-1kit.csv": {"bytes": 173, "sha256": "cbe9b5bf58175dc38a7fb79be0886540ddc32245c7b70fd7ab35cd545d1f8026"},
+        "estimate.json": {"bytes": 24188, "sha256": "99579745f80524863bed3d99347404cbcaa446d1d216169eafd154f2b6ce6aa1"},
+        "counts.json": {"bytes": 18218, "sha256": "5edc70fc820a1da5050efd824674791156c82c2ebc7bd8e0d0685a1e7299f897"}
+      }
+    },
+    {
+      "recipe": "rainfall",
+      "combination": "B",
+      "outputs": {
+        "layout.json": {"bytes": 2085602, "sha256": "52a957dedfebf6c68dae4aa8470d0c66e7c9809797cba64dbc83898c949c5612"},
+        "report.json": {"bytes": 13347, "sha256": "f0970a826988704d55e310c90b0e3d22f0cc39cf0f7502f0022023a6f3b4e196"},
+        "preview.png": {"bytes": 43434, "sha256": "0c17c877ca51114fbbe98d3880702a4cd3b3ffc95d136282157b9466a002ea55", "pixels": "7e0929470835d490d92be713a6b873b0e57f3ef656bedb834a2f44341b3a3d69"},
+        "cells.json": {"bytes": 189674, "sha256": "cd97ecec5ad71b6e8b1f6a515382e169a7537ae8afa55e9ea9686db140e12af3"},
+        "parts.json": {"bytes": 18982, "sha256": "53a080fc3adce4904a4090878a86ad9f46d404a024cfddc59054f337c784a0a6"},
+        "bricklink.xml": {"bytes": 1698, "sha256": "53468c35bbcfec04c1e94bdd005e04d7622c2b7b99144bc6811348c2f1a0bd47"},
+        "rebrickable.csv": {"bytes": 199, "sha256": "5f42301921fe22e58e67f668e69b56ee3a3f32c27ebba51bf9604df540098191"},
+        "parts-1kit.json": {"bytes": 19048, "sha256": "1918d89a05f6c2ef7f0f18fc20b8b163215bf725b34fd75c2ebceb4b24d4716d"},
+        "bricklink-1kit.xml": {"bytes": 1459, "sha256": "1a57ab17ad748705402457dc69dd16e6195821529aa7728291a4ae2b10936840"},
+        "rebrickable-1kit.csv": {"bytes": 173, "sha256": "dd000628ffff18778059e8f4d9bb38629c429a8782504e84a146bf444c9da5c9"},
+        "estimate.json": {"bytes": 24183, "sha256": "74b98408d50987419b5acf40ea640028a33f732605ef6a6c820cb2ef9f02da89"},
+        "counts.json": {"bytes": 18218, "sha256": "7aa722b27a413345a96e929ae7422584e970649ad772ce2b96c164949fab36cc"}
+      }
+    },
+    {
+      "recipe": "rainfall",
+      "combination": "C",
+      "outputs": {
+        "layout.json": {"bytes": 2085641, "sha256": "880f44d2e0753227d48383feecc4eb76e8bc8a7eb894cddc49fa72b70786ae76"},
+        "report.json": {"bytes": 13364, "sha256": "bbfb33d74595ab31da9e9ccd7e5bb00b4e86425b017e0d91074d9ddac48b69b1"},
+        "preview.png": {"bytes": 43377, "sha256": "abfc01eae75304e130b8ce06b28be61d0d9c301d0b4a134b52e78b549a760261", "pixels": "ce66041aa8dd2d68c6d6a5632a312d07fef34271a56f998fe53a88e752602eb4"},
+        "cells.json": {"bytes": 189675, "sha256": "f0eba48a9d00018d31a3f4e0169734ba3b1a7675fe45568c1516d5086e0c9a2d"},
+        "parts.json": {"bytes": 18988, "sha256": "3a25ce9685420700bfc1b4b73212272c7ead048e99f5dd3010ca8320fc7c6e65"},
+        "bricklink.xml": {"bytes": 1698, "sha256": "68a6f6ced820001f21dad9ee6efc622c34396ad89cbb5222c5ae0366eb013714"},
+        "rebrickable.csv": {"bytes": 199, "sha256": "e3b8ea2debfb7ca16fabedcd9b13ceeb45d3a7d731e271473d2a9f1bf3bb838a"},
+        "parts-1kit.json": {"bytes": 19054, "sha256": "b89fb9484afe3bf6ba8401714154f72fe95c14081b63ab5f706bc8f6bf74e418"},
+        "bricklink-1kit.xml": {"bytes": 1459, "sha256": "8a9d6d159559912facb1f66d339b265d462f645d476fd80358f275911e4c0092"},
+        "rebrickable-1kit.csv": {"bytes": 173, "sha256": "677affe9c0bd4080d577c733fb86beed876d067d1fb8229ebe8effb1e8a36208"},
+        "estimate.json": {"bytes": 24189, "sha256": "312fcfb3d89f57312eedeee20516a95caa48f0bc85653b3b96ddfabdefde9ad6"},
+        "counts.json": {"bytes": 18218, "sha256": "124f8f6a83138cbe68cb1db494cb6ca2d60159acf1493ef67ac12c1406751c9f"}
+      }
+    }
+  ],
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
+}

@@ -1,0 +1,25 @@
+{
+  "fixture": "stickers_017_guard.json",
+  "what": "Feature 017 guard golden (research R13 G3; FR-017, SC-006): digests of every kit 31203 output of the 8 bundled recipes x combinations A, B, C, built from the dataset fixtures (tests/fixtures/datasets, via the fixture_registry fixture) and from each recipe's bytes before its sticker block: layout JSON and report JSON (generated_at fixed to 2026-01-01T00:00:00Z), preview PNG bytes and decoded pixels, parts lists (full and one kit), BrickLink XML and Rebrickable CSV (full and one kit; null when nothing is to buy), parts estimate JSON on the synthetic price fixture (tests/fixtures/prices/bricklink_price_guide.json, as of 2026-12-05), section counts JSON and cells.json; plus the sheets PDF (Letter) bytes and every sheets SVG page of land-elevation and ocean-sst in A. Compared by tests/integration/test_stickers_outputs_unchanged.py::test_guard_golden. Written once, before any feature 017 production change, and never regenerated in this feature: a changed digest is a bug in the new code.",
+  "generator": "cd cli && STICKERS_017_GUARD_WRITE=1 .venv/bin/pytest tests/integration/test_stickers_outputs_unchanged.py -k guard_golden (helpers in tests/integration/stickers_guard.py, library functions only)",
+  "code": {
+    "commit": "6038d9c",
+    "note": "library and web code of commit 6038d9c, unmodified (git diff --stat -- cli/src web/src empty when the file was written). The 8 bundled recipe files are byte-identical at af3ce57 and 6038d9c, so the recipe checksums recorded here are the af3ce57 values of research R13."
+  },
+  "cross_check": "The 292 digests this file shares with feature 016's kit golden (cli/tests/fixtures/golden/kit_outputs.json on branch 016-map-templates, made through the CLI commands on an unmodified checkout of 6038d9c) are equal: layout, report, preview, cells, parts lists, exports, estimate, counts, the sheets PDF and the SVG pages.",
+  "generated_on": "2026-11-24",
+  "python": "3.11.13",
+  "libraries": {
+    "lego-image-processor": "0.1.0",
+    "numpy": "1.26.4",
+    "Pillow": "10.4.0",
+    "reportlab": "5.1.0",
+    "scipy": "1.17.1",
+    "scikit-image": "0.21.0",
+    "h5py": "3.16.0",
+    "click": "8.5.1"
+  },
+  "license": "Derived from the project's own outputs; the dataset fixtures keep their sources' licenses (see each tests/fixtures/datasets/*.source.json).",
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group.",
+  "sha256": "d1a136fee9986d84c98bd44758bd0f14fc3c3a44278304245607ce0936c886bc"
+}
