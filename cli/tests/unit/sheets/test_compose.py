@@ -46,7 +46,7 @@ def few_set(few_grid):
 def test_page_order_and_count(official_set):
     kinds = [p.kind for p in official_set.pages]
     assert kinds[0] == "overview" and kinds.count("section") == 40
-    assert kinds == ["overview"] + ["legend"] * kinds.count("legend") + ["section"] * 40
+    assert kinds == ["overview"] + ["legend"] * kinds.count("legend") + ["section"] * 40 + ["assembly"]
     labels = [p.label for p in official_set.pages if p.kind == "section"]
     assert labels[:6] == ["A1", "A2", "A3", "A4", "A5", "B1"] and labels[-1] == "H5"
     n = len(official_set.pages)
@@ -211,7 +211,7 @@ def test_legend_paginates_before_sections():
     kinds = [p.kind for p in s.pages]
     n_legend = kinds.count("legend")
     assert n_legend >= 3  # 90 lots at about 25 per page
-    assert kinds == ["overview"] + ["legend"] * n_legend + ["section"] * 40
+    assert kinds == ["overview"] + ["legend"] * n_legend + ["section"] * 40 + ["assembly"]
     swatches = [c for p in s.pages if p.kind == "legend" for c in items(p, Circle, "swatch")]
     assert [int(data(c)["lot"]) for c in swatches] == list(range(1, 91))
 

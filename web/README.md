@@ -1,6 +1,7 @@
 # web98138: the 98138.world web site
 
-Pick one of the six bundled maps and a frame combination (A, B, C), see the stud preview, and
+Pick one of the six bundled maps and a frame combination (A–E; D and E are not in the building
+instructions, feature 010), see the stud preview, and
 download everything to build it: layout JSON, parts lists (full and topped up from one 31203 kit),
 BrickLink wanted list, Rebrickable CSV and build-sheet PDFs (US Letter and A4). Feature 008; see
 `specs/008-web-app/`.

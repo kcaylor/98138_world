@@ -48,9 +48,9 @@ def test_map_build_default_is_a(runner, official):
 
 
 def test_map_build_bad_arrangement_exit_2(runner, tmp_path):
-    r = runner.invoke(cli, ["map", "build", "official-31203", "--arrangement", "D", "-o", str(tmp_path / "x.json")])
+    r = runner.invoke(cli, ["map", "build", "official-31203", "--arrangement", "F", "-o", str(tmp_path / "x.json")])
     assert r.exit_code == 2
-    assert "A, B, C, europe-africa, americas, asia-australia" in r.output
+    assert "A, B, C, D, E, europe-africa, americas, asia-australia, pacific, asia-pacific" in r.output
 
 
 def test_map_check_arrangement(runner):

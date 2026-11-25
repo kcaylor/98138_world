@@ -66,7 +66,7 @@ def test_byte_identical_and_escaped(few_grid, few_svg):
 def test_svg_pitch_is_8mm(few_grid, paper):
     """SC-003 in SVG coordinates (user units are millimetres)."""
     s = build_sheet_set(few_grid, paper=paper, sections="C2")
-    root = ET.fromstring(render_svg(s)[-1][1])
+    root = ET.fromstring(render_svg(s)[-2][1])  # the last page is the assembly page (feature 010)
     studs = root.findall(".//s:circle[@class='stud']", NS)
     xs = sorted({float(c.get("cx")) for c in studs})
     ys = sorted({float(c.get("cy")) for c in studs})

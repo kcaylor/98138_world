@@ -15,22 +15,30 @@
 {% for m in maps %}<li><a href="/maps/{{ m.id }}/{{ m.default_combination }}">{{ m.title }}</a>: {{ m.description }}</li>{% endfor %}
 </ul>
 
-<h2>Three ways to hang the frames</h2>
-<p>The board is three frames side by side: frame 1 America, frame 2 Europe &amp; Africa, frame 3 Asia &amp; Australia. The building instructions (pp. 7–8, “1 world – 3 combinations”) show three ways to hang them. Because the grid spans exactly 360° of longitude, each one is still a continuous map, just centred differently. Every combination uses the same pieces.</p>
+<h2>Five ways to hang the frames</h2>
+<p>The board is three frames side by side: frame 1 America, frame 2 Europe &amp; Africa, frame 3 Asia &amp; Australia. The building instructions (pp. 7–8, “1 world – 3 combinations”) show three ways to hang them, A, B and C. Because the grid spans exactly 360° of longitude, each one is still a continuous map, just centred differently. Every combination uses the same pieces.</p>
+<p>Two more, D and E, are <strong>not in the building instructions</strong>; this site adds them so the Pacific can sit in the middle. They are possible because each frame is made of strips of five section bases (8 strips in all), a joint between two strips inside a frame uses the same 15 connector pegs as a joint between frames, and the white border is built once round the finished board ({{ manifest.joints_source.citation }}). So frame 2 can be unpegged between two of its strips and the board hung as 2b · 3 · 1 · 2a with one kit's parts and nothing extra. D puts the date line in the centre (the board's edges then cut Europe and Africa); E is the usual Asia-Pacific world map, centred on 146° E. Each map's page and its build sheets show the steps.</p>
 <dl class="combo-list">
 {% for a in arrangements %}
-  <div><dt>Combination {{ a.id }}</dt><dd>{{ a.description }} (left to right: {{ a.frames | join(" · ") }})</dd></div>
+  <div><dt>Combination {{ a.id }}{% if not a.in_instructions %} <span class="unofficial">(not in the building instructions)</span>{% endif %}</dt><dd>{{ a.description }} (left to right: {{ a.frames | join(" · ") }})</dd></div>
 {% endfor %}
 </dl>
 <div class="combo-figs">
 {% for a in arrangements %}
-<figure><img src="/maps/{{ maps[0].id }}/{{ a.id }}/thumb.png" width="384" height="240" class="stud-img" alt="{{ maps[0].title }} hung as combination {{ a.id }}, {{ a.centre }} in the centre"><figcaption>{{ a.id }}: {{ a.centre }}</figcaption></figure>
+<figure><img src="/maps/{{ maps[0].id }}/{{ a.id }}/thumb.png" width="384" height="240" class="stud-img" alt="{{ maps[0].title }} hung as combination {{ a.id }}, {{ a.centre }} in the centre"><figcaption>{{ a.id }}: {{ a.centre }}{% if not a.in_instructions %} (not in the building instructions){% endif %}</figcaption></figure>
 {% endfor %}
 </div>
-<p class="note">Source: {{ manifest.arrangement_source.title }}, pp. 7–8.</p>
+<h3>How to hang D and E</h3>
+<ol class="steps">
+  <li>Build the 40 section bases, peg them into 8 strips of five and the strips into the three frames, as in the building instructions (pp. 134–138).</li>
+  <li>Unpeg frame 2 between strips D and E for D, or between strips C and D for E, and keep the 15 connector pegs.</li>
+  <li>Lay the groups face up, left to right 2b · 3 · 1 · 2a, and peg them together at F|G, H|A and B|C, 15 connector pegs per joint, as for the frame joints on p. 139.</li>
+  <li>Build the white border round the whole board as in pp. 140–153.</li>
+</ol>
+<p class="note">Sources: {{ manifest.arrangement_source.title }}, pp. 7–8 (combinations A–C); {{ manifest.joints_source.citation }} (why D and E are possible).</p>
 
 <h2>What you can download</h2>
-<p>For every map and combination: the layout (every stud's position and color), a parts list with LEGO, BrickLink and Rebrickable IDs (in full, and topped up from one 31203 kit you already own), a BrickLink wanted list, a Rebrickable parts CSV, and printable build sheets: an overview, a color legend and 40 section pages at true scale with numbered studs.</p>
+<p>For every map and combination: the layout (every stud's position and color), a parts list with LEGO, BrickLink and Rebrickable IDs (in full, and topped up from one 31203 kit you already own), a BrickLink wanted list, a Rebrickable parts CSV, and printable build sheets: an overview, a color legend, 40 section pages at true scale with numbered studs, and an assembly page showing how to hang the frames.</p>
 
 <h2>Open source and privacy</h2>
 <p>Everything here is built by an open-source command-line tool; the site only serves files that tool made. Source code, recipes and data citations: <a href="{{ REPO_URL }}">{{ REPO_URL }}</a>.</p>

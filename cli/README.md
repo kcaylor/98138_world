@@ -20,11 +20,13 @@ A CLI tool that converts images to LEGO-compatible color palettes and generates 
 - **Build sheets** (feature 006): printable section-by-section pages at true scale with numbered
   studs and per-section counts, as a PDF or SVG pages, plus per-section counts JSON (`sheets`
   commands)
-- **Map arrangements** (feature 007): the kit's three frames can be hung in three orders
-  (combination A Europe and Africa in the centre, B America, C Asia and Australia); build any map
-  in any of them (`map build --arrangement`) or re-hang an existing layout (`layout arrange`)
+- **Map arrangements** (features 007, 010): the kit's three frames can be hung in three orders
+  (combination A Europe and Africa in the centre, B America, C Asia and Australia), plus two
+  Pacific-centred combinations that are not in the building instructions (D the date line, E
+  146° E; frame 2 split in two); build any map in any of them (`map build --arrangement`) or
+  re-hang an existing layout (`layout arrange`); build sheets end with an assembly page
 - **ENSO maps** (feature 009): sea surface temperature anomaly of a strong El Niño (December 1997)
-  and a strong La Niña (December 1988) on one shared °C legend, Pacific-centred (recipes
+  and a strong La Niña (December 1988) on one shared °C legend, date line centred (D; recipes
   `ocean-el-nino`, `ocean-la-nina`; recipe key `arrangement`)
 
 ## Installation
@@ -239,14 +241,16 @@ minimum (no `blend` texture, so every tile states its class exactly):
 | Bright Orange | +0.5 to +1.0 |
 | Vibrant Coral | +1.0 and above |
 
-A value on a bound takes the upper class. Both maps are hung as combination B (America in the
-centre, so the Pacific is whole) by the recipe key `arrangement = "B"`; `--arrangement` on the
+A value on a bound takes the upper class. Both maps are hung as combination D (the date line in
+the centre, so the Pacific is whole; feature 010, not among the building instructions'
+combinations) by the recipe key `arrangement = "D"`; `--arrangement` on the
 command line wins, and the build output says where the arrangement came from (`- from the recipe`,
 `- from --arrangement`, `- default`; the report JSON has `arrangement_source`). A recipe without
 the key is hung as A, as before.
 
 One kit is not quite enough: the El Niño map needs 1,114 ocean tiles beyond one kit's supply and
-the La Niña map 1,155 (the shadow's 390 Earth Blue tiles counted). The build prints the °C range
+the La Niña map 1,152 in D (the shadow's 387 Earth Blue tiles counted; in B 1,114 and 1,155, in E
+1,112 and 1,158). The build prints the °C range
 and cells of each color and `Tiles beyond one kit: N`; `parts list <layout> --kits 1` lists the
 same tiles per color and `parts export <layout> --kits 1 --bricklink wanted.xml` writes them as a
 wanted list.
@@ -255,7 +259,7 @@ wanted list.
 lego-image-processor map build ocean-el-nino --fetch -o el-nino.json --preview el-nino.png
 lego-image-processor map build ocean-la-nina --fetch -o la-nina.json --preview la-nina.png
 lego-image-processor parts list el-nino.json --kits 1
-lego-image-processor map build ocean-el-nino --arrangement A -o el-nino-A.json   # override
+lego-image-processor map build ocean-el-nino --arrangement B -o el-nino-B.json   # override
 ```
 
 The El Niño map is meant to move to the 2026-27 event once it peaks. NCEI's per-month files from
@@ -270,7 +274,7 @@ A recipe is a TOML file (format "1"). A minimal data layer:
 format = "1"
 id = "my-map"
 title = "My map"
-arrangement = "A"                    # optional: A | B | C (or europe-africa, americas, asia-australia)
+arrangement = "A"                    # optional: A-E (or europe-africa, americas, asia-australia, pacific, asia-pacific)
 
 [land]
 role = "background"
@@ -430,6 +434,15 @@ frames in any order:
 | `A` / `europe-africa` (default) | 1 · 2 · 3 | Europe and Africa | 0 |
 | `B` / `americas` | 3 · 1 · 2 | America | +32 |
 | `C` / `asia-australia` | 2 · 3 · 1 | Asia and Australia | −32 |
+| `D` / `pacific` (not in the instructions) | 2b · 3 · 1 · 2a (strips E F G H A B C D) | the Pacific (date line) | +64 |
+| `E` / `asia-pacific` (not in the instructions) | 2b · 3 · 1 · 2a (strips D E F G H A B C) | Asia-Pacific (146° E) | +80 |
+
+D and E (feature 010) are not among the building instructions' combinations. The board is 8
+strips of five section bases (the kit's section columns A–H); a joint between strips inside a
+frame uses the same 15 connector pegs as a joint between frames (pp. 134–139) and the white border
+is built round the finished board (p. 140), so any rotation of the strips by whole strips is
+buildable from one kit (201 of the 205 connector pegs). D unpegs frame 2 between strips D and E,
+E between C and D; the build sheets' assembly page and `docs/runbook.md` give the steps.
 
 ```bash
 lego-image-processor map build land-elevation --arrangement B -o elev-B.json --preview elev-B.png
@@ -440,7 +453,7 @@ lego-image-processor sheets build elev-B.json -o elev-B.pdf
 ```
 
 - The grid spans exactly 360° of longitude, so every arrangement is a cyclic shift of whole
-  frames and its seams are geographically continuous.
+  strips and its seams are geographically continuous.
 - A layout's x is the column as hung; `metadata.arrangement` records the arrangement (schema stays
   2.0; a layout without it is A). `layout arrange` only moves positions, so arranging back to A
   restores the original positions exactly.
@@ -450,7 +463,8 @@ lego-image-processor sheets build elev-B.json -o elev-B.pdf
   official design moved frame by frame.
 - Build sheets label sections A1–H5 as hung, draw the frame boundaries where they fall, name the
   frames and the combination; each section page names its physical frame and its kit section
-  (the label in the instructions). Parts lists are the same in every arrangement.
+  (the label in the instructions). The last page shows how to hang the frames (for D and E: the
+  frame-2 joint to unpeg and the joints to make). Parts lists are the same in every arrangement.
 
 ### Python library
 

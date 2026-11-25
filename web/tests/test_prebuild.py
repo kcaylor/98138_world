@@ -21,7 +21,7 @@ def test_manifest_top_level(manifest):
     assert tools["lego_image_processor"] and tools["web98138"] and tools["python"].startswith("3.11")
     assert "git_commit" in tools
     assert manifest["generated_at"].endswith("Z")
-    assert [a["id"] for a in manifest["arrangements"]] == ["A", "B", "C"]
+    assert [a["id"] for a in manifest["arrangements"]] == ["A", "B", "C", "D", "E"]  # feature 010
     b = manifest["arrangements"][1]
     assert b["frame_order"] == [3, 1, 2] and b["centre"] == "America"
     assert manifest["arrangement_source"]["pages"] == [7, 8]
@@ -31,7 +31,7 @@ def test_manifest_top_level(manifest):
 
 def test_every_variant_has_files_matching_checksums(site_dir, manifest):
     for m in manifest["maps"]:
-        assert set(m["variants"]) == {"A", "B", "C"}
+        assert set(m["variants"]) == {"A", "B", "C", "D", "E"}
         for c, v in m["variants"].items():
             assert KINDS_ALWAYS <= set(v["files"])
             for kind, f in v["files"].items():
@@ -81,7 +81,7 @@ def test_nothing_to_buy_has_no_topup_export(manifest):
 
 def test_map_page_data(manifest):
     off, sst, nino = manifest["maps"]
-    assert off["default_combination"] == "A" and nino["default_combination"] == "B"
+    assert off["default_combination"] == "A" and nino["default_combination"] == "D"  # feature 010
     assert off["title"] and off["description"]
     assert off["datasets"] == [] and off["citations"]          # kit design source
     assert [l["class"] for l in sst["layers"]] == ["land", "ocean"]
@@ -106,7 +106,7 @@ def test_cli_usage_errors(tmp_path, capsys):
     from web98138.prebuild import main
 
     assert main(["--out", str(tmp_path / "o"), "--maps", "nope"]) == 2
-    assert main(["--out", str(tmp_path / "o"), "--combinations", "D"]) == 2
+    assert main(["--out", str(tmp_path / "o"), "--combinations", "F"]) == 2
     assert "Not affiliated" in capsys.readouterr().err
 
 

@@ -13,4 +13,4 @@ REPO_URL = "https://github.com/kcaylor/98138_world"
 SITE_HOST = "98138.world"
 MAP_IDS = ("official-31203", "official-31203-bathymetry", "ocean-sst", "land-elevation", "ocean-el-nino",
            "ocean-la-nina")
-COMBINATIONS = ("A", "B", "C")
+COMBINATIONS = ("A", "B", "C", "D", "E")  # D and E (feature 010) are not in the building instructions

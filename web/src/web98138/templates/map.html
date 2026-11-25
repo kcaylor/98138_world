@@ -20,8 +20,18 @@
   <figure class="preview">
     <img src="/maps/{{ map.id }}/{{ combination }}/preview.png" width="1280" height="800" class="stud-img"
          alt="Stud preview of the {{ map.title }} map hung as combination {{ combination }}, {{ arrangement.centre }} in the centre">
-    <figcaption><strong>Combination {{ combination }}:</strong> {{ arrangement.description }}. Left to right: {{ arrangement.frames | join(" · ") }}. One square per stud; 128 × 80 studs.</figcaption>
+    <figcaption><strong>Combination {{ combination }}:</strong> {{ arrangement.description }}. Left to right: {{ arrangement.frames | join(" · ") }}. One square per stud; 128 × 80 studs.{% if not arrangement.in_instructions %} Combination {{ combination }} is not one of the three combinations in the building instructions; see how to hang it below.{% endif %}</figcaption>
   </figure>
+</section>
+
+<section aria-labelledby="hang-heading" class="panel assembly">
+  <h2 id="hang-heading">How to hang the frames <span class="sub">as combination {{ combination }}</span></h2>
+  <p>{{ arrangement.note }}</p>
+  <p class="note">Strips as hung, left to right: {{ arrangement.strips | list | join(" ") }} (the kit's section columns).</p>
+  <ol class="steps">
+  {% for step in arrangement.assembly %}<li>{{ step }}</li>{% endfor %}
+  </ol>
+  <p class="note">The build sheets end with this as an assembly page.</p>
 </section>
 
 <div class="columns">
@@ -108,7 +118,7 @@
   {% for d in data.datasets %}
   <p class="note">Pinned file: {{ d.id }}, {{ d.size | size }}, SHA-256 <code class="hash">{{ d.sha256[:16] }}…</code></p>
   {% endfor %}
-  <p class="note">Frame combinations: {{ manifest.arrangement_source.title }}, pp. 7–8.</p>
+  <p class="note">Frame combinations: {{ manifest.arrangement_source.title }}, pp. 7–8.{% if not arrangement.in_instructions %} Combination {{ combination }} is not among them; why it is possible: {{ arrangement.citation }}.{% endif %}</p>
 </section>
 </div>
 {% endblock %}

@@ -2,7 +2,8 @@
 
 The site is one small Python service (`web/`, feature 008) in one Docker image. The image build
 installs the CLI library, downloads the four pinned public datasets (~10.8 MB, checked by SHA-256),
-and prebuilds every map in every frame combination (6 × 3 = 18 variants, ~110 MB) into `/site`.
+and prebuilds every map in every frame combination (6 × 5 = 30 variants, combinations A–E; ~185 MB,
+about 6 MB per variant) into `/site`.
 The running container only serves those files: it never downloads data or builds maps, and it
 fits Fly's smallest machine (shared-cpu-1x, 256 MB; measured ~60 MB RSS).
 
@@ -41,7 +42,7 @@ dedicated IPv6 address. Check:
 ```bash
 fly status
 fly ips list
-curl -fsS https://world-98138.fly.dev/healthz     # {"status":"ok","variants":18,...}
+curl -fsS https://world-98138.fly.dev/healthz     # {"status":"ok","variants":30,...}
 open https://world-98138.fly.dev/
 ```
 
@@ -113,7 +114,7 @@ Useful: `fly logs` (startup and errors; access logs are off for privacy), `fly s
 docker build --platform linux/amd64 -t world-98138 --build-arg GIT_COMMIT=$(git rev-parse HEAD) .
 docker run --rm world-98138 id                         # uid=10001(app)
 docker run --rm -d --name w98 -p 8080:8080 --memory 256m world-98138
-curl -fsS http://localhost:8080/healthz                 # {"status":"ok","variants":18,...}
+curl -fsS http://localhost:8080/healthz                 # {"status":"ok","variants":30,...}
 curl -s -o /dev/null -w "%{http_code} %{content_type}\n" \
   http://localhost:8080/maps/ocean-sst/B/download/sheets-letter   # 200 application/pdf
 docker stats --no-stream w98                            # memory well under 256 MiB

@@ -27,11 +27,11 @@ def _edit(site, fn):
 def test_load_ok(site_dir):
     cat = Catalog.load(site_dir)
     assert [m.id for m in cat.maps] == ["official-31203", "ocean-sst", "ocean-el-nino"]
-    assert cat.variant_count == 9
+    assert cat.variant_count == 15  # 3 maps x 5 combinations (feature 010)
     assert cat.map("ocean-sst").title == "Ocean temperature"
     assert cat.map("nope") is None
     assert cat.file("ocean-sst", "B", "bricklink").name == "bricklink.xml"
-    assert cat.file("ocean-sst", "D", "bricklink") is None
+    assert cat.file("ocean-sst", "F", "bricklink") is None
     assert cat.file("ocean-sst", "B", "../../manifest") is None
     assert cat.arrangement("C")["centre"] == "Asia and Australia"
 

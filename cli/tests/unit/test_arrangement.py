@@ -44,13 +44,14 @@ def test_arrangements(aid, order, shift, name):
 
 
 def test_ids():
-    assert ARRANGEMENT_IDS == ("A", "B", "C")
+    assert ARRANGEMENT_IDS == ("A", "B", "C", "D", "E")  # feature 010 adds D and E
     assert parse_arrangement(None).id == "A"
 
 
 def test_unknown():
-    with pytest.raises(ArrangementError, match="A, B, C, europe-africa, americas, asia-australia"):
-        parse_arrangement("D")
+    with pytest.raises(ArrangementError, match="A, B, C, D, E, europe-africa, americas, "
+                       "asia-australia, pacific, asia-pacific"):
+        parse_arrangement("F")
 
 
 def test_shift_matches_frame_order():

@@ -272,11 +272,12 @@ class TestArrangementKey:
     def test_absent_is_none(self):
         assert parse_recipe(BASE).arrangement is None
 
-    @pytest.mark.parametrize("value", ['"D"', "2", "true", "{ id = \"B\" }"])
+    @pytest.mark.parametrize("value", ['"F"', "2", "true", "{ id = \"B\" }"])
     def test_invalid_values(self, value):
         e = _err(self._with(f"arrangement = {value}"))
         assert e.path == "arrangement"
-        for name in ("A", "B", "C", "europe-africa", "americas", "asia-australia"):
+        for name in ("A", "B", "C", "D", "E", "europe-africa", "americas", "asia-australia",
+                     "pacific", "asia-pacific"):
             assert name in e.rule
 
     def test_unknown_top_level_key_still_rejected(self):

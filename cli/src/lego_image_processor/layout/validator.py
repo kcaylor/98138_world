@@ -139,7 +139,7 @@ class MaskMismatchViolation(Violation):
     in the layout's arrangement (feature 007).
 
     Attributes:
-        arrangement: Arrangement id the mask was checked in (A, B or C)
+        arrangement: Arrangement id the mask was checked in (A-E)
         positions_required: Number of mismatched positions
         examples: Up to 10 mismatches as {x, y, part_type, expected}
     """
