@@ -14,7 +14,8 @@ from lego_image_processor.datasets import cache as cache_mod
 from lego_image_processor.maps.suitability import extra_tiles
 
 DISCLAIMER = "Not affiliated with or endorsed by The LEGO Group."
-B_LINE = "Arrangement: B (americas, frames 3·1·2, America in the centre) - from the recipe"
+D_LINE = ("Arrangement: D (pacific, frames 2b·3·1·2a, the Pacific (date line) in the centre; not in the "
+          "building instructions) - from the recipe")  # feature 010: the ENSO maps default to D
 LEGEND = [("lego_earth_blue", "below -1.5"), ("lego_bright_bluish_green", "-1.5 to -0.5"),
           ("lego_medium_azur", "-0.5 to -0.25"), ("lego_bright_green", "-0.25 to -0.1"),
           ("lego_bright_yellowish_green", "-0.1 to +0.1"), ("lego_brick_yellow", "+0.1 to +0.3"),
@@ -47,8 +48,8 @@ class TestBuild:
         out, rep = tmp_path / "x.json", tmp_path / "r.json"
         r = runner.invoke(cli, ["map", "build", "ocean-el-nino", "-o", str(out), "--report", str(rep)])
         assert r.exit_code == 0, r.output
-        assert B_LINE in r.output
-        assert json.loads(out.read_text())["metadata"]["arrangement"]["id"] == "B"
+        assert D_LINE in r.output
+        assert json.loads(out.read_text())["metadata"]["arrangement"]["id"] == "D"
         report = json.loads(rep.read_text())
         assert report["arrangement_source"] == "recipe"
         # legend: 9 lines, cold to warm, with the cells of each class
@@ -84,7 +85,7 @@ class TestBuild:
         assert json.loads(rep.read_text())["arrangement_source"] == "default"
 
     def test_bad_arrangement_exit_2(self, runner, enso, tmp_path):
-        r = runner.invoke(cli, ["map", "build", "ocean-el-nino", "--arrangement", "D", "-o", str(tmp_path / "x.json")])
+        r = runner.invoke(cli, ["map", "build", "ocean-el-nino", "--arrangement", "F", "-o", str(tmp_path / "x.json")])
         assert r.exit_code == 2
 
     def test_not_cached_exit_3_no_network(self, runner, tmp_path, monkeypatch):
@@ -109,7 +110,7 @@ class TestCheck:
         rep = tmp_path / "r.json"
         r = runner.invoke(cli, ["map", "check", "ocean-el-nino", "--report", str(rep)])
         assert r.exit_code == 0, r.output
-        assert B_LINE in r.output
+        assert D_LINE in r.output
         assert len(_legend_lines(r.output)) == 9
         assert json.loads(rep.read_text())["arrangement_source"] == "recipe"
         assert _last(r.output) == DISCLAIMER
@@ -123,8 +124,8 @@ class TestRecipes:
         assert lines[0].split()[:3] == ["id", "title", "arrangement"]
         col = lines[0].index("arrangement")
         rows = {line.split()[0]: line for line in lines[1:] if line.strip()}
-        assert rows["ocean-el-nino"][col] == "B"
-        assert rows["ocean-la-nina"][col] == "B"
+        assert rows["ocean-el-nino"][col] == "D"
+        assert rows["ocean-la-nina"][col] == "D"
         assert rows["ocean-sst"][col] == "A"
 
 

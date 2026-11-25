@@ -33,7 +33,7 @@ def official(tmp_path_factory):
 def test_full_set_pages(official):
     _, s, pdf, _ = official
     reader = PdfReader(io.BytesIO(pdf))
-    assert len(reader.pages) == len(s.pages) == 42  # overview, 1 legend page, 40 sections
+    assert len(reader.pages) == len(s.pages) == 43  # overview, 1 legend page, 40 sections, assembly
     expected = [x.label for x in sections()]
     for label, page in zip(expected, reader.pages[2:]):
         assert f"Section {label}" in page.extract_text()
@@ -82,7 +82,7 @@ def test_pdf_text_on_every_page_and_no_images(official):
     reader = PdfReader(io.BytesIO(pdf))
     for i, page in enumerate(reader.pages, start=1):
         text = page.extract_text()
-        assert DISCLAIMER in text and f"Page {i} of 42" in text
+        assert DISCLAIMER in text and f"Page {i} of 43" in text
         assert "Print at 100% (no fit-to-page)" in text
     assert re.search(rb"/Subtype\s*/Image", pdf) is None
 
@@ -91,7 +91,7 @@ def test_svg_every_page(official):
     """SC-006 for SVG; SC-005 byte-identical."""
     _, s, _, _ = official
     files = render_svg(s)
-    assert len(files) == 42
+    assert len(files) == 43
     for name, text in files:
         root = ET.fromstring(text)
         assert root.find(f".//{SVG}image") is None

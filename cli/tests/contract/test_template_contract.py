@@ -63,7 +63,7 @@ def test_list_json(runner, synthetic_template):
     by_id = {t["id"]: t for t in doc["templates"]}
     assert list(by_id) == [KIT_TEMPLATE_ID, "winkel-tripel"]
     assert by_id[KIT_TEMPLATE_ID]["status"] == "reference"
-    assert by_id[KIT_TEMPLATE_ID]["arrangements"] == ["A", "B", "C"]
+    assert by_id[KIT_TEMPLATE_ID]["arrangements"] == ["A", "B", "C", "D", "E"]
     assert by_id[KIT_TEMPLATE_ID]["counts"]["land"] == 3062
     w = by_id["winkel-tripel"]
     assert set(w) == {"id", "title", "status", "counts", "arrangements"}

@@ -33,7 +33,7 @@ def test_text_extractable(few_pdf):
         text = page.extract_text()
         assert DISCLAIMER in text and f"Page {i + 1} of {len(s.pages)}" in text
     labels = [p.label for p in s.pages if p.kind == "section"]
-    first = len(s.pages) - 40
+    first = len(s.pages) - 41  # 40 sections, then the assembly page (feature 010)
     for label, page in zip(labels, reader.pages[first:]):
         assert f"Section {label}" in page.extract_text()
 

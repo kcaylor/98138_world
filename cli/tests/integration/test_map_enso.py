@@ -50,7 +50,7 @@ def nino34_classes(result):
 
 def _common_checks(result, dataset_id):
     r = result.recipe
-    assert result.layout.arrangement["id"] == "B"
+    assert result.layout.arrangement["id"] == "D"  # feature 010: date line centred
     assert result.report["arrangement_source"] == "recipe"
     assert r.ocean.role == "data" and r.ocean.variable == "ssta"
     assert r.ocean.dataset.id == dataset_id
@@ -63,7 +63,7 @@ def _common_checks(result, dataset_id):
     ocean = _ocean(result)
     assert ocean["filled_share"] < 0.05
     assert "outside_bounds" not in ocean
-    assert result.report["shadow"]["cells"] == 390
+    assert result.report["shadow"]["cells"] == 387  # in D (390 in B, feature 009)
     tiles = kit_supply()["98138"]
     for p in result.layout.positions:
         if p.part_type == "tile":
@@ -79,7 +79,7 @@ def _common_checks(result, dataset_id):
 
 
 class TestElNino:
-    def test_builds_as_b_with_the_legend(self, built):
+    def test_builds_as_d_with_the_legend(self, built):
         _common_checks(built["ocean-el-nino"], "ersst-v5-1997-12")
 
     def test_title_and_description(self, built):
@@ -97,14 +97,14 @@ class TestElNino:
         res = built["ocean-el-nino"]
         a = arrange_grid(res.layout, parse_arrangement("A"))
         assert a.arrangement["id"] == "A"
-        delta = parse_arrangement("A").column_shift - parse_arrangement("B").column_shift
+        delta = parse_arrangement("A").column_shift - parse_arrangement("D").column_shift
         before = {(p.x, p.y): p.color_id for p in res.layout.positions}
         for p in a.positions:
             assert before[((p.x - delta) % 128, p.y)] == p.color_id
 
 
 class TestLaNina:
-    def test_builds_as_b_with_the_same_legend(self, built):
+    def test_builds_as_d_with_the_same_legend(self, built):
         _common_checks(built["ocean-la-nina"], "ersst-v5-1988-12")
         en, ln = built["ocean-el-nino"].recipe.ocean, built["ocean-la-nina"].recipe.ocean
         assert en.classification.bounds == ln.classification.bounds
@@ -140,3 +140,13 @@ class TestLaNina:
     def test_empty_class_does_not_fail(self, built):
         codes = [w["code"] for w in built["ocean-la-nina"].report["warnings"]]
         assert "over_supply" in codes  # warnings are reported, the build succeeds
+
+
+def test_b_still_builds_with_the_option(fixture_registry):
+    """Feature 010: the recipes default to D; --arrangement B (feature 009's default) still wins."""
+    fixture_registry.place_all()
+    for rid in ("ocean-el-nino", "ocean-la-nina"):
+        res = build_map(load_recipe(rid), arrangement=parse_arrangement("B"))
+        assert res.layout.arrangement["id"] == "B" and res.report["arrangement_source"] == "option"
+        assert res.report["shadow"]["cells"] == 390
+        assert "(D)" in res.recipe.description

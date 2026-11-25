@@ -1,8 +1,9 @@
 {
-  "format_version": "1",
+  "format_version": "2",
   "kit": "31203",
   "width": 128,
   "height": 80,
+  "strip_width": 16,
   "frames": [
     {"number": 1, "name": "America", "columns": [0, 31], "section_columns": "A-B"},
     {"number": 2, "name": "Europe & Africa", "columns": [32, 95], "section_columns": "C-F"},
@@ -10,13 +11,28 @@
   ],
   "arrangements": [
     {"id": "A", "name": "europe-africa", "centre": "Europe and Africa", "frame_order": [1, 2, 3],
-     "column_shift": 0, "default": true},
+     "column_shift": 0, "strips": "ABCDEFGH", "groups": ["1", "2", "3"], "in_instructions": true,
+     "default": true},
     {"id": "B", "name": "americas", "centre": "America", "frame_order": [3, 1, 2],
-     "column_shift": 32},
+     "column_shift": 32, "strips": "GHABCDEF", "groups": ["3", "1", "2"], "in_instructions": true},
     {"id": "C", "name": "asia-australia", "centre": "Asia and Australia", "frame_order": [2, 3, 1],
-     "column_shift": -32}
+     "column_shift": -32, "strips": "CDEFGHAB", "groups": ["2", "3", "1"], "in_instructions": true},
+    {"id": "D", "name": "pacific", "centre": "the Pacific (date line)", "frame_order": [2, 3, 1, 2],
+     "column_shift": 64, "strips": "EFGHABCD", "groups": ["2b", "3", "1", "2a"],
+     "in_instructions": false},
+    {"id": "E", "name": "asia-pacific", "centre": "Asia-Pacific (146° E)", "frame_order": [2, 3, 1, 2],
+     "column_shift": 80, "strips": "DEFGHABC", "groups": ["2b", "3", "1", "2a"],
+     "in_instructions": false}
   ],
-  "notes": "\"1 world - 3 combinations\": the three frames can be hung in three orders, joined with the kit's connector pins. Kit columns are the columns of combination A (the kit mask, the official design and the projection are defined in them). A layout's x is the column as hung: display column = (kit column + column_shift) mod 128. The grid spans 360 degrees of longitude (kit_31203_projection.json), so every seam is geographically continuous.",
+  "assembly": {
+    "pegs_per_joint": 15,
+    "pegs_per_base_joint": 3,
+    "bases_per_strip": 5,
+    "peg_design_id": "61332",
+    "joint_pages": "134-139",
+    "border_pages": "140-153"
+  },
+  "notes": "Kit columns are the columns of combination A (the kit mask, the official design and the projection are defined in them). The 40 section bases are pegged into 8 strips of five (strips A-H, the kit's section column letters, 16 columns each), and strips into the three frames. A layout's x is the column as hung: display column = (kit column + column_shift) mod 128, where column_shift = 16 x the display position of strip A. strips lists the kit strips left to right as hung; groups lists the frames or frame parts left to right (2a = the left part of frame 2 in kit order, 2b = the right part); frame_order is the frame number of each group. A, B and C are the three combinations of the building instructions (\"1 world - 3 combinations\", pp. 7-8 and 139). D and E are not among them: a joint inside a frame uses the same 15 connector pegs as a joint between frames (pp. 134-139) and the white border is built once round the finished board (p. 140), so any rotation of the 8 strips by whole strips is buildable from one kit with no extra parts (7 strip joints x 15 + 8 strips x 4 x 3 = 201 of the 205 connector pegs). The grid spans 360 degrees of longitude (kit_31203_projection.json), so every seam is geographically continuous.",
   "source": {
     "title": "LEGO 31203 World Map building instructions",
     "url": "https://www.lego.com/cdn/product-assets/product.bi.core.pdf/6372756.pdf",
@@ -25,6 +41,16 @@
     "citation": "LEGO 31203 building instructions, pp. 7–8",
     "read_on": "2026-11-22",
     "method": "Read by hand from pages 7-8 (frame numbers, names and the three combinations); the frame column ranges follow from the 8 x 5 section layout of kit_31203_design.json. Nothing from the PDF is shipped.",
+    "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
+  },
+  "joints_source": {
+    "title": "LEGO 31203 World Map building instructions",
+    "url": "https://www.lego.com/cdn/product-assets/product.bi.core.pdf/6372756.pdf",
+    "sha256": "b593e2f4befbc227c5b12fec9b58a1bd6141d19b54de5f5336dcc8cc9eb43c4c",
+    "pages": [134, 135, 136, 137, 138, 139, 140],
+    "citation": "LEGO 31203 building instructions, pp. 134–140",
+    "read_on": "2026-11-22",
+    "method": "Read by hand (feature 010): pp. 134-136 sections pegged into strips of five (3 connector pegs per joint), p. 137 strips pegged into frames, p. 138 the three frames, p. 139 the combinations with 15 connector pegs per frame joint, p. 140 the border built round the finished board. Used only for combinations D and E, which are not among the instructions' combinations. Nothing from the PDF is shipped.",
     "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
   }
 }

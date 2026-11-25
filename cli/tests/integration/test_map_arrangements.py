@@ -11,7 +11,7 @@ from lego_image_processor.maps.build import build_map, land_mask_array
 from lego_image_processor.maps.recipe import load_recipe, parse_recipe
 from lego_image_processor.maps.texture import shadow_mask
 
-ARR = ("A", "B", "C")
+ARR = ("A", "B", "C", "D", "E")  # feature 010 adds D and E
 
 
 def _grid(layout, attr="color_id"):
@@ -83,7 +83,7 @@ def test_shadow_is_east_of_land_as_hung(maps, rid, aid):
 
 def test_shadow_counts_differ_only_at_seams(maps):
     land = land_mask_array()
-    for aid in ("B", "C"):
+    for aid in ("B", "C", "D", "E"):
         a = parse_arrangement(aid)
         sa = shadow_mask(land)
         sx = a.unroll(shadow_mask(a.roll(land)))  # back in kit columns
@@ -97,7 +97,7 @@ def test_land_counts_and_cells_equal_across_arrangements(maps):
     """bins + blend on land run in kit coordinates: identical land cells in every arrangement."""
     base = _grid(maps["land-elevation", "A"].layout)
     land = land_mask_array()
-    for aid in ("B", "C"):
+    for aid in ("B", "C", "D", "E"):
         a = parse_arrangement(aid)
         g = a.unroll(_grid(maps["land-elevation", aid].layout))
         assert (g[land] == base[land]).all()

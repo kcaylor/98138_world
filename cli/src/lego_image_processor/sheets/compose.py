@@ -1,7 +1,8 @@
 """Compose a build-sheet set as page models (006 US1, US2, US4; contracts/page-layout.md).
 
-A set is an overview page, legend pages and one page per section, all portrait with 12 mm
-margins. Section grids are drawn at true scale: 8.0 mm stud pitch (LDraw: 1 brick width = 20 LDU,
+A set is an overview page, legend pages, one page per section and an assembly page (feature 010:
+how to hang the strips and frames, after the example of the instructions' p. 139), all portrait
+with 12 mm margins. Section grids are drawn at true scale: 8.0 mm stud pitch (LDraw: 1 brick width = 20 LDU,
 1 LDU = 0.4 mm, both stated there as approximations). Every page carries a 100 mm scale bar, the
 footer "Page n of N" and the disclaimer. Pages are built only from the layout and cited data with
 circles, rectangles, lines and text: no image, artwork, logo or crop from LEGO instructions.
@@ -31,7 +32,8 @@ from .counts import SectionCount, count_sections
 from .legend import LegendEntry, build_legend, lot_numbers, text_color
 from .model import (BLACK, GREY, OUTLINE, PT_MM, RGB, WHITE, Circle, Item, Line, Page, PageSize,
                     Rect, Text, latin1_safe, paper_size)
-from ..layout.arrangement import Arrangement, arrangement_of, load_arrangements, parse_arrangement
+from ..layout.arrangement import (Arrangement, arrangement_of, assembly_note, assembly_steps,
+                                  load_arrangements, parse_arrangement)
 from .sections import (COLUMNS, GRID_HEIGHT, GRID_WIDTH, N_COLS, N_ROWS, Section,
                        arranged_sections, parse_section_labels)
 
@@ -80,7 +82,7 @@ class SheetSet:
 
     @property
     def page_kinds(self) -> Dict[str, int]:
-        out = {"overview": 0, "legend": 0, "section": 0}
+        out = {"overview": 0, "legend": 0, "section": 0, "assembly": 0}
         for p in self.pages:
             out[p.kind] += 1
         return out
@@ -225,6 +227,9 @@ def section_page(size: PageSize, section: Section, grid_cells: Dict[Tuple[int, i
     items.append(Text(MARGIN, 21.0, f"Section {s.label}", 20, bold=True, tag="section-title"))
     where = (f"columns {s.x_range[0]}-{s.x_range[1]}, rows {s.y_range[0]}-{s.y_range[1]} · "
              f"frame {s.frame} of 3 ({frame_names()[s.frame]})")
+    group = arrangement.group_at(s.x_range[0])
+    if group.label != str(group.frame.number):  # a split frame (D, E; feature 010)
+        where += f", part {group.label}"
     if s.kit_label and s.kit_label != s.label:
         where += f" · kit section {s.kit_label}"
     items.append(Text(MARGIN, 28.0, fit(where, 9.5, W - 2 * MARGIN - 40.0), 9.5, tag="section-range"))
@@ -349,10 +354,10 @@ def overview_page(size: PageSize, title: str, grid: PositionPlacementGrid,
         items.append(Text(x0 - 1.5, y0 + (r + 0.5) * sec + cap_offset(8), str(r + 1), 8, "right",
                           True, tag="map-row-label"))
 
-    for f, start, end in arrangement.frame_spans():
-        items.append(Text(x0 + (start + end + 1) / 2 * MAP_PITCH, y0 + mh + 3.6,
-                          f"Frame {f.number}: {f.name}", 7.5, "center", True, tag="frame-label",
-                          data=d(frame=f.number)))
+    for g in arrangement.group_spans():
+        items.append(Text(x0 + (g.start + g.end + 1) / 2 * MAP_PITCH, y0 + mh + 3.6,
+                          f"Frame {g.label}: {g.frame.name}", 7.5, "center", True, tag="frame-label",
+                          data=d(frame=g.frame.number)))
 
     flow = Flow(MARGIN, y0 + mh + 5.0, W - 2 * MARGIN, H - CONTENT_BOTTOM)
     plates = sum(e.lot.needed for e in legend if e.lot.part_type == "plate")
@@ -387,27 +392,34 @@ def overview_page(size: PageSize, title: str, grid: PositionPlacementGrid,
     labels = [s.label for s in chosen]
     which = "A1 to H5" if len(chosen) == 40 else ", ".join(labels)
     flow.para(f"This set: 1 overview page, {n_legend_pages} legend page(s), {len(chosen)} section "
-              f"page(s) ({which}), column by column "
+              f"page(s) ({which}) and 1 assembly page (last); sections column by column "
               + ("as in the kit's section instructions" if not arrangement.column_shift else "as hung")
               + ". Each "
               "section page is one 16 x 16 base at true size; the number on each stud is its lot "
               f"in the legend. {drawn}. Frames: "
-              + ", ".join(f"{COLUMNS[s // 16]}-{COLUMNS[e // 16]} frame {f.number}"
-                          for f, s, e in arrangement.frame_spans()) + ".", 8.5, tag="howto")
-    order = "·".join(str(n) for n in arrangement.frame_order)
-    src = load_arrangements().source
+              + ", ".join(f"{COLUMNS[g.start // 16]}-{COLUMNS[g.end // 16]} frame {g.label}"
+                          for g in arrangement.group_spans()) + ".", 8.5, tag="howto")
+    src = arrangement.source
     citation = latin1_safe(src['citation'].replace('–', '-'))
     if template is None:
-        flow.para(f"Combination {arrangement.id} ({arrangement.name}): frames {order} from left to right, "
-                  f"{arrangement.centre} in the centre ({citation}). Sections are labelled as hung"
-                  + ("." if not arrangement.column_shift else
-                     "; each section page names its physical frame and its kit section in the instructions.")
-                  + " Every combination uses the same pieces.", 8.5, tag="arrangement")
+        text = (f"Combination {arrangement.id} ({arrangement.name}): frames {arrangement.order_text} "
+                f"from left to right, {arrangement.centre} in the centre ({citation}). Sections are "
+                "labelled as hung"
+                + ("." if not arrangement.column_shift else
+                   "; each section page names its physical frame and its kit section in the instructions.")
+                + " Every combination uses the same pieces.")
+        if not arrangement.in_instructions:
+            (left, right), = arrangement.unpeg()
+            text += (f" Combination {arrangement.id} is not one of the three combinations in the "
+                     f"building instructions: frame 2 is split between strips {left} and {right}; see "
+                     "the assembly page.")
+        flow.para(latin1_safe(text), 8.5, tag="arrangement")
     else:  # feature 016 (FR-011): a curved map is hung one way only
-        flow.para(f"Template {template.get('id')} ({template.get('title')}): frames {order} from left to "
-                  f"right as combination {arrangement.id} ({arrangement.name}), {arrangement.centre} in the "
-                  f"centre ({citation}); {REHANG_RULE}, so this map has no other combination. Sections "
-                  "are labelled as in the kit's instructions.", 8.5, tag="arrangement")
+        flow.para(f"Template {template.get('id')} ({template.get('title')}): frames "
+                  f"{arrangement.order_text} from left to right as combination {arrangement.id} "
+                  f"({arrangement.name}), {arrangement.centre} in the centre ({citation}); "
+                  f"{REHANG_RULE}, so this map has no other combination. Sections are labelled as in "
+                  "the kit's instructions.", 8.5, tag="arrangement")
     flow.para("Provenance", 9, True, tag="heading", gap=0.3)
     flow.para(f"Layout: {layout.get('path') or '(in memory)'}", 8, tag="provenance")
     if layout.get("sha256"):
@@ -522,6 +534,122 @@ def legend_pages(size: PageSize, legend: Sequence[LegendEntry], title: str, firs
     return pages
 
 
+# --- assembly page (feature 010) ----------------------------------------------------------------
+
+JOINT_MAKE: RGB = (0, 0, 0)
+JOINT_UNPEG: RGB = (200, 30, 30)
+STRIP_FILL: RGB = (235, 235, 235)
+
+
+def _dashed(x: float, y1: float, y2: float, color: RGB, w: float, tag: str, data) -> List[Item]:
+    out: List[Item] = []
+    y = y1
+    while y < y2:
+        out.append(Line(x, y, x, min(y + 1.6, y2), color, w, tag=tag, data=data))
+        y += 2.6
+    return out
+
+
+def _strips(x0: float, y0: float, cell: float, gap: float, groups, tag: str = "strip") -> Tuple[List[Item], Dict[str, float], float]:
+    """Strips as columns of five bases, groups separated by ``gap``; returns items, the left x of
+    each strip and the right edge."""
+    items: List[Item] = []
+    left: Dict[str, float] = {}
+    x = x0
+    for gi, (label, letters) in enumerate(groups):
+        if gi:
+            x += gap
+        for letter in letters:
+            left[letter] = x
+            items.append(Rect(x, y0, cell, 5 * cell, STRIP_FILL, BLACK, 0.3, tag=tag,
+                              data=d(strip=letter, group=label)))
+            for r in range(1, 5):
+                items.append(Line(x, y0 + r * cell, x + cell, y0 + r * cell, SOFT, 0.15, tag="base-line"))
+            items.append(Text(x + cell / 2, y0 - 1.6, letter, 9, "center", True, tag="strip-label",
+                              data=d(strip=letter)))
+            x += cell
+    return items, left, x
+
+
+def assembly_page(size: PageSize, title: str, arrangement: Arrangement, number: int,
+                  total: int) -> Page:
+    """How to hang the board as ``arrangement``: the strips as hung grouped into frames or frame
+    parts, the joints to make (15 connector pegs each, as on p. 139), the frame-2 joint to unpeg for
+    D and E, the border, and numbered steps. Drawn from the arrangement data only."""
+    a = arrangement
+    facts = load_arrangements().assembly
+    W, H = size.width_mm, size.height_mm
+    items: List[Item] = []
+    items.append(Text(MARGIN, 21.0, f"Assembly: combination {a.id}", 20, bold=True, tag="assembly-title"))
+    sub = (f"{a.id} ({a.name}): {a.centre} in the centre; frames {a.order_text} left to right "
+           f"(strips {' '.join(a.strips)}).")
+    items.append(Text(MARGIN, 28.0, fit(latin1_safe(sub), 9.5, W - 2 * MARGIN), 9.5, tag="assembly-subtitle"))
+    flow = Flow(MARGIN, 30.0, W - 2 * MARGIN, H - CONTENT_BOTTOM)
+    flow.para(latin1_safe(assembly_note(a)), 8.5, bold=not a.in_instructions, tag="assembly-status")
+    items += flow.items
+    y = flow.y + 4.0
+    cell = 12.0
+    gap = 7.0
+    unpeg = a.unpeg()
+    if unpeg:
+        (ul, ur), = unpeg
+        frame2 = next(f for f in load_arrangements().frames if ul in f.strips)
+        small = 6.0
+        items.append(Text(MARGIN, y + 3.0, f"Frame {frame2.number} as built (p. 137): unpeg strips "
+                          f"{ul} | {ur}", 9, bold=True, tag="diagram-title"))
+        y += 9.0
+        sx = MARGIN + 4.0
+        st, left, right = _strips(sx, y, small, 0.0, [(str(frame2.number), frame2.strips)], tag="frame-strip")
+        items += st
+        xu = left[ur]
+        items += _dashed(xu, y - 2.5, y + 5 * small + 2.5, JOINT_UNPEG, 0.9, "joint-unpeg", d(joint=f"{ul}|{ur}"))
+        items.append(Text(right + 4.0, y + 2.5 * small, f"Unpeg {ul}|{ur}: take out its "
+                          f"{facts.pegs_per_joint} connector pegs; keep them for the joints below.",
+                          8, color=JOINT_UNPEG, tag="unpeg-label", data=d(joint=f"{ul}|{ur}")))
+        y += 5 * small + 6.0
+    items.append(Text(MARGIN, y + 3.0, "The board as hung, left to right (front view, north up)",
+                      9, bold=True, tag="diagram-title"))
+    y += 11.0
+    groups = [(g.label, g.strips) for g in a.group_spans()]
+    width = 8 * cell + gap * (len(groups) - 1)
+    bx = (W - width) / 2
+    st, left, right = _strips(bx, y, cell, gap, groups)
+    items += st
+    items.append(Rect(bx - 2.0, y - 4.5, width + 4.0, 5 * cell + 6.5, None, SOFT, 0.25, tag="border-outline"))
+    for j in a.joints():
+        if j.kind != "make":
+            continue
+        xj = left[j.right] - gap / 2
+        items += _dashed(xj, y - 2.0, y + 5 * cell + 1.0, JOINT_MAKE, 0.7, "joint-make", d(joint=j.text))
+        items.append(Rect(xj - 3.2, y + 5 * cell / 2 - 2.2, 6.4, 4.4, WHITE, None, 0, tag="joint-label-bg"))
+        items.append(Text(xj, y + 5 * cell / 2 + cap_offset(7), f"{facts.pegs_per_joint}x", 7, "center", True,
+                          tag="joint-label", data=d(joint=j.text)))
+    by = y + 5 * cell + 4.0
+    for g in a.group_spans():
+        x1 = left[g.strips[0]]
+        x2 = left[g.strips[-1]] + cell
+        items.append(Line(x1, by, x2, by, BLACK, 0.4, tag="group-bracket"))
+        items.append(Text((x1 + x2) / 2, by + 3.6, f"Frame {g.label}", 8, "center", True, tag="group-label",
+                          data=d(group=g.label, frame=g.frame.number)))
+        items.append(Text((x1 + x2) / 2, by + 7.0, fit(g.frame.name, 6.5, x2 - x1 + gap - 1.0), 6.5,
+                          "center", color=SOFT, tag="group-name", data=d(group=g.label)))
+    items.append(Text(W / 2, by + 11.5, "Dashed lines: joints to make, "
+                      f"{facts.pegs_per_joint} connector pegs each. Grey outline: the white border, "
+                      f"built round the whole board (pp. {facts.border_pages}).", 7, "center",
+                      color=SOFT, tag="diagram-key"))
+    flow = Flow(MARGIN, by + 15.0, W - 2 * MARGIN, H - CONTENT_BOTTOM)
+    flow.para("Steps", 10, True, tag="heading", gap=0.5)
+    for i, step in enumerate(assembly_steps(a), start=1):
+        flow.para(latin1_safe(f"{i}. {step}"), 8.5, tag="step", gap=1.2)
+    flow.para("Strip letters are the kit's section columns (kit sections on the section pages). "
+              "Drawn from the arrangement data only; no LEGO artwork or instruction images.", 7.5,
+              color=SOFT, tag="assembly-note")
+    items += flow.items
+    items += furniture(size, title, number, total)
+    return Page(size=size, items=tuple(items), number=number, total=total, kind="assembly",
+                label=a.id)
+
+
 # --- the set ------------------------------------------------------------------------------------
 
 def default_title(grid: PositionPlacementGrid, layout_path: Optional[Union[str, Path]]) -> str:
@@ -537,7 +665,7 @@ def build_sheet_set(layout: Union[LayoutInput, PositionPlacementGrid],
                     layout_path: Optional[Union[str, Path]] = None, paper: str = "letter",
                     sections: Optional[Union[str, Iterable[str]]] = None,
                     title: Optional[str] = None, layout_sha256: Optional[str] = None) -> SheetSet:
-    """The overview, legend and section pages for a full 128 x 80 layout."""
+    """The overview, legend, section and assembly pages for a full 128 x 80 layout."""
     try:
         size = paper_size(paper)
     except ValueError as exc:
@@ -568,12 +696,13 @@ def build_sheet_set(layout: Union[LayoutInput, PositionPlacementGrid],
     count_by_label = {c.section.label: c for c in counts}
     title = title if title is not None and title.strip() else default_title(grid, layout_path)
     n_legend = max(1, math.ceil(len(legend) / legend_rows_per_page(size)))
-    total = 1 + n_legend + len(chosen)
+    total = 1 + n_legend + len(chosen) + 1  # + the assembly page (feature 010)
     pages: List[Page] = [overview_page(size, title, grid, cells, legend, pl.layout,
                                        grid.map_metadata, n_legend, chosen, total, arrangement)]
     pages += legend_pages(size, legend, title, 2, total)
     for i, s in enumerate(chosen):
         pages.append(section_page(size, s, cells, count_by_label[s.label], legend, title,
                                   2 + n_legend + i, total, arrangement))
+    pages.append(assembly_page(size, title, arrangement, total, total))
     return SheetSet(title=title, layout=pl.layout, legend=legend, pages=tuple(pages), paper=size,
                     sections=chosen, counts=counts, parts_list=pl, map_metadata=grid.map_metadata)

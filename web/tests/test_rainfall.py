@@ -20,7 +20,7 @@ def test_manifest_entry(rainfall_site):
     m = json.loads((rainfall_site / "manifest.json").read_text(encoding="utf-8"))
     (rf,) = m["maps"]
     assert rf["id"] == "rainfall" and rf["title"] == "Rainfall" and rf["default_combination"] == "A"
-    assert sorted(rf["variants"]) == ["A", "B", "C"]
+    assert sorted(rf["variants"]) == ["A", "B", "C", "D", "E"]
     gpcp, nsidc = rf["datasets"]
     assert gpcp["id"] == "gpcp-v23-ltm-1991-2020" and len(gpcp["sha256"]) == 64 and "files" not in gpcp
     assert nsidc["id"] == "nsidc-cdr-v6-seaice-minimum-1991-2020" and nsidc["sha256"] == ""

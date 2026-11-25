@@ -58,7 +58,7 @@ def test_templates_list(manifest, template):
 
 def test_template_variants_only_for_eligible_maps(manifest):
     for m in manifest["maps"]:
-        assert set(m["variants"]) == {"A", "B", "C"}       # kit variants stay exactly A, B, C
+        assert set(m["variants"]) == {"A", "B", "C", "D", "E"}   # kit variants stay exactly A-E (010)
     assert set(_row(manifest, "ocean-sst")["template_variants"]) == {TID}
     assert "template_variants" not in _row(manifest, "official-31203")
     assert "template_variants" not in _row(manifest, "ocean-el-nino")

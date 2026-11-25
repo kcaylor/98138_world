@@ -161,3 +161,10 @@ Updated: 2026-11-22 (implement done)
 - SHA-256: ersst.v5.199712.nc 9f96dbe3aadf8b261e607a8337de02425c65e67803929c592bf1271b2c4e9ebe;
   ersst.v5.198812.nc f6d21ff447213c6abd32ee32bb1a4a26b5d847a5abb3dee33baed3f250bb14db
   (both 134,832 bytes).
+
+> **Note (feature 010, 2026-11-22)**: at the owner's request both ENSO recipes now default to
+> `arrangement = "D"` (`pacific`, the date line centred; not among the building instructions'
+> combinations; see `specs/010-pacific-arrangements/`). This supersedes FR-013's value B; B is still
+> available with `--arrangement B`. Measured with the real ERSST files: in D the land shadow takes
+> 387 Earth Blue tiles (390 in B) and the tiles beyond one kit are 1,114 (El Niño, as in B) and
+> 1,152 (La Niña; 1,155 in B); in E 1,112 and 1,158.

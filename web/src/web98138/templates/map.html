@@ -21,10 +21,22 @@
   <figure class="preview" id="preview-figure">
     <img id="preview-img" src="/maps/{{ map.id }}/{{ combination }}/preview.png" width="1280" height="800" class="stud-img"
          alt="{% if template %}Stud preview of the {{ map.title }} map on the {{ template.projection }} projection, with square tiles in the margin{% else %}Stud preview of the {{ map.title }} map hung as combination {{ combination }}, {{ arrangement.centre }} in the centre{% endif %}">
-    <figcaption>{% if template %}{% set tc = template.counts %}<strong>{{ template.projection }}:</strong> {{ template.title }}, {{ template.board.modules | join(" × ") }} modules, {{ template.board.width }} × {{ template.board.height }} studs ({{ tc.land | n }} land, {{ tc.ocean | n }} ocean, {{ tc.margin | n }} margin). Round studs for land and ocean, square tiles in the margin.{% else %}<strong>Combination {{ combination }}:</strong> {{ arrangement.description }}. Left to right: {{ arrangement.frames | join(" · ") }}. One square per stud; 128 × 80 studs.{% endif %}</figcaption>
+    <figcaption>{% if template %}{% set tc = template.counts %}<strong>{{ template.projection }}:</strong> {{ template.title }}, {{ template.board.modules | join(" × ") }} modules, {{ template.board.width }} × {{ template.board.height }} studs ({{ tc.land | n }} land, {{ tc.ocean | n }} ocean, {{ tc.margin | n }} margin). Round studs for land and ocean, square tiles in the margin.{% else %}<strong>Combination {{ combination }}:</strong> {{ arrangement.description }}. Left to right: {{ arrangement.frames | join(" · ") }}. One square per stud; 128 × 80 studs.{% if arrangement.in_instructions == false %} Combination {{ combination }} is not one of the three combinations in the building instructions; see how to hang it below.{% endif %}{% endif %}</figcaption>
   </figure>{% if template %}
-  <p class="note rehang-note">The frames of a curved map cannot be re-hung: this version hangs one way, frames 1·2·3 as built. Combinations A, B and C are the kit's own grid.</p>{% endif %}
+  <p class="note rehang-note">The frames of a curved map cannot be re-hung: this version hangs one way, frames 1·2·3 as built. Combinations A–E are the kit's own grid.</p>{% endif %}
 </section>
+
+{% if not template %}
+<section aria-labelledby="hang-heading" class="panel assembly">
+  <h2 id="hang-heading">How to hang the frames <span class="sub">as combination {{ combination }}</span></h2>
+  <p>{{ arrangement.note }}</p>
+  <p class="note">Strips as hung, left to right: {{ arrangement.strips | list | join(" ") }} (the kit's section columns).</p>
+  <ol class="steps">
+  {% for step in arrangement.assembly %}<li>{{ step }}</li>{% endfor %}
+  </ol>
+  <p class="note">The build sheets end with this as an assembly page.</p>
+</section>
+{% endif %}
 
 {% if variant.files.cells %}
 <section id="palette" class="panel palette" aria-labelledby="palette-heading" data-cells="/maps/{{ map.id }}/{{ combination }}/cells.json" hidden>
@@ -187,7 +199,7 @@
   <p class="note">Pinned file: {{ d.id }}, {{ d.size | size }}, content SHA-256 <code class="hash">{{ d.content_sha256[:16] }}…</code> (built on request by the server; the checksum covers the data, not the file header)</p>
   {% endif %}
   {% endfor %}
-  <p class="note">Frame combinations: {{ manifest.arrangement_source.title }}, pp. 7–8.</p>{% if template %}
+  <p class="note">Frame combinations: {{ manifest.arrangement_source.title }}, pp. 7–8.{% if not template and arrangement.in_instructions == false %} Combination {{ combination }} is not among them; why it is possible: {{ arrangement.citation }}.{% endif %}</p>{% if template %}
   <p class="note">Template <code>{{ template.id }}</code>: {{ template.description }} Template file SHA-256 <code class="hash">{{ template.source.sha256[:16] }}…</code>{% if template.source.confirmation %}, confirmed by the {{ template.source.confirmation.role }} on {{ template.source.confirmation.date }}{% endif %}.</p>{% endif %}
 </section>
 </div>

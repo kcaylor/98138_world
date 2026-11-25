@@ -210,7 +210,7 @@ def test_readme_and_runbook_describe_the_enso_maps():
     for text in (readme, runbook):
         assert "ocean-el-nino" in text and "ocean-la-nina" in text
         assert "2026-27" in text
-    assert 'arrangement = "B"' in readme
+    assert 'arrangement = "D"' in readme  # feature 010 (it was B in feature 009)
     assert DISCLAIMER in readme
 
 

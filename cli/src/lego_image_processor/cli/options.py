@@ -9,12 +9,13 @@ from ..layout.arrangement import ArrangementError, parse_arrangement, valid_valu
 
 
 class ArrangementType(click.ParamType):
-    """``A``/``B``/``C`` or ``europe-africa``/``americas``/``asia-australia``, any case."""
+    """``A``-``E`` or ``europe-africa``/``americas``/``asia-australia``/``pacific``/``asia-pacific``,
+    any case."""
 
     name = "arrangement"
 
     def get_metavar(self, param, ctx=None):  # noqa: D401 - click API
-        return "[A|B|C]"
+        return "[A|B|C|D|E]"
 
     def convert(self, value, param, ctx):
         if not isinstance(value, str):
@@ -26,9 +27,12 @@ class ArrangementType(click.ParamType):
                       param, ctx)
 
 
-ARRANGEMENT_HELP = ("How the kit's three frames are hung (LEGO 31203 building instructions, pp. 7-8): "
+ARRANGEMENT_HELP = ("How the kit's frames are hung (LEGO 31203 building instructions, pp. 7-8): "
                     "A = 1·2·3, Europe and Africa in the centre (default); B = 3·1·2, America; "
-                    "C = 2·3·1, Asia and Australia. Also europe-africa, americas, asia-australia.")
+                    "C = 2·3·1, Asia and Australia. D = 2b·3·1·2a, the Pacific (date line); "
+                    "E = 2b·3·1·2a, Asia-Pacific (146° E): not in the building instructions, frame 2 "
+                    "split in two (pp. 134-140). Also europe-africa, americas, asia-australia, "
+                    "pacific, asia-pacific.")
 
 
 RECIPE_DEFAULT_HELP = (" Default: the recipe's `arrangement`, else A; an explicit --arrangement wins.")

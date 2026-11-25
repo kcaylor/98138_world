@@ -32,8 +32,8 @@ def _read(layout_path: Path):
 
 @click.group("sheets")
 def sheets() -> None:
-    """Printable build sheets: overview, legend and one page per section base, with
-    per-section counts (works offline)."""
+    """Printable build sheets: overview, legend, one page per section base and an assembly page
+    (how to hang the frames), with per-section counts (works offline)."""
 
 
 @sheets.command("build")
@@ -87,7 +87,8 @@ def build_cmd(layout_path, output, output_format, paper, section_list, title, qu
     where = output if output_format == "pdf" else f"{output}/page-01.svg ... page-{len(sheet_set.pages):02d}.svg"
     click.echo(f"Build sheets: {sheet_set.title}")
     click.echo(f"Wrote {where}: {len(sheet_set.pages)} pages ({kinds['overview']} overview, "
-               f"{kinds['legend']} legend, {kinds['section']} sections), {sheet_set.paper.label}")
+               f"{kinds['legend']} legend, {kinds['section']} sections, {kinds['assembly']} assembly), "
+               f"{sheet_set.paper.label}")
     lots = f"{t['lots']} lots ({t['verified_lots']} verified"
     lots += f", {t['unverified_lots']} unverified: no cited IDs)" if t["unverified_lots"] else ")"
     template = pl.layout.get("template")  # feature 016: non-kit layouts only

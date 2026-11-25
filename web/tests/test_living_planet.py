@@ -20,7 +20,7 @@ def test_manifest_entry(living_site):
     m = json.loads((living_site / "manifest.json").read_text(encoding="utf-8"))
     (lp,) = m["maps"]
     assert lp["id"] == "living-planet" and lp["default_combination"] == "A"
-    assert sorted(lp["variants"]) == ["A", "B", "C"]
+    assert sorted(lp["variants"]) == ["A", "B", "C", "D", "E"]
     assert [d["id"] for d in lp["datasets"]] == ["mod17a3-npp-mean-2000-2015", "etopo2022-surface-10m",
                                                  "modis-aqua-chla-2013-2024"]
     chl = lp["datasets"][2]

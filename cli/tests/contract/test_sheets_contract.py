@@ -51,8 +51,8 @@ def test_build_pdf_default(runner, layouts, tmp_path):
     r = runner.invoke(cli, ["sheets", "build", str(layouts["official"]), "-o", str(out)])
     assert r.exit_code == 0, r.output
     reader = PdfReader(io.BytesIO(out.read_bytes()))
-    assert len(reader.pages) == 42
-    assert "42 pages (1 overview, 1 legend, 40 sections), Letter" in r.output
+    assert len(reader.pages) == 43
+    assert "43 pages (1 overview, 1 legend, 40 sections, 1 assembly), Letter" in r.output
     assert "10 lots (10 verified)" in r.output
     assert PRINT_LINE in r.output
     assert _last(r.output) == DISCLAIMER
@@ -105,7 +105,7 @@ def test_sections_subset(runner, layouts, tmp_path):
                             "--sections", "C2,B2"])
     assert r.exit_code == 0, r.output
     reader = PdfReader(io.BytesIO(out.read_bytes()))
-    assert len(reader.pages) == 4
+    assert len(reader.pages) == 5  # + the assembly page (feature 010)
     assert "Section B2" in reader.pages[2].extract_text()
     assert "Section C2" in reader.pages[3].extract_text()
 
@@ -150,7 +150,7 @@ def test_build_svg(runner, layouts, tmp_path):
                             "--format", "svg"])
     assert r.exit_code == 0, r.output
     files = sorted(p.name for p in out.iterdir())
-    assert files == [f"page-{i:02d}.svg" for i in range(1, 43)]
+    assert files == [f"page-{i:02d}.svg" for i in range(1, 44)]  # 43rd: the assembly page
     root = ET.fromstring((out / "page-03.svg").read_text(encoding="utf-8"))
     studs = root.findall(".//{http://www.w3.org/2000/svg}circle[@class='stud']")
     assert len(studs) == 256
@@ -249,7 +249,7 @@ def test_build_winkel_pdf(runner, winkel_file, confirmed_winkel, tmp_path):
     assert f"10,240 pieces, {n:,} of them square tiles (part 3070b)" in r.output
     assert _last(r.output) == DISCLAIMER
     reader = PdfReader(io.BytesIO(out.read_bytes()))
-    assert len(reader.pages) == 42  # overview, one legend page (4 lots), 40 sections
+    assert len(reader.pages) == 43  # overview, one legend page (4 lots), 40 sections, assembly (010)
     text = reader.pages[0].extract_text()
     assert "winkel-tripel" in text and "tiles 1x1 square" in text
 

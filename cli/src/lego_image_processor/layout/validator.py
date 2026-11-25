@@ -148,7 +148,7 @@ class MaskMismatchViolation(Violation):
     on the margin).
 
     Attributes:
-        arrangement: Arrangement id the mask was checked in (A, B or C)
+        arrangement: Arrangement id the mask was checked in (A-E)
         positions_required: Number of mismatched positions
         examples: Up to 10 mismatches as {x, y, part_type, expected}
         template: The non-kit template id checked against; None for the kit mask (not written)

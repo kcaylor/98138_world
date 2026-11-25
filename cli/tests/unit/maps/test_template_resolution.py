@@ -124,7 +124,7 @@ class TestErrors:
         assert "winkel-tripel" in msg
 
     def test_enso_recipe_names_its_arrangement(self, confirmed_winkel):
-        with pytest.raises(MapBuildError, match=r"cannot be re-hung.*arrangement B.*from the recipe"):
+        with pytest.raises(MapBuildError, match=r"cannot be re-hung.*arrangement D.*from the recipe"):
             build_map(load_recipe("ocean-el-nino"), template="winkel-tripel")
 
     def test_kit_design_dataset(self, confirmed_winkel):

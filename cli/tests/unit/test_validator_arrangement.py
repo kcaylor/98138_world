@@ -21,7 +21,7 @@ def _validate(grid):
     return v.validate(grid, layout_file="x.json")
 
 
-@pytest.mark.parametrize("aid", ["A", "B", "C"])
+@pytest.mark.parametrize("aid", ["A", "B", "C", "D", "E"])
 def test_arranged_official_is_buildable(official, aid):
     r = _validate(arrange_grid(official, parse_arrangement(aid)))
     assert r.buildable, [v.to_dict() for v in r.violations]
