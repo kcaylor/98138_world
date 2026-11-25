@@ -2,7 +2,7 @@
 
 Source: prompt (owner, 2026-11-23: stickers instead of brick labels; four scoping answers)
 Phase: done (converge round 1: T092 appended and implemented; every task done but the owner's T091)
-Status: done; main 6f300dc (feature 010) merged in, uncommitted (the coordinator commits); owner steps open: T091 price refresh, push/PR, deploy
+Status: done; committed (merge of main 6f300dc in 5f5af68), not pushed; owner steps open: push/PR, deploy; T091 waits for BrickLink API access
 Updated: 2026-11-25
 
 Worktree: ../98138_world-017 (branch 017-map-stickers, from main af3ce57,
