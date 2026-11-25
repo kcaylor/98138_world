@@ -23,6 +23,8 @@ tqdm = "^4.65.0"
 scipy = "^1.11"
 # Build sheets PDF (feature 006); BSD license, pure-Python wheel (needs Pillow, charset-normalizer).
 reportlab = ">=4.4,<6"
+# netCDF-4/HDF5 reader (feature 013: GPCP, NSIDC sea ice; ERSST per-month files); BSD-3-Clause.
+h5py = "^3.16.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
@@ -31,13 +33,16 @@ pytest-cov = "^4.1.0"
 # Reads build-sheet PDFs in tests (feature 006); BSD-3-Clause.
 pypdf = ">=5"
 
-# Maintainer-only tools (cli/tools/kit31203). Not needed to use the package:
+# Maintainer-only tools (cli/tools/kit31203, cli/tools/maptemplates). Not needed to use the package:
 #   poetry install --with maintainer
 [tool.poetry.group.maintainer]
 optional = true
 
 [tool.poetry.group.maintainer.dependencies]
 pypdf = ">=5"
+# Map template generation (feature 016, cli/tools/maptemplates generate/write/build); MIT.
+# 3.8 needs Python 3.12; Winkel tripel needs no PROJ 9.6 feature. The run time never imports it.
+pyproj = ">=3.7,<3.8"
 
 [tool.poetry.scripts]
 lego-image-processor = "lego_image_processor.cli.main:cli"

@@ -1,7 +1,8 @@
 """Per-section piece counts (006 FR-013, contracts/counts-format.md).
 
 For each of the 40 sections: the count per lot number (005 lot order). Used by the section pages,
-``sheets counts`` and the planned web app (for example to sort pieces into 40 bags).
+``sheets counts`` and the planned web app (for example to sort pieces into 40 bags). A layout on a
+non-kit template (feature 016) counts its margin's square tiles like any lot and names the template.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -47,11 +48,20 @@ class SectionCounts:
     kit_id: str = "31203"
     arrangement: str = "A"
 
+    @property
+    def template(self) -> Optional[Dict[str, Any]]:
+        """``{id, title}`` of a non-kit layout's template (feature 016); None on the kit."""
+        return self.layout.get("template")
+
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        out: Dict[str, Any] = {
             "format_version": FORMAT_VERSION,
             "kit": self.kit_id,
             "arrangement": self.arrangement,
+        }
+        if self.template is not None:  # feature 016: non-kit layouts only (kit JSON unchanged)
+            out["template"] = dict(self.template)
+        out.update({
             "layout": {"path": self.layout.get("path"), "sha256": self.layout.get("sha256"),
                        "source_image": self.layout.get("source_image")},
             "legend": [{"number": e.number, "part_id": e.lot.part_id, "part_type": e.lot.part_type,
@@ -59,7 +69,8 @@ class SectionCounts:
                         "total": e.lot.needed} for e in self.legend],
             "sections": [s.to_dict() for s in self.sections],
             "disclaimer": DISCLAIMER,
-        }
+        })
+        return out
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), indent=2, ensure_ascii=False) + "\n"

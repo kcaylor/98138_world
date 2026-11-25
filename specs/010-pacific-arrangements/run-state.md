@@ -47,3 +47,15 @@ Updated: 2026-11-22
 ## Deferred findings
 - analyze LOW: `map check --arrangement D` had no explicit test in the first task list; folded into
   T006 (test_arrange_de_contract.py::test_map_check_d).
+
+## Merge with main (2026-11-24)
+Committed 2026-11-24 (owner: "push and merge and deploy") and merged with main 309c17d (features
+011-016). Resolutions: the web site builds 8 maps x A-E (40 kit variants) plus 5 Winkel tripel
+(45); map pages keep 015's palette chooser and 016's template figure, and show the "How to hang
+the frames" panel on kit pages only (a template hangs one way); the sheets "arrangement" paragraph
+keeps 016's template sentence and uses 010's `order_text`/`source`; template sheet sets also end
+with the assembly page (43 pages). Both kit goldens were rewritten on the merge, since 010 changes
+kit outputs on purpose: CLI `kit_outputs.json` (every sheet set gains the assembly page; the ENSO
+recipes changed, so their outputs record a new recipe checksum; no other layout or parts list
+changed), web `kit_variants_golden.json` written from kit-only sites (`templates=()`). Tests: CLI
+2,288 passed, 3 skipped; web 218 passed.

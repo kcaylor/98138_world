@@ -6,6 +6,10 @@ with 12 mm margins. Section grids are drawn at true scale: 8.0 mm stud pitch (LD
 1 LDU = 0.4 mm, both stated there as approximations). Every page carries a 100 mm scale bar, the
 footer "Page n of N" and the disclaimer. Pages are built only from the layout and cited data with
 circles, rectangles, lines and text: no image, artwork, logo or crop from LEGO instructions.
+A layout on a non-kit template (feature 016, ``metadata.template``) uses the same 40 sections and
+frames, hung as A; its margin studs, 1x1 square tiles, are drawn as squares, and the overview names
+the template, says the frames cannot be re-hung and cites the template's file and dataset. Kit
+layouts are drawn exactly as before.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -22,7 +26,8 @@ from .. import __version__
 from ..kit.source import DISCLAIMER
 from ..layout.grid import PositionPlacementGrid
 from ..parts import ACKNOWLEDGEMENT, LayoutInput, LayoutInputError, PartsList, build_parts_list
-from ..parts.partslist import check_grid
+from ..parts.partslist import PART_TYPE_TEXT, check_grid
+from ..templates import REHANG_RULE
 from .counts import SectionCount, count_sections
 from .legend import LegendEntry, build_legend, lot_numbers, text_color
 from .model import (BLACK, GREY, OUTLINE, PT_MM, RGB, WHITE, Circle, Item, Line, Page, PageSize,
@@ -40,6 +45,12 @@ MAP_PITCH = 1.4
 SCALE_BAR_MM = 100.0
 PRINT_NOTE = "Print at 100% (no fit-to-page)"
 SUBTITLE = "LEGO World Map 31203 template: 128 x 80 studs, 40 sections"
+# Feature 016: a non-kit template's subtitle (it names the template; the frames are not re-hung).
+TEMPLATE_SUBTITLE = "Template {id}: 128 x 80 studs, 40 sections of kit 31203; the frames cannot be re-hung"
+LEGEND_NOTE = ("Lot numbers are printed on the studs. Plates (land) have a ring, tiles (ocean) are "
+               "plain. Totals are for the whole map.")
+LEGEND_NOTE_SQUARES = ("Lot numbers are on the studs. Plates (land) have a ring, tiles (ocean) are "
+                       "plain, margin tiles are square. Totals are for the whole map.")
 TOOL = "lego-image-processor"
 FULL_POSITIONS = GRID_WIDTH * GRID_HEIGHT
 DARK: RGB = (60, 60, 60)
@@ -143,10 +154,18 @@ def furniture(size: PageSize, title: str, number: int, total: int) -> List[Item]
     return items
 
 
+def is_square(entry: LegendEntry) -> bool:
+    """A 1x1 square tile (a template's margin, feature 016): drawn as a square, not a circle."""
+    return entry.lot.part_type == "square_tile"
+
+
 def stud(cx: float, cy: float, entry: LegendEntry, r: float, number_size: float,
          x: int, y: int) -> List[Item]:
-    out: List[Item] = [Circle(cx, cy, r, entry.rgb, OUTLINE, 0.2, tag="stud",
-                              data=d(x=x, y=y, lot=entry.number))]
+    if is_square(entry):
+        out: List[Item] = [Rect(cx - r, cy - r, 2 * r, 2 * r, entry.rgb, OUTLINE, 0.2, tag="stud",
+                                data=d(x=x, y=y, lot=entry.number))]
+    else:
+        out = [Circle(cx, cy, r, entry.rgb, OUTLINE, 0.2, tag="stud", data=d(x=x, y=y, lot=entry.number))]
     if entry.lot.part_type == "plate":
         out.append(Circle(cx, cy, r * RING_RATIO, None, entry.text_color, 0.25, tag="ring",
                           data=d(x=x, y=y)))
@@ -157,7 +176,12 @@ def stud(cx: float, cy: float, entry: LegendEntry, r: float, number_size: float,
 
 
 def disc(cx: float, cy: float, r: float, entry: LegendEntry, size: float, tag: str) -> List[Item]:
-    out: List[Item] = [Circle(cx, cy, r, entry.rgb, OUTLINE, 0.2, tag=tag, data=d(lot=entry.number))]
+    """A lot's swatch with its number: a disc, or a square for a square tile."""
+    if is_square(entry):
+        out: List[Item] = [Rect(cx - r, cy - r, 2 * r, 2 * r, entry.rgb, OUTLINE, 0.2, tag=tag,
+                                data=d(lot=entry.number))]
+    else:
+        out = [Circle(cx, cy, r, entry.rgb, OUTLINE, 0.2, tag=tag, data=d(lot=entry.number))]
     if entry.lot.part_type == "plate":
         out.append(Circle(cx, cy, r * RING_RATIO, None, entry.text_color, 0.2, tag=tag + "-ring"))
     if entry.number >= 100:
@@ -249,7 +273,7 @@ def section_page(size: PageSize, section: Section, grid_cells: Dict[Tuple[int, i
         cx = MARGIN + (k // rows) * col_w
         ry = top + (k % rows) * COUNT_ROW
         items += disc(cx + 2.5, ry + 2.6, 2.3, e, 6.5, "count-disc")
-        name = fit(f"{e.name} ({e.lot.part_type})", 8, col_w - 6.5 - 12)
+        name = fit(f"{e.name} ({PART_TYPE_TEXT[e.lot.part_type]})", 8, col_w - 6.5 - 12)
         items.append(Text(cx + 6.5, ry + 3.6, name, 8, tag="count-name", data=d(lot=num)))
         items.append(Text(cx + col_w - 4, ry + 3.6, str(n), 8, "right", True, tag="count",
                           data=d(lot=num)))
@@ -289,13 +313,16 @@ def overview_page(size: PageSize, title: str, grid: PositionPlacementGrid,
                   chosen: Sequence[Section], total: int,
                   arrangement: Optional[Arrangement] = None) -> Page:
     arrangement = arrangement or parse_arrangement(None)
+    template = getattr(grid, "template", None)  # feature 016: None on the kit template
     bounds = arrangement.boundaries()
     W, H = size.width_mm, size.height_mm
     items: List[Item] = []
     for i, line in enumerate(wrap(title, 18, W - 2 * MARGIN, True)[:2]):
         items.append(Text(MARGIN, 21.0 + i * 7.0, line, 18, bold=True, tag="title"))
     shift = 7.0 if len(wrap(title, 18, W - 2 * MARGIN, True)) > 1 else 0.0
-    items.append(Text(MARGIN, 27.5 + shift, SUBTITLE, 9.5, tag="subtitle"))
+    subtitle = SUBTITLE if template is None else fit(TEMPLATE_SUBTITLE.format(id=template.get("id")),
+                                                     9.5, W - 2 * MARGIN)
+    items.append(Text(MARGIN, 27.5 + shift, subtitle, 9.5, tag="subtitle"))
 
     mw, mh = GRID_WIDTH * MAP_PITCH, GRID_HEIGHT * MAP_PITCH
     x0, y0 = (W - mw) / 2, 38.0 + shift
@@ -304,7 +331,10 @@ def overview_page(size: PageSize, title: str, grid: PositionPlacementGrid,
         for x in range(GRID_WIDTH):
             e = cells[(x, y)]
             cx, cy = x0 + (x + 0.5) * MAP_PITCH, y0 + (y + 0.5) * MAP_PITCH
-            items.append(Circle(cx, cy, 0.6, e.rgb, None, 0, tag="map-stud"))
+            if is_square(e):
+                items.append(Rect(cx - 0.6, cy - 0.6, 1.2, 1.2, e.rgb, None, 0, tag="map-stud"))
+            else:
+                items.append(Circle(cx, cy, 0.6, e.rgb, None, 0, tag="map-stud"))
             if e.lot.part_type == "plate":
                 items.append(Circle(cx, cy, 0.33, None, GREY, 0.1, tag="map-ring"))
     sec = 16 * MAP_PITCH
@@ -350,8 +380,15 @@ def overview_page(size: PageSize, title: str, grid: PositionPlacementGrid,
         flow.x -= 2.0
         flow.width += 4.0
         flow.y += 3.5
-    flow.para(f"{plates + tiles:,} pieces: {plates:,} plates 1x1 round (land, part 6141), {tiles:,} "
-              f"tiles 1x1 round (ocean, part 98138); {lots}.", 8.5, tag="totals")
+    squares = sum(e.lot.needed for e in legend if is_square(e))
+    pieces = (f"{plates + tiles + squares:,} pieces: {plates:,} plates 1x1 round (land, part 6141), "
+              f"{tiles:,} tiles 1x1 round (ocean, part 98138)")
+    if template is not None or squares:
+        pieces += f", {squares:,} tiles 1x1 square (margin, part 3070b)"
+    flow.para(f"{pieces}; {lots}.", 8.5, tag="totals")
+    drawn = "Plates (land) are drawn with a ring, tiles (ocean) plain"
+    if template is not None or squares:
+        drawn += ", square tiles (margin) as squares"
     labels = [s.label for s in chosen]
     which = "A1 to H5" if len(chosen) == 40 else ", ".join(labels)
     flow.para(f"This set: 1 overview page, {n_legend_pages} legend page(s), {len(chosen)} section "
@@ -359,36 +396,47 @@ def overview_page(size: PageSize, title: str, grid: PositionPlacementGrid,
               + ("as in the kit's section instructions" if not arrangement.column_shift else "as hung")
               + ". Each "
               "section page is one 16 x 16 base at true size; the number on each stud is its lot "
-              "in the legend. Plates (land) are drawn with a ring, tiles (ocean) plain. Frames: "
+              f"in the legend. {drawn}. Frames: "
               + ", ".join(f"{COLUMNS[g.start // 16]}-{COLUMNS[g.end // 16]} frame {g.label}"
                           for g in arrangement.group_spans()) + ".", 8.5, tag="howto")
     src = arrangement.source
-    text = (f"Combination {arrangement.id} ({arrangement.name}): frames {arrangement.order_text} from "
-            f"left to right, {arrangement.centre} in the centre "
-            f"({latin1_safe(src['citation'].replace('–', '-'))}). Sections are labelled as hung"
-            + ("." if not arrangement.column_shift else
-               "; each section page names its physical frame and its kit section in the instructions.")
-            + " Every combination uses the same pieces.")
-    if not arrangement.in_instructions:
-        (left, right), = arrangement.unpeg()
-        text += (f" Combination {arrangement.id} is not one of the three combinations in the building "
-                 f"instructions: frame 2 is split between strips {left} and {right}; see the assembly "
-                 "page.")
-    flow.para(latin1_safe(text), 8.5, tag="arrangement")
+    citation = latin1_safe(src['citation'].replace('–', '-'))
+    if template is None:
+        text = (f"Combination {arrangement.id} ({arrangement.name}): frames {arrangement.order_text} "
+                f"from left to right, {arrangement.centre} in the centre ({citation}). Sections are "
+                "labelled as hung"
+                + ("." if not arrangement.column_shift else
+                   "; each section page names its physical frame and its kit section in the instructions.")
+                + " Every combination uses the same pieces.")
+        if not arrangement.in_instructions:
+            (left, right), = arrangement.unpeg()
+            text += (f" Combination {arrangement.id} is not one of the three combinations in the "
+                     f"building instructions: frame 2 is split between strips {left} and {right}; see "
+                     "the assembly page.")
+        flow.para(latin1_safe(text), 8.5, tag="arrangement")
+    else:  # feature 016 (FR-011): a curved map is hung one way only
+        flow.para(f"Template {template.get('id')} ({template.get('title')}): frames "
+                  f"{arrangement.order_text} from left to right as combination {arrangement.id} "
+                  f"({arrangement.name}), {arrangement.centre} in the centre ({citation}); "
+                  f"{REHANG_RULE}, so this map has no other combination. Sections are labelled as in "
+                  "the kit's instructions.", 8.5, tag="arrangement")
     flow.para("Provenance", 9, True, tag="heading", gap=0.3)
     flow.para(f"Layout: {layout.get('path') or '(in memory)'}", 8, tag="provenance")
     if layout.get("sha256"):
         flow.para(f"Layout SHA-256: {layout['sha256']}", 8, tag="provenance")
+    if template is not None:
+        flow.para(template_line(template), 8, tag="provenance")
     recipe = (map_meta or {}).get("recipe") or {}
     if recipe.get("id"):
         flow.para(f"Map recipe: {recipe['id']}" + (f" - {recipe['title']}" if recipe.get("title")
                                                    else ""), 8, tag="provenance")
         for ds in _datasets(map_meta):
-            flow.para(f"Dataset {ds.get('id')} {ds.get('version') or ''}: "
-                      f"{ds.get('title') or ''}. License: {ds.get('license')}. "
-                      f"Citation: {ds.get('citation')}", 8, tag="provenance")
+            flow.para(dataset_line(ds), 8, tag="provenance")
     else:
         flow.para(f"Source image: {layout.get('source_image')}", 8, tag="provenance")
+    if template is not None and template.get("dataset"):
+        flow.para(template_dataset_line(template["dataset"], [x.get("id") for x in _datasets(map_meta)]),
+                  8, tag="provenance")
     made = f"Made with {TOOL} {__version__}"
     tv = (map_meta or {}).get("tool_version")
     if tv and tv != __version__:
@@ -398,6 +446,33 @@ def overview_page(size: PageSize, title: str, grid: PositionPlacementGrid,
     items += flow.items
     items += furniture(size, title, 1, total)
     return Page(size=size, items=tuple(items), number=1, total=total, kind="overview")
+
+
+def dataset_line(ds: Dict[str, Any]) -> str:
+    return (f"Dataset {ds.get('id')} {ds.get('version') or ''}: {ds.get('title') or ''}. "
+            f"License: {ds.get('license')}. Citation: {ds.get('citation')}")
+
+
+def template_line(rec: Dict[str, Any]) -> str:
+    """The provenance line of a non-kit layout's template (``metadata.template``; feature 016,
+    data-model.md SheetProvenance.template): id, title, projection, file SHA-256, confirmation."""
+    src = rec.get("source") or {}
+    conf = src.get("confirmation")
+    when = (f"confirmed by the {conf.get('role')} on {conf.get('date')}" if conf
+            else "not confirmed by the project owner")
+    file = f"file {src['file']} " if src.get("file") else "file "
+    return (f"Template: {rec.get('id')} ({rec.get('title')}), projection "
+            f"{(rec.get('projection') or {}).get('proj')}; {file}SHA-256 {src.get('sha256')}; {when}.")
+
+
+def template_dataset_line(ds: Dict[str, Any], listed: Sequence[Optional[str]]) -> str:
+    """The dataset that decided the template's land and ocean, cited once: in full, or pointing to
+    the layer's dataset line above when a layer reads the same dataset."""
+    head = f"Template land and ocean from dataset {ds.get('id')} {ds.get('version') or ''}"
+    if ds.get("id") in listed:
+        return head + " (above)."
+    return (f"{head}: {ds.get('title') or ''}. License: {ds.get('license')}. "
+            f"Citation: {ds.get('citation')}")
 
 
 def _datasets(meta: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -427,10 +502,8 @@ def legend_pages(size: PageSize, legend: Sequence[LegendEntry], title: str, firs
         items: List[Item] = []
         head = "Legend" if len(chunks) == 1 else f"Legend ({k + 1} of {len(chunks)})"
         items.append(Text(MARGIN, 21.0, head, 16, bold=True, tag="legend-title"))
-        items.append(Text(MARGIN, 27.0, fit("Lot numbers are printed on the studs. Plates (land) "
-                                            "have a ring, tiles (ocean) are plain. Totals are for "
-                                            "the whole map.", 8.5, W - 2 * MARGIN), 8.5,
-                          tag="legend-note"))
+        note = LEGEND_NOTE_SQUARES if any(is_square(e) for e in legend) else LEGEND_NOTE
+        items.append(Text(MARGIN, 27.0, fit(note, 8.5, W - 2 * MARGIN), 8.5, tag="legend-note"))
         items.append(Text(MARGIN, 33.5, "Lot", 8, bold=True, tag="legend-head"))
         items.append(Text(MARGIN + 9, 33.5, "Color (LEGO id), part, element; BrickLink item / "
                           "color (id); Rebrickable part / color (id)", 8, bold=True, tag="legend-head"))

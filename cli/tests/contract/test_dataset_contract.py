@@ -68,7 +68,7 @@ def test_fetch_ok(runner, fixture_registry, monkeypatch):
 
 
 def test_fetch_by_recipe(runner, fixture_registry, monkeypatch):
-    files = {e: p.read_bytes() for e, p in fixture_registry.files.items()}
+    files = {e: p.read_bytes() for e, p in fixture_registry.files.items() if not isinstance(p, list)}
     by_url = {}
     from lego_image_processor.datasets import get_entry
     for i, b in files.items():

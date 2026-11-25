@@ -319,3 +319,69 @@ class TestMapProvenance:
         assert g.map_metadata is None
         assert "map" not in json.loads(g.to_json())["metadata"]
         assert PositionPlacementGrid.from_json(g.to_json()).map_metadata is None
+
+
+class TestTemplateLayout:
+    """Feature 016 (T052; FR-010; research R11; data-model.md Layout (extended)): ``metadata.template``,
+    ``metadata.margin_positions``, ``statistics.margin_tile_count`` and
+    ``statistics.color_frequency_by_part_type.square_tile`` only for non-kit layouts; a layout without
+    ``metadata.template`` reads as the kit."""
+
+    TEMPLATE = {"id": "winkel-tripel", "title": "Winkel tripel on the kit board",
+                "parts": {"land": "6141", "ocean": "98138", "margin": "3070b"},
+                "counts": {"land": 1, "ocean": 1, "margin": 2, "ring": 2}}
+
+    def _positions(self):
+        def p(x, y, part_type, part, color, name, code):
+            return PositionPlacement(x=x, y=y, color_id=color, color_name=name, lego_color_code=code,
+                                     part_type=part_type, lego_part_id=part)
+        return [p(0, 0, "plate", "6141", "lego_white", "White", "1"),
+                p(1, 0, "tile", "98138", "lego_medium_azur", "Medium Azur", "322"),
+                p(0, 1, "square_tile", "3070b", "lego_black", "Black", "26"),
+                p(1, 1, "square_tile", "3070b", "lego_white", "White", "1")]
+
+    def _grid(self, template=None):
+        return PositionPlacementGrid(width=2, height=2, positions=self._positions(), source_image="recipe:demo",
+                                     generated_at="2026-11-23T00:00:00Z", template=template)
+
+    def test_template_layout(self):
+        g = self._grid(self.TEMPLATE)
+        assert g.template == self.TEMPLATE
+        assert (g.land_positions, g.ocean_positions, g.margin_positions) == (1, 1, 2)
+        d = json.loads(g.to_json())
+        m = d["metadata"]
+        assert m["template"] == self.TEMPLATE and m["margin_positions"] == 2
+        assert list(m).index("margin_positions") == list(m).index("ocean_positions") + 1
+        s = d["statistics"]
+        assert s["margin_tile_count"] == 2
+        assert s["color_frequency_by_part_type"]["square_tile"] == {"lego_black": 1, "lego_white": 1}
+        assert s["color_frequency_by_part_type"]["plate"] == {"lego_white": 1}
+        assert s["total_tile_count"] == 4 and s["color_frequency"]["lego_white"] == 2
+
+    def test_round_trip(self):
+        g = self._grid(self.TEMPLATE)
+        again = PositionPlacementGrid.from_json(g.to_json())
+        assert again.template == self.TEMPLATE
+        assert again.to_json() == g.to_json()
+
+    def test_kit_layout_has_no_template_keys(self):
+        positions = [q for q in self._positions() if q.part_type != "square_tile"]
+        g = PositionPlacementGrid(width=2, height=1, positions=positions, source_image="recipe:demo",
+                                  generated_at="2026-11-23T00:00:00Z")
+        assert g.template is None
+        d = json.loads(g.to_json())
+        assert not {"template", "margin_positions"} & set(d["metadata"])
+        assert "margin_tile_count" not in d["statistics"]
+        assert set(d["statistics"]["color_frequency_by_part_type"]) == {"plate", "tile"}
+        assert list(d["statistics"]) == ["total_tile_count", "land_plate_count", "ocean_tile_count",
+                                         "unique_colors", "color_frequency", "color_frequency_by_part_type",
+                                         "most_common_color", "coverage_percentage"]
+
+    def test_absent_template_reads_as_kit(self):
+        g = PositionPlacementGrid.from_json(self._grid().to_json())
+        assert g.template is None and g.arrangement is None  # absent = kit template, combination A
+
+    def test_statistics_object(self):
+        st = self._grid(self.TEMPLATE).compute_statistics()
+        assert st.margin_tile_count == 2
+        assert self._grid().compute_statistics().margin_tile_count is None

@@ -3,7 +3,9 @@
 A lot is one part in one color. For each lot: needed (positions in the layout), owned (whole kits
 from the cited inventory, minus missing pieces, plus loose parts), shortfall, spares (only on
 request), to buy and surplus. Map pieces only (Q6): the frame, section bases and other kit parts
-are not listed. No prices are estimated (FR-018).
+are not listed. The list carries no prices; feature 011's ``parts estimate`` prices it offline.
+A layout on a non-kit template (feature 016) also has the margin's 1x1 square tiles (part 3070b),
+which no kit supplies; their lots follow the plates and round tiles.
 Not affiliated with or endorsed by The LEGO Group.
 """
 
@@ -16,9 +18,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from ..kit.colors import load_kit_color_table
 from ..kit.inventory import load_kit_inventory
 from ..kit.part_colors import load_part_colors
-from ..kit.part_numbers import load_part_numbers
+from ..kit.part_numbers import KIT_PARTS, load_part_numbers
 from ..kit.source import DISCLAIMER
 from ..layout.grid import CURRENT_SCHEMA_VERSION, LayoutSchemaError, PositionPlacementGrid
 from .owned import OwnedInputs, percent_text
@@ -26,12 +29,17 @@ from .resolve import ResolvedColor, Unresolved, resolve_color
 
 FORMAT_VERSION = "1"
 GRID_WIDTH, GRID_HEIGHT = 128, 80
-PART_ORDER = {"6141": 0, "98138": 1}
-PART_TYPE = {"6141": "plate", "98138": "tile"}
+PART_ORDER = {"6141": 0, "98138": 1, "3070b": 2}
+PART_TYPE = {"6141": "plate", "98138": "tile", "3070b": "square_tile"}
+# How tables and sheets write a part type (JSON keeps PART_TYPE); the kit's two read as before.
+PART_TYPE_TEXT = {"plate": "plate", "tile": "tile", "square_tile": "square tile"}
 ACKNOWLEDGEMENT = ("Catalog data: Rebrickable (rebrickable.com), BrickLink, LDraw, Brickset; kit "
                    "inventory from the LEGO 31203 building instructions.")
-PRICE_NOTE = ("Prices: none are estimated. Upload the list to BrickLink or Rebrickable to price it; "
-              "both price an imported list.")
+# The parts list carries no prices (its format is unchanged); feature 011 estimates them offline
+# from a BrickLink price guide snapshot with `parts estimate` (011 FR-019, research R15).
+PRICE_NOTE = ("Prices: none in this file. Estimate them offline with `lego-image-processor parts "
+              "estimate LAYOUT` (BrickLink price guide snapshot), or upload the list to BrickLink or "
+              "Rebrickable to price it.")
 
 
 class LayoutInputError(ValueError):
@@ -148,12 +156,46 @@ class Lot:
 
 
 @dataclass(frozen=True)
+class Leftover:
+    """One kit map element (part in a color) and how many of its pieces stay in the box (014).
+
+    ``kit_supply`` is the owned kits' supply of this part in this color (minus missing pieces;
+    loose parts are not in the box); ``used`` is the layout positions of this part in this cited
+    color. A kit color the layout does not use is left over whole.
+    """
+
+    part_id: str
+    color_key: str
+    lego_name: str
+    lego_id: int
+    element_id: str
+    rgb: Tuple[int, int, int]
+    kit_supply: int
+    used: int
+
+    @property
+    def part_type(self) -> str:
+        return PART_TYPE[self.part_id]
+
+    @property
+    def leftover(self) -> int:
+        return max(0, self.kit_supply - self.used)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"part_id": self.part_id, "part_type": self.part_type, "color_key": self.color_key,
+                "lego": {"name": self.lego_name, "id": self.lego_id, "element_id": self.element_id},
+                "rgb": list(self.rgb), "kit_supply": self.kit_supply, "used": self.used,
+                "leftover": self.leftover}
+
+
+@dataclass(frozen=True)
 class PartsList:
     layout: Dict[str, Any]
     owned: OwnedInputs
     lots: Tuple[Lot, ...]
     citations: Tuple[Dict[str, Any], ...]
     kit_id: str = "31203"
+    leftovers: Tuple[Leftover, ...] = ()
 
     @property
     def verified_lots(self) -> Tuple[Lot, ...]:
@@ -179,6 +221,7 @@ class PartsList:
             "surplus": sum(l.surplus for l in lots),
             "verified_lots": len(self.verified_lots),
             "unverified_lots": len(self.unverified_lots),
+            "leftover": sum(l.leftover for l in self.leftovers),
         }
 
     def to_dict(self) -> Dict[str, Any]:
@@ -193,6 +236,7 @@ class PartsList:
                       "ignored_rows": o.ignored_rows,
                       "spares_percent": percent_text(o.spares_percent)},
             "lots": [l.to_dict() for l in self.lots],
+            "leftovers": [l.to_dict() for l in self.leftovers],
             "totals": self.totals(),
             "unverified": [{"part_id": l.part_id, "color_key": l.color_key, "reason": l.reason,
                             "needed": l.needed} for l in self.unverified_lots],
@@ -204,6 +248,23 @@ class PartsList:
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), indent=2, ensure_ascii=False) + "\n"
+
+
+def owned_parts(grid: PositionPlacementGrid) -> Tuple[str, ...]:
+    """The map parts an owned or missing CSV is read for (``parse_owned_csv(parts=)``, feature 016
+    T110): the kit's two, plus the square tile 3070b when the layout has square tiles. A kit
+    layout's CSVs are read as before feature 016, so a 3070b row there is ignored and counted."""
+    used = {pos.lego_part_id for pos in grid.positions}
+    return tuple(p for p in PART_ORDER if p in KIT_PARTS or p in used)
+
+
+def template_block(grid: PositionPlacementGrid) -> Optional[Dict[str, Any]]:
+    """``{id, title}`` of a non-kit layout's template (``metadata.template``, feature 016); None for
+    the kit template (data-model.md PartsList.layout.template)."""
+    rec = getattr(grid, "template", None)
+    if not rec:
+        return None
+    return {"id": rec.get("id"), "title": rec.get("title")}
 
 
 def _arrangement_block(grid: PositionPlacementGrid) -> Dict[str, Any]:
@@ -255,6 +316,22 @@ def _citations(lots: Tuple[Lot, ...]) -> Tuple[Dict[str, Any], ...]:
     return tuple(out)
 
 
+def _leftovers(inv, owned: OwnedInputs, used: Counter) -> Tuple[Leftover, ...]:
+    """One row per kit map element, plates then tiles by LEGO color id (feature 014 FR-001)."""
+    table = load_kit_color_table()
+    rows = []
+    for e in inv.by_role("land") + inv.by_role("ocean"):
+        part_id = {"land": "6141", "ocean": "98138"}[e.role]
+        kc = table.by_key(e.color_key)
+        supply = max(0, owned.kits * inv.supplied_for(part_id, e.color_key)
+                     - owned.missing((part_id, e.color_key)))
+        rows.append(Leftover(part_id=part_id, color_key=e.color_key, lego_name=kc.lego.name,
+                             lego_id=kc.lego.id, element_id=e.element_id, rgb=tuple(kc.rgb),
+                             kit_supply=supply, used=used[(part_id, e.color_key)]))
+    rows.sort(key=lambda l: (PART_ORDER[l.part_id], l.lego_id))
+    return tuple(rows)
+
+
 def build_parts_list(layout: Union[LayoutInput, PositionPlacementGrid],
                      layout_path: Optional[Union[str, Path]] = None,
                      owned: Optional[OwnedInputs] = None, kit_id: str = "31203",
@@ -279,6 +356,7 @@ def build_parts_list(layout: Union[LayoutInput, PositionPlacementGrid],
         codes.setdefault(key, set()).add(str(pos.lego_color_code))
     p = owned.spares_percent
     lots: List[Lot] = []
+    used: Counter = Counter()
     for (part_id, color_key), needed in counts.items():
         name, code = labels[(part_id, color_key)]
         if len(codes[(part_id, color_key)]) > 1:
@@ -288,6 +366,8 @@ def build_parts_list(layout: Union[LayoutInput, PositionPlacementGrid],
             res = resolve_color(part_id, color_key, code)
         # Supply and owned parts are keyed by the cited color, which may be named differently.
         ck = res.color.key if isinstance(res, ResolvedColor) else color_key
+        if isinstance(res, ResolvedColor):
+            used[(part_id, ck)] += needed
         supply = max(0, owned.kits * inv.supplied_for(part_id, ck)
                      - owned.missing((part_id, ck)))
         loose = owned.loose((part_id, ck))
@@ -310,5 +390,8 @@ def build_parts_list(layout: Union[LayoutInput, PositionPlacementGrid],
         "map": _map_provenance(grid.map_metadata),
         "arrangement": _arrangement_block(grid),
     }
+    template = template_block(grid)
+    if template is not None:  # feature 016: non-kit layouts only, so kit lists keep their bytes
+        layout_block["template"] = template
     return PartsList(layout=layout_block, owned=owned, lots=lots_t, citations=_citations(lots_t),
-                     kit_id=kit_id)
+                     kit_id=kit_id, leftovers=_leftovers(inv, owned, used))

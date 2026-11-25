@@ -53,6 +53,7 @@ pp. 7–8; `data/kit_31203_arrangements.json`).
 - Q: Does the runtime image contain the CLI library? → A: No. The library runs in the build stage; the runtime stage copies the output and installs only the web service and its server dependencies. Principle VI is met because every file and every number shown comes from the library at build time. (agent decision: memory and image size, owner decision 3 invites it)
 - Q: Minimum machines? → A: `min_machines_running = 0` with `auto_stop_machines = "stop"` (recommended in plan.md; cold start is a second or two). (agent decision, FOR OWNER REVIEW)
 - Q: Round studs in the preview? → A: No; the library's square-per-stud renderer at 10 px per stud (map pages) and 3 px (thumbnails), shown with pixelated scaling. A round-stud style would need a new CLI option (reserved: CLI flags). (agent decision)
+  - Amended 2026-11-23 (owner): the map-page preview and the palette chooser canvas show round studs on a black background, as built (`write_preview(style="round")`, the library and CLI default; `map build --preview-style round|square`); thumbnails stay square with pixelated scaling, easier to read when small.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -228,6 +229,9 @@ DNS record.
   a dataset MUST show that dataset's citation and license.
 - **FR-009**: Pages MUST work without JavaScript, set no cookies, and load nothing from third
   parties (no trackers, analytics, fonts or scripts from other sites).
+  *Amended by feature 015 (FR-020, owner decision 2026-11-22): the only script allowed is the
+  site's own hand-written `/static/palette.js` on map pages (progressive enhancement; no inline
+  script, no front-end build); pages still work fully without it.*
 - **FR-010**: Pages MUST be usable on a 360 px wide phone without horizontal scrolling, and meet
   basic accessibility: one `h1` per page, landmarks, text alternatives for images, visible focus,
   sufficient contrast, a language attribute, and the current combination exposed to assistive

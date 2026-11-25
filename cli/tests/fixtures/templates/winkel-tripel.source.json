@@ -1,0 +1,13 @@
+{
+  "fixture": "winkel-tripel.json",
+  "what": "Synthetic, confirmed winkel-tripel template for the test suite (feature 016, T025): 128 x 80 studs, the Winkel tripel outline (phi1 50.4598, lon0 11.1 E, exact extent, contain fit) and 24 check points from the run-time numpy formula (src/templates/winkel.py), stud locations from a Newton inverse of that formula (4 decimals), land from a fixed rule on the locations (not ETOPO), one recorded correction, and the test confirmation {role: project owner, date: 2026-11-23}. Not a map of the Earth; it stands in for src/data/templates/winkel-tripel.json until that file exists and is confirmed. tests/unit/templates/test_fixture_template.py regenerates it byte for byte.",
+  "generator": "PYTHONPATH=tools python -m maptemplates.testing tests/fixtures/templates (run from cli/); tools/maptemplates/testing.py write_synthetic_template",
+  "generated_on": "2026-11-23",
+  "python": "3.11.13",
+  "libraries": {
+    "numpy": "1.26.4"
+  },
+  "license": "Synthetic, made by the project's own code; no dataset values are used (the ETOPO 2022 and ERSST v5 registry entries are named only so the files have the contract's shape).",
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group.",
+  "sha256": "8cc76a1906a7f745451f4d270532f84f8c56f3de3400dba1e55c1b0f676b4ec0"
+}

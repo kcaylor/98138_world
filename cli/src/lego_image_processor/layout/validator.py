@@ -1,4 +1,10 @@
-"""Layout validator for LEGO World Map kit compliance."""
+"""Layout validator for LEGO World Map kit compliance.
+
+Colors and quantities are checked against one kit 31203. A layout on a non-kit template (feature
+016, ``metadata.template``) is checked against its own template's classes instead of the kit's
+land/sea mask, and its margin's 1x1 square tiles (part 3070b) are reported as unavailable in the
+kit with no suggestion, since no kit has them (FR-016, research R17). Kit layouts validate as before.
+"""
 
 from __future__ import annotations
 
@@ -13,7 +19,7 @@ import numpy as np
 
 from .grid import DISCLAIMER, PositionPlacementGrid
 from .kit_spec import LEGOWorldMapKitSpecification
-from .position import LAND_PART_TYPE, OCEAN_PART_TYPE
+from .position import LAND_PART_TYPE, MARGIN_PART_ID, MARGIN_PART_TYPE, OCEAN_PART_TYPE
 from ..core.color_quantizer import delta_e_2000
 from ..kit import load_kit_color_table
 from ..palette.converter import rgb_to_lab
@@ -58,12 +64,13 @@ class ColorUnavailableViolation(Violation):
 
     Attributes:
         type: Always "color_unavailable"
-        part_type: Affected part type ("plate" or "tile")
-        part_id: LEGO part ID ("6141" or "98138")
+        part_type: Affected part type ("plate", "tile", or "square_tile" on a non-kit template)
+        part_id: LEGO part ID ("6141", "98138" or "3070b")
         color_id: Required color not in kit
         color_name: Human-readable color name
         positions_required: Number of positions needing this color
-        suggested_alternative: Nearest available color in kit
+        suggested_alternative: Nearest available color in kit (None for square tiles: the kit
+            has none)
     """
 
     part_type: str
@@ -136,25 +143,32 @@ class QuantityExceededViolation(Violation):
 @dataclass
 class MaskMismatchViolation(Violation):
     """Positions whose part (plate on land, tile on ocean) does not match the kit's land/sea mask
-    in the layout's arrangement (feature 007).
+    in the layout's arrangement (feature 007), or, for a layout on a non-kit template, the part
+    of the template's class at that stud (feature 016: plate on land, tile on ocean, square tile
+    on the margin).
 
     Attributes:
         arrangement: Arrangement id the mask was checked in (A-E)
         positions_required: Number of mismatched positions
         examples: Up to 10 mismatches as {x, y, part_type, expected}
+        template: The non-kit template id checked against; None for the kit mask (not written)
     """
 
     arrangement: str
     positions_required: int
     examples: List[Dict[str, Any]] = field(default_factory=list)
+    template: Optional[str] = None
 
     @property
     def type(self) -> str:
         return "mask_mismatch"
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"type": self.type, "arrangement": self.arrangement,
-                "positions_required": self.positions_required, "examples": list(self.examples)}
+        out = {"type": self.type, "arrangement": self.arrangement}
+        if self.template is not None:
+            out["template"] = self.template
+        out.update(positions_required=self.positions_required, examples=list(self.examples))
+        return out
 
 
 @dataclass
@@ -177,10 +191,11 @@ class ValidationReport:
     kit_id: str
     layout_file: str
     arrangement: str = "A"
+    template: Optional[Dict[str, Any]] = None  # feature 016: {id, title}; None (not written) on the kit
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert report to dictionary."""
-        return {
+        out = {
             "buildable": self.buildable,
             "buildability_score": round(self.buildability_score, 4),
             "violations": [v.to_dict() for v in self.violations],
@@ -188,8 +203,11 @@ class ValidationReport:
             "kit_id": self.kit_id,
             "layout_file": self.layout_file,
             "arrangement": self.arrangement,
-            "disclaimer": DISCLAIMER,
         }
+        if self.template is not None:
+            out["template"] = dict(self.template)
+        out["disclaimer"] = DISCLAIMER
+        return out
 
     def to_json(self, indent: int = 2) -> str:
         """Convert report to JSON string."""
@@ -239,12 +257,15 @@ class LayoutValidator:
         # Count colors by part type
         plate_colors = Counter()
         tile_colors = Counter()
+        square_colors = Counter()  # feature 016: a non-kit template's margin
         color_names = {}
 
         for pos in layout.positions:
             color_names[pos.color_id] = pos.color_name
             if pos.part_type == LAND_PART_TYPE:
                 plate_colors[pos.color_id] += 1
+            elif pos.part_type == MARGIN_PART_TYPE:
+                square_colors[pos.color_id] += 1
             else:
                 tile_colors[pos.color_id] += 1
 
@@ -314,11 +335,27 @@ class LayoutValidator:
                     ))
                     total_violation_positions += (count - available)
 
-        # Land/sea mask in the layout's arrangement (feature 007)
+        # Square tiles (feature 016): no kit 31203 supplies part 3070b, so every color of it is
+        # unavailable, with no suggestion (a template map always needs pieces beyond the kit).
+        for color_id, count in square_colors.items():
+            violations.append(ColorUnavailableViolation(
+                part_type=MARGIN_PART_TYPE,
+                part_id=MARGIN_PART_ID,
+                color_id=color_id,
+                color_name=color_names.get(color_id, color_id),
+                positions_required=count,
+            ))
+            total_violation_positions += count
+
+        # Land/sea mask in the layout's arrangement (feature 007), or the layout's own template
         from .arrangement import arrangement_of
 
         arrangement = arrangement_of(layout)
-        mismatch = self._mask_mismatch(layout, arrangement)
+        template = self._template(layout)
+        if template is None:
+            mismatch = self._mask_mismatch(layout, arrangement)
+        else:
+            mismatch = self._template_mismatch(layout, template, arrangement)
         if mismatch is not None:
             violations.append(mismatch)
             total_violation_positions += mismatch.positions_required
@@ -336,7 +373,40 @@ class LayoutValidator:
             kit_id=self._kit_spec.kit_id,
             layout_file=layout_file,
             arrangement=arrangement.id,
+            template=None if template is None else {"id": template.id, "title": template.title},
         )
+
+    @staticmethod
+    def _template(layout: PositionPlacementGrid):
+        """The non-kit template a layout records (``metadata.template``), or None for the kit.
+
+        Raises ``UnknownTemplateError`` (a ``ValueError``) for a template id this version does not
+        know."""
+        rec = getattr(layout, "template", None)
+        if not rec:
+            return None
+        from ..templates import KIT_TEMPLATE_ID, load_template
+
+        tid = rec.get("id") if isinstance(rec, dict) else None
+        if tid == KIT_TEMPLATE_ID:
+            return None
+        return load_template(tid)
+
+    @staticmethod
+    def _template_mismatch(layout: PositionPlacementGrid, template, arrangement) -> Optional["MaskMismatchViolation"]:
+        """Positions whose part type is not the part of the template's class at that stud."""
+        expected_type = {"land": LAND_PART_TYPE, "ocean": OCEAN_PART_TYPE, "margin": MARGIN_PART_TYPE}
+        bad = []
+        for p in layout.positions:
+            if not (0 <= p.x < template.width and 0 <= p.y < template.height):
+                continue
+            expected = expected_type[template.class_at(p.y, p.x)]
+            if p.part_type != expected:
+                bad.append({"x": p.x, "y": p.y, "part_type": p.part_type, "expected": expected})
+        if not bad:
+            return None
+        return MaskMismatchViolation(arrangement=arrangement.id, positions_required=len(bad),
+                                     examples=bad[:10], template=template.id)
 
     @staticmethod
     def _mask_mismatch(layout: PositionPlacementGrid, arrangement) -> Optional["MaskMismatchViolation"]:

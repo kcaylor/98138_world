@@ -1,0 +1,20 @@
+{
+  "fixture": "api/*.json",
+  "synthetic": true,
+  "note": "Synthetic BrickLink API responses for tests, written by hand in the documented response shape (research R4, R7; not yet checked against the live documentation). Values are made up; none is BrickLink data. {CONSUMER_KEY} is replaced by the test opener with the consumer key of the request, to test that echoed credentials are redacted.",
+  "files": {
+    "price_4073_1_sold.json": "plate 6141 White (BrickLink 4073, color 1), guide_type sold",
+    "price_4073_1_stock.json": "plate 6141 White, guide_type stock",
+    "price_98138_63_sold.json": "tile 98138 Earth Blue (BrickLink color 63 Dark Blue), guide_type sold",
+    "price_98138_63_stock.json": "tile 98138 Earth Blue, guide_type stock",
+    "price_98138_63_sold_numbers.json": "as price_98138_63_sold.json with prices as JSON numbers",
+    "no_sales.json": "a guide with no data (unit_quantity 0)",
+    "not_found.json": "RESOURCE_NOT_FOUND (HTTP 404)",
+    "error_400.json": "PARAMETER_MISSING_OR_INVALID (HTTP 400)",
+    "error_401_token_ip.json": "token bound to another IP address (HTTP 401)",
+    "error_401_signature.json": "bad OAuth signature (HTTP 401)",
+    "error_429.json": "too many requests (HTTP 429)",
+    "error_daily_limit.json": "daily request limit reached"
+  },
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
+}

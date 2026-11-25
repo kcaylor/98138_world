@@ -1,0 +1,13 @@
+{
+  "fixture": "winkel-tripel-ice.json",
+  "what": "Synthetic ice regions of the synthetic winkel-tripel test template (feature 016, T025): land ice on land studs whose location lies south of 60 S, sea ice on ocean studs poleward of 75 degrees (board coordinates, row-major), with the template's layout digest in source.template_layout_sha256. tests/unit/templates/test_fixture_template.py regenerates it byte for byte.",
+  "generator": "PYTHONPATH=tools python -m maptemplates.testing tests/fixtures/templates (run from cli/); tools/maptemplates/testing.py write_synthetic_template",
+  "generated_on": "2026-11-23",
+  "python": "3.11.13",
+  "libraries": {
+    "numpy": "1.26.4"
+  },
+  "license": "Synthetic, made by the project's own code; no dataset values are used (the ETOPO 2022 and ERSST v5 registry entries are named only so the files have the contract's shape).",
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group.",
+  "sha256": "2724e038ca0798f901ef664f80c531e834cb67f08986ee33d559801686970ad1"
+}

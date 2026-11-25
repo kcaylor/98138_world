@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% set nav = 'maps' %}
 {% set s = variant.summary %}
-{% block title %}{{ map.title }} · Combination {{ combination }} · 98138.world{% endblock %}
-{% block description %}{{ map.description }} Combination {{ combination }}: {{ arrangement.description }}.{% endblock %}
+{% block title %}{{ map.title }} · {% if template %}{{ template.projection }}{% else %}Combination {{ combination }}{% endif %} · 98138.world{% endblock %}
+{% block description %}{{ map.description }} {% if template %}{{ template.projection }} version: {{ template.title }}; its frames cannot be re-hung.{% else %}Combination {{ combination }}: {{ arrangement.description }}.{% endif %}{% endblock %}
 {% block main %}
 <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Maps</a> <span aria-hidden="true">/</span> <span>{{ map.title }}</span></nav>
 <h1>{{ map.title }}</h1>
@@ -14,16 +14,19 @@
     <ul aria-labelledby="combo-label">
     {% for a in arrangements %}
       <li><a href="/maps/{{ map.id }}/{{ a.id }}"{% if a.id == combination %} aria-current="page"{% endif %}><span class="combo-id">{{ a.id }}</span> <span class="combo-name">{{ a.centre }}</span></a></li>
-    {% endfor %}
+    {% endfor %}{% for t in map_templates %}
+      <li class="combo-template"><a href="/maps/{{ map.id }}/{{ t.id }}"{% if t.id == combination %} aria-current="page"{% endif %}><span class="combo-id">{{ t.projection }}</span> <span class="combo-name">curved map</span></a></li>{% endfor %}
     </ul>
   </nav>
-  <figure class="preview">
-    <img src="/maps/{{ map.id }}/{{ combination }}/preview.png" width="1280" height="800" class="stud-img"
-         alt="Stud preview of the {{ map.title }} map hung as combination {{ combination }}, {{ arrangement.centre }} in the centre">
-    <figcaption><strong>Combination {{ combination }}:</strong> {{ arrangement.description }}. Left to right: {{ arrangement.frames | join(" · ") }}. One square per stud; 128 × 80 studs.{% if not arrangement.in_instructions %} Combination {{ combination }} is not one of the three combinations in the building instructions; see how to hang it below.{% endif %}</figcaption>
-  </figure>
+  <figure class="preview" id="preview-figure">
+    <img id="preview-img" src="/maps/{{ map.id }}/{{ combination }}/preview.png" width="1280" height="800" class="stud-img"
+         alt="{% if template %}Stud preview of the {{ map.title }} map on the {{ template.projection }} projection, with square tiles in the margin{% else %}Stud preview of the {{ map.title }} map hung as combination {{ combination }}, {{ arrangement.centre }} in the centre{% endif %}">
+    <figcaption>{% if template %}{% set tc = template.counts %}<strong>{{ template.projection }}:</strong> {{ template.title }}, {{ template.board.modules | join(" × ") }} modules, {{ template.board.width }} × {{ template.board.height }} studs ({{ tc.land | n }} land, {{ tc.ocean | n }} ocean, {{ tc.margin | n }} margin). Round studs for land and ocean, square tiles in the margin.{% else %}<strong>Combination {{ combination }}:</strong> {{ arrangement.description }}. Left to right: {{ arrangement.frames | join(" · ") }}. One square per stud; 128 × 80 studs.{% if arrangement.in_instructions == false %} Combination {{ combination }} is not one of the three combinations in the building instructions; see how to hang it below.{% endif %}{% endif %}</figcaption>
+  </figure>{% if template %}
+  <p class="note rehang-note">The frames of a curved map cannot be re-hung: this version hangs one way, frames 1·2·3 as built. Combinations A–E are the kit's own grid.</p>{% endif %}
 </section>
 
+{% if not template %}
 <section aria-labelledby="hang-heading" class="panel assembly">
   <h2 id="hang-heading">How to hang the frames <span class="sub">as combination {{ combination }}</span></h2>
   <p>{{ arrangement.note }}</p>
@@ -33,10 +36,35 @@
   </ol>
   <p class="note">The build sheets end with this as an assembly page.</p>
 </section>
+{% endif %}
+
+{% if variant.files.cells %}
+<section id="palette" class="panel palette" aria-labelledby="palette-heading" data-cells="/maps/{{ map.id }}/{{ combination }}/cells.json" hidden>
+  <h2 id="palette-heading">Try other colors</h2>
+  <p class="pc-note"><strong>Preview only: parts lists, prices, build sheets and downloads use the map's default colors.</strong> Pick a color for each class from the colors each part is made in, change the number of classes and their bounds, and show ice as White. Your choices stay in this page's address, so you can share the link.</p>
+  <p class="pc-status" role="status" aria-live="polite"></p>
+  <fieldset class="pc-ice">
+    <legend>Ice-covered regions</legend>
+    <label><input type="radio" name="pc-ice" value="data" checked> Show the map's data</label>
+    <label><input type="radio" name="pc-ice" value="white"> Show as White ice</label>
+    <p class="note pc-ice-note"></p>
+  </fieldset>
+  <div class="pc-layers"></div>
+  <div class="pc-actions"><div class="pc-shadow"></div><button type="button" class="pc-reset">Reset to the map's colors</button></div>
+  <details class="pc-palette">
+    <summary>All colors the parts are made in</summary>
+    <p class="note">BrickLink names, light to dark; the number is CIE L* (higher is lighter). Bold = in kit 31203; outlined = in use above. Swatches use the on-screen RGB from the cited color tables, so real plastic looks a little different.</p>
+    <div class="pc-swatches"></div>
+  </details>
+  <p class="note">{{ DISCLAIMER }}</p>
+</section>
+<noscript><p class="note pc-noscript">The color chooser needs JavaScript. The preview above shows the map's colors, and every download works without it.</p></noscript>
+<script src="/static/palette.js?v={{ asset_version }}" defer></script>
+{% endif %}
 
 <div class="columns">
 <section aria-labelledby="dl-heading" class="panel">
-  <h2 id="dl-heading">Downloads <span class="sub">for combination {{ combination }}</span></h2>
+  <h2 id="dl-heading">Downloads <span class="sub">{% if template %}for the {{ template.projection }} version{% else %}for combination {{ combination }}{% endif %}</span></h2>
   <ul class="downloads">
   {% for kind in download_kinds %}{% set f = variant.files.get(kind) %}
     {% if f %}
@@ -56,10 +84,37 @@
     <div><dt>Lots</dt><dd>{{ s.lots }}</dd></div>
     <div><dt>One 31203 kit covers</dt><dd>{{ s.one_kit_covers | n }} <span class="pct">({{ (100 * s.one_kit_covers / s.pieces) | round(1) }}%)</span></dd></div>
     <div><dt>To buy with one kit</dt><dd>{% if s.to_buy_with_kit %}{{ s.to_buy_with_kit | n }} <span class="pct">in {{ s.lots_to_buy_with_kit }} lots</span>{% else %}nothing{% endif %}</dd></div>
+    {% if s.left_over_with_kit is defined %}<div><dt>Left over in the box</dt><dd>{{ s.left_over_with_kit | n }} <span class="pct">pieces of one kit</span></dd></div>{% endif %}
   </dl>
-  <p class="note">Map pieces only (no frames or baseplates). Every arrangement uses the same pieces; only the frames' order changes.</p>
+  <p class="note">{% if template %}Map pieces only (no frames or baseplates). Square tiles (part 3070b) fill the margin; one 31203 kit supplies none, so they are all to buy.{% else %}Map pieces only (no frames or baseplates). Every arrangement uses the same pieces; only the frames' order changes.{% endif %}</p>
 </section>
 </div>
+
+{% if manifest.prices and variant.estimates %}{% set p = manifest.prices %}
+<section aria-labelledby="cost-heading" class="panel">
+  <h2 id="cost-heading">Estimated cost</h2>
+  <dl class="costs">
+  {% for kind in ('full', 'one_kit') %}{% set e = variant.estimates[kind] %}{% set w = e.whole_dollars %}
+    <div class="cost">
+      <dt>{{ e.label }}</dt>
+      {% if e.nothing_to_buy %}
+      <dd class="cost-figure covered">One kit covers every piece</dd>
+      {% else %}
+      <dd class="cost-figure">about {{ w.average | usd }} <span class="range">(range {{ w.low | usd }}{% if w.high != w.low %}–{{ w.high | usd }}{% endif %})</span></dd>
+      {% endif %}
+      {% if not e.complete %}
+      <dd class="incomplete">Incomplete: {{ e.unpriced.pieces | plural('piece') }} in {{ e.unpriced.lots | plural('color') }} could not be priced.</dd>
+      {% endif %}
+    </div>
+  {% endfor %}
+  </dl>
+  {% if p.staleness.stale %}<p class="cost-warning">These prices are from {{ p.snapshot.retrieved_on }} and may be out of date.</p>{% endif %}
+  {% if not p.snapshot.complete %}<p class="cost-warning">The price snapshot is partial.</p>{% endif %}
+  <p class="note">Prices from {{ p.snapshot.retrieved_on }}: {{ p.basis }} Source: <a href="{{ p.source.url }}">BrickLink price guide</a>.</p>
+  <p class="note">{{ p.estimate_note }}</p>
+  <p class="note ack">{{ p.attribution }}</p>
+</section>
+{% endif %}
 
 <section aria-labelledby="lots-heading" class="panel">
   <h2 id="lots-heading">Lots</h2>
@@ -84,6 +139,25 @@
     </tbody>
   </table>
   </div>
+  {% if variant.leftovers %}
+  <h3 id="leftovers-heading">Left over in the box <span class="sub">one 31203 kit</span></h3>
+  <div class="table-scroll" role="region" aria-labelledby="leftovers-heading" tabindex="0">
+  <table class="lots leftovers">
+    <thead><tr><th scope="col">Color (LEGO)</th><th scope="col">Part</th><th scope="col" class="num">One kit has</th><th scope="col" class="num">Used</th><th scope="col" class="num">Left over</th></tr></thead>
+    <tbody>
+    {% for r in variant.leftovers %}
+      <tr class="leftover-row">
+        <th scope="row"><svg class="swatch" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6" fill="rgb({{ r.rgb | join(',') }})"/></svg>{{ r.lego.name }} <span class="id">({{ r.lego.id }}; element {{ r.lego.element_id }})</span></th>
+        <td>{{ part_labels.get(r.part_id, r.part_type) }} <span class="id">{{ r.part_id }}</span></td>
+        <td class="num">{{ r.kit_supply | n }}</td><td class="num">{{ r.used | n }}</td><td class="num">{{ r.leftover | n }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+    <tfoot><tr><th scope="row" colspan="4">Total left over</th><td class="num">{{ s.left_over_with_kit | n }}</td></tr></tfoot>
+  </table>
+  </div>
+  <p class="note">Map pieces of one kit that this map does not use, per color; a kit color the map does not use at all stays in the box whole. Pieces beyond one kit are under To buy above.</p>
+  {% endif %}
   <p class="note ack">{{ manifest.acknowledgement }} Rebrickable part and color IDs courtesy of <a href="https://rebrickable.com">Rebrickable</a>.</p>
 </section>
 
@@ -91,10 +165,11 @@
 <section aria-labelledby="layers-heading" class="panel">
   <h2 id="layers-heading">How this map is made</h2>
   <ul class="layers">
-  {% for l in data.layers %}
+  {% for l in variant.layers or data.layers %}
     <li><strong>{{ l.class | capitalize }}:</strong> {{ role_label.get(l.role, l.role) }}{% if l.dataset %} ({{ l.dataset }}{% if l.classification %}, {{ l.classification }}{% endif %}){% endif %} on {{ l.cells | n }} {{ part_labels.get(l.part_id, l.part_id) }} pieces (part {{ l.part_id }}).</li>
   {% endfor %}
-  {% if variant.shadow_cells %}<li>Land shadow: {{ variant.shadow_cells | n }} ocean studs just east of land, as on the official design.</li>{% endif %}
+  {% if variant.shadow_cells %}<li>Land shadow: {{ variant.shadow_cells | n }} ocean studs just east of land, as on the official design.</li>{% endif %}{% if template and variant.margin %}{% set mg = variant.margin %}
+  <li>Margin: {{ mg.cells.margin | n }} square tiles (part {{ mg.part_id }}) in {% for lot in variant.lots if lot.part_id == mg.part_id and lot.color_key == mg.color %}{{ lot.lego.name }}{% else %}{{ mg.color }}{% endfor %} where the board is off the globe{% if mg.ring %}, {{ mg.cells.ring | n }} of them an outline ring in {% for lot in variant.lots if lot.part_id == mg.part_id and lot.color_key == mg.ring %}{{ lot.lego.name }}{% else %}{{ mg.ring }}{% endfor %}{% endif %}.</li>{% endif %}
   </ul>
   <p class="note">Recipe <code>{{ map.id }}</code>, SHA-256 <code class="hash">{{ data.recipe.sha256[:16] }}…</code></p>
   {% if variant.warnings %}
@@ -107,7 +182,7 @@
 
 <section aria-labelledby="data-heading" class="panel">
   <h2 id="data-heading">Data and sources</h2>
-  {% for c in data.citations %}
+  {% for c in variant.citations or data.citations %}
   <div class="citation">
     <p class="cite-title">{{ c.title }}{% if c.version %} <span class="id">({{ c.version }})</span>{% endif %}</p>
     <p>{{ c.citation }}{% if c.doi %} <a href="https://doi.org/{{ c.doi }}">https://doi.org/{{ c.doi }}</a>{% endif %}</p>
@@ -116,9 +191,16 @@
   </div>
   {% endfor %}
   {% for d in data.datasets %}
+  {% if d.files %}
+  <p class="note">Pinned files: {{ d.id }}, {{ d.files }} files, {{ d.size | size }} in all, each pinned by SHA-256; manifest SHA-256 <code class="hash">{{ d.files_sha256[:16] }}…</code></p>
+  {% elif d.sha256 %}
   <p class="note">Pinned file: {{ d.id }}, {{ d.size | size }}, SHA-256 <code class="hash">{{ d.sha256[:16] }}…</code></p>
+  {% else %}
+  <p class="note">Pinned file: {{ d.id }}, {{ d.size | size }}, content SHA-256 <code class="hash">{{ d.content_sha256[:16] }}…</code> (built on request by the server; the checksum covers the data, not the file header)</p>
+  {% endif %}
   {% endfor %}
-  <p class="note">Frame combinations: {{ manifest.arrangement_source.title }}, pp. 7–8.{% if not arrangement.in_instructions %} Combination {{ combination }} is not among them; why it is possible: {{ arrangement.citation }}.{% endif %}</p>
+  <p class="note">Frame combinations: {{ manifest.arrangement_source.title }}, pp. 7–8.{% if not template and arrangement.in_instructions == false %} Combination {{ combination }} is not among them; why it is possible: {{ arrangement.citation }}.{% endif %}</p>{% if template %}
+  <p class="note">Template <code>{{ template.id }}</code>: {{ template.description }} Template file SHA-256 <code class="hash">{{ template.source.sha256[:16] }}…</code>{% if template.source.confirmation %}, confirmed by the {{ template.source.confirmation.role }} on {{ template.source.confirmation.date }}{% endif %}.</p>{% endif %}
 </section>
 </div>
 {% endblock %}

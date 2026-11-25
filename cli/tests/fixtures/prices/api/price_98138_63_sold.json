@@ -1,0 +1,5 @@
+{"meta": {"description": "OK", "message": "OK", "code": 200},
+ "data": {"item": {"no": "98138", "type": "PART"}, "new_or_used": "N", "currency_code": "USD",
+          "min_price": "0.0200", "max_price": "0.6000", "avg_price": "0.0910",
+          "qty_avg_price": "0.0690", "unit_quantity": 812, "total_quantity": 90412,
+          "price_detail": []}}

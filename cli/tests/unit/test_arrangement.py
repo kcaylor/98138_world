@@ -183,3 +183,15 @@ def test_position_outside_grid():
                                      lego_color_code="1", part_type="plate", lego_part_id="6141"))
     with pytest.raises(ArrangementError, match="outside"):
         arrange_grid(g, parse_arrangement("B"))
+
+
+# --- a layout on a non-kit template cannot be re-hung (feature 016 T070; FR-011) ----------------
+
+@pytest.mark.parametrize("aid", ["A", "B", "C"])
+def test_template_layout_cannot_be_rehung(confirmed_winkel, aid):
+    from ..winkel_layouts import winkel_grid
+    grid = winkel_grid(confirmed_winkel)
+    with pytest.raises(ArrangementError) as exc:
+        arrange_grid(grid, parse_arrangement(aid))
+    assert str(exc.value) == "the frames of a curved map cannot be re-hung (template winkel-tripel)"
+    assert arrangement_of(grid).id == "A"  # reading the arrangement still works

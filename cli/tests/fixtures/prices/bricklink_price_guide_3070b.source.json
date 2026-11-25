@@ -1,0 +1,9 @@
+{
+  "fixture": "bricklink_price_guide_3070b.json",
+  "synthetic": true,
+  "note": "Synthetic values for tests; not BrickLink data.",
+  "lots": "official 31203 layout's 10 lots; land-elevation plate colors except Dark Brown (LEGO 308); Medium Azur tile priced from stock only; plus 1x1 square tile 3070b Black (feature 016, the default margin color)",
+  "generator": "tools/fixtures011/make_price_fixture.py",
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group.",
+  "sha256": "013037b9a275d51f37eb7b978bac3ee600b1662c6cbbaf0d490d576c21ccc101"
+}

@@ -30,6 +30,19 @@ def test_datasets_registered(rid):
         assert e.id in ids and e.license and e.citation
 
 
+# Feature 012: living-planet reads the 385 MB MOD17A3 GeoTIFF and a 147 MB ERDDAP file (owner
+# approved); every other bundled recipe keeps the feature 004 bound (SC-009, 15 MB together).
+# feature 013: rainfall needs GPCP (0.7 MB) and 60 NSIDC files (17.8 MB); SC-003 bound 20 MB
+LARGE_DOWNLOADS = {"living-planet": 560_000_000, "rainfall": 20_000_000}
+
+
 def test_downloads_for_all_bundled_recipes_under_15_mb():
-    needed = {e.id: e for rid in RECIPES for e in load_recipe(rid).datasets() if e.kind == "download"}
+    needed = {e.id: e for rid in RECIPES if rid not in LARGE_DOWNLOADS
+              for e in load_recipe(rid).datasets() if e.kind == "download"}
     assert sum(e.size for e in needed.values()) < 15_000_000
+
+
+@pytest.mark.parametrize("rid", sorted(LARGE_DOWNLOADS))
+def test_large_recipe_downloads_bounded(rid):
+    total = sum(e.size for e in load_recipe(rid).datasets() if e.kind == "download")
+    assert total < LARGE_DOWNLOADS[rid]

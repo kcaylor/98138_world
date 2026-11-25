@@ -5,6 +5,7 @@ AF_UNIX sockets are left alone.
 """
 
 import socket
+from pathlib import Path
 
 import pytest
 
@@ -38,68 +39,17 @@ def _block_network():
 
 
 # --- Feature 004: registry pointed at the small derived dataset fixtures (FR-025) -------------
+# The registry helper lives in tools/fixtures004/registry.py (feature 016, research R9) so the kit
+# golden harness (`maptemplates kit-golden --fixtures`) places the same fixtures as the tests.
 
-import hashlib  # noqa: E402
-import json  # noqa: E402
-import shutil  # noqa: E402
-from pathlib import Path  # noqa: E402
-
-FIXTURE_DATASETS = Path(__file__).resolve().parent / "fixtures" / "datasets"
-
-
-class FixtureRegistry:
-    """A registry whose download entries are the committed fixtures (same ids and versions)."""
-
-    def __init__(self, root: Path):
-        self.root = root
-        self.cache_dir = root / "cache"
-        self.registry_path = root / "datasets.json"
-        self.files = {}
-
-    def place(self, dataset_id: str) -> Path:
-        """Copy the fixture into the cache as if it had been fetched."""
-        from lego_image_processor.datasets import cached_path, get_entry
-
-        e = get_entry(dataset_id)
-        dest = cached_path(e, self.cache_dir)
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(self.files[dataset_id], dest)
-        return dest
-
-    def place_all(self):
-        for i in self.files:
-            self.place(i)
-        return self
-
-
-def _sha(p: Path) -> str:
-    return hashlib.sha256(p.read_bytes()).hexdigest()
+from fixtures004.registry import FIXTURE_DATASETS, FixtureRegistry, make_fixture_registry  # noqa: E402,F401
 
 
 @pytest.fixture
 def fixture_registry(tmp_path, monkeypatch):
     from lego_image_processor.datasets import registry as reg
 
-    data = json.loads(reg.REGISTRY_PATH.read_text(encoding="utf-8"))
-    fr = FixtureRegistry(tmp_path)
-    etopo = FIXTURE_DATASETS / "etopo2022_1deg.npy"
-    ersst = FIXTURE_DATASETS / "ersst_v5_annual_2deg.nc"
-    months = {"ersst-v5-1997-12": FIXTURE_DATASETS / "ersst_v5_199712_ssta.nc",  # feature 009
-              "ersst-v5-1988-12": FIXTURE_DATASETS / "ersst_v5_198812_ssta.nc"}
-    for row in data["datasets"]:
-        if row["id"] == "etopo2022-surface-10m":
-            row.update(format="npy", filename=etopo.name, size=etopo.stat().st_size, sha256=_sha(etopo),
-                       grid={"lat": [-90, 90], "lon": [-180, 180]})
-            fr.files[row["id"]] = etopo
-        elif row["id"] == "ersst-v5-ltm-1991-2020":
-            row.update(filename=ersst.name, size=ersst.stat().st_size, sha256=_sha(ersst),
-                       variables={"sst": {"units": "degC"}})
-            fr.files[row["id"]] = ersst
-        elif row["id"] in months:
-            f = months[row["id"]]
-            row.update(filename=f.name, size=f.stat().st_size, sha256=_sha(f))
-            fr.files[row["id"]] = f
-    fr.registry_path.write_text(json.dumps(data), encoding="utf-8")
+    fr = make_fixture_registry(tmp_path)
     monkeypatch.setattr(reg, "REGISTRY_PATH", fr.registry_path)
     monkeypatch.setenv("LEGO_IMAGE_PROCESSOR_CACHE", str(fr.cache_dir))
     return fr
@@ -130,3 +80,67 @@ def _no_fetch_retry_pause(monkeypatch):
     """Dataset downloads retry with a pause; tests never wait for it."""
     from lego_image_processor.datasets import cache
     monkeypatch.setattr(cache.time, "sleep", lambda s: None)
+
+
+# --- Feature 016: map templates (T030) --------------------------------------------------------
+# Both fixtures use tools/maptemplates/testing.py (shared with the web tests, T084).
+
+TEMPLATE_FIXTURES = Path(__file__).resolve().parent / "fixtures" / "templates"
+TEST_CONFIRMATION_DATE = "2026-11-23"  # test confirmation {"role": "project owner", "date": ...}
+
+
+@pytest.fixture
+def synthetic_template(tmp_path):
+    """The committed synthetic, confirmed ``winkel-tripel`` fixture (tests/fixtures/templates),
+    with ``templates.TEMPLATE_DIR`` pointed at a copy of it for the test."""
+    from lego_image_processor.templates import load_template
+    from maptemplates.testing import confirmed_copy, use_template_dir
+
+    d = tmp_path / "templates-synthetic"
+    confirmed_copy(TEMPLATE_FIXTURES, d, TEST_CONFIRMATION_DATE)
+    with use_template_dir(d):
+        yield load_template("winkel-tripel")
+
+
+@pytest.fixture
+def confirmed_winkel(tmp_path):
+    """A buildable ``winkel-tripel``. The owner confirmed the package file on 2026-11-24 (T039 ->
+    T081), so it is used as is; the other two cases are kept for a template not yet confirmed:
+
+    - the package file is confirmed: it is used as is;
+    - it exists but is unconfirmed: a ``confirmed_copy`` with the test confirmation, together with
+      the package ice file ``winkel-tripel-ice.json`` (T076; the layout digest leaves the
+      confirmation out, so the ice file stays valid for the copy);
+    - it does not exist yet (before T037 and T076): the committed synthetic fixture template and
+      its own ice file.
+    """
+    import json
+
+    import lego_image_processor.templates as templates
+    from maptemplates.testing import confirmed_copy, use_template_dir
+
+    package = templates.TEMPLATE_DIR / "winkel-tripel.json"
+    if package.exists() and json.loads(package.read_text(encoding="utf-8")).get("confirmation"):
+        yield templates.load_template("winkel-tripel")
+        return
+    src = templates.TEMPLATE_DIR if package.exists() else TEMPLATE_FIXTURES
+    d = tmp_path / "templates-confirmed"
+    confirmed_copy(src, d, TEST_CONFIRMATION_DATE)
+    with use_template_dir(d):
+        yield templates.load_template("winkel-tripel")
+
+
+@pytest.fixture
+def unconfirmed_winkel(tmp_path):
+    """The package ``winkel-tripel`` without its confirmation (and with its ice file), with
+    ``templates.TEMPLATE_DIR`` pointed at the copy: the refusal to build on an unconfirmed template
+    (FR-004) is tested on it, since the package file is confirmed (owner, 2026-11-24)."""
+    import lego_image_processor.templates as templates
+    from maptemplates.testing import unconfirmed_copy, use_template_dir
+
+    d = tmp_path / "templates-unconfirmed"
+    unconfirmed_copy(templates.TEMPLATE_DIR, d)
+    with use_template_dir(d):
+        t = templates.load_template("winkel-tripel")
+        assert t.status == "unconfirmed" and not t.buildable
+        yield t

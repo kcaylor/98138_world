@@ -1,0 +1,594 @@
+{
+  "format_version": "1",
+  "source": {
+    "title": "BrickLink price guide (BrickLink API)",
+    "publisher": "LEGO BrickLink, Inc.",
+    "url": "https://www.bricklink.com",
+    "api": {
+      "base_url": "https://api.bricklink.com/api/store/v1",
+      "endpoint": "GET /items/{type}/{no}/price",
+      "documentation": [
+        {
+          "id": "bricklink-api-price-guide",
+          "title": "BrickLink API: Get Price Guide",
+          "url": "https://www.bricklink.com/v3/api.page?page=get-price-guide"
+        }
+      ],
+      "checked": false
+    },
+    "tool": {
+      "name": "lego-image-processor",
+      "version": "0.1.0",
+      "command": "tools/fixtures011/make_price_fixture.py (synthetic)"
+    },
+    "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
+  },
+  "retrieved": {
+    "started_at": "2026-12-01T18:02:10Z",
+    "finished_at": "2026-12-01T18:03:05Z"
+  },
+  "query": {
+    "new_or_used": "N",
+    "currency_code": "USD",
+    "vat": "N",
+    "country_code": null,
+    "region": null,
+    "guide_types": {
+      "sold": "sales in the last 6 months (BrickLink's fixed period)",
+      "stock": "items for sale at retrieval time"
+    }
+  },
+  "statistic": {
+    "average": "qty_avg_price",
+    "low": "min_price",
+    "high": "max_price",
+    "also_recorded": [
+      "avg_price"
+    ],
+    "fallback": "stock when sold has no data; unpriced when neither has data"
+  },
+  "lot_set": {
+    "kind": "named",
+    "recipes": [],
+    "count": 18
+  },
+  "complete": true,
+  "lots": [
+    {
+      "part_id": "6141",
+      "lego_color_id": 1,
+      "color_key": "lego_white",
+      "lego_color_name": "White",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "4073",
+        "color_id": 1,
+        "color_name": "White"
+      },
+      "retrieved_at": "2026-12-01T18:02:12Z",
+      "sold": {
+        "qty_avg_price": "0.0385",
+        "avg_price": "0.0612",
+        "min_price": "0.0100",
+        "max_price": "0.5000",
+        "unit_quantity": 1204,
+        "total_quantity": 380211
+      },
+      "stock": {
+        "qty_avg_price": "0.0450",
+        "avg_price": "0.0790",
+        "min_price": "0.0100",
+        "max_price": "2.0000",
+        "unit_quantity": 3110,
+        "total_quantity": 2104455
+      },
+      "error": null
+    },
+    {
+      "part_id": "6141",
+      "lego_color_id": 5,
+      "color_key": "lego_brick_yellow",
+      "lego_color_name": "Brick Yellow",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "4073",
+        "color_id": 2,
+        "color_name": "Tan"
+      },
+      "retrieved_at": "2026-12-01T18:02:14Z",
+      "sold": {
+        "qty_avg_price": "0.0420",
+        "avg_price": "0.0650",
+        "min_price": "0.0150",
+        "max_price": "0.4000",
+        "unit_quantity": 640,
+        "total_quantity": 120500
+      },
+      "stock": {
+        "qty_avg_price": "0.0500",
+        "avg_price": "0.0800",
+        "min_price": "0.0150",
+        "max_price": "1.5000",
+        "unit_quantity": 1500,
+        "total_quantity": 600000
+      },
+      "error": null
+    },
+    {
+      "part_id": "6141",
+      "lego_color_id": 28,
+      "color_key": "lego_dark_green",
+      "lego_color_name": "Dark Green",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "4073",
+        "color_id": 6,
+        "color_name": "Green"
+      },
+      "retrieved_at": "2026-12-01T18:02:16Z",
+      "sold": {
+        "qty_avg_price": "0.0610",
+        "avg_price": "0.0800",
+        "min_price": "0.0200",
+        "max_price": "0.6000",
+        "unit_quantity": 410,
+        "total_quantity": 51000
+      },
+      "stock": {
+        "qty_avg_price": "0.0700",
+        "avg_price": "0.0950",
+        "min_price": "0.0200",
+        "max_price": "1.2000",
+        "unit_quantity": 900,
+        "total_quantity": 210000
+      },
+      "error": null
+    },
+    {
+      "part_id": "6141",
+      "lego_color_id": 37,
+      "color_key": "lego_bright_green",
+      "lego_color_name": "Bright Green",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "4073",
+        "color_id": 36,
+        "color_name": "Bright Green"
+      },
+      "retrieved_at": "2026-12-01T18:02:18Z",
+      "sold": {
+        "qty_avg_price": "0.0550",
+        "avg_price": "0.0720",
+        "min_price": "0.0200",
+        "max_price": "0.5500",
+        "unit_quantity": 380,
+        "total_quantity": 48200
+      },
+      "stock": {
+        "qty_avg_price": "0.0650",
+        "avg_price": "0.0900",
+        "min_price": "0.0200",
+        "max_price": "1.0000",
+        "unit_quantity": 820,
+        "total_quantity": 190000
+      },
+      "error": null
+    },
+    {
+      "part_id": "6141",
+      "lego_color_id": 119,
+      "color_key": "lego_bright_yellowish_green",
+      "lego_color_name": "Bright Yellowish Green",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "4073",
+        "color_id": 34,
+        "color_name": "Lime"
+      },
+      "retrieved_at": "2026-12-01T18:02:20Z",
+      "sold": {
+        "qty_avg_price": "0.0480",
+        "avg_price": "0.0700",
+        "min_price": "0.0150",
+        "max_price": "0.5000",
+        "unit_quantity": 350,
+        "total_quantity": 40100
+      },
+      "stock": {
+        "qty_avg_price": "0.0600",
+        "avg_price": "0.0850",
+        "min_price": "0.0150",
+        "max_price": "1.1000",
+        "unit_quantity": 760,
+        "total_quantity": 170000
+      },
+      "error": null
+    },
+    {
+      "part_id": "6141",
+      "lego_color_id": 138,
+      "color_key": "lego_sand_yellow",
+      "lego_color_name": "Sand Yellow",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "4073",
+        "color_id": 69,
+        "color_name": "Dark Tan"
+      },
+      "retrieved_at": "2026-12-01T18:02:22Z",
+      "sold": {
+        "qty_avg_price": "0.0890",
+        "avg_price": "0.1100",
+        "min_price": "0.0300",
+        "max_price": "0.7500",
+        "unit_quantity": 120,
+        "total_quantity": 9800
+      },
+      "stock": {
+        "qty_avg_price": "0.0990",
+        "avg_price": "0.1300",
+        "min_price": "0.0300",
+        "max_price": "1.5000",
+        "unit_quantity": 300,
+        "total_quantity": 41000
+      },
+      "error": null
+    },
+    {
+      "part_id": "6141",
+      "lego_color_id": 192,
+      "color_key": "lego_reddish_brown",
+      "lego_color_name": "Reddish Brown",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "4073",
+        "color_id": 88,
+        "color_name": "Reddish Brown"
+      },
+      "retrieved_at": "2026-12-01T18:02:24Z",
+      "sold": {
+        "qty_avg_price": "0.0460",
+        "avg_price": "0.0680",
+        "min_price": "0.0150",
+        "max_price": "0.4500",
+        "unit_quantity": 520,
+        "total_quantity": 77000
+      },
+      "stock": {
+        "qty_avg_price": "0.0550",
+        "avg_price": "0.0800",
+        "min_price": "0.0150",
+        "max_price": "1.3000",
+        "unit_quantity": 1200,
+        "total_quantity": 400000
+      },
+      "error": null
+    },
+    {
+      "part_id": "6141",
+      "lego_color_id": 194,
+      "color_key": "lego_medium_stone_grey",
+      "lego_color_name": "Medium Stone Grey",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "4073",
+        "color_id": 86,
+        "color_name": "Light Bluish Gray"
+      },
+      "retrieved_at": "2026-12-01T18:02:26Z",
+      "sold": {
+        "qty_avg_price": "0.0400",
+        "avg_price": "0.0600",
+        "min_price": "0.0100",
+        "max_price": "0.4000",
+        "unit_quantity": 700,
+        "total_quantity": 150000
+      },
+      "stock": {
+        "qty_avg_price": "0.0480",
+        "avg_price": "0.0750",
+        "min_price": "0.0100",
+        "max_price": "1.6000",
+        "unit_quantity": 1800,
+        "total_quantity": 800000
+      },
+      "error": null
+    },
+    {
+      "part_id": "6141",
+      "lego_color_id": 312,
+      "color_key": "lego_medium_nougat",
+      "lego_color_name": "Medium Nougat",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "4073",
+        "color_id": 150,
+        "color_name": "Medium Nougat"
+      },
+      "retrieved_at": "2026-12-01T18:02:28Z",
+      "sold": {
+        "qty_avg_price": "0.0730",
+        "avg_price": "0.0950",
+        "min_price": "0.0250",
+        "max_price": "0.6500",
+        "unit_quantity": 260,
+        "total_quantity": 30500
+      },
+      "stock": {
+        "qty_avg_price": "0.0810",
+        "avg_price": "0.1100",
+        "min_price": "0.0250",
+        "max_price": "1.4000",
+        "unit_quantity": 610,
+        "total_quantity": 120000
+      },
+      "error": null
+    },
+    {
+      "part_id": "98138",
+      "lego_color_id": 5,
+      "color_key": "lego_brick_yellow",
+      "lego_color_name": "Brick Yellow",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "98138",
+        "color_id": 2,
+        "color_name": "Tan"
+      },
+      "retrieved_at": "2026-12-01T18:02:38Z",
+      "sold": {
+        "qty_avg_price": "0.0640",
+        "avg_price": "0.0850",
+        "min_price": "0.0200",
+        "max_price": "0.5500",
+        "unit_quantity": 510,
+        "total_quantity": 70000
+      },
+      "stock": {
+        "qty_avg_price": "0.0720",
+        "avg_price": "0.0990",
+        "min_price": "0.0200",
+        "max_price": "1.1000",
+        "unit_quantity": 1100,
+        "total_quantity": 260000
+      },
+      "error": null
+    },
+    {
+      "part_id": "98138",
+      "lego_color_id": 37,
+      "color_key": "lego_bright_green",
+      "lego_color_name": "Bright Green",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "98138",
+        "color_id": 36,
+        "color_name": "Bright Green"
+      },
+      "retrieved_at": "2026-12-01T18:02:32Z",
+      "sold": {
+        "qty_avg_price": "0.0880",
+        "avg_price": "0.1150",
+        "min_price": "0.0300",
+        "max_price": "0.7000",
+        "unit_quantity": 280,
+        "total_quantity": 19000
+      },
+      "stock": {
+        "qty_avg_price": "0.0970",
+        "avg_price": "0.1300",
+        "min_price": "0.0300",
+        "max_price": "1.4000",
+        "unit_quantity": 650,
+        "total_quantity": 85000
+      },
+      "error": null
+    },
+    {
+      "part_id": "98138",
+      "lego_color_id": 106,
+      "color_key": "lego_bright_orange",
+      "lego_color_name": "Bright Orange",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "98138",
+        "color_id": 4,
+        "color_name": "Orange"
+      },
+      "retrieved_at": "2026-12-01T18:02:30Z",
+      "sold": {
+        "qty_avg_price": "0.0910",
+        "avg_price": "0.1200",
+        "min_price": "0.0300",
+        "max_price": "0.8000",
+        "unit_quantity": 300,
+        "total_quantity": 20400
+      },
+      "stock": {
+        "qty_avg_price": "0.1000",
+        "avg_price": "0.1400",
+        "min_price": "0.0300",
+        "max_price": "1.5000",
+        "unit_quantity": 700,
+        "total_quantity": 90000
+      },
+      "error": null
+    },
+    {
+      "part_id": "98138",
+      "lego_color_id": 107,
+      "color_key": "lego_bright_bluish_green",
+      "lego_color_name": "Bright Bluish Green",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "98138",
+        "color_id": 39,
+        "color_name": "Dark Turquoise"
+      },
+      "retrieved_at": "2026-12-01T18:02:34Z",
+      "sold": {
+        "qty_avg_price": "0.0750",
+        "avg_price": "0.0990",
+        "min_price": "0.0250",
+        "max_price": "0.6000",
+        "unit_quantity": 450,
+        "total_quantity": 61000
+      },
+      "stock": {
+        "qty_avg_price": "0.0850",
+        "avg_price": "0.1150",
+        "min_price": "0.0250",
+        "max_price": "1.2000",
+        "unit_quantity": 980,
+        "total_quantity": 210000
+      },
+      "error": null
+    },
+    {
+      "part_id": "98138",
+      "lego_color_id": 119,
+      "color_key": "lego_bright_yellowish_green",
+      "lego_color_name": "Bright Yellowish Green",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "98138",
+        "color_id": 34,
+        "color_name": "Lime"
+      },
+      "retrieved_at": "2026-12-01T18:02:36Z",
+      "sold": {
+        "qty_avg_price": "0.0820",
+        "avg_price": "0.1050",
+        "min_price": "0.0300",
+        "max_price": "0.6500",
+        "unit_quantity": 330,
+        "total_quantity": 25000
+      },
+      "stock": {
+        "qty_avg_price": "0.0920",
+        "avg_price": "0.1250",
+        "min_price": "0.0300",
+        "max_price": "1.3000",
+        "unit_quantity": 720,
+        "total_quantity": 95000
+      },
+      "error": null
+    },
+    {
+      "part_id": "98138",
+      "lego_color_id": 140,
+      "color_key": "lego_earth_blue",
+      "lego_color_name": "Earth Blue",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "98138",
+        "color_id": 63,
+        "color_name": "Dark Blue"
+      },
+      "retrieved_at": "2026-12-01T18:02:40Z",
+      "sold": {
+        "qty_avg_price": "0.0690",
+        "avg_price": "0.0910",
+        "min_price": "0.0200",
+        "max_price": "0.6000",
+        "unit_quantity": 812,
+        "total_quantity": 90412
+      },
+      "stock": {
+        "qty_avg_price": "0.0780",
+        "avg_price": "0.1050",
+        "min_price": "0.0200",
+        "max_price": "1.2000",
+        "unit_quantity": 140,
+        "total_quantity": 31000
+      },
+      "error": null
+    },
+    {
+      "part_id": "98138",
+      "lego_color_id": 191,
+      "color_key": "lego_flame_yellowish_orange",
+      "lego_color_name": "Flame Yellowish Orange",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "98138",
+        "color_id": 110,
+        "color_name": "Bright Light Orange"
+      },
+      "retrieved_at": "2026-12-01T18:02:42Z",
+      "sold": {
+        "qty_avg_price": "0.0950",
+        "avg_price": "0.1250",
+        "min_price": "0.0350",
+        "max_price": "0.9000",
+        "unit_quantity": 240,
+        "total_quantity": 15000
+      },
+      "stock": {
+        "qty_avg_price": "0.1050",
+        "avg_price": "0.1450",
+        "min_price": "0.0350",
+        "max_price": "1.6000",
+        "unit_quantity": 520,
+        "total_quantity": 66000
+      },
+      "error": null
+    },
+    {
+      "part_id": "98138",
+      "lego_color_id": 322,
+      "color_key": "lego_medium_azur",
+      "lego_color_name": "Medium Azur",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "98138",
+        "color_id": 156,
+        "color_name": "Medium Azure"
+      },
+      "retrieved_at": "2026-12-01T18:02:44Z",
+      "sold": null,
+      "stock": {
+        "qty_avg_price": "0.0870",
+        "avg_price": "0.1100",
+        "min_price": "0.0300",
+        "max_price": "1.0000",
+        "unit_quantity": 400,
+        "total_quantity": 52000
+      },
+      "error": null
+    },
+    {
+      "part_id": "98138",
+      "lego_color_id": 353,
+      "color_key": "lego_vibrant_coral",
+      "lego_color_name": "Vibrant Coral",
+      "bricklink": {
+        "item_type": "P",
+        "item_no": "98138",
+        "color_id": 220,
+        "color_name": "Coral"
+      },
+      "retrieved_at": "2026-12-01T18:02:46Z",
+      "sold": {
+        "qty_avg_price": "0.0712",
+        "avg_price": "0.0950",
+        "min_price": "0.0250",
+        "max_price": "0.7000",
+        "unit_quantity": 190,
+        "total_quantity": 12000
+      },
+      "stock": {
+        "qty_avg_price": "0.0800",
+        "avg_price": "0.1100",
+        "min_price": "0.0250",
+        "max_price": "1.3000",
+        "unit_quantity": 430,
+        "total_quantity": 51000
+      },
+      "error": null
+    }
+  ],
+  "attribution": "Price data: BrickLink price guide (bricklink.com). BrickLink is a trademark of LEGO BrickLink, Inc. Not endorsed by BrickLink.",
+  "estimate_note": "Estimate only; excludes shipping, fees and taxes; prices vary by seller and over time.",
+  "disclaimer": "Not affiliated with or endorsed by The LEGO Group."
+}

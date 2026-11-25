@@ -48,3 +48,45 @@ def _bad(mutate):
 def test_loader_rejects(mutate, match):
     with pytest.raises(ValueError, match=match):
         parse_part_numbers(_bad(mutate))
+
+
+# --- feature 016 (T014): the 1x1 square tile 3070b, not in the kit (research R10) ---------------
+
+def test_parts_are_exactly_the_kit_parts_and_the_square_tile():
+    from lego_image_processor.kit.part_numbers import KIT_PARTS, PARTS
+    assert PARTS == ("6141", "98138", "3070b") and KIT_PARTS == ("6141", "98138")
+    assert list(load_part_numbers().parts) == ["6141", "98138", "3070b"]
+    with pytest.raises(ValueError, match="exactly"):
+        parse_part_numbers(_bad(lambda d: d["parts"].pop("3070b")))
+
+
+def test_shipped_square_tile_numbers():
+    sq = load_part_numbers().get("3070b")
+    # BrickLink files the 3070b design as item 3070 (3070b is an alternate there)
+    assert (sq.bricklink_item_type, sq.bricklink_item_no) == ("P", "3070")
+    assert "3070b" in sq.bricklink_alternates
+    assert sq.rebrickable_part_num == "3070b"
+    assert "3070" in sq.lego_design_ids and "3070b" not in sq.lego_design_ids
+    assert "Black" in sq.bricklink_colors
+    assert {c.id for c in sq.citations.values()} == {"bricklink-3070", "rebrickable-3070b"}
+    assert all(len(c.sha256) == 64 and "web.archive.org" in c.url for c in sq.citations.values())
+
+
+@pytest.mark.parametrize("mutate,match", [
+    # rules that hold for every part
+    (lambda d: d["parts"]["3070b"]["bricklink"].update(alternates=["30039"]), "alternate"),
+    (lambda d: d["parts"]["3070b"]["rebrickable"].update(part_num="3070"), "part_num"),
+    (lambda d: d["parts"]["3070b"].update(lego_design_ids=[]), "lego_design_ids"),
+])
+def test_square_tile_loader_rules(mutate, match):
+    with pytest.raises(ValueError, match=match):
+        parse_part_numbers(_bad(mutate))
+
+
+def test_kit_rules_do_not_apply_to_the_square_tile():
+    # not in the kit inventory, and its design IDs need not include "3070b" (LEGO design 3070)
+    d = _bad(lambda d: d["parts"]["3070b"].update(lego_design_ids=["3070"]))
+    assert parse_part_numbers(d).get("3070b").lego_design_ids == ("3070",)
+    # the kit parts keep both kit rules
+    with pytest.raises(ValueError, match="lego_design_ids"):
+        parse_part_numbers(_bad(lambda d: d["parts"]["6141"].update(lego_design_ids=["4073"])))

@@ -91,10 +91,19 @@ def build_cmd(layout_path, output, output_format, paper, section_list, title, qu
                f"{sheet_set.paper.label}")
     lots = f"{t['lots']} lots ({t['verified_lots']} verified"
     lots += f", {t['unverified_lots']} unverified: no cited IDs)" if t["unverified_lots"] else ")"
-    click.echo(f"Lots: {lots}; {t['needed']:,} pieces")
-    from ..layout.arrangement import arrangement_of
-    a = arrangement_of(layout.grid)
-    click.echo(f"Arrangement: {a.describe()}; sections labelled as hung")
+    template = pl.layout.get("template")  # feature 016: non-kit layouts only
+    squares = sum(l.needed for l in pl.lots if l.part_type == "square_tile")
+    pieces = f"{t['needed']:,} pieces"
+    if template:
+        pieces += f", {squares:,} of them square tiles (part 3070b)"
+    click.echo(f"Lots: {lots}; {pieces}")
+    if template:
+        from ..templates import REHANG_RULE
+        click.echo(f"Template: {template['id']} ({template['title']}); arrangement A only ({REHANG_RULE})")
+    else:
+        from ..layout.arrangement import arrangement_of
+        a = arrangement_of(layout.grid)
+        click.echo(f"Arrangement: {a.describe()}; sections labelled as hung")
     click.echo(PRINT_LINE)
     click.echo("Drawn from the layout data only; no LEGO artwork or instruction images.")
     click.echo(DISCLAIMER)
@@ -126,6 +135,9 @@ def counts_cmd(layout_path, output_format, output, quiet):
     if quiet:
         return
     click.echo(f"Section counts for {layout.path} (lot numbers as in the build sheets)")
+    if sc.template is not None:
+        click.echo(f"Template {sc.template['id']} ({sc.template['title']}): margin square tiles counted "
+                   "per section")
     if sc.arrangement != "A":
         click.echo(f"Arrangement {sc.arrangement}: sections labelled as hung; kit section in brackets")
     for s in sc.sections:

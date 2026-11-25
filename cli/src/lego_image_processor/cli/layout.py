@@ -189,7 +189,9 @@ def arrange(layout_file: str, arrangement, output: str, quiet: bool) -> None:
 
     A pure frame move, as when moving the physical frames: every position moves by whole frames
     (32 or 64 columns, cyclically); colors and parts never change, and arranging back to A
-    restores the original positions. A layout without ``metadata.arrangement`` is in A.
+    restores the original positions. A layout without ``metadata.arrangement`` is in A. A layout
+    built on a non-kit template (map build --template) is a curved map whose frames cannot be
+    re-hung: exit 1.
 
     \b
     Examples:

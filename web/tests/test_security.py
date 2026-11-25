@@ -13,7 +13,10 @@ SRC = Path(__file__).resolve().parents[1] / "src" / "web98138"
 
 @pytest.mark.parametrize("path", ["/", "/about", "/maps/ocean-sst/A", "/static/style.css",
                                   "/maps/ocean-sst/A/preview.png",
-                                  "/maps/ocean-sst/A/download/layout", "/healthz", "/nope"])
+                                  "/maps/ocean-sst/A/download/layout", "/healthz", "/nope",
+                                  # feature 016: a template variant's page, image and download
+                                  "/maps/ocean-sst/winkel-tripel", "/maps/ocean-sst/winkel-tripel/preview.png",
+                                  "/maps/ocean-sst/winkel-tripel/download/bricklink"])
 def test_security_headers_no_cookies(client, path):
     r = client.get(path)
     h = r.headers
@@ -28,7 +31,7 @@ def test_security_headers_no_cookies(client, path):
 
 
 def test_no_third_party_resources(client):
-    for path in ("/", "/about", "/maps/ocean-sst/A", "/maps/official-31203/B"):
+    for path in ("/", "/about", "/maps/ocean-sst/A", "/maps/official-31203/B", "/maps/ocean-sst/winkel-tripel"):
         html = client.get(path).text
         for attr in re.findall(r'(?:src|href)="([^"]+)"', html):
             tag_ok = attr.startswith("/") or attr.startswith("#")
@@ -62,7 +65,7 @@ def test_healthz(client):
     r = client.get("/healthz")
     assert r.status_code == 200
     j = r.json()
-    assert j["status"] == "ok" and j["variants"] == 15 and j["generated_at"]
+    assert j["status"] == "ok" and j["variants"] == 16 and j["generated_at"]   # 15 kit (A-E) + 1 Winkel (016)
 
 
 def test_manifest_public(client, site_dir):
@@ -107,3 +110,23 @@ def test_missing_output_fails_at_startup(tmp_path):
 
     with pytest.raises(CatalogError):
         create_app(tmp_path)
+
+
+def test_site_holds_no_price_fetch_config_or_credentials(site_dir):
+    """FR-022: the build output has no API configuration, credentials or snapshot file."""
+    names = {p.name for p in site_dir.rglob("*")}
+    assert "bricklink_api.json" not in names
+    assert "bricklink_price_guide.json" not in names
+    assert not any(n.endswith(".progress.json") for n in names)
+    for p in site_dir.rglob("*"):
+        if p.is_file() and p.suffix in (".json", ".xml", ".csv", ".html"):
+            text = p.read_text(encoding="utf-8")
+            assert "BRICKLINK_" not in text, p
+            assert "oauth" not in text.lower(), p
+            assert "api.bricklink.com" not in text, p
+
+
+def test_price_panel_links_only_plainly(client):
+    html = client.get("/maps/official-31203/A").text
+    assert '<a href="https://www.bricklink.com">' in html
+    assert not re.search(r'<(?:img|link|script|iframe)[^>]+bricklink', html)

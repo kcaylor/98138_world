@@ -1,5 +1,10 @@
 # Contract: recipe file (format 1, TOML, Q1)
 
+Feature 012 adds `transform = "log10"` and the optional `[<layer>.no_data]` table (format stays
+"1"): see `specs/012-living-planet/contracts/recipe-and-datasets.md`.
+Feature 013 adds `sampling`, `[[<layer>.override]]` and `[<layer>.legend]` (format stays "1"):
+see `specs/013-rainfall/contracts/recipe-and-datasets.md`.
+
 A recipe is a UTF-8 TOML file. Unknown keys are errors. Errors name the key path
 (e.g. `ocean.classification.bounds`) and the rule.
 

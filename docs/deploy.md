@@ -1,11 +1,34 @@
 # Deploying 98138.world on Fly.io
 
 The site is one small Python service (`web/`, feature 008) in one Docker image. The image build
-installs the CLI library, downloads the four pinned public datasets (~10.8 MB, checked by SHA-256),
-and prebuilds every map in every frame combination (6 × 5 = 30 variants, combinations A–E; ~185 MB,
-about 6 MB per variant) into `/site`.
+installs the CLI library, downloads the pinned public datasets (~561 MB: ~10.8 MB for the
+first six maps, plus 385 MB of MOD17A3 NPP and 147 MB of MODIS-Aqua chlorophyll for `living-planet`,
+feature 012, plus 0.7 MB of GPCP and 17.8 MB of NSIDC sea ice in 60 files for `rainfall`, feature
+013; each checked by SHA-256 or, for the ERDDAP file, a content SHA-256), and prebuilds every
+map in every frame combination (8 × 5 = 40 variants, combinations A–E, about 6 MB each) plus a Winkel tripel version of five
+maps (feature 016; 45 variants in all, about 28 MB more) into `/site`. The builder needs about
+650 MB of RAM at peak (the NPP GeoTIFF is read strip by strip, never decoded whole) and a little
+over 1 GB of disk for the dataset cache.
 The running container only serves those files: it never downloads data or builds maps, and it
 fits Fly's smallest machine (shared-cpu-1x, 256 MB; measured ~60 MB RSS).
+
+Map pages show price estimates (feature 011) from the committed BrickLink price snapshot
+`cli/src/lego_image_processor/data/bricklink_price_guide.json`, installed with the CLI as package
+data. The image build never calls BrickLink and holds no BrickLink credentials. Until a complete
+snapshot is committed, the `Dockerfile` builds without prices (`ARG PREBUILD_PRICES=--no-prices`,
+no price panel). After committing one, deploy with `--build-arg PREBUILD_PRICES=` (or change that
+default) and the prebuild then **fails** if the snapshot is missing or partial. See "Refreshing
+prices" below.
+
+Map templates (feature 016): the prebuild also builds a Winkel tripel version of five maps for
+every template the project owner has confirmed (its default `--templates`). The template file
+ships with the CLI as package data, so the `Dockerfile` is unchanged and the build needs no new
+dependency (pyproj is for the maintainer tool only). The committed `winkel-tripel` was confirmed
+by the project owner on 2026-11-24, so the image builds 45 variants, 40 kit (A–E) and 5 Winkel
+(`/healthz` reports `"variants":45`); with A–C only it was 29, about a fifth more than the kit only
+(measured locally: 151 MB in 51 s for the kit only, 180 MB in 61-63 s with Winkel). A template
+that is not confirmed gives no variants, and the build log says "not confirmed by the project
+owner". Deploying is the owner's step, as for every deploy.
 
 Configuration: `fly.toml` (app `world-98138`, region `sjc`, internal port 8080, forced HTTPS,
 auto stop/start with `min_machines_running = 0`, health check `GET /healthz`), `Dockerfile`
@@ -15,6 +38,9 @@ Not affiliated with or endorsed by The LEGO Group.
 
 ## 0. Before you start
 
+- For prices on the site: a complete price snapshot is committed (`git ls-files cli/src/
+  lego_image_processor/data/bricklink_price_guide.json` prints it) and the deploy passes
+  `--build-arg PREBUILD_PRICES=`. Without both, the site builds without price estimates.
 - `flyctl` installed and logged in: `fly auth login` (check with `fly auth whoami`).
 - Run every command below from the repository root (where `fly.toml` is).
 - Optional local check (needs Docker; see "Smoke test" at the end).
@@ -42,7 +68,7 @@ dedicated IPv6 address. Check:
 ```bash
 fly status
 fly ips list
-curl -fsS https://world-98138.fly.dev/healthz     # {"status":"ok","variants":30,...}
+curl -fsS https://world-98138.fly.dev/healthz     # {"status":"ok","variants":45,...}
 open https://world-98138.fly.dev/
 ```
 
@@ -108,13 +134,35 @@ Useful: `fly logs` (startup and errors; access logs are off for privacy), `fly s
 `fly machine list`. To avoid cold starts set `min_machines_running = 1` in `fly.toml` and redeploy
 (one always-on 256 MB machine).
 
+## Refreshing prices
+
+Prices are only as fresh as the committed snapshot; pages say so once it is older than 90 days at
+build time. Before a deploy that should carry new prices, on a machine whose IP the BrickLink API
+token allows (specs/011-price-estimates/quickstart.md §4–5):
+
+```bash
+cd cli
+export BRICKLINK_CONSUMER_KEY=… BRICKLINK_CONSUMER_SECRET=… BRICKLINK_TOKEN_VALUE=… BRICKLINK_TOKEN_SECRET=…
+poetry run lego-image-processor parts prices fetch -o src/lego_image_processor/data/bricklink_price_guide.json
+# if it stops: rerun the same command with --resume
+git status          # the snapshot only; never a *.progress.json
+poetry run pytest tests/unit/prices/test_packaged_snapshot.py
+git add src/lego_image_processor/data/bricklink_price_guide.json && git commit
+```
+
+Then deploy as above. The credentials never go into the repository, the image or Fly secrets.
+To check the site build locally without the network:
+`python -m web98138.prebuild --out /tmp/site --prices cli/tests/fixtures/prices/bricklink_price_guide.json`
+(`--no-prices` builds pages without the price panel; `--allow-partial-prices` accepts a partial
+snapshot, and the pages then say it is partial). Neither option is used by the `Dockerfile`.
+
 ## Smoke test with Docker (optional, for anyone with Docker)
 
 ```bash
 docker build --platform linux/amd64 -t world-98138 --build-arg GIT_COMMIT=$(git rev-parse HEAD) .
 docker run --rm world-98138 id                         # uid=10001(app)
 docker run --rm -d --name w98 -p 8080:8080 --memory 256m world-98138
-curl -fsS http://localhost:8080/healthz                 # {"status":"ok","variants":30,...}
+curl -fsS http://localhost:8080/healthz                 # {"status":"ok","variants":45,...}
 curl -s -o /dev/null -w "%{http_code} %{content_type}\n" \
   http://localhost:8080/maps/ocean-sst/B/download/sheets-letter   # 200 application/pdf
 docker stats --no-stream w98                            # memory well under 256 MiB
